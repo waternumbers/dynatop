@@ -3,3 +3,4 @@
 **.so
 .Rhistory
 **/RcppExports.*
+inst/doc

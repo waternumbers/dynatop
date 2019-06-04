@@ -1,0 +1,22 @@
+---
+title: "Code Performance for larger simulations"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Code Performance for larger simulations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+
+
+```{r setup}
+## library(dynatop)
+```
