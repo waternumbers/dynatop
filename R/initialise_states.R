@@ -19,13 +19,22 @@ initialise_hillslope <- function(hillslope,model,init_discharge){
     ## compute the max flow from saturated area
     hillslope$lsz_max <- exp(hillslope$ln_t0-hillslope$atb_bar)
         
-    ## initialise based on the sum of the lateral flow from the saturated zone to all channle elements being init_discharge. If not proportion by area
+    ## initialise based on steady state of saturated zone given constant recharge from unsturated zone
     total_hillslope_area <- sum(hillslope$area)
-    q_0 <- init_discharge*3600/total_hillslope_area # q_0 is specific area recharge in mm/hr
+    q_0 <- init_discharge*3600/total_hillslope_area # q_0 is specific area recharge in m/hr
+    print(q_0)
+    
+    hillslope$quz <- rep(q_0,length(hillslope$id))
+    
+    K_init <- diag(1/hillslope$area) %*% (diag(nrow(model$Wsat)) - model$Wsat) %*%
+        diag(hillslope$area)
     hillslope$lsz <- q_0 # assume constant across catchment
     try({
-        hillslope$lsz <- solve( diag(nrow(model$Wsat)) - model$Wsat,
-                               q_0*hillslope$area) / hillslope$area
+        #hillslope$lsz <- solve( K_init , hillslope$quz )
+        print('paul')
+        print( hillslope$lsz )
+        print( hillslope$lsz_max )
+        print( diag(1/channel$area) %*% model$Fsat %*% diag(hillslope$area) %*% hillslope$lsz )
         names(hillslope$lsz) <- NULL
         if(any( hillslope$lsz <= 0 )){
             stop("Solution for saturated zone initialisation produced negative or zero flows.\n Using constant recharge across catchment")
@@ -34,10 +43,11 @@ initialise_hillslope <- function(hillslope,model,init_discharge){
     hillslope$lsz <- pmin( hillslope$lsz , hillslope$lsz_max )
     
     ## compute the saturated zone storage deficit based on the flow
-    hillslope$ssz <- -hillslope$m * (log(hillslope$lsz)-hillslope$ln_t0+hillslope$atb_bar)
-
+    hillslope$ssz <- -hillslope$m * log(hillslope$lsz/exp(hillslope$ln_t0-hillslope$atb_bar))
+    hillslope$ssz <- pmax(  hillslope$ssz, 0 )
+    
     ## assume full recharge from saturated zone
-    hillslope$quz <- hillslope$lsz
+    #hillslope$quz <- rep(q_0,length(hillslope$id))
 
     ## unsaturated storage by inverse of eqn for q_uz in Beven & Wood 1983
     hillslope$suz <- hillslope$quz * hillslope$td * hillslope$ssz
@@ -48,6 +58,7 @@ initialise_hillslope <- function(hillslope,model,init_discharge){
     ## initialise surface storage to 0
     hillslope$ex <- rep(0,length(hillslope$id))
 
+    print(hillslope)
     return(hillslope)
 }
 

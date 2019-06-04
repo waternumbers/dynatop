@@ -56,11 +56,11 @@ dynatop <- function(model,param,obs_data,init_discharge,sim_time_step){
     for(it in 1:nrow(obs_data)){
         ##print(it)
 
-        ## initialise channel stores with precipitation
+        ## Step 1: Initialise channel stores with precipitation
         ## channel$store[] <- 0
         channel$store <- obs_data[it,channel$precip_input]*ts$step
 
-        ## distribute any surface storage downslope for next time step
+        ## Step 2: Distribute any surface storage downslope for next time step
   	if(any(hillslope$ex > 0)){
             ## solve eigen routing
             ex_in[ex_idx] <- hillslope$ex
@@ -116,6 +116,7 @@ dynatop <- function(model,param,obs_data,init_discharge,sim_time_step){
             #browser()
             ## work out is there is flow to excess due to limit on lsz
             qsz <- pmax(0, hillslope$quz + K_sz %*% hillslope$lsz) * (hillslope$lsz >= hillslope$lsz_max)
+            
 
             ## compute the gradient of the storage change
             grad_ssz <- -hillslope$quz - K_sz %*% hillslope$lsz + qsz

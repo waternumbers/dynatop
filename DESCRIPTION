@@ -1,13 +1,14 @@
 Package: dynatop
-Title: What the Package Does (One Line, Title Case)
+Title: An Implimentation of Dynamic TOPMODEL Hydrological Modelin R & RCpp
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "First",
-           family = "Last",
-           role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+	   c(person(given = "Peter",family = "Metcalfe",role = c("aut")),
+	     person(given = "Paul",
+           	family = "Smith",
+           	role = c("aut", "cre"),
+           	email = "paul@waternumbers.co.uk",
+           	comment = c(ORCID = "YOUR-ORCID-ID")))
+Description: An R and Rcpp implementation and enhancement of the Dynamic TOPMODEL semi-distributed hydrological model.
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
@@ -20,4 +21,10 @@ LinkingTo:
 Depends:
 	R (>= 3.1),
 	xts
+BugReports: https://github.com/waternumbers/dynatop/issues
+URL: https://waternumbers.github.io/dynatop/, https://github.com/waternumbers/dynatop
 RoxygenNote: 6.1.1
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

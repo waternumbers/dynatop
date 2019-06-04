@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function to check the input data to a dynamic TOPMODEL run — check_input • dynatop</title>
+<title>Changelog • dynatop</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,10 +30,7 @@
 
 
 
-<meta property="og:title" content="Function to check the input data to a dynamic TOPMODEL run — check_input" />
-
-<meta property="og:description" content="Describe the checks. Describes where the data comes from. Does basic sanity checks NOT a full check on for example paramter values" />
-<meta name="twitter:card" content="summary" />
+<meta property="og:title" content="Changelog" />
 
 
 
@@ -50,7 +47,7 @@
   </head>
 
   <body>
-    <div class="container template-reference-topic">
+    <div class="container template-news">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -120,67 +117,35 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Function to check the input data to a dynamic TOPMODEL run</h1>
-    <small class="dont-index">Source: <a href='https://github.com/waternumbers/dynatop/blob/master/R/check_input.R'><code>R/check_input.R</code></a></small>
-    <div class="hidden name"><code>check_input.Rd</code></div>
+      <h1>Changelog <small></small></h1>
+      <small>Source: <a href='https://github.com/waternumbers/dynatop/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div class="ref-description">
-    
-    <p>Describe the checks. Describes where the data comes from. Does basic sanity checks NOT a full check on for example paramter values</p>
-    
-    </div>
-
-    <pre class="usage"><span class='fu'>check_input</span>(<span class='no'>model</span>, <span class='no'>param</span>, <span class='no'>obs_data</span>, <span class='no'>init_discharge</span>, <span class='no'>sim_time_step</span>)</pre>
-    
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>param</th>
-      <td><p>named parameter vector</p></td>
-    </tr>
-    <tr>
-      <th>obs_data</th>
-      <td><p>xts object of observed data used for inputs</p></td>
-    </tr>
-    <tr>
-      <th>init_discharge</th>
-      <td><p>initial discharge for hillslope initialisation</p></td>
-    </tr>
-    <tr>
-      <th>sim_time_step</th>
-      <td><p>simulation time step in hours</p></td>
-    </tr>
-    <tr>
-      <th>hru</th>
-      <td><p>details of the hydrological units</p></td>
-    </tr>
-    <tr>
-      <th>Wsat</th>
-      <td><p>weighting matrix for saturated zone flow</p></td>
-    </tr>
-    <tr>
-      <th>Wsurf</th>
-      <td><p>weighting matric for surface flow</p></td>
-    </tr>
-    </table>
-    
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>Logical if tests passed, otherwise fails</p>
-    
-
+    <div id="dynatop-0-0-0-9000" class="section level1">
+<h1 class="page-header">
+<a href="#dynatop-0-0-0-9000" class="anchor"></a>dynatop 0.0.0.9000</h1>
+<ul>
+<li>Gone through Peter code to find functions actually beign used</li>
+<li>Altered input files to allow for more easy reparameterisation and use of multiple inputs (used named columns, parameters not implicit by columns order)</li>
+<li>rewritten initialisation and main execution loop of dynamic TOPMODEL so that
+<ul>
+<li>Chanels are handled explicily not as ‘special cases’ (parameterisations) of hillslope units</li>
+<li>Outputs can be selected</li>
+</ul>
+</li>
+</ul>
+</div>
   </div>
+
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <h2>Contents</h2>
-    <ul class="nav nav-pills nav-stacked">
-      <li><a href="#arguments">Arguments</a></li>
-      
-      <li><a href="#value">Value</a></li>
-          </ul>
-
+    <div id="tocnav">
+      <h2>Contents</h2>
+      <ul class="nav nav-pills nav-stacked">
+        <li><a href="#dynatop-0-0-0-9000">0.0.0.9000</a></li>
+      </ul>
+    </div>
   </div>
+
 </div>
 
       <footer>
