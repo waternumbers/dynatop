@@ -1,33 +1,22 @@
-#' Function to check the model to be used in a dynamic TOPMODEL run
+#' Function to check the observations provided to drive a dynamic TOPMODEL run
 #'
-#' @description This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model.
+#' @description This function makes some basic consistency checks on the observed data and summaries of the model
 #'
+#' @param obs xts object containing the forcing data
 #' @param model a dynamic TOPMODEL list object
 #' @return Logical if tests passed, otherwise fails
 #'
-#' @details The checks performed and basic 'sanity' checks. they do not check for the logic of the parameter values nor the consistncy of states and parameters.
+#' @details The checks performed and basic 'sanity' checks. they do not check for the logic of parameter values nor the consistncy of states and parameters.
 #' @export
-check_model <- function(model){
+check_obs <- function(obs,model){
 
-    check_state <- TRUE
-    warning_text <- NULL
-    error_text <- NULL
-
-    ## check HRU table
-    if(!is.data.frame(model$hru)){
-        error_text <- c(error_text,"hru should be a data.frame")
-    }else{
-        req_names-c('id','area','atb_bar',
-    if(!is.vector(param)){
-        stop("param should be a vector")}
-    if(!is.matrix(model$Wsurf)){
-        stop("Wsurf should be a matrix")}
-    if(!is.matrix(model$Wsat)){
-        stop("Wsat should be a matrix")}
-    if(!is.matrix(model$Fsurf)){
-        stop("Fsurf should be a matrix")}
-    if(!is.matrix(model$Fsat)){
-        stop("Fsat should be a matrix")}
+    ## check object types
+    if(!is.data.frame(model$hru)){stop("hru should be a data.frame")}
+    if(!is.vector(param)){stop("param should be a vector")}
+    if(!is.matrix(model$Wsurf)){stop("Wsurf should be a matrix")}
+    if(!is.matrix(model$Wsat)){stop("Wsat should be a matrix")}
+    if(!is.matrix(model$Fsurf)){stop("Fsurf should be a matrix")}
+    if(!is.matrix(model$Fsat)){stop("Fsat should be a matrix")}
     
     if(!is.xts(obs_data)){stop("param should be a vector")}
     if(!is.numeric(init_discharge)){stop("initial_discharge should be numeric")}

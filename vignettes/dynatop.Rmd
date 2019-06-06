@@ -1,0 +1,172 @@
+---
+title: "Using Dynamic TOPMODEL"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The Model Object}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+The purpose of this vignette is to provide an outline of the steps needed to
+perform a Dynamic TOPMODEL simualtion and introduce the formats of the data
+input and returned. 
+
+The data used in this example comes from Brompton and is contained within the package and can be loaded with
+```{r setup}
+devtools::load_all()
+## library(dynatop)
+data("brompton")
+```
+which returns the following variables
+```{r data_loaded}
+names(brompton)
+```
+In the following
+# The model structure
+A dynamic TOPMODEL is described in a list object. The list has the following
+elements
+```{r model_parts}
+names(brompton$model)
+```
+which are described in Table <>. The [dynatop_gis]{http://bbc.co.uk} package
+can be used for constructing models and contains further details.
+
+<Add table of model parts >
+
+## Checking the model
+The structure of the model can be tested:
+```{r test_model}
+check_model(brompton$model)
+```
+In this case we can see three warning messages. The two warnings relate to
+the redistrubution of the flows from the <> hru. In both case sum of the fractions
+describing the destination of the flows is greater then 1, meaning that flow
+is artificually generated during the redistrbution. This can be checked
+manually by
+```{r check_redistribution}
+model <- brompton$model
+current_total_frac_sat <- colSums( rbind(model$Wsat,model$Fsat) )
+current_total_frac_ex <- colSums( rbind(model$Wex,model$Fex) )
+```
+We can readily fix this:
+```{r fix_redistribution}
+model$Wsat[,'<>'] <- model$Wsat[,'<>']/current_total_frac_sat['']
+model$Fsat[,'<>'] <- model$Fsat[,'<>']/current_total_frac_sat['']
+model$Wex[,'<>'] <- model$Wex[,'<>']/current_total_frac_ex['']
+model$Fex[,'<>'] <- model$Fex[,'<>']/current_total_frac_ex['']
+```
+and repeat the check:
+```{r test_model_pass}
+check_model(model)
+```
+
+## Altering parameters
+
+The parmeter values are stored in the parameter vector ```model$parameters```. Each parameter
+value has a unique name. In the current model the parameters are all set to
+their default values:
+```{r default_param}
+print(model$param)
+```
+The relationship between the parameters and the HRUs are given in the columns of
+the HRU table e.g.
+```{r hru_param}
+## unsaturated zone time constant
+print( model$hru[,c('id','td')])
+```
+Altering parameter values requires changing there values in the parameter
+vector. For this catchment all HRU have the same parameter values. This
+could be altered by changing parameter names in the HRU table and adding these
+parameters to the parameter vector.
+
+In this case we change the parameter vectors to me more representative of the
+catchment
+```{r change_param}
+model$param[c("srz_max_default","srz_0_default","ln_t0_default",
+              "m_default","td_default","tex_default")] <-
+    c(0.1,,0.98,1.15,0.0044,33,0.2)
+```
+
+# Preparing input data
+
+The input to the model is expected to take the form of an ```xts``` object with
+constant time step whose column names are found in the 'precip' and 'pe'
+columns of the HRU table in the model. Helpful functions for creating and
+manipulating \code{xts} obects can be found [here]{http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html}
+
+The precipitation and potential evapotranspiration (PET) inputs for Brompton are
+contained the \code{brompton$rain} and \code{brompton$pe} variables. However while the PET input
+comes on a 15 minute time step
+```{r pet}
+head(brompton$pe)
+```
+the precipitation is on a courser hourly timestp
+```{r rain}
+head(brompton$rain)
+```
+The \code{resample_xts} function can be used to alter the rainfall to the
+correct time step
+```{r rain_resample}
+rain <- resample_xts(brompton$rain, dt = 15/60)
+```
+These series can then be merged, along with the obseved output, to give
+single xts object
+```{r merge_obs}
+obs <- merge(rain,brompton$pe,all=c(TRUE,FALSE))
+## obs <- merge(obs,qobs,all=c(TRUE,FALSE))
+```
+
+# Running dynamic TOPMODEL
+
+The model can be run with the data using the ```dyantop``` command. For a
+event in November 2012 the model can be run with the command
+```{r run_1}
+## select the event period
+event_period <- "2012-11-23 12:00::2012-12-01"
+## recharge rate for initialisation
+initial_recharge <- as.numeric(obs_data["2012-11-23 12:00",'q'])
+## running the model
+sim_1 <- dynatop(model,obs[event_period,],initial_recharge)
+```
+The returned object from ```dynatop``` is a list with two elements
+```{r sim_out}
+names(sim1)
+names(sim1$model)
+names(sim1$channel_flows)
+```
+which are an ```xts``` object of the flows to the channel HRUs at each time
+step and the model passed to the call augmented with the final states of the
+simulation.
+
+In the above simulation the model was initialised using the flow at the start
+of the event and used the default timestep, which is the time step of the
+input data. Sub stepping, that is using a finer mueric timestep then the
+data can improve the stability and quality of the simulations. The <>
+parameter of the  ```dynatop``` function can be used to impliment this. For
+example
+```{r sub_step}
+sim_2 <- dynatop(model,obs[event_period,],initial_recharge,sim_time_step=5/60)
+```
+performs the same simulation with a 5 minute time step.
+
+The output states of a simulation can be used to initialise the a subsequent
+simulation. We note in doing this that no checks are made of the simulation
+times periods or of the timesteps used. For example
+```{r sim_initialisation}
+sim_3 <- dynatop(sim_1$model,obs[event_period,],sim_time_step=5/60)
+```
+
+The effects of the different implimentations can be seem in the following
+graph. Note that the descrepancy between the simulations and observed data is
+due in part to the absense of any channel routing.
+```{r final_plot}
+out <- merge(merge(merge(obs_data,sim_1),sim_2),sim_3)
+names(out) <- c(names(obs_data),'sim_1','sim_2','sim_3')
+plot(out[,c('q','sim_1','sim_2','sim_3')])
+```

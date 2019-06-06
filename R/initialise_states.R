@@ -30,7 +30,7 @@ initialise_hillslope <- function(hillslope,model,init_discharge){
         diag(hillslope$area)
     hillslope$lsz <- q_0 # assume constant across catchment
     try({
-        #hillslope$lsz <- solve( K_init , hillslope$quz )
+        hillslope$lsz <- solve( K_init , hillslope$quz )
         print('paul')
         print( hillslope$lsz )
         print( hillslope$lsz_max )
