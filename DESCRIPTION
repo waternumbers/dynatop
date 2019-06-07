@@ -19,7 +19,7 @@ Imports:
 LinkingTo:
 	Rcpp
 Depends:
-	R (>= 3.1),
+	R (>= 3.5.0),
 	xts
 BugReports: https://github.com/waternumbers/dynatop/issues
 URL: https://waternumbers.github.io/dynatop/, https://github.com/waternumbers/dynatop

@@ -33,7 +33,7 @@ Because of the methods used the results:
 require(dynatop)
 data("brompton")
 
-obs <- resample_obs(rain, dt=15/60)
+obs <- resample_xts(brompton$rain, dt=15/60)
 
 # check totals for Sept - Oct 2012
 sum(obs$rain*15/60, na.rm=TRUE)

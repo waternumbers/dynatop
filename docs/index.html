@@ -85,7 +85,6 @@
       
       </header><div class="row">
   <div class="contents col-md-9">
-
 <div id="dynatop" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#dynatop" class="anchor"></a>dynatop</h1></div>
@@ -94,46 +93,43 @@
 <h2 class="hasAnchor">
 <a href="#to-do" class="anchor"></a>TO DO</h2>
 <ul>
-<li>Reformat example to reflect changes in debug example</li>
 <li>Provide R and Rcpp version of all functions</li>
-<li>clean out unused Rcpp functions</li>
 <li>Check function documentation and add missing variables</li>
-<li>What happens to cpp version of route_ex_eigen when eigen values of WV are imaginary?</li>
-<li>check solution to initialisation when only one chanel</li>
-<li>change from channel to chanel</li>
-<li>Does channnel need vof??</li>
-<li>write checks</li>
-<li>add back in water balance?</li>
-<li>add back in output of states?</li>
+<li>Check parameterisation and definitions in intialisation</li>
+<li>Compete solutions vignette</li>
+<li>Write model structure vignette</li>
 </ul>
 </div>
 <div id="suggestions" class="section level2">
 <h2 class="hasAnchor">
 <a href="#suggestions" class="anchor"></a>Suggestions</h2>
+</div>
+<div id="coding" class="section level2">
+<h2 class="hasAnchor">
+<a href="#coding" class="anchor"></a>Coding</h2>
 <ul>
-<li>Move to object oriented?</li>
-<li>Check application of eigen vector routing?</li>
-<li>improve initialisation</li>
-<li>Change how initialisation is passed, currently loaded into workspace is</li>
-<li>allow checks to warn and change rather then fail</li>
-<li>Use RcppArmadillo - spped up matrix operation further + can use sparse matrices</li>
-<li>consider consistancy of sd and qsz</li>
-<li>qsz_max initialised by atb_bar rather then mean slope</li>
+<li>Move to object oriented programming systle making use of S4 or R5 classes
+<ul>
+<li>May get improved memory usage</li>
+<li>Allows for a more managed growth of complexity by imposing a more rigid style of programming<br>
+</li>
+</ul>
+</li>
+<li>Further checks on eigen vector routing and stability of solution</li>
+<li>Use RcppArmadillo to speed up matrix operations further &amp; can use sparse matrices</li>
+<li>Test speed up of moving further components to Rcpp</li>
+</ul>
+</div>
+<div id="hydrological" class="section level2">
+<h2 class="hasAnchor">
+<a href="#hydrological" class="anchor"></a>Hydrological</h2>
+<ul>
+<li>Improve initialisation of model</li>
+<li>Consider improving calculation of quz</li>
+<li>Consider re-introduction of sd_max</li>
 </ul>
 </div>
 </div>
-<div id="dynatop-v0-0-0-9000" class="section level1">
-<h1 class="hasAnchor">
-<a href="#dynatop-v0-0-0-9000" class="anchor"></a>dynatop v0.0.0.9000</h1>
-<ul>
-<li>Gone through Peter code to find functions actually beign used</li>
-<li>Altered input files to allow for more easy reparameterisation and use of multiple inputs (used named columns, parameters not implicit by columns order)</li>
-<li>rewritten initialisation and main execution loop of dynamic TOPMODEL so that</li>
-<li>Chanels are handled explicily not as ‘special cases’ (parameterisations) of hillslope units</li>
-<li>Outputs can be selected</li>
-</ul>
-</div>
-
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

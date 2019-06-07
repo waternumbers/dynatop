@@ -1,38 +1,38 @@
 #' Run dynamic topmodel
-#' @param hru TODO
-#' @param param TODO
-#' @param Wsat TODO
-#' @param Wsurf TODO
+#' @param model TODO
 #' @param obs_data TODO
-#' @param init_discharge initial dischage in m^3/s
-#' @param sim_time_step simulation timestep in hours
+#' @param initial_recharge Initial recharge to the saturated zone in steady state in m/hr
+#' @param sim_time_step simulation timestep in hours, default value of NULL results in data time step
+#' @param use_states should the states in the model be used (default FALSE)
+#'
+#' @details use_states, currently does not impose any checks
+#' 
 #' @export
-dynatop <- function(model,param,obs_data,init_discharge,sim_time_step){
-    ## check inputs are valid and return a 'sim' object
-    if(!check_input(model,param,obs_data,init_discharge,sim_time_step)){
-        stop("Input check failed")
+dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_states=FALSE){
+    # check input and get model timestep
+    ts <- check_obs(obs_data, unique( unlist(model$hru[,c("precip_input","pet_input")]) ),sim_time_step)
+
+    if(use_states){ # then just take states from the model object
+        hillslope <- model$states$hillslope
+        channel <- model$states$channel
+    }else{ # initialise the model
+        ## check model is valid - fails if not
+        check_model(model)
+
+        ## initialise the properties and states of the hillslope hru - include check on initial recharge
+        hillslope <- initialise_hillslope(model,initial_recharge)
+
+        ## initialise the properties and states of the channel hru
+        channel <- initialise_channel(model)
     }
-    ##sim <- model
-    ## compute the time step and number of sum timesteps
-    ts <- list()
-    ts$step <- diff(as.numeric(index(obs_data)[1:2]))/(60*60) # hours
-    ts$sub_step <- sim_time_step # hours
-    ts$n_sub_step <- floor(ts$step/sim_time_step) # dimensionless
-
-    ## initialise the properties and states of the hillslope hru
-    hillslope <- initialise_properties(model,param,'hillslope')
-    hillslope <- initialise_hillslope(hillslope,model,init_discharge)
-
-    ## initialise the properties and states of the channel hru
-    channel <- initialise_properties(model,param,'channel')
-    channel <- initialise_channel(channel)
+    
 
     ## create the common parts of the surface excess solution
     K_ex <- diag(1/c(hillslope$area,channel$area)) %*%
-        cbind( rbind( (model$Wsurf-diag(nrow(model$Wsurf))), model$Fsurf),
+        cbind( rbind( (model$Wex-diag(nrow(model$Wex))), model$Fex),
               matrix(0,length(hillslope$id)+length(channel$id),length(channel$id) ) # no flow from channel
               ) %*% diag(c(hillslope$area,channel$area)) %*%
-        diag(c(1/hillslope$Tex,rep(0,length(channel$id))))
+        diag(c(1/hillslope$tex,rep(0,length(channel$id))))
     ex_eigen <- eigen_routing_setup(K_ex)
     ex_in <- ex_out <- rep(0,nrow(K_ex)) # preassign vector for initial condition storages
     ex_idx <- 1:length(hillslope$id) # index of hillslope elements in the solution
@@ -54,7 +54,6 @@ dynatop <- function(model,param,obs_data,init_discharge,sim_time_step){
     message("Running Dynamic TOPMODEL using ", length(hillslope$id), " hillslope units and ", length(channel$id), " channel units")
 
     for(it in 1:nrow(obs_data)){
-        ##print(it)
 
         ## Step 1: Initialise channel stores with precipitation
         ## channel$store[] <- 0
@@ -76,7 +75,7 @@ dynatop <- function(model,param,obs_data,init_discharge,sim_time_step){
 
         ## inner loop to update the flows and storages
         for(inner in 1:ts$n_sub_step){
-            ## solve the root zone for hillslope elements
+            ## Step 3: solve the root zone for hillslope elements
             b <- pmax( pet/hillslope$srz_max , 1e-10 ) # stops round errors in explicit solution
             a <- precip
 
@@ -92,12 +91,14 @@ dynatop <- function(model,param,obs_data,init_discharge,sim_time_step){
             hillslope$suz[!saturated_index] <- hillslope$suz[!saturated_index] +
                 integral_qrz[!saturated_index] # if not satureated goes to unsaturated zone
 
+            ## Step 4: Unsaturated zone
             ## recharge rate through unsaturated drainage into saturated zone
             hillslope$quz <- funcpp_uz(hillslope$suz, hillslope$ssz, hillslope$td, ts$sub_step)
 
             ## reduce storage by drainage out of zone over time step - limited in above call
             hillslope$suz <- hillslope$suz - hillslope$quz*ts$sub_step
 
+            ## Step 5: Solve saturated zone
             ## solve the saturated zone to distribute baseflows downslope through areas
             ## using precalculated inter-group splits
 
@@ -162,5 +163,9 @@ dynatop <- function(model,param,obs_data,init_discharge,sim_time_step){
 
     } ## end of timestep loop
 
-    return( qchannel_output )
+    model$states <- list(hillslope=hillslope,
+                         channel=channel)
+    
+    return( list(model=model,
+                 channel_input = qchannel_output ) )
 }
