@@ -20,7 +20,7 @@
 #' require(dynatop)
 #' data("brompton")
 #'
-#' obs <- resample_obs(rain, dt=15/60)
+#' obs <- resample_xts(brompton$rain, dt=15/60)
 #'
 #' # check totals for Sept - Oct 2012
 #' sum(obs$rain*15/60, na.rm=TRUE)
@@ -30,7 +30,7 @@ resample_xts <- function(obs, dt, is.rate=TRUE){
     
     ## if the set is NULL then return
     if(is.null(obs)){return(obs)}
-    if(!is.zoo(obs)){stop("Time series required")}
+    if(!zoo::is.zoo(obs)){stop("Time series required")}
     if(is.null(dt)){stop("Supply new time interval")}
     tms <- as.double(index(obs))
     dt_series <- diff(tms)/3600
@@ -70,7 +70,7 @@ resample_xts <- function(obs, dt, is.rate=TRUE){
         idx <- rep(tms, each=fact)
         idx <- idx[1:nrow(obs)]
         if(is.rate){fun=mean}else{fun=sum}
-        obs_agg <- zoo::aggregate(zoo(obs), by = idx, FUN=fun)
+        obs_agg <- zoo::aggregate(zoo::zoo(obs), by = idx, FUN=fun)
         names(obs_agg) <- names(obs)
     }
     

@@ -18,7 +18,7 @@ perform a Dynamic TOPMODEL simualtion and introduce the formats of the data
 input and returned. 
 
 The data used in this example comes from Brompton and is contained within the package and can be loaded with
-```{r setup}
+```{r, setup}
 devtools::load_all()
 ## library(dynatop)
 data("brompton")
@@ -41,7 +41,7 @@ can be used for constructing models and contains further details.
 
 ## Checking the model
 The structure of the model can be tested:
-```{r test_model}
+```{r, test_model, error=TRUE}
 check_model(brompton$model)
 ```
 In this case we can see three warning messages. The two warnings relate to
@@ -56,13 +56,13 @@ current_total_frac_ex <- colSums( rbind(model$Wex,model$Fex) )
 ```
 We can readily fix this:
 ```{r fix_redistribution}
-model$Wsat[,'<>'] <- model$Wsat[,'<>']/current_total_frac_sat['']
-model$Fsat[,'<>'] <- model$Fsat[,'<>']/current_total_frac_sat['']
-model$Wex[,'<>'] <- model$Wex[,'<>']/current_total_frac_ex['']
-model$Fex[,'<>'] <- model$Fex[,'<>']/current_total_frac_ex['']
+model$Wsat[,'101'] <- model$Wsat[,'101']/current_total_frac_sat['101']
+model$Fsat[,'101'] <- model$Fsat[,'101']/current_total_frac_sat['101']
+model$Wex[,'101'] <- model$Wex[,'101']/current_total_frac_ex['101']
+model$Fex[,'101'] <- model$Fex[,'101']/current_total_frac_ex['101']
 ```
 and repeat the check:
-```{r test_model_pass}
+```{r, test_model_pass}
 check_model(model)
 ```
 
@@ -71,15 +71,19 @@ check_model(model)
 The parmeter values are stored in the parameter vector ```model$parameters```. Each parameter
 value has a unique name. In the current model the parameters are all set to
 their default values:
-```{r default_param}
+```{r, default_param}
 print(model$param)
 ```
 The relationship between the parameters and the HRUs are given in the columns of
 the HRU table e.g.
-```{r hru_param}
+```{r, hru_param}
 ## unsaturated zone time constant
-print( model$hru[,c('id','td')])
+print( model$hru[,c('id','type','td')])
 ```
+As in the above (where the unsaturated zone time constant is specified for the channel
+HRU) there is no danger in specifying parameters not needed by the HRU type
+since these are ignored.
+
 Altering parameter values requires changing there values in the parameter
 vector. For this catchment all HRU have the same parameter values. This
 could be altered by changing parameter names in the HRU table and adding these
@@ -87,10 +91,10 @@ parameters to the parameter vector.
 
 In this case we change the parameter vectors to me more representative of the
 catchment
-```{r change_param}
+```{r, change_param}
 model$param[c("srz_max_default","srz_0_default","ln_t0_default",
               "m_default","td_default","tex_default")] <-
-    c(0.1,,0.98,1.15,0.0044,33,0.2)
+    c(0.1,0.98,1.15,0.0044,33,0.2)
 ```
 
 # Preparing input data
@@ -103,42 +107,56 @@ manipulating \code{xts} obects can be found [here]{http://rstudio-pubs-static.s3
 The precipitation and potential evapotranspiration (PET) inputs for Brompton are
 contained the \code{brompton$rain} and \code{brompton$pe} variables. However while the PET input
 comes on a 15 minute time step
-```{r pet}
-head(brompton$pe)
+```{r, pet}
+head(brompton$pet)
 ```
 the precipitation is on a courser hourly timestp
-```{r rain}
+```{r, rain}
 head(brompton$rain)
 ```
 The \code{resample_xts} function can be used to alter the rainfall to the
 correct time step
-```{r rain_resample}
+```{r, rain_resample, warning=TRUE}
 rain <- resample_xts(brompton$rain, dt = 15/60)
 ```
-These series can then be merged, along with the obseved output, to give
+These series can then be merged, to give
 single xts object
-```{r merge_obs}
-obs <- merge(rain,brompton$pe,all=c(TRUE,FALSE))
-## obs <- merge(obs,qobs,all=c(TRUE,FALSE))
+```{r, merge_obs}
+obs <- merge(rain,brompton$pet,all=c(TRUE,FALSE))
+obs <- merge(obs,brompton$qobs,all=c(TRUE,FALSE))
 ```
+Let's now check this observed data
+```{r, check obs, error=TRUE}
+check_obs(obs, unique( unlist(model$hru[,c("precip_input","pet_input")]) ))
+```
+The check fails with a warning since there are non-finite values in the
+data. This requires more detailed investigation but as a simple fix
+```{r, check obs_2, error=TRUE}
+## replace all non finite values with 0
+obs[!is.finite(obs)] <- 0
+check_obs(obs, unique( unlist(model$hru[,c("precip_input","pet_input")]) ))
+```
+From the return of check_obs we can see the time step of the data and default
+number fo sub time steps used in the model evaluation which is discussed
+later.
 
 # Running dynamic TOPMODEL
 
 The model can be run with the data using the ```dyantop``` command. For a
 event in November 2012 the model can be run with the command
-```{r run_1}
+```{r, run_1}
 ## select the event period
 event_period <- "2012-11-23 12:00::2012-12-01"
 ## recharge rate for initialisation
-initial_recharge <- as.numeric(obs_data["2012-11-23 12:00",'q'])
+initial_recharge <- as.numeric(obs["2012-11-23 12:00",'qobs'])
 ## running the model
 sim_1 <- dynatop(model,obs[event_period,],initial_recharge)
 ```
 The returned object from ```dynatop``` is a list with two elements
-```{r sim_out}
-names(sim1)
-names(sim1$model)
-names(sim1$channel_flows)
+```{r, sim_out}
+names(sim_1)
+names(sim_1$model)
+head(sim_1$channel_input)
 ```
 which are an ```xts``` object of the flows to the channel HRUs at each time
 step and the model passed to the call augmented with the final states of the
@@ -150,7 +168,7 @@ input data. Sub stepping, that is using a finer mueric timestep then the
 data can improve the stability and quality of the simulations. The <>
 parameter of the  ```dynatop``` function can be used to impliment this. For
 example
-```{r sub_step}
+```{r, sub_step}
 sim_2 <- dynatop(model,obs[event_period,],initial_recharge,sim_time_step=5/60)
 ```
 performs the same simulation with a 5 minute time step.
@@ -158,15 +176,17 @@ performs the same simulation with a 5 minute time step.
 The output states of a simulation can be used to initialise the a subsequent
 simulation. We note in doing this that no checks are made of the simulation
 times periods or of the timesteps used. For example
-```{r sim_initialisation}
-sim_3 <- dynatop(sim_1$model,obs[event_period,],sim_time_step=5/60)
+```{r, sim_initialisation}
+sim_3 <- dynatop(sim_1$model,obs[event_period,],sim_time_step=5/60,use_states=TRUE)
 ```
 
 The effects of the different implimentations can be seem in the following
 graph. Note that the descrepancy between the simulations and observed data is
 due in part to the absense of any channel routing.
-```{r final_plot}
-out <- merge(merge(merge(obs_data,sim_1),sim_2),sim_3)
-names(out) <- c(names(obs_data),'sim_1','sim_2','sim_3')
-plot(out[,c('q','sim_1','sim_2','sim_3')])
+```{r, final_plot}
+out <- merge( merge( merge(obs,sim_1$channel_input),
+                    sim_2$channel_input),
+             sim_3$channel_input)
+names(out) <- c(names(obs),'sim_1','sim_2','sim_3')
+plot(out[,c('qobs','sim_1','sim_2','sim_3')])
 ```

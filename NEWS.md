@@ -1,9 +1,40 @@
 # dynatop 0.0.0.9000
-- Gone through Peter code to find functions actually beign used
-- Altered input files to allow for more easy reparameterisation and use of multiple inputs (used named columns, parameters not implicit by columns order)
-- rewritten initialisation and main execution loop of dynamic TOPMODEL so that
-    - Chanels are handled explicily not as 'special cases' (parameterisations) of hillslope units
-    - Outputs can be selected
-    - changed analytical solution of root zone to handle case where both pe
-    and precip are positive
 
+## Context
+This package is the result of an almost complete rewrite of the dynatopmodel package
+formally on CRAN and the associated development code (not in the public
+domain).
+
+This package contains the code for model evaluation and helpers for preparing time
+series input data. The package [dynatop_gis]{http://bbc.co.uk} contains the
+tools for preparing models from GIS data.
+
+## New Features
+- New definition of a dynamic TOPMODEL 'object'
+      - seperates out GIS data for more compact size
+	  - introduces the concept of Hydrological Response Unit (HRU) types
+	  - Altered HRU definition table to allow for more transparent and easy
+        reparameterisation
+	  - Altered HRU definition table to allow for more transparent use of
+        multiple input series (referenced by name, not input column)
+- Altered input of time series data to a single xts object containing names
+columns
+- New output list containing:
+      - model object, with final states of the system
+	  - xts object of flows to channel HRUs
+- Rewritten initialisation and main execution loop of dynamic TOPMODEL so that
+      - Chanels are handled explicily not as 'special cases' (parameterisations) of hillslope units
+      - Analytical solution of root zone can handle case where both pet and
+        precip are positive
+	  - Initialisation does not return a new workspace
+- Vignettes documenting
+      - use of dynamic TOPMODEL
+	  - Equations and solution methodology
+	  - Performance of code for larger simulations
+- 'Hard' checks are now implimented, previously code was performaing various
+  'corrections' without warning.
+
+## Regressions of note
+- Plotting functions and performance calculations have not been replicated
+- The time delay historgram method for river routing is not implimented
+- Model no longer outputs states and fluxes at every time step

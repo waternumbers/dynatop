@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Routing by eigen value method — eigen_routing • dynatop</title>
+<title>Function to check the observations provided to drive a dynamic TOPMODEL run — check_obs • dynatop</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Routing by eigen value method — eigen_routing" />
+<meta property="og:title" content="Function to check the observations provided to drive a dynamic TOPMODEL run — check_obs" />
 
-<meta property="og:description" content="Functions to setup and then evaluate the eigen vector method of Dummit, 2016" />
+<meta property="og:description" content="This function makes some basic consistency checks on the observed data and summaries of the model" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -120,69 +120,45 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Routing by eigen value method</h1>
-    <small class="dont-index">Source: <a href='https://github.com/waternumbers/dynatop/blob/master/R/eigen_routing.R'><code>R/eigen_routing.R</code></a></small>
-    <div class="hidden name"><code>eigen_routing.Rd</code></div>
+    <h1>Function to check the observations provided to drive a dynamic TOPMODEL run</h1>
+    <small class="dont-index">Source: <a href='https://github.com/waternumbers/dynatop/blob/master/R/check_obs.R'><code>R/check_obs.R</code></a></small>
+    <div class="hidden name"><code>check_obs.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Functions to setup and then evaluate the eigen vector method of Dummit, 2016</p>
+    <p>This function makes some basic consistency checks on the observed data and summaries of the model</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>eigen_routing_setup</span>(<span class='no'>K</span>)
-
-<span class='fu'>eigen_routing_step</span>(<span class='no'>v</span>, <span class='no'>eig</span>, <span class='no'>dt</span>)</pre>
+    <pre class="usage"><span class='fu'>check_obs</span>(<span class='no'>obs</span>, <span class='no'>req_series</span>, <span class='kw'>sub_step</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>K</th>
-      <td><p>matric such that dx/dt = K*s</p></td>
+      <th>obs</th>
+      <td><p>xts object containing the forcing data</p></td>
     </tr>
     <tr>
-      <th>v</th>
-      <td><p>vector of volumes to be redistributed</p></td>
+      <th>req_series</th>
+      <td><p>a character vector of series that should be in obs</p></td>
     </tr>
     <tr>
-      <th>eig</th>
-      <td><p>an object containing summaries of eigen matrix and vectors</p></td>
-    </tr>
-    <tr>
-      <th>dt</th>
-      <td><p>time step to be taken</p></td>
+      <th>sub_step</th>
+      <td><p>duration of sub step in model evaluation in hours, default value of NULL results in data time step</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Either an eig object (eigen_setup) or a revised set of volumes after time step</p>
+    <p>Returns a list containing the time interval for the main and sub step as well and the number of substeps</p>
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>The current solution is based on inverting the matrix of eigen vectors in the setup step. This means that on each evaluation requires the sonstant in the solution arecomputed using a matrix multiplication. It may be more robust (and memery efficent) to solve for the initial conditions based on the eigen vector matrix instead.</p>
+    <p>The checks performed and basic 'sanity' checks. they do not check for the logic of parameter values nor the consistncy of states and parameters. The number of sub steps is</p>
     
 
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'># a real value problem</span>
-<span class='no'>K</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/matrix'>matrix</a></span>( <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>2</span>,<span class='fl'>0</span>,<span class='fl'>0</span>,-<span class='fl'>2</span>,<span class='fl'>3</span>,-<span class='fl'>1</span>,<span class='fl'>4</span>,-<span class='fl'>2</span>,<span class='fl'>2</span>),<span class='fl'>3</span> )
-<span class='no'>v0</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>2</span>,<span class='fl'>0</span>,<span class='fl'>2</span>)
-<span class='no'>dt</span> <span class='kw'>&lt;-</span> <span class='fl'>1</span>
-<span class='co'># solution using eigen_routing</span>
-<span class='no'>tmp</span> <span class='kw'>&lt;-</span> <span class='fu'>eigen_routing_setup</span>(<span class='no'>K</span>)
-<span class='no'>x</span> <span class='kw'>&lt;-</span> <span class='fu'>eigen_routing_step</span>(<span class='no'>v0</span>,<span class='no'>tmp</span>,<span class='no'>dt</span>)
-
-<span class='co'># solution should be</span>
-<span class='no'>B</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/matrix'>matrix</a></span>(<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>0</span>, -<span class='fl'>2</span>,<span class='fl'>1</span>,<span class='fl'>1</span>,<span class='fl'>4</span>,-<span class='fl'>2</span>,<span class='fl'>1</span>),<span class='fl'>3</span>)
-<span class='no'>xhat</span> <span class='kw'>&lt;-</span> <span class='no'>B</span> <span class='kw'>%*%</span> (<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/solve'>solve</a></span>(<span class='no'>B</span>,<span class='no'>v0</span>)*<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/Log'>exp</a></span>(-<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='fl'>2</span>,<span class='fl'>1</span>,<span class='fl'>4</span>)*<span class='no'>dt</span>))
-
-<span class='co'># so this should be small</span>
-<span class='no'>x</span>-<span class='no'>xhat</span></div><div class='output co'>#&gt;           [,1]
-#&gt; [1,] 153.78593
-#&gt; [2,] -69.63924
-#&gt; [3,]  39.52043</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -192,9 +168,7 @@
       <li><a href="#value">Value</a></li>
 
       <li><a href="#details">Details</a></li>
-      
-      <li><a href="#examples">Examples</a></li>
-    </ul>
+          </ul>
 
   </div>
 </div>

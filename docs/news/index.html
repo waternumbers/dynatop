@@ -124,17 +124,57 @@
     <div id="dynatop-0-0-0-9000" class="section level1">
 <h1 class="page-header">
 <a href="#dynatop-0-0-0-9000" class="anchor"></a>dynatop 0.0.0.9000</h1>
+<div id="context" class="section level2">
+<h2 class="hasAnchor">
+<a href="#context" class="anchor"></a>Context</h2>
+<p>This package is the result of an almost complete rewrite of the dynatopmodel package formally on CRAN and the associated development code (not in the public domain).</p>
+<p>This package contains the code for model evaluation and helpers for preparing time series input data. The package [dynatop_gis]{<a href="http://bbc.co.uk" class="uri">http://bbc.co.uk</a>} contains the tools for preparing models from GIS data.</p>
+</div>
+<div id="new-features" class="section level2">
+<h2 class="hasAnchor">
+<a href="#new-features" class="anchor"></a>New Features</h2>
 <ul>
-<li>Gone through Peter code to find functions actually beign used</li>
-<li>Altered input files to allow for more easy reparameterisation and use of multiple inputs (used named columns, parameters not implicit by columns order)</li>
-<li>rewritten initialisation and main execution loop of dynamic TOPMODEL so that
+<li>New definition of a dynamic TOPMODEL ‘object’
 <ul>
-<li>Chanels are handled explicily not as ‘special cases’ (parameterisations) of hillslope units</li>
-<li>Outputs can be selected</li>
-<li>changed analytical solution of root zone to handle case where both pe and precip are positive</li>
+<li>seperates out GIS data for more compact size</li>
+<li>introduces the concept of Hydrological Response Unit (HRU) types</li>
+<li>Altered HRU definition table to allow for more transparent and easy reparameterisation</li>
+<li>Altered HRU definition table to allow for more transparent use of multiple input series (referenced by name, not input column)</li>
 </ul>
 </li>
+<li>Altered input of time series data to a single xts object containing names columns</li>
+<li>New output list containing:
+<ul>
+<li>model object, with final states of the system</li>
+<li>xts object of flows to channel HRUs</li>
 </ul>
+</li>
+<li>Rewritten initialisation and main execution loop of dynamic TOPMODEL so that
+<ul>
+<li>Chanels are handled explicily not as ‘special cases’ (parameterisations) of hillslope units</li>
+<li>Analytical solution of root zone can handle case where both pet and precip are positive</li>
+<li>Initialisation does not return a new workspace</li>
+</ul>
+</li>
+<li>Vignettes documenting
+<ul>
+<li>use of dynamic TOPMODEL</li>
+<li>Equations and solution methodology</li>
+<li>Performance of code for larger simulations</li>
+</ul>
+</li>
+<li>‘Hard’ checks are now implimented, previously code was performaing various ‘corrections’ without warning.</li>
+</ul>
+</div>
+<div id="regressions-of-note" class="section level2">
+<h2 class="hasAnchor">
+<a href="#regressions-of-note" class="anchor"></a>Regressions of note</h2>
+<ul>
+<li>Plotting functions and performance calculations have not been replicated</li>
+<li>The time delay historgram method for river routing is not implimented</li>
+<li>Model no longer outputs states and fluxes at every time step</li>
+</ul>
+</div>
 </div>
   </div>
 

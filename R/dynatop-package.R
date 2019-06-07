@@ -2,7 +2,7 @@
 #'
 #' This package contains the core code for the R implimentation of dynamic TOPMODEL
 #'
-#' @name dynatop
+#' @name dynatop-package
 #' @docType package
 #' @useDynLib dynatop
 #' @import xts

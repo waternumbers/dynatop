@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>dynatop — dynatop • dynatop</title>
+<title>Run dynamic topmodel — dynatop • dynatop</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="dynatop — dynatop" />
+<meta property="og:title" content="Run dynamic topmodel — dynatop" />
 
-<meta property="og:description" content="This package contains the core code for the R implimentation of dynamic TOPMODEL" />
+<meta property="og:description" content="Run dynamic topmodel" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -120,24 +120,25 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>dynatop</h1>
-    <small class="dont-index">Source: <a href='https://github.com/waternumbers/dynatop/blob/master/R/dynatop-package.R'><code>R/dynatop-package.R</code></a>, <a href='https://github.com/waternumbers/dynatop/blob/master/R/dynatop.R'><code>R/dynatop.R</code></a></small>
+    <h1>Run dynamic topmodel</h1>
+    <small class="dont-index">Source: <a href='https://github.com/waternumbers/dynatop/blob/master/R/dynatop.R'><code>R/dynatop.R</code></a></small>
     <div class="hidden name"><code>dynatop.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>This package contains the core code for the R implimentation of dynamic TOPMODEL</p>
+    <p>Run dynamic topmodel</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>dynatop</span>(<span class='no'>model</span>, <span class='no'>param</span>, <span class='no'>obs_data</span>, <span class='no'>init_discharge</span>, <span class='no'>sim_time_step</span>)</pre>
+    <pre class="usage"><span class='fu'>dynatop</span>(<span class='no'>model</span>, <span class='no'>obs_data</span>, <span class='kw'>initial_recharge</span> <span class='kw'>=</span> <span class='fl'>NA</span>, <span class='kw'>sim_time_step</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>use_states</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>param</th>
+      <th>model</th>
       <td><p>TODO</p></td>
     </tr>
     <tr>
@@ -145,26 +146,22 @@
       <td><p>TODO</p></td>
     </tr>
     <tr>
-      <th>init_discharge</th>
-      <td><p>initial dischage in m^3/s</p></td>
+      <th>initial_recharge</th>
+      <td><p>Initial recharge to the saturated zone in steady state in m/hr</p></td>
     </tr>
     <tr>
       <th>sim_time_step</th>
-      <td><p>simulation timestep in hours</p></td>
+      <td><p>simulation timestep in hours, default value of NULL results in data time step</p></td>
     </tr>
     <tr>
-      <th>hru</th>
-      <td><p>TODO</p></td>
-    </tr>
-    <tr>
-      <th>Wsat</th>
-      <td><p>TODO</p></td>
-    </tr>
-    <tr>
-      <th>Wsurf</th>
-      <td><p>TODO</p></td>
+      <th>use_states</th>
+      <td><p>should the states in the model be used (default FALSE)</p></td>
     </tr>
     </table>
+    
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>use_states, currently does not impose any checks</p>
     
 
   </div>
@@ -172,7 +169,9 @@
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-                </ul>
+      
+      <li><a href="#details">Details</a></li>
+          </ul>
 
   </div>
 </div>
