@@ -45,9 +45,10 @@ Table [tab:hru_notation] outlines the notation used for describing a
                                         $w^{\left[i,j\right]}_{ex}$  fraction of $l_{ex}$ going from $j$th to $i$th HRU           -
                                         $w^{\left[i,j\right]}_{sz}$  fraction of $l_{sz}$ going from $j$th to $i$th HRU           -
                                                 $s_{rzmax}$          maximum root zone storage                                    m
-                                                   $T_d$                                                                  
-                                                 $T_{ex}$                                                                 
-                                                    $m$                                                                   
+                                                   $T_d$             Unsaturated zone time constant per m of saturated           h/m
+                                                                     storage deficit.
+                                                 $T_{ex}$            Surface excess storage time constant                         h
+                                                    $m$              Exponential transmissivity constant                                                -
 
   Table: Outline of notation for describing “hillslope”
   HRUs[]{data-label="tab:hru_notation"}
@@ -108,8 +109,10 @@ Later we make use of the following:
 -	To illisutrate some calculations intermediate evaluations variables are
      computed. To distinguish these a $\tilde{}$ is used. For example
 	 $\tilde{q}_{rz}$ is an intermediate value in the computation of
-     $q_{rz}$. Multiple $\tilde{}$ may be used if there are multiple
-     intermediate calculations.
+     $q_{rz}$. In some cases these values may evolve across multiple
+     steps. Where needed the superscript $^\left[-\right]$ will be used to
+     indicate the value at the start of the step and $^\left[+\right]$ that at
+     the end.
 
 # Numerical Solution
 
@@ -156,11 +159,10 @@ given by
 For all the hillslope HRU this can be expressed as:
 $$\mathbf{A}\frac{d\mathbf{s}_{ex}}{dt} =  \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{ex}
     + \mathbf{A}\mathbf{q}_{sz}$$
-The surface excess store also interacts with to the channel. Let
-$\tilde{\tilde{\mathbf{s}}}_{ch}$ be the contribution to the channel storage
-from surface excess and
+The surface excess store also passes water to the channel. Let $\mathbf{y}$ be
+the contribution to the channel storage from surface excess and 
 \[ \mathbf{x} = \left[ \begin{array}{c} \mathbf{s}_{ex} \\
-                       \tilde{\tilde{\mathbf{s}}}_{ch} \end{array} \right] \]
+                       \mathbf{y} \end{array}\right] \]
 This allows the evolution of $\mathbf{x}$ to be written as
 $$
 \left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
@@ -193,11 +195,16 @@ $$
                        \mathbf{0} \end{array}\right]
 $$
 	
-The solution of this is carried out directly but through two stages. The first
-stage redistributes the surface excess storage $\mathbf{s}_{ex}$ between the
+The solution of this is carried out through two stages. The first
+stage redistributes the surface excess storage $\left.\mathbf{s}_{ex}\right\rvert_{t}$ between the
 hillslope and channel HRUs on the presumption that there is no inflow
-($\mathbf{q}_{rz}=\mathbf{0}$). 
-Specifically the ODE initial condition problem
+($\mathbf{q}_{sz}=\mathbf{0}$). The second stage, carried out in later steps
+adds the inflow term.
+
+Specifically letting
+\[ \tilde{\mathbf{x}} = \left[ \begin{array}{c} \tilde{\mathbf{s}}_{ex} \\
+                       \tilde{\mathbf{s}}_{ch} \end{array} \right] \]
+the ODE initial condition problem
 $$\frac{d\mathbf{x}}{dt}=\left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
          \mathbf{0} & \mathbf{A}_{ch} \end{array} \right]^{-1}
 	      \left[ \begin{array}{cc}
@@ -206,19 +213,22 @@ $$\frac{d\mathbf{x}}{dt}=\left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
 			  \right]
           \mathbf{x} \quad \mathbf{x}_{0} = \left[\begin{array}{c}
                                                     \left.\mathbf{s}_{ex}\right\rvert_t
-\\ \mathbf{0}\end{array}\right]$$ 
+\\ \tilde{\mathbf{s}}_{cg}^{\left[-\right]}\end{array}\right]$$ 
 is solve using the eigenvalue method to give
 $$
-\left[\begin{array}{c} \left.\tilde{s}_{ex}\right\rvert_{t+\Delta t} \\
-\left.\tilde{\tilde{s}}_{ch}\right\rvert_{t+\Delta t} \end{array}\right]
+\left[\begin{array}{c} \tilde{s}_{ex} \\
+\tilde{\mathbf{s}}_{ch}^{\left[+\right]} \end{array}\right]
 $$
-an intermediate solution to the channel storage and an approximation to the amount of water added
-to the channel HRUs by surface excess redistribution.
+an intermediate solution to the surface excess and channel storage through the
+redistribution of the initiual surface excess water.
 
 ### Comments
 
 1. The flow to the channel is possibly underestimated since $\mathbf{q}_{sz}$
    may be positive.
+1. The possible inflow to the surface store from the root zone is not
+   currently included in the description since it is unclear if this is a
+   numeric or conceptual feature.
 1. Since the only interaction between the other stores and the surface excess
    is  $\mathbf{q}_{sz}$ this step could be evaluated later with an estimate
    of $\mathbf{q}_{sz}$
@@ -245,13 +255,14 @@ $\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} - \left. s_{rz}\right\rvert_{t
 The water passed from the root zone can be passed wither to the surface excess
 storage or the unsaturated zone. If $\left. s_{sd}\right\rvert_{t} = 0$ the water is passed to the
 surface excess store, that is 
-$$ \left.\tilde{\tilde{\mathbf{s}}}_{ex}\right\rvert_{t+\Delta t} =
+$$ \tilde{s}_{ex}^{\left[+\right]} =
+   \tilde{s}_{ex}^{\left[-\right]} +
  \left.\tilde{s}_{rz}\right\rvert_{t + \Delta t} -
  \left. s_{rz}\right\rvert_{t + \Delta t}$$ 
-and $\int_{\Delta t} q_{rz} dt = \mathbf{0}$, otherwise
+and $\int_{\Delta t} q_{rz} dt = 0$, otherwise
 $$\int_{\Delta t} q_{rz} dt = \left. \tilde{s}_{rz}\right\rvert_{t + \Delta
   t} - \left. s_{rz}\right\rvert_{t + \Delta t}$$ 
-and $\left. \tilde{\tilde{\mathbf{s}}}_{ex}\right\rvert_{t+\Delta t}=\mathbf{0}$
+and $\tilde{s}_{ex}^{\left[+\right]} = \tilde{s}_{ex}^{\left[-\right]}$
 
 ### Comments
 1.  The assigning of the water fromt he root zone to either the excess storage
@@ -306,7 +317,7 @@ steps are performed:
 
 ## Step 4: Saturated Zone
 
-For the $i$th hillslope HRU teh change in staturated zone storage deficit is
+For the $i$th hillslope HRU the change in staturated zone storage deficit is
 given by 
 $$a^{\left[i\right]}\frac{ds^{\left[i\right]}_{sz}}{dt} = -a^{\left[i\right]}q^{\left[i\right]}_{uz} - \left(w^{\left[i,i\right]}_{sz}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{sz}
     - \sum\limits_{j \neq i} w^{\left[i,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
@@ -339,8 +350,65 @@ Substituting the transmissivity relationship gives
 $$-\mathbf{L}^{-1}_{sz}\mathbf{M}\frac{d\mathbf{l}_{sz}}{dt} = -\mathbf{q}_{uz} - \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
     + \mathbf{q}_{sz}$$
 
+The solution of these limited joint set of ODEs are not trivial. The current
+solution numerically solves the ODE problem
+$$-\mathbf{L}^{-1}_{sz}\mathbf{M}\frac{d\mathbf{l}_{sz}}{dt} =
+  -\mathbf{q}_{uz} -
+  \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
+  $$
+  subject ot the contraints $\frac{dl_{sz}^{\left[i\right]}}{dt} \leq 0$ if
+  $l_{sz}^{\left[i\right]}=l_{szmax}^{\left[i\right]}$ with initial conditions
+  $\left.\mathbf{l}_{sz}\right\rvert_{t}$ to give
+  $\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta t}$. The flows from the
+  saturated zone to the surface excess storage is estimated from these as
+  $$
+  \mathbf{q}_{sz} =
+  \max\left(\mathbf{A}^{-1}\left(
+  \mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta
+  t}+\mathbf{q}_{uz},
+  \mathbf{0}\right)
+  $$
+where the maximum is taken element wise.
 
-# Analytical ODE Solutions
+Then an initial estimate of the storage deficit is given by
+$$ \tilde{\mathbf{s}}_{sz} = \left. \mathbf{s}_{sz}\right\rvert_{t} +
+ \Delta t \left.\frac{d\mathbf{s}_{sz}}{dt}\right\rvert_{t+\Delta t} $$
+ where the gradient term is evaluated as
+ $$ \left.\frac{d\mathbf{s}_{sz}}{dt}\right\rvert_{t+\Delta t}=
+ -\mathbf{q}_{uz} -
+ \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}\right\rvert_{t
+   + \Delta t}
+    + \left.\mathbf{q}_{sz}\right\rvert_{t
+   + \Delta t}$$
+
+The resulting saturated storage deficit is computed from this as
+$$
+  \left.\mathbf{s}_{sz}\right\rvert_{t + \Delta t} =
+  \max\left( \tilde{\mathbf{s}}_{sz},
+  \mathbf{0}\right)
+  $$
+
+The final estimate of the surface excess store can now be computed by adding
+the volume of water coming from the saturated zone to give
+$$
+\left.\mathbf{s}_{ex}\right\rvert_{t+\Delta t} =
+\tilde{\mathbf{s}}_{ex} + \Delta t \left.\mathbf{q}_{sz}\right\rvert_{t+\Delta
+t} +
+\left.\mathbf{s}_{sz}\right\rvert_{t + \Delta t} - \tilde{\mathbf{s}}_{sz}
+$$
+
+The flow from the saturated zone to the river channels is used to give
+$$
+\left.\mathbf{s}_{ch}\right\rvert_{t+\Delta t} =
+\tilde{\mathbf{s}}_{ch} + \Delta t \mathbf{F}_{sz} \left.\mathbf{l}_{sz}\right\rvert_{t+\Delta
+t}$$
+
+## Step 5: Estimating Channel Flow
+The average flow to the channel over the time step is given by 
+$\frac{ \left.\mathbf{s}_{ch}\right\rvert_{t+\Delta t}}{\Delta t}$
+
+
+# Ordinary Differential Equations Solutions
 
 For completeness the solutions to the ODEs made use of above are
 documented here.
@@ -365,13 +433,33 @@ Note that $$\begin{array}{c}
         x\rightarrow x_{0} + at \quad\mathrm{as}\quad b\rightarrow0\\
     \end{array}$$
 
-## Multiple variable non-homogeneous ODE with constant input
+## Multiple variable non-homogeneous ODE with no input
 
-By the method of “Variation of Parameters for Systems” the solution to
-the initial value problem
-$$\frac{d\mathbf{x}\left(t\right)}{dt} = \mathbf{a} - \mathbf{B} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0$$
+The solution to the initial value problem
+$$\frac{d\mathbf{x}\left(t\right)}{dt} = \mathbf{A} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0$$
 or more compactly
-$$\mathbf{x}^{\prime}\left(t\right) = \mathbf{a} - \mathbf{B} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0$$
-is given by
-$$\mathbf{x}\left(t\right) = e^{\mathbf{B}t}\mathbf{x}_0 + e^{\mathbf{B}t}\int_{t_0}^{t} e^{r\mathbf{B}} \mathbf{a} dr$$
+$$\mathbf{x}^{\prime}\left(t\right) = \mathbf{A} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0$$
+is computed using the eigen value method.
 
+Suppose $\mathbf{x}$ is of length $n$ and $\mathbf{A}$ has suitably unique eigen values
+$\mathbf{\lambda}$. Taking $\mathbf{M}$ to be the matrix of eigen vectors
+$$
+\mathbf{x}\left(t\right) = \mathbf{M} \left[\begin{array}{c}
+c_1 \exp\left(\lambda_1t\right) \\
+\vdots \\
+c_n \exp\left(\lambda_nt\right)
+\end{array}
+\right]
+$$
+where the constant $\mathbf{c}$ can be estimated from the initial conditions
+at time 0 as
+$$ \mathbf{c} = \mathbf{M}^{-1} \mathbf{x}_{0} $$
+
+
+<!-- By the method of “Variation of Parameters for Systems” the solution to -->
+<!-- the initial value problem -->
+<!-- $$\frac{d\mathbf{x}\left(t\right)}{dt} = \mathbf{a} - \mathbf{B} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0$$ -->
+<!-- or more compactly -->
+<!-- $$\mathbf{x}^{\prime}\left(t\right) = \mathbf{a} - \mathbf{B} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0$$ -->
+<!-- is given by -->
+<!-- $$\mathbf{x}\left(t\right) = e^{\mathbf{B}t}\mathbf{x}_0 + e^{\mathbf{B}t}\int_{t_0}^{t} e^{r\mathbf{B}} \mathbf{a} dr$$ -->

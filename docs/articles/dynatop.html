@@ -124,7 +124,7 @@
 <h2 class="hasAnchor">
 <a href="#checking-the-model" class="anchor"></a>Checking the model</h2>
 <p>The structure of the model can be tested:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">check_model</span>(brompton<span class="op">$</span>model)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/check_model.html">check_model</a></span>(brompton<span class="op">$</span>model)
 <span class="co">#&gt; Error in check_model(brompton$model): Saturated flow redistribution fractions sum to greater then 1 for HRUs: 101</span></code></pre></div>
 <p>In this case we can see three warning messages. The two warnings relate to the redistrubution of the flows from the &lt;&gt; hru. In both case sum of the fractions describing the destination of the flows is greater then 1, meaning that flow is artificually generated during the redistrbution. This can be checked manually by</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">model &lt;-<span class="st"> </span>brompton<span class="op">$</span>model
@@ -136,7 +136,7 @@ model<span class="op">$</span>Fsat[,<span class="st">'101'</span>] &lt;-<span cl
 model<span class="op">$</span>Wex[,<span class="st">'101'</span>] &lt;-<span class="st"> </span>model<span class="op">$</span>Wex[,<span class="st">'101'</span>]<span class="op">/</span>current_total_frac_ex[<span class="st">'101'</span>]
 model<span class="op">$</span>Fex[,<span class="st">'101'</span>] &lt;-<span class="st"> </span>model<span class="op">$</span>Fex[,<span class="st">'101'</span>]<span class="op">/</span>current_total_frac_ex[<span class="st">'101'</span>]</code></pre></div>
 <p>and repeat the check:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">check_model</span>(model)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/check_model.html">check_model</a></span>(model)
 <span class="co">#&gt; NULL</span></code></pre></div>
 </div>
 <div id="altering-parameters" class="section level2">
@@ -187,7 +187,7 @@ model<span class="op">$</span>Fex[,<span class="st">'101'</span>] &lt;-<span cla
 <span class="co">#&gt; 2012-09-01 04:00:00    0</span>
 <span class="co">#&gt; 2012-09-01 05:00:00    0</span></code></pre></div>
 <p>The  function can be used to alter the rainfall to the correct time step</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">rain &lt;-<span class="st"> </span><span class="kw">resample_xts</span>(brompton<span class="op">$</span>rain, <span class="dt">dt =</span> <span class="dv">15</span><span class="op">/</span><span class="dv">60</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">rain &lt;-<span class="st"> </span><span class="kw"><a href="../reference/resample_xts.html">resample_xts</a></span>(brompton<span class="op">$</span>rain, <span class="dt">dt =</span> <span class="dv">15</span><span class="op">/</span><span class="dv">60</span>)
 <span class="co">#&gt; Warning in resample_xts(brompton$rain, dt = 15/60): Irregularly spaced time</span>
 <span class="co">#&gt; series supplied to resample_xts - proceding with modal timestep, results</span>
 <span class="co">#&gt; are questionable</span></code></pre></div>
@@ -195,12 +195,12 @@ model<span class="op">$</span>Fex[,<span class="st">'101'</span>] &lt;-<span cla
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>(rain,brompton<span class="op">$</span>pet,<span class="dt">all=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))
 obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>(obs,brompton<span class="op">$</span>qobs,<span class="dt">all=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))</code></pre></div>
 <p>Let’s now check this observed data</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">check_obs</span>(obs, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/unique">unique</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/unlist">unlist</a></span>(model<span class="op">$</span>hru[,<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"precip_input"</span>,<span class="st">"pet_input"</span>)]) ))
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/check_obs.html">check_obs</a></span>(obs, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/unique">unique</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/unlist">unlist</a></span>(model<span class="op">$</span>hru[,<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"precip_input"</span>,<span class="st">"pet_input"</span>)]) ))
 <span class="co">#&gt; Error in check_obs(obs, unique(unlist(model$hru[, c("precip_input", "pet_input")]))): There are non finite values in the required time series</span></code></pre></div>
 <p>The check fails with a warning since there are non-finite values in the data. This requires more detailed investigation but as a simple fix</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## replace all non finite values with 0
 obs[<span class="op">!</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/is.finite">is.finite</a></span>(obs)] &lt;-<span class="st"> </span><span class="dv">0</span>
-<span class="kw">check_obs</span>(obs, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/unique">unique</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/unlist">unlist</a></span>(model<span class="op">$</span>hru[,<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"precip_input"</span>,<span class="st">"pet_input"</span>)]) ))
+<span class="kw"><a href="../reference/check_obs.html">check_obs</a></span>(obs, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/unique">unique</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/unlist">unlist</a></span>(model<span class="op">$</span>hru[,<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"precip_input"</span>,<span class="st">"pet_input"</span>)]) ))
 <span class="co">#&gt; $step</span>
 <span class="co">#&gt; [1] 0.25</span>
 <span class="co">#&gt; </span>
@@ -220,7 +220,7 @@ event_period &lt;-<span class="st"> "2012-11-23 12:00::2012-12-01"</span>
 ## recharge rate for initialisation
 initial_recharge &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/numeric">as.numeric</a></span>(obs[<span class="st">"2012-11-23 12:00"</span>,<span class="st">'qobs'</span>])
 ## running the model
-sim_<span class="dv">1</span> &lt;-<span class="st"> </span><span class="kw">dynatop</span>(model,obs[event_period,],initial_recharge)
+sim_<span class="dv">1</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs[event_period,],initial_recharge)
 <span class="co">#&gt; Running Dynamic TOPMODEL using 3 hillslope units and 1 channel units</span></code></pre></div>
 <p>The returned object from <code>dynatop</code> is a list with two elements</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(sim_<span class="dv">1</span>)
@@ -238,11 +238,11 @@ sim_<span class="dv">1</span> &lt;-<span class="st"> </span><span class="kw">dyn
 <span class="co">#&gt; 2012-11-23 13:15:00 0.008279035</span></code></pre></div>
 <p>which are an <code>xts</code> object of the flows to the channel HRUs at each time step and the model passed to the call augmented with the final states of the simulation.</p>
 <p>In the above simulation the model was initialised using the flow at the start of the event and used the default timestep, which is the time step of the input data. Sub stepping, that is using a finer mueric timestep then the data can improve the stability and quality of the simulations. The &lt;&gt; parameter of the <code>dynatop</code> function can be used to impliment this. For example</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sim_<span class="dv">2</span> &lt;-<span class="st"> </span><span class="kw">dynatop</span>(model,obs[event_period,],initial_recharge,<span class="dt">sim_time_step=</span><span class="dv">5</span><span class="op">/</span><span class="dv">60</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sim_<span class="dv">2</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs[event_period,],initial_recharge,<span class="dt">sim_time_step=</span><span class="dv">5</span><span class="op">/</span><span class="dv">60</span>)
 <span class="co">#&gt; Running Dynamic TOPMODEL using 3 hillslope units and 1 channel units</span></code></pre></div>
 <p>performs the same simulation with a 5 minute time step.</p>
 <p>The output states of a simulation can be used to initialise the a subsequent simulation. We note in doing this that no checks are made of the simulation times periods or of the timesteps used. For example</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sim_<span class="dv">3</span> &lt;-<span class="st"> </span><span class="kw">dynatop</span>(sim_<span class="dv">1</span><span class="op">$</span>model,obs[event_period,],<span class="dt">sim_time_step=</span><span class="dv">5</span><span class="op">/</span><span class="dv">60</span>,<span class="dt">use_states=</span><span class="ot">TRUE</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sim_<span class="dv">3</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(sim_<span class="dv">1</span><span class="op">$</span>model,obs[event_period,],<span class="dt">sim_time_step=</span><span class="dv">5</span><span class="op">/</span><span class="dv">60</span>,<span class="dt">use_states=</span><span class="ot">TRUE</span>)
 <span class="co">#&gt; Running Dynamic TOPMODEL using 3 hillslope units and 1 channel units</span></code></pre></div>
 <p>The effects of the different implimentations can be seem in the following graph. Note that the descrepancy between the simulations and observed data is due in part to the absense of any channel routing.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">out &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>(obs,sim_<span class="dv">1</span><span class="op">$</span>channel_input),

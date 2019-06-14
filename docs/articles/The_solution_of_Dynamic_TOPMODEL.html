@@ -199,20 +199,26 @@
 <tr class="even">
 <td align="left"></td>
 <td align="center"><span class="math inline">\(T_d\)</span></td>
-<td align="left"></td>
-<td align="center"></td>
+<td align="left">Unsaturated zone time constant per m of saturated</td>
+<td align="center">h/m</td>
 </tr>
 <tr class="odd">
 <td align="left"></td>
-<td align="center"><span class="math inline">\(T_{ex}\)</span></td>
-<td align="left"></td>
+<td align="center"></td>
+<td align="left">storage deficit.</td>
 <td align="center"></td>
 </tr>
 <tr class="even">
 <td align="left"></td>
-<td align="center"><span class="math inline">\(m\)</span></td>
+<td align="center"><span class="math inline">\(T_{ex}\)</span></td>
+<td align="left">Surface excess storage time constant</td>
+<td align="center">h</td>
+</tr>
+<tr class="odd">
 <td align="left"></td>
-<td align="center"></td>
+<td align="center"><span class="math inline">\(m\)</span></td>
+<td align="left">Exponential transmissivity constant</td>
+<td align="center">-</td>
 </tr>
 </tbody>
 </table>
@@ -285,7 +291,7 @@
 <li><p>Bold uppercase letters to indicate matrices which may be diagonal if the underlying variables is a vector (e.g. <span class="math inline">\(\mathbf{A}\)</span> is a diagonal matrix of area) or dense (e.g. <span class="math inline">\(W_{sz}\)</span> where the <span class="math inline">\(j\)</span>th element of the <span class="math inline">\(i\)</span>th row is <span class="math inline">\(w_{sz}^{\left[i,j\right]}\)</span>).</p></li>
 <li><p>The identity matrix is written as <span class="math inline">\(\mathbf{I}\)</span>. The notation <span class="math inline">\(\mathbf{0}\)</span> is used to indicate a matrix of vecotr fo zeros whose size can be infered from its location.</p></li>
 <li><p>The notation <span class="math inline">\(\left.x\right\rvert_t\)</span> to indicate the value of the variable <span class="math inline">\(x\)</span> at time <span class="math inline">\(t\)</span></p></li>
-<li><p>To illisutrate some calculations intermediate evaluations variables are computed. To distinguish these a <span class="math inline">\(\tilde{}\)</span> is used. For example <span class="math inline">\(\tilde{q}_{rz}\)</span> is an intermediate value in the computation of <span class="math inline">\(q_{rz}\)</span>. Multiple <span class="math inline">\(\tilde{}\)</span> may be used if there are multiple intermediate calculations.</p></li>
+<li><p>To illisutrate some calculations intermediate evaluations variables are computed. To distinguish these a <span class="math inline">\(\tilde{}\)</span> is used. For example <span class="math inline">\(\tilde{q}_{rz}\)</span> is an intermediate value in the computation of <span class="math inline">\(q_{rz}\)</span>. In some cases these values may evolve across multiple steps. Where needed the superscript <span class="math inline">\(^\left[-\right]\)</span> will be used to indicate the value at the start of the step and <span class="math inline">\(^\left[+\right]\)</span> that at the end.</p></li>
 </ul>
 </div>
 <div id="numerical-solution" class="section level1">
@@ -315,8 +321,8 @@
     + \sum\limits_{j \neq i} w^{\left[i,j\right]}_{ex}a^{\left[j\right]}l^{\left[j\right]}_{ex}
     + a^{\left[i\right]}q^{\left[i\right]}_{sz}
     \]</span> For all the hillslope HRU this can be expressed as: <span class="math display">\[\mathbf{A}\frac{d\mathbf{s}_{ex}}{dt} =  \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{ex}
-    + \mathbf{A}\mathbf{q}_{sz}\]</span> The surface excess store also interacts with to the channel. Let <span class="math inline">\(\tilde{\tilde{\mathbf{s}}}_{ch}\)</span> be the contribution to the channel storage from surface excess and <span class="math display">\[ \mathbf{x} = \left[ \begin{array}{c} \mathbf{s}_{ex} \\
-                       \tilde{\tilde{\mathbf{s}}}_{ch} \end{array} \right] \]</span> This allows the evolution of <span class="math inline">\(\mathbf{x}\)</span> to be written as <span class="math display">\[
+    + \mathbf{A}\mathbf{q}_{sz}\]</span> The surface excess store also passes water to the channel. Let <span class="math inline">\(\mathbf{y}\)</span> be the contribution to the channel storage from surface excess and <span class="math display">\[ \mathbf{x} = \left[ \begin{array}{c} \mathbf{s}_{ex} \\
+                       \mathbf{y} \end{array}\right] \]</span> This allows the evolution of <span class="math inline">\(\mathbf{x}\)</span> to be written as <span class="math display">\[
 \left[ \begin{array}{cc} \mathbf{A} &amp; \mathbf{0} \\
          \mathbf{0} &amp; \mathbf{A}_{ch} \end{array} \right]
      \frac{d\mathbf{x}}{dt} =
@@ -341,7 +347,9 @@
                \left[ \begin{array}{c} \mathbf{q}_{sz} \\
                        \mathbf{0} \end{array}\right]
 \]</span></p>
-<p>The solution of this is carried out directly but through two stages. The first stage redistributes the surface excess storage <span class="math inline">\(\mathbf{s}_{ex}\)</span> between the hillslope and channel HRUs on the presumption that there is no inflow (<span class="math inline">\(\mathbf{q}_{rz}=\mathbf{0}\)</span>). Specifically the ODE initial condition problem <span class="math display">\[\frac{d\mathbf{x}}{dt}=\left[ \begin{array}{cc} \mathbf{A} &amp; \mathbf{0} \\
+<p>The solution of this is carried out through two stages. The first stage redistributes the surface excess storage <span class="math inline">\(\left.\mathbf{s}_{ex}\right\rvert_{t}\)</span> between the hillslope and channel HRUs on the presumption that there is no inflow (<span class="math inline">\(\mathbf{q}_{sz}=\mathbf{0}\)</span>). The second stage, carried out in later steps adds the inflow term.</p>
+<p>Specifically letting <span class="math display">\[ \tilde{\mathbf{x}} = \left[ \begin{array}{c} \tilde{\mathbf{s}}_{ex} \\
+                       \tilde{\mathbf{s}}_{ch} \end{array} \right] \]</span> the ODE initial condition problem <span class="math display">\[\frac{d\mathbf{x}}{dt}=\left[ \begin{array}{cc} \mathbf{A} &amp; \mathbf{0} \\
          \mathbf{0} &amp; \mathbf{A}_{ch} \end{array} \right]^{-1}
           \left[ \begin{array}{cc}
           \begin{array}{c} \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{T}^{-1}_{ex} \\
@@ -349,15 +357,16 @@
               \right]
           \mathbf{x} \quad \mathbf{x}_{0} = \left[\begin{array}{c}
                                                     \left.\mathbf{s}_{ex}\right\rvert_t
-\\ \mathbf{0}\end{array}\right]\]</span> is solve using the eigenvalue method to give <span class="math display">\[
-\left[\begin{array}{c} \left.\tilde{s}_{ex}\right\rvert_{t+\Delta t} \\
-\left.\tilde{\tilde{s}}_{ch}\right\rvert_{t+\Delta t} \end{array}\right]
-\]</span> an intermediate solution to the channel storage and an approximation to the amount of water added to the channel HRUs by surface excess redistribution.</p>
+\\ \tilde{\mathbf{s}}_{cg}^{\left[-\right]}\end{array}\right]\]</span> is solve using the eigenvalue method to give <span class="math display">\[
+\left[\begin{array}{c} \tilde{s}_{ex} \\
+\tilde{\mathbf{s}}_{ch}^{\left[+\right]} \end{array}\right]
+\]</span> an intermediate solution to the surface excess and channel storage through the redistribution of the initiual surface excess water.</p>
 <div id="comments" class="section level3">
 <h3 class="hasAnchor">
 <a href="#comments" class="anchor"></a>Comments</h3>
 <ol style="list-style-type: decimal">
 <li>The flow to the channel is possibly underestimated since <span class="math inline">\(\mathbf{q}_{sz}\)</span> may be positive.</li>
+<li>The possible inflow to the surface store from the root zone is not currently included in the description since it is unclear if this is a numeric or conceptual feature.</li>
 <li>Since the only interaction between the other stores and the surface excess is <span class="math inline">\(\mathbf{q}_{sz}\)</span> this step could be evaluated later with an estimate of <span class="math inline">\(\mathbf{q}_{sz}\)</span>
 </li>
 </ol>
@@ -372,10 +381,11 @@
     \end{array} \right.\]</span></p>
 <p>The root zone is solved as a two step process. Firstly the ODE <span class="math display">\[\frac{d\tilde{s}_{rz}}{dt}=p-\frac{e_{p}}{s_{rzmax}}\tilde{s}_{rz} \quad  \left. \tilde{s}_{rz}\right\rvert_{t} = \left. s_{rz}\right\rvert_{t}\]</span> to give <span class="math display">\[\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} = 
     \left. s_{rz}\right\rvert_{t} \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta t\right) + p\frac{ s_{srmax}}{e_p}\left(1 - \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta t\right)\right)\]</span> which can be though off as the unconstrained root zone storage. Then from this <span class="math display">\[\left. s_{rz}\right\rvert_{t + \Delta t} = \min\left(\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t}, s_{rzmax}\right)\]</span> and the total water passed from the root zone is <span class="math inline">\(\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} - \left. s_{rz}\right\rvert_{t + \Delta t}\)</span>.</p>
-<p>The water passed from the root zone can be passed wither to the surface excess storage or the unsaturated zone. If <span class="math inline">\(\left. s_{sd}\right\rvert_{t} = 0\)</span> the water is passed to the surface excess store, that is <span class="math display">\[ \left.\tilde{\tilde{\mathbf{s}}}_{ex}\right\rvert_{t+\Delta t} =
+<p>The water passed from the root zone can be passed wither to the surface excess storage or the unsaturated zone. If <span class="math inline">\(\left. s_{sd}\right\rvert_{t} = 0\)</span> the water is passed to the surface excess store, that is <span class="math display">\[ \tilde{s}_{ex}^{\left[+\right]} =
+   \tilde{s}_{ex}^{\left[-\right]} +
  \left.\tilde{s}_{rz}\right\rvert_{t + \Delta t} -
- \left. s_{rz}\right\rvert_{t + \Delta t}\]</span> and <span class="math inline">\(\int_{\Delta t} q_{rz} dt = \mathbf{0}\)</span>, otherwise <span class="math display">\[\int_{\Delta t} q_{rz} dt = \left. \tilde{s}_{rz}\right\rvert_{t + \Delta
-  t} - \left. s_{rz}\right\rvert_{t + \Delta t}\]</span> and <span class="math inline">\(\left. \tilde{\tilde{\mathbf{s}}}_{ex}\right\rvert_{t+\Delta t}=\mathbf{0}\)</span></p>
+ \left. s_{rz}\right\rvert_{t + \Delta t}\]</span> and <span class="math inline">\(\int_{\Delta t} q_{rz} dt = 0\)</span>, otherwise <span class="math display">\[\int_{\Delta t} q_{rz} dt = \left. \tilde{s}_{rz}\right\rvert_{t + \Delta
+  t} - \left. s_{rz}\right\rvert_{t + \Delta t}\]</span> and <span class="math inline">\(\tilde{s}_{ex}^{\left[+\right]} = \tilde{s}_{ex}^{\left[-\right]}\)</span></p>
 <div id="comments-1" class="section level3">
 <h3 class="hasAnchor">
 <a href="#comments-1" class="anchor"></a>Comments</h3>
@@ -413,7 +423,7 @@
 <div id="step-4-saturated-zone" class="section level2">
 <h2 class="hasAnchor">
 <a href="#step-4-saturated-zone" class="anchor"></a>Step 4: Saturated Zone</h2>
-<p>For the <span class="math inline">\(i\)</span>th hillslope HRU teh change in staturated zone storage deficit is given by <span class="math display">\[a^{\left[i\right]}\frac{ds^{\left[i\right]}_{sz}}{dt} = -a^{\left[i\right]}q^{\left[i\right]}_{uz} - \left(w^{\left[i,i\right]}_{sz}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{sz}
+<p>For the <span class="math inline">\(i\)</span>th hillslope HRU the change in staturated zone storage deficit is given by <span class="math display">\[a^{\left[i\right]}\frac{ds^{\left[i\right]}_{sz}}{dt} = -a^{\left[i\right]}q^{\left[i\right]}_{uz} - \left(w^{\left[i,i\right]}_{sz}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{sz}
     - \sum\limits_{j \neq i} w^{\left[i,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
     + a^{\left[i\right]}q^{\left[i\right]}_{sz}\]</span> For the assumed exponential transmissivity profile: <span class="math display">\[\frac{dl^{\left[i\right]}_{sz}}{dt} = -\frac{l^{\left[i\right]}_{sz}}{m}\frac{ds^{\left[i\right]}_{sz}}{dt}\]</span> which gives <span class="math display">\[-a^{\left[i\right]}\frac{m}{l^{\left[i\right]}_{sz}}\frac{dl^{\left[i\right]}_{sz}}{dt}
     = -a^{\left[i\right]}q^{\left[i\right]}_{uz} - \left(w^{\left[i,i\right]}_{sz}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{sz}
@@ -427,11 +437,48 @@
     + \mathbf{q}_{sz}\]</span></p>
 <p>Substituting the transmissivity relationship gives <span class="math display">\[-\mathbf{L}^{-1}_{sz}\mathbf{M}\frac{d\mathbf{l}_{sz}}{dt} = -\mathbf{q}_{uz} - \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
     + \mathbf{q}_{sz}\]</span></p>
+<p>The solution of these limited joint set of ODEs are not trivial. The current solution numerically solves the ODE problem <span class="math display">\[-\mathbf{L}^{-1}_{sz}\mathbf{M}\frac{d\mathbf{l}_{sz}}{dt} =
+  -\mathbf{q}_{uz} -
+  \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
+  \]</span> subject ot the contraints <span class="math inline">\(\frac{dl_{sz}^{\left[i\right]}}{dt} \leq 0\)</span> if <span class="math inline">\(l_{sz}^{\left[i\right]}=l_{szmax}^{\left[i\right]}\)</span> with initial conditions <span class="math inline">\(\left.\mathbf{l}_{sz}\right\rvert_{t}\)</span> to give <span class="math inline">\(\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta t}\)</span>. The flows from the saturated zone to the surface excess storage is estimated from these as <span class="math display">\[
+  \mathbf{q}_{sz} =
+  \max\left(\mathbf{A}^{-1}\left(
+  \mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta
+  t}+\mathbf{q}_{uz},
+  \mathbf{0}\right)
+  \]</span> where the maximum is taken element wise.</p>
+<p>Then an initial estimate of the storage deficit is given by <span class="math display">\[ \tilde{\mathbf{s}}_{sz} = \left. \mathbf{s}_{sz}\right\rvert_{t} +
+ \Delta t \left.\frac{d\mathbf{s}_{sz}}{dt}\right\rvert_{t+\Delta t} \]</span> where the gradient term is evaluated as <span class="math display">\[ \left.\frac{d\mathbf{s}_{sz}}{dt}\right\rvert_{t+\Delta t}=
+ -\mathbf{q}_{uz} -
+ \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}\right\rvert_{t
+   + \Delta t}
+    + \left.\mathbf{q}_{sz}\right\rvert_{t
+   + \Delta t}\]</span></p>
+<p>The resulting saturated storage deficit is computed from this as <span class="math display">\[
+  \left.\mathbf{s}_{sz}\right\rvert_{t + \Delta t} =
+  \max\left( \tilde{\mathbf{s}}_{sz},
+  \mathbf{0}\right)
+  \]</span></p>
+<p>The final estimate of the surface excess store can now be computed by adding the volume of water coming from the saturated zone to give <span class="math display">\[
+\left.\mathbf{s}_{ex}\right\rvert_{t+\Delta t} =
+\tilde{\mathbf{s}}_{ex} + \Delta t \left.\mathbf{q}_{sz}\right\rvert_{t+\Delta
+t} +
+\left.\mathbf{s}_{sz}\right\rvert_{t + \Delta t} - \tilde{\mathbf{s}}_{sz}
+\]</span></p>
+<p>The flow from the saturated zone to the river channels is used to give <span class="math display">\[
+\left.\mathbf{s}_{ch}\right\rvert_{t+\Delta t} =
+\tilde{\mathbf{s}}_{ch} + \Delta t \mathbf{F}_{sz} \left.\mathbf{l}_{sz}\right\rvert_{t+\Delta
+t}\]</span></p>
+</div>
+<div id="step-5-estimating-channel-flow" class="section level2">
+<h2 class="hasAnchor">
+<a href="#step-5-estimating-channel-flow" class="anchor"></a>Step 5: Estimating Channel Flow</h2>
+<p>The average flow to the channel over the time step is given by <span class="math inline">\(\frac{ \left.\mathbf{s}_{ch}\right\rvert_{t+\Delta t}}{\Delta t}\)</span></p>
 </div>
 </div>
-<div id="analytical-ode-solutions" class="section level1">
+<div id="ordinary-differential-equations-solutions" class="section level1">
 <h1 class="hasAnchor">
-<a href="#analytical-ode-solutions" class="anchor"></a>Analytical ODE Solutions</h1>
+<a href="#ordinary-differential-equations-solutions" class="anchor"></a>Ordinary Differential Equations Solutions</h1>
 <p>For completeness the solutions to the ODEs made use of above are documented here.</p>
 <div id="single-variable-non-homogeneous-ode-with-constant-input" class="section level2">
 <h2 class="hasAnchor">
@@ -441,10 +488,25 @@
         x\rightarrow x_{0} + at \quad\mathrm{as}\quad b\rightarrow0\\
     \end{array}\]</span></p>
 </div>
-<div id="multiple-variable-non-homogeneous-ode-with-constant-input" class="section level2">
+<div id="multiple-variable-non-homogeneous-ode-with-no-input" class="section level2">
 <h2 class="hasAnchor">
-<a href="#multiple-variable-non-homogeneous-ode-with-constant-input" class="anchor"></a>Multiple variable non-homogeneous ODE with constant input</h2>
-<p>By the method of “Variation of Parameters for Systems” the solution to the initial value problem <span class="math display">\[\frac{d\mathbf{x}\left(t\right)}{dt} = \mathbf{a} - \mathbf{B} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0\]</span> or more compactly <span class="math display">\[\mathbf{x}^{\prime}\left(t\right) = \mathbf{a} - \mathbf{B} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0\]</span> is given by <span class="math display">\[\mathbf{x}\left(t\right) = e^{\mathbf{B}t}\mathbf{x}_0 + e^{\mathbf{B}t}\int_{t_0}^{t} e^{r\mathbf{B}} \mathbf{a} dr\]</span></p>
+<a href="#multiple-variable-non-homogeneous-ode-with-no-input" class="anchor"></a>Multiple variable non-homogeneous ODE with no input</h2>
+<p>The solution to the initial value problem <span class="math display">\[\frac{d\mathbf{x}\left(t\right)}{dt} = \mathbf{A} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0\]</span> or more compactly <span class="math display">\[\mathbf{x}^{\prime}\left(t\right) = \mathbf{A} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0\]</span> is computed using the eigen value method.</p>
+<p>Suppose <span class="math inline">\(\mathbf{x}\)</span> is of length <span class="math inline">\(n\)</span> and <span class="math inline">\(\mathbf{A}\)</span> has suitably unique eigen values <span class="math inline">\(\mathbf{\lambda}\)</span>. Taking <span class="math inline">\(\mathbf{M}\)</span> to be the matrix of eigen vectors <span class="math display">\[
+\mathbf{x}\left(t\right) = \mathbf{M} \left[\begin{array}{c}
+c_1 \exp\left(\lambda_1t\right) \\
+\vdots \\
+c_n \exp\left(\lambda_nt\right)
+\end{array}
+\right]
+\]</span> where the constant <span class="math inline">\(\mathbf{c}\)</span> can be estimated from the initial conditions at time 0 as <span class="math display">\[ \mathbf{c} = \mathbf{M}^{-1} \mathbf{x}_{0} \]</span></p>
+<!-- By the method of “Variation of Parameters for Systems” the solution to -->
+<!-- the initial value problem -->
+<!-- $$\frac{d\mathbf{x}\left(t\right)}{dt} = \mathbf{a} - \mathbf{B} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0$$ -->
+<!-- or more compactly -->
+<!-- $$\mathbf{x}^{\prime}\left(t\right) = \mathbf{a} - \mathbf{B} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0$$ -->
+<!-- is given by -->
+<!-- $$\mathbf{x}\left(t\right) = e^{\mathbf{B}t}\mathbf{x}_0 + e^{\mathbf{B}t}\int_{t_0}^{t} e^{r\mathbf{B}} \mathbf{a} dr$$ -->
 </div>
 </div>
   </div>
@@ -462,12 +524,13 @@
       <li><a href="#step-3-root-zone">Step 3: Root Zone</a></li>
       <li><a href="#step-4-unsaturated-zone">Step 4: Unsaturated Zone</a></li>
       <li><a href="#step-4-saturated-zone">Step 4: Saturated Zone</a></li>
+      <li><a href="#step-5-estimating-channel-flow">Step 5: Estimating Channel Flow</a></li>
       </ul>
 </li>
       <li>
-<a href="#analytical-ode-solutions">Analytical ODE Solutions</a><ul class="nav nav-pills nav-stacked">
+<a href="#ordinary-differential-equations-solutions">Ordinary Differential Equations Solutions</a><ul class="nav nav-pills nav-stacked">
 <li><a href="#single-variable-non-homogeneous-ode-with-constant-input">Single variable non-homogeneous ODE with constant input</a></li>
-      <li><a href="#multiple-variable-non-homogeneous-ode-with-constant-input">Multiple variable non-homogeneous ODE with constant input</a></li>
+      <li><a href="#multiple-variable-non-homogeneous-ode-with-no-input">Multiple variable non-homogeneous ODE with no input</a></li>
       </ul>
 </li>
       </ul>

@@ -6,7 +6,7 @@ formally on CRAN and the associated development code (not in the public
 domain).
 
 This package contains the code for model evaluation and helpers for preparing time
-series input data. The package [dynatop_gis]{http://bbc.co.uk} contains the
+series input data. The package [dynatopGIS](https://waternumbers.github.io/dynatopGIS/) contains the
 tools for preparing models from GIS data.
 
 ## New Features
@@ -33,6 +33,7 @@ columns
 	  - Performance of code for larger simulations
 - 'Hard' checks are now implimented, previously code was performaing various
   'corrections' without warning.
+- Model simulation can be initialised by passed in states allowing for larger simualtions
 
 ## Regressions of note
 - Plotting functions and performance calculations have not been replicated
