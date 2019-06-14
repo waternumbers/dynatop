@@ -5,9 +5,9 @@ simulation.
 
 ## TO DO
 * Provide R and Rcpp version of all functions
-* Check function documentation and add missing variables
 * Check parameterisation and definitions in intialisation
-* Compete solutions vignette
+* try to fix notes relating to xts and zoo packages in build
+* Alter model structure to match GIS
 * Write model structure vignette
 
 ## Suggestions
