@@ -19,8 +19,8 @@ input and returned.
 
 The data used in this example comes from Brompton and is contained within the package and can be loaded with
 ```{r, setup}
-devtools::load_all()
-## library(dynatop)
+##devtools::load_all()
+library(dynatop)
 data("brompton")
 ```
 which returns the following variables
@@ -56,10 +56,15 @@ current_total_frac_ex <- colSums( rbind(model$Wex,model$Fex) )
 ```
 We can readily fix this:
 ```{r fix_redistribution}
-model$Wsat[,'101'] <- model$Wsat[,'101']/current_total_frac_sat['101']
-model$Fsat[,'101'] <- model$Fsat[,'101']/current_total_frac_sat['101']
-model$Wex[,'101'] <- model$Wex[,'101']/current_total_frac_ex['101']
-model$Fex[,'101'] <- model$Fex[,'101']/current_total_frac_ex['101']
+for(ii in names(current_total_frac_sat[current_total_frac_sat>1])){
+    model$Wsat[,ii] <- model$Wsat[,ii]/current_total_frac_sat[ii]
+    model$Fsat[,ii] <- model$Fsat[,ii]/current_total_frac_sat[ii]
+}
+for(ii in names(current_total_frac_sat[current_total_frac_ex>1])){
+    model$Wex[,ii] <- model$Wex[,ii]/current_total_frac_ex[ii]
+    model$Fex[,ii] <- model$Fex[,ii]/current_total_frac_ex[ii]
+}
+
 ```
 and repeat the check:
 ```{r, test_model_pass}
@@ -75,14 +80,11 @@ their default values:
 print(model$param)
 ```
 The relationship between the parameters and the HRUs are given in the columns of
-the HRU table e.g.
+the HRU tables e.g.
 ```{r, hru_param}
 ## unsaturated zone time constant
-print( model$hru[,c('id','type','td')])
+print( model$hillslope[,c('id','td')])
 ```
-As in the above (where the unsaturated zone time constant is specified for the channel
-HRU) there is no danger in specifying parameters not needed by the HRU type
-since these are ignored.
 
 Altering parameter values requires changing there values in the parameter
 vector. For this catchment all HRU have the same parameter values. This
@@ -94,7 +96,7 @@ catchment
 ```{r, change_param}
 model$param[c("srz_max_default","srz_0_default","ln_t0_default",
               "m_default","td_default","tex_default")] <-
-    c(0.1,0.98,1.15,0.0044,33,0.2)
+    c(0.1,0.98,1.15,0.0044,33,0.02)
 ```
 
 # Preparing input data
@@ -127,17 +129,19 @@ obs <- merge(obs,brompton$qobs,all=c(TRUE,FALSE))
 ```
 Let's now check this observed data
 ```{r, check obs, error=TRUE}
-check_obs(obs, unique( unlist(model$hru[,c("precip_input","pet_input")]) ))
+check_obs(obs, unique( unlist(model$hillslope[,c("precip_input","pet_input")]),
+                      unlist(model$channel[,c("precip_input","pet_input")])))
 ```
 The check fails with a warning since there are non-finite values in the
 data. This requires more detailed investigation but as a simple fix
 ```{r, check obs_2, error=TRUE}
 ## replace all non finite values with 0
 obs[!is.finite(obs)] <- 0
-check_obs(obs, unique( unlist(model$hru[,c("precip_input","pet_input")]) ))
+check_obs(obs, unique( unlist(model$hillslope[,c("precip_input","pet_input")]),
+                      unlist(model$channel[,c("precip_input","pet_input")])))
 ```
 From the return of check_obs we can see the time step of the data and default
-number fo sub time steps used in the model evaluation which is discussed
+number of sub time steps used in the model evaluation which is discussed
 later.
 
 # Running dynamic TOPMODEL
@@ -188,5 +192,6 @@ out <- merge( merge( merge(obs,sim_1$channel_input),
                     sim_2$channel_input),
              sim_3$channel_input)
 names(out) <- c(names(obs),'sim_1','sim_2','sim_3')
-plot(out[,c('qobs','sim_1','sim_2','sim_3')])
+out$qobs <- out$qobs*sum(model$hillslope$area)/3600
+plot(out[event_period,c('qobs','sim_1','sim_2','sim_3')])
 ```
