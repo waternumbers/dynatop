@@ -13,10 +13,11 @@
 #' }
 #'
 #' @return rate of change of y with time
-funR_dqdt <- function(t, y, parms)
+fun_dlex_dt <- function(t, y, parms)
 {
     ## y is q, discharge, and kinematic wave velocity is q/m
     res <-  y/parms$m * ( (parms$Wdash %*% y) + parms$quz)
+    
     ## res <-  y/parms$m * (matrix_vect_mult_cpp(parms$Wdash, y) + parms$quz)
     
     ##imax = res > parms$lsz_max & res > 0; # original constrains gradient to qbf_max - why??

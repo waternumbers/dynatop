@@ -4,13 +4,16 @@
 #' @param initial_recharge Initial recharge to the saturated zone in steady state in m/hr
 #' @param sim_time_step simulation timestep in hours, default value of NULL results in data time step
 #' @param use_states should the states in the model be used (default FALSE)
-#'
+#' 
 #' @details use_states, currently does not impose any checks
 #' 
 #' @export
 dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_states=FALSE){
     # check input and get model timestep
-    ts <- check_obs(obs_data, unique( unlist(model$hru[,c("precip_input","pet_input")]) ),sim_time_step)
+    ts <- check_obs(obs_data,
+                    unique( c(unlist(model$hillslope[,c("precip_input","pet_input")]),
+                              unlist(model$channel[,c("precip_input","pet_input")]))),
+                           sim_time_step)
 
     if(use_states){ # then just take states from the model object
         hillslope <- model$states$hillslope
@@ -51,7 +54,7 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
     obs_data <- as.matrix(obs_data)
 
 
-    message("Running Dynamic TOPMODEL using ", length(hillslope$id), " hillslope units and ", length(channel$id), " channel units")
+    ## message("Running Dynamic TOPMODEL using ", length(hillslope$id), " hillslope units and ", length(channel$id), " channel units")
 
     for(it in 1:nrow(obs_data)){
 
@@ -93,7 +96,13 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
 
             ## Step 4: Unsaturated zone
             ## recharge rate through unsaturated drainage into saturated zone
-            hillslope$quz <- funcpp_uz(hillslope$suz, hillslope$ssz, hillslope$td, ts$sub_step)
+            ## if(use_cpp){
+            ##     hillslope$quz <- funcpp_uz(hillslope$suz, hillslope$ssz, hillslope$td, ts$sub_step)
+            ## }else{
+            hillslope$quz <- pmin( hillslope$suz / (hillslope$td * hillslope$ssz) , hillslope$suz/ts$sub_step )
+            hillslope$quz[ hillslope$ssz==0 ] <- 0
+            ## }
+            
 
             ## reduce storage by drainage out of zone over time step - limited in above call
             hillslope$suz <- hillslope$suz - hillslope$quz*ts$sub_step
@@ -106,7 +115,7 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
             # browser()
             res <- deSolve::ode(y=hillslope$lsz,
                                 times=seq(0, ts$sub_step, length.out=2),
-                                func=funR_dqdt,
+                                func=fun_dlex_dt,
                                 parms=list(Wdash=K_sz,
                                            m=hillslope$m,
                                            lsz_max=hillslope$lsz_max,
@@ -130,7 +139,7 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
             hillslope$ex <- hillslope$ex + (hillslope_ssz - tilde_ssz) + qsz*ts$sub_step
 
             ## add flow to channel
-            channel$store <- channel$store + (FA_sz %*% hillslope$lsz)/channel$area
+            channel$store <- channel$store + (FA_sz %*% hillslope$lsz)*ts$sub_step/channel$area
 
             ## ## get inflows to each hillslope HRU
             ## qin <- vect_matrix_mult_cpp(res*all_area,Wsat) / all_area # distribute downstream and convert back to specific input

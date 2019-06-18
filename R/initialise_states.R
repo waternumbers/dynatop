@@ -22,40 +22,54 @@ initialise_hillslope <- function(model,initial_recharge){
     }
     
     ## create a list and fill with fixed properties
-    hru_var <- c("id","area","atb_bar","precip_input","pet_input")
+    hru_var <- c("id","area","atb_bar","s_bar","precip_input","pet_input")
     param_var <- c("srz_max","srz_0","ln_t0","m","td","tex")
 
     hillslope <- list()
-    idx <- which(model$hru[,'type']=='hillslope')
     for(ii in hru_var){
-        hillslope[[ii]] <- model$hru[idx,ii]
+        hillslope[[ii]] <- model$hillslope[,ii]
         names(hillslope[[ii]]) <- NULL
     }
     for(ii in param_var){
-        hillslope[[ii]] <- model$param[ model$hru[idx,ii] ]
+        hillslope[[ii]] <- model$param[ model$hillslope[,ii] ]
         names(hillslope[[ii]]) <- NULL
     }
 
     ## Now compute values based on initialisation
     
     ## compute the max flow from saturated area
-    hillslope$lsz_max <- exp(hillslope$ln_t0-hillslope$atb_bar)
-        
+    hillslope$lsz_max <- exp(hillslope$ln_t0)*hillslope$s_bar
+
     ## initialise based on steady state of saturated zone given constant recharge from unsturated zone
     q_0 <- initial_recharge # q_0 is specific area recharge in m/hr
 
     hillslope$quz <- rep(q_0,length(hillslope$id))
-    
-    K_init <- diag(1/hillslope$area) %*% (diag(nrow(model$Wsat)) - model$Wsat) %*%
-        diag(hillslope$area)
+
+    ## a least squares solution with total outflow equals total inflow to saturated zone
+    ## Assume all outflow to river
+    X_init <- rbind( diag(nrow(model$Wsat)) - model$Wsat , colSums(model$Fsat) ) %*% diag(hillslope$area)
+    y_init <- c( hillslope$area*q_0, sum(hillslope$area)*q_0 )
+    browser()
     hillslope$lsz <- q_0 # assume constant across catchment
     try({
-        hillslope$lsz <- solve( K_init , hillslope$quz )
+        hillslope$lsz <- solve( t(X_init)%*%X_init, t(X_init)%*%y_init )
         names(hillslope$lsz) <- NULL
         if(any( hillslope$lsz <= 0 )){
             stop("Solution for saturated zone initialisation produced negative or zero flows.\n Using constant recharge across catchment")
         }
     })
+        
+    
+    ## K_init <- diag(1/hillslope$area) %*% (diag(nrow(model$Wsat)) - model$Wsat) %*%
+    ##     diag(hillslope$area)
+    ## hillslope$lsz <- q_0 # assume constant across catchment
+    ## try({
+    ##     hillslope$lsz <- solve( K_init , hillslope$quz )
+    ##     names(hillslope$lsz) <- NULL
+    ##     if(any( hillslope$lsz <= 0 )){
+    ##         stop("Solution for saturated zone initialisation produced negative or zero flows.\n Using constant recharge across catchment")
+    ##     }
+    ## })
     hillslope$lsz <- pmin( hillslope$lsz , hillslope$lsz_max )
     
     ## compute the saturated zone storage deficit based on the flow
@@ -86,9 +100,8 @@ initialise_channel <- function(model){
     hru_var <- c("id","area","precip_input","pet_input")
 
     channel <- list()
-    idx <- which(model$hru[,'type']=='channel')
     for(ii in hru_var){
-        channel[[ii]] <- model$hru[idx,ii]
+        channel[[ii]] <- model$channel[,ii]
         names(channel[[ii]]) <- NULL
     }
 
