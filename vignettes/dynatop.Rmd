@@ -14,12 +14,11 @@ knitr::opts_chunk$set(
 )
 ```
 The purpose of this vignette is to provide an outline of the steps needed to
-perform a Dynamic TOPMODEL simualtion and introduce the formats of the data
+perform a Dynamic TOPMODEL simulation and introduce the formats of the data
 input and returned. 
 
 The data used in this example comes from Brompton and is contained within the package and can be loaded with
 ```{r, setup}
-##devtools::load_all()
 library(dynatop)
 data("brompton")
 ```
@@ -34,20 +33,31 @@ elements
 ```{r model_parts}
 names(brompton$model)
 ```
-which are described in Table <>. The [dynatop_gis]{http://bbc.co.uk} package
+which are described in Table <>. The [dynatopGIS](https://waternumbers.github.io/dynatopGIS) package
 can be used for constructing models and contains further details.
+```{r, model_table, echo=FALSE, results='asis'}
+tmp <- data.frame(name=character(0),
+                  Description=character(0),
+                  stringsAsFactors=FALSE)
+tmp[1,] <- c("hillslope","data frame of hill slope HRU unit descriptions")
+tmp[2,] <- c("channel","data frame of channel HRU unit descriptions")
+tmp[3,] <- c("Wsat","Matrix controlling saturated zone redistribution between hill slope HRUs")
+tmp[4,] <- c("Wex","Matrix controlling surface excess redistribution between hill slope HRUs")
+tmp[5,] <- c("Fsat","Matrix controlling saturated zone redistribution between hill slope and channel HRUs")
+tmp[6,] <- c("Fex","Matrix controlling surface excess redistribution between hill slope and channel HRUs")
 
-<Add table of model parts >
+knitr::kable(tmp)
+```
 
 ## Checking the model
 The structure of the model can be tested:
 ```{r, test_model, error=TRUE}
 check_model(brompton$model)
 ```
-In this case we can see three warning messages. The two warnings relate to
-the redistrubution of the flows from the <> hru. In both case sum of the fractions
+In this case we can see multiple warning messages. The warnings relate to
+the redistribution of the flows from the hill slope HRUs. In all cases the sum of the fractions
 describing the destination of the flows is greater then 1, meaning that flow
-is artificually generated during the redistrbution. This can be checked
+is artificially generated during the redistribution. This can be checked
 manually by
 ```{r check_redistribution}
 model <- brompton$model
@@ -66,14 +76,14 @@ for(ii in names(current_total_frac_sat[current_total_frac_ex>1])){
 }
 
 ```
-and repeat the check:
+and repeating the check does not produce an error:
 ```{r, test_model_pass}
 check_model(model)
 ```
 
 ## Altering parameters
 
-The parmeter values are stored in the parameter vector ```model$parameters```. Each parameter
+The parameter values are stored in the parameter vector ```model$parameters```. Each parameter
 value has a unique name. In the current model the parameters are all set to
 their default values:
 ```{r, default_param}
@@ -102,27 +112,27 @@ model$param[c("srz_max_default","srz_0_default","ln_t0_default",
 # Preparing input data
 
 The input to the model is expected to take the form of an ```xts``` object with
-constant time step whose column names are found in the 'precip' and 'pe'
+constant time step whose column names are found in the 'precip_input' and 'pet_input'
 columns of the HRU table in the model. Helpful functions for creating and
-manipulating \code{xts} obects can be found [here]{http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html}
+manipulating ```xts``` objects can be found [here]{http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html}
 
 The precipitation and potential evapotranspiration (PET) inputs for Brompton are
-contained the \code{brompton$rain} and \code{brompton$pe} variables. However while the PET input
+contained the ```brompton$rain``` and ```brompton$pet``` variables. However while the PET input
 comes on a 15 minute time step
 ```{r, pet}
 head(brompton$pet)
 ```
-the precipitation is on a courser hourly timestp
+the precipitation is on a courser hourly time step
 ```{r, rain}
 head(brompton$rain)
 ```
-The \code{resample_xts} function can be used to alter the rainfall to the
+The ```resample_xts``` function can be used to alter the rainfall to the
 correct time step
 ```{r, rain_resample, warning=TRUE}
 rain <- resample_xts(brompton$rain, dt = 15/60)
 ```
 These series can then be merged, to give
-single xts object
+single ```xts``` object
 ```{r, merge_obs}
 obs <- merge(rain,brompton$pet,all=c(TRUE,FALSE))
 obs <- merge(obs,brompton$qobs,all=c(TRUE,FALSE))
@@ -140,7 +150,7 @@ obs[!is.finite(obs)] <- 0
 check_obs(obs, unique( unlist(model$hillslope[,c("precip_input","pet_input")]),
                       unlist(model$channel[,c("precip_input","pet_input")])))
 ```
-From the return of check_obs we can see the time step of the data and default
+From the return of ```check_obs``` we can see the time step of the data and default
 number of sub time steps used in the model evaluation which is discussed
 later.
 
@@ -151,7 +161,7 @@ event in November 2012 the model can be run with the command
 ```{r, run_1}
 ## select the event period
 event_period <- "2012-11-23 12:00::2012-12-01"
-## recharge rate for initialisation
+## recharge rate for initialization
 initial_recharge <- as.numeric(obs["2012-11-23 12:00",'qobs'])
 ## running the model
 sim_1 <- dynatop(model,obs[event_period,],initial_recharge)
@@ -166,27 +176,27 @@ which are an ```xts``` object of the flows to the channel HRUs at each time
 step and the model passed to the call augmented with the final states of the
 simulation.
 
-In the above simulation the model was initialised using the flow at the start
-of the event and used the default timestep, which is the time step of the
-input data. Sub stepping, that is using a finer mueric timestep then the
+In the above simulation the model was initialized using the flow at the start
+of the event and used the default time step, which is the time step of the
+input data. Sub stepping, that is using a finer numeric time step then the
 data can improve the stability and quality of the simulations. The <>
-parameter of the  ```dynatop``` function can be used to impliment this. For
+parameter of the  ```dynatop``` function can be used to implement this. For
 example
 ```{r, sub_step}
 sim_2 <- dynatop(model,obs[event_period,],initial_recharge,sim_time_step=5/60)
 ```
 performs the same simulation with a 5 minute time step.
 
-The output states of a simulation can be used to initialise the a subsequent
+The output states of a simulation can be used to initialize the a subsequent
 simulation. We note in doing this that no checks are made of the simulation
-times periods or of the timesteps used. For example
-```{r, sim_initialisation}
+times periods or of the time steps used. For example
+```{r, sim_initialization}
 sim_3 <- dynatop(sim_1$model,obs[event_period,],sim_time_step=5/60,use_states=TRUE)
 ```
 
-The effects of the different implimentations can be seem in the following
-graph. Note that the descrepancy between the simulations and observed data is
-due in part to the absense of any channel routing.
+The effects of the different implementations can be seem in the following
+graph. Note that the discrepancy between the simulations and observed data is
+due in part to the absence of any channel routing.
 ```{r, final_plot}
 out <- merge( merge( merge(obs,sim_1$channel_input),
                     sim_2$channel_input),

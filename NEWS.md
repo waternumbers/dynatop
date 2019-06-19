@@ -2,7 +2,7 @@
 
 ## Context
 This package is the result of an almost complete rewrite of the dynatopmodel package
-formally on CRAN and the associated development code (not in the public
+formally CRAN and the associated development code (not in the public
 domain).
 
 This package contains the code for model evaluation and helpers for preparing time
@@ -32,8 +32,9 @@ columns
 	  - Equations and solution methodology
 	  - Performance of code for larger simulations
 - 'Hard' checks are now implimented, previously code was performaing various
-  'corrections' without warning.
-- Model simulation can be initialised by passed in states allowing for larger simualtions
+  'corrections' sometimes without warning.
+- Model simulation can be initialised by passed in states allowing for
+  chinking of the longer simulations.
 
 ## Regressions of note
 - Plotting functions and performance calculations have not been replicated

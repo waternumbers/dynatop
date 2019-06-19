@@ -1,0 +1,310 @@
+---
+title: "Code Performance for larger simulations"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Code Performance for larger simulations}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+This vignette briefly studies the performance of the dynamic TOPMODEL code for 'larger'
+simulations. 
+
+The scale of a dynamic TOPMODEL simulations is related to a
+number of factors given below along with the upper limits considered in the discussion
+
+```{r, echo=FALSE, results='asis'}
+factors <- data.frame(Factor = c("The number of time steps to be evaluated",
+                                 "The number of input series",
+                                 "The number of hill slope HRU",
+                                 "The number of channel HRU",
+                                 "The number of computational steps"),
+                      Value = c(1000000,1000,5000,1000,3000000),
+                      Comment = c("Approximately 30 years of 15 minute data",
+                                  "Enough to allow for some representation of spatial input",
+                                  "Approximately 10 hill slope units for each spatial input",
+                                  "Enough to output 1000km of river in 1km lengths for a hydraulic model",
+                                  "Approximately running 30 years of 15 minute data with 3 sub steps (5 minute step)"),
+                      stringsAsFactors=FALSE)
+knitr::kable(factors,caption="Factor affecting performance and limits considered")
+```
+
+In the following section scaling up in terms of size of the input and output
+data is discussed. The performance of simulations with increasing numbers of
+hill slope HRUs is then tested and the code profiled to suggest improvements.
+
+# Scaling the input and output data
+
+The size of the input data relates to the product of the number of time steps
+and input series. Similarly the size of the output series relates to the
+product of the number of time steps and channel HRUs.
+
+The ```dynatop``` function holds all its values within memory (including swap if
+enabled). The amount of memory used for the storage of variables can be broken
+into different classes for which approximate values for the limits outlined are shown below. 
+
+```{r, echo=FALSE, results='asis'}
+mem_usage<- data.frame(Usage= c("Storage of input data",
+                                "Storage of output data",
+                                "Storage of hill slope states & parameters",
+                                "Storage of channel states"),
+                       Value = c(factors[1,'Value']*(factors[2,'Value']+1),
+                                factors[1,'Value']*(factors[4,'Value']+1) + factors[3,'Value']*30,
+                                factors[3,'Value']*30 + 2*(factors[3,'Value']^2),
+                                factors[4,'Value']*6 + 2*(factors[3,'Value']+factors[4,'Value'])),
+                       stringsAsFactors=FALSE)
+mem_usage[,'Value'] <- signif(mem_usage[,'Value']*8/1e6,1)
+knitr::kable(mem_usage,caption="Approximate memory usage in MB assuming a 8 bit numeric values")
+```
+
+R has at times quite complex memory usage patterns (see
+[here](http://adv-r.had.co.nz/memory.html) for a fuller introduction) but the
+above table shows that memory usage is likely to be an issue on
+many systems area the input and output data size increase.
+
+The simplest method to address memory usage limits is to split the input
+ data into sequential chunks (e.g. a year at a time) then evaluate them
+ initializing the model with the final states from the previous chunk. Then by
+ reading the input and writing the output for each chunk individually the
+ memory use can be constrained. The ```dynatop```
+function allows for this, returning the final state and allowing initial
+states to be provided. It is left to the user to script the remainder based on
+their specific requirements.
+
+# Scaling with increasing numbers of hill slope HRUs and computational steps
+
+The computational work load of executing ```dynatop``` is dominated by the
+evaluation of the evolution of the hill slope HRUs. For each computational step
+the equation given in the [accompanying
+vignette](https://waternumbers.github.io/dynatop/articles/The_solution_of_Dynamic_TOPMODEL.html)
+are solved. The execution time of the code will therefor will depend on both the
+number of hill slope HRUs and number of computational steps.
+
+To test the relationship between simulation time, the number of hill slope HRUs
+and number of computational time steps an number of simulations are performed
+based on the data for Brompton. Due to the time taken to evaluate these the
+data is precompiled and can be reloaded from the package data using
+```{r, load_data}
+library(dynatop)
+data("performance_record")
+```
+Details of how to recreate the data are in Appendix 2.
+
+## Number of hill slope HRUs
+
+Additional hill slope HRUs are generated by replicating the
+existing hill slope HRUs and associated routing matrices. The number of
+channels is kept constant as is the length of the simulation and computational
+time steps (`r performance_record$number_obs` steps).
+
+The following figure shows the performance of the code for increasing numbers
+of hill slope HRU.
+
+```{r, hillslope_scale, echo=FALSE, results='hide'}
+tmp <- sapply(performance_record$hru,FUN=function(x){x['user.self',]})
+boxplot(tmp,
+        xlab="# hillslope HRU", ylab="Evaluation time [s]")
+number_hru_timesteps <- as.numeric(names(performance_record$hru))*performance_record$number_obs
+boxplot(tmp / matrix(number_hru_timesteps,nrow(tmp),ncol(tmp),byrow=TRUE),
+        xlab="# hillslope HRU", ylab="Seconds per hillslope HRU per timestep")
+```
+
+The initialization cost is clearly seen with the lowest number of
+hill slope HRU. For larger numbers of hill slope HRUs the performance scaling is
+worse then linear. Although this is not investigated in detail the profiling
+suggests that this may be due to matrix operations,
+particularly since these feature in the evaluation of the gradient
+calculations used with saturated zone solution and repeatedly called by ```deSolve```,
+
+## Number of computational steps
+
+Additional computational time steps are generated by setting the computational
+step form the original value of 15 minutes to smaller values down to 1
+minute. A system with 300 hill slope HRU is used.
+
+```{r, comp_step_scale, echo=FALSE, results='hide'}
+tmp <- sapply(performance_record$comp_step,FUN=function(x){x['user.self',]})
+n_sub_step <- 0.25/as.numeric(colnames(tmp))
+colnames(tmp) <- paste(n_sub_step)
+boxplot(tmp,
+        xlab="# sub steps", ylab="Evaluation time [s]")
+number_hru_timesteps <- 300*performance_record$number_obs
+boxplot(tmp / matrix(number_hru_timesteps,nrow(tmp),ncol(tmp),byrow=TRUE),
+        xlab="# sub steps", ylab="Seconds per hill slope HRU per time step")
+```
+
+As might be hoped the scaling appears to be approximately linear with the
+number of computational steps.
+
+# Code profiling
+
+The performance of the code is profiled using ```Rprof``` for model with 100
+hill slope HRUs running for a `r performance_record$number_obs` time
+steps. A summary of the results are shown in the following table.
+
+```{r, profile_scale, echo=FALSE, results='asis'}
+knitr::kable(performance_record$profile$by.self[1:10,])
+```
+
+Of the time spent in the ```dynatop``` function 55% was spent in
+```deSolve::ode``` which solves the differential equation governing the evolution of the saturated zone fluxes. This includes the time spent
+evaluating the function for
+computing the gradient of $\mathbf{l}_{sz}$. Clearly evaluating the evolution
+of the saturated zone is the most computationally expensive part of the
+code. Around 22% of the time is spent evaluating matrix multiplications
+(labeled "%*%" in the table). These multiplications occur both within and
+outside the function for computing the gradient of $\mathbf{l}_{sz}$.
+
+# Summary
+
+The performance analysis above has a number of limitations but is adequate to
+show that longer simulation are still beyond the scope off the code. Extrapolation
+based on the limits above and an (optimistic) runtime of 8E-05 seconds per
+hill slope HRU per time step gives a runtime of
+approximately `r round((8e-5*5000*1e6)/(60*60*24))` days. In the following
+table we present a non-exhaustive list of potential improvements which could be
+considered to address this. 
+
+```{r, echo=FALSE, results='asis'}
+tmp <- data.frame(Improvement=character(0),
+                  Description=character(0),
+                  Potential_Improvement=character(0),
+                  Effort=character(0),
+                  stringsAsFactors=FALSE)
+tmp[1,] <- c("Improved analytical solutions",
+             "A close form solution or approximation to the saturated zone would remove the largest computation cost. Simplification elsewhere may given marginal speed benefits",
+             "Very Large","High")
+tmp[2,] <- c("Use of ```Matrix``` package for matrix operations",
+             "Given at larger scales the redistribution matrices are likely to be sparse use of the ```Matrix``` package, which improves the handling of sparse matrices could be considered", "Medium/Large","Medium")
+tmp[3,] <- c("Use of the ```RcppArmadillo```", "```RcppArmadillo``` is an ```R``` interface to the Armadillo high performance C++ matrix library. This may further improve performance of matrix calculations","Medium/Large","Medium")
+tmp[4,] <- c("Compiled gradient function for ```deSolve```","```deSolve``` has the potential to interface directly with a compiled function for evaluating the gradient which may decrease the evaluation time","Medium/Large","Medium (Low if done with ```RcppArmadillo```)")
+tmp[5,] <- c("Parallelization of root and unsaturated zone","The root and unsaturated zones are evaluated independently for each HRU. There evaluation could be parallelized across multiple processors.","Medium","Medium")
+tmp[6,] <- c("Parallelization of Surface excess and saturated zone","If the matrices controlling the redistribution of the surface excess and saturated fluxes are separable the evaluation of these matrices operation can be readily parallelized. In other cases the use of a linear algebra library making use of multiple threads (implicitly parallelized) could be considered","Medium","High")
+
+knitr::kable(tmp)
+```
+
+# Appendix 1 - Machine Details
+The simulations were performed on a machine with equipped with a `r performance_record$machine$cpu` processors 
+and `r performance_record$machine$memory` of RAM.
+The session information is:
+```{r session_info,echo=FALSE}
+performance_record$machine$summary
+```
+
+# Appendix 2 - Reproducing the results
+
+Since the simulation times are long the results discussed in this vignette are
+stored in a package data. To recreate them on a different systems (or for
+testing changes) extract the code in this vignette to an R file using
+
+```{r, sep_out_code, eval=FALSE}
+output_file <- "perf_script.R"
+knitr::purl(system.file('doc/Performance_Evaluation.Rmd',package='dynatop'),
+            output = output_file)
+```
+then evaluate *only* the code block below, changing file names and machine
+description as required. The resulting save data file is in the same format as
+that of the package data.
+
+```{r recreate, eval=FALSE}
+rm(list=ls())
+library(dynatop)
+data('brompton')
+
+## tidy up the model so it runs
+model <- brompton$model
+current_total_frac_sat <- colSums( rbind(model$Wsat,model$Fsat) )
+current_total_frac_ex <- colSums( rbind(model$Wex,model$Fex) )
+for(ii in names(current_total_frac_sat[current_total_frac_sat>1])){
+    model$Wsat[,ii] <- model$Wsat[,ii]/current_total_frac_sat[ii]
+    model$Fsat[,ii] <- model$Fsat[,ii]/current_total_frac_sat[ii]
+}
+for(ii in names(current_total_frac_sat[current_total_frac_ex>1])){
+    model$Wex[,ii] <- model$Wex[,ii]/current_total_frac_ex[ii]
+    model$Fex[,ii] <- model$Fex[,ii]/current_total_frac_ex[ii]
+}
+
+## create input data
+rain <- resample_xts(brompton$rain, dt = 15/60)
+obs <- merge(rain,brompton$pet,all=c(TRUE,FALSE))
+obs <- merge(obs,brompton$qobs,all=c(TRUE,FALSE))
+obs[is.na(obs)] <- 0
+obs <- obs["2012-11-23 12:00::2012-12-01",]
+
+## function for timing simulations of different sizes
+fperf <- function(model,obs,number_of_hru,number_of_replicates,
+                  computational_timestep,return_model=FALSE){
+    ## work out how many replicates to take
+    nhru <- ceiling(number_of_hru/nrow(model$hillslope))
+    ## replicate hillslopes
+    hill <- do.call(rbind, replicate(nhru, model$hillslope, simplify=FALSE))
+    hill$id <- 1:nrow(hill)
+    ## construct matrices
+    W <- as.matrix(Matrix::bdiag(rep(list(model$Wex),nhru)))
+    F <- do.call(cbind, replicate(nhru, model$Fex, simplify=FALSE))
+    rownames(W) <- colnames(W) <- colnames(F) <- paste(hill$id)
+
+    ## put back into model and trim to exact number
+    model$hillslope <- hill[1:number_of_hru,]
+    model$Wex <- model$Wsat <- W[1:number_of_hru,1:number_of_hru,drop=FALSE]
+    model$Fex <- model$Fsat <- F[,1:number_of_hru,drop=FALSE]
+
+    ## return model if required
+    if( return_model ){return(model)}
+    
+    gc() ## garbage collection
+
+    ## run replicates of simulation
+    replicate(number_of_replicates,
+              system.time(dynatop(model,obs,
+                                  initial_recharge=as.numeric(obs[1,'qobs']),
+                                  sim_time_step = computational_timestep)))
+}
+
+## run different numbers of hru
+test_hru <- c(10,100,500,1000,1500)
+out_hru<- list()
+for(ii in 1:length(test_hru)){
+    out_hru[[ii]] <- fperf(model,obs,test_hru[ii],10,NULL)
+}
+names(out_hru) <- paste(test_hru)
+
+## run different numbers of computational steps 
+test_step <- c(1,3,5,7.5,15)/60
+out_ts<- list()
+for(ii in 1:length(test_step)){
+    out_ts[[ii]] <- fperf(model,obs,300,10,test_step[ii])
+}
+names(out_ts) <- paste(test_step)
+
+## profile a simulation
+mdl <- fperf(model,obs,100,1,NULL,TRUE)
+Rprof()
+tmp <- dynatop(mdl,obs,initial_recharge=as.numeric(obs[1,'qobs']))
+Rprof(NULL)
+summaryProf <- summaryRprof()
+
+## store the summary of the machine - CHANGE as required
+machineSummary <- list(
+    cpu = "Intel Core i7 CPU 920 @2.67 Ghz",
+    memory = "11.7 Gb",
+    summary = sessionInfo()
+)
+
+## save output in the same format as that in the package data
+performance_record <- list(number_obs = nrow(obs),
+                           hru=out_hru,
+                           comp_step=out_ts,
+                           profile=summaryProf,
+                           machine=machineSummary)
+save("performance_record",file='performance_summary.rda')
+```
+
+

@@ -30,7 +30,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
       </span>
     </div>
 
@@ -56,6 +56,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/Performance_Evaluation.html">Code Performance for larger simulations</a>
+    </li>
+    <li>
       <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Numerical Solution of Dynamic TOPMODEL</a>
     </li>
   </ul>
@@ -93,14 +96,13 @@
 
     
     
-<p>The dynamic TOPMODEL R package impliments a set of numerical solutions to the governing equations of the dynamic TOPMODEL formulation. This vignette documents the formaulation and the numerical solutions used. It also outlines a number of potential changes to the code which may improves it.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## library(dynatop)</code></pre></div>
+<p>The dynamic TOPMODEL R package implements a set of numerical solutions to the governing equations of the dynamic TOPMODEL formulation. This vignette documents the formulation and the numerical solutions used. It also outlines a number of potential changes to the code which may improves it.</p>
 <div id="notation-and-nomenclature" class="section level1">
 <h1 class="hasAnchor">
 <a href="#notation-and-nomenclature" class="anchor"></a>Notation and nomenclature</h1>
-<p>Consider two types of Hydrological response unit (HRU). The first termed “hillslope” solves the surface, root, unsaturated and saturated zones for ‘similar’ areas of the catchment a each time step. Table [tab:hru_notation] outlines the notation used for describing a “hillslope” HRU.</p>
+<p>Consider two types of Hydrological response unit (HRU). The first termed “hill slope” solves the surface, root, unsaturated and saturated zones for ‘similar’ areas of the catchment a each time step. Table [tab:hru_notation] outlines the notation used for describing a “hill slope” HRU.</p>
 <table class="table">
-<caption>Outline of notation for describing “hillslope” HRUs<span data-label="tab:hru_notation"></span>
+<caption>Outline of notation for describing “hill slope” HRUs<span data-label="tab:hru_notation"></span>
 </caption>
 <thead><tr class="header">
 <th align="left">Quantity type</th>
@@ -219,7 +221,7 @@
 </tr>
 </tbody>
 </table>
-<p>The second, termed “chanel” represents the inflow to a length of river channel. As such it acts as a sink collecting water from the “hillslope” HRUs over the course of a time step. Table [tab:ch_notation] outlines the notation for channel HRU.</p>
+<p>The second, termed “chanel” represents the inflow to a length of river channel. As such it acts as a sink collecting water from the “hill slope” HRUs over the course of a time step. Table [tab:ch_notation] outlines the notation for channel HRU.</p>
 <table class="table">
 <caption>Outline of notation for describing “channel” HRUs<span data-label="tab:ch_notation"></span>
 </caption>
@@ -246,20 +248,20 @@
 <tr class="odd">
 <td></td>
 <td align="right"><span class="math inline">\(f^{\left[k,j\right]}_{ex}\)</span></td>
-<td align="left">fraction of <span class="math inline">\(l_{ex}\)</span> going from <span class="math inline">\(j\)</span>th hillslope HRU to <span class="math inline">\(k\)</span>th channel HRU</td>
+<td align="left">fraction of <span class="math inline">\(l_{ex}\)</span> going from <span class="math inline">\(j\)</span>th hill slope HRU to <span class="math inline">\(k\)</span>th channel HRU</td>
 <td align="left">-</td>
 </tr>
 <tr class="even">
 <td></td>
 <td align="right"><span class="math inline">\(f^{\left[k,j\right]}_{sz}\)</span></td>
-<td align="left">fraction of <span class="math inline">\(l_{sz}\)</span> going from <span class="math inline">\(j\)</span>th hillslope HRU to <span class="math inline">\(k\)</span>th HRU</td>
+<td align="left">fraction of <span class="math inline">\(l_{sz}\)</span> going from <span class="math inline">\(j\)</span>th hill slope HRU to <span class="math inline">\(k\)</span>th HRU</td>
 <td align="left">-</td>
 </tr>
 </tbody>
 </table>
 <p>From the above a mass conservative system will redirect all flows within the defined catchment hence: <span class="math display">\[\sum\limits_{j} w^{\left[j,i\right]} +
     \sum\limits_{k} f^{\left[k,i\right]} =1\]</span></p>
-<p>Inputas to the system are given in Table [tab:inputs]. These are treated as being the same for every HRU though the calculations readily allow for them to vary by HRU.</p>
+<p>Inputs to the system are given in Table [tab:inputs]. These are treated as being the same for every HRU though the calculations readily allow for them to vary by HRU.</p>
 <table class="table">
 <caption>Eternal inputs to HRUs<span data-label="tab:inputs"></span>
 </caption>
@@ -284,11 +286,11 @@
 <p>Later we make use of the following:</p>
 <ul>
 <li><p>Superscript notation <span class="math inline">\(^{\left[i\right]}\)</span> to indicate the property of the <span class="math inline">\(i\)</span>th HRU</p></li>
-<li><p>Bold lower case letter to indicate the column vector of quanties from all HRUs, e.g. <span class="math inline">\(\mathbf{q}_{rz} = \left(q_{rz}^{\left[1\right]},\ldots,q_{rz}^{\left[n\right]}\right)^{T}\)</span></p></li>
+<li><p>Bold lower case letter to indicate the column vector of quantities from all HRUs, e.g. <span class="math inline">\(\mathbf{q}_{rz} = \left(q_{rz}^{\left[1\right]},\ldots,q_{rz}^{\left[n\right]}\right)^{T}\)</span></p></li>
 <li><p>Bold uppercase letters to indicate matrices which may be diagonal if the underlying variables is a vector (e.g. <span class="math inline">\(\mathbf{A}\)</span> is a diagonal matrix of area) or dense (e.g. <span class="math inline">\(W_{sz}\)</span> where the <span class="math inline">\(j\)</span>th element of the <span class="math inline">\(i\)</span>th row is <span class="math inline">\(w_{sz}^{\left[i,j\right]}\)</span>).</p></li>
-<li><p>The identity matrix is written as <span class="math inline">\(\mathbf{I}\)</span>. The notation <span class="math inline">\(\mathbf{0}\)</span> is used to indicate a matrix of vecotr fo zeros whose size can be infered from its location.</p></li>
+<li><p>The identity matrix is written as <span class="math inline">\(\mathbf{I}\)</span>. The notation <span class="math inline">\(\mathbf{0}\)</span> is used to indicate a matrix of vector of zeros whose size can be inferred from its location.</p></li>
 <li><p>The notation <span class="math inline">\(\left.x\right\rvert_t\)</span> to indicate the value of the variable <span class="math inline">\(x\)</span> at time <span class="math inline">\(t\)</span></p></li>
-<li><p>To illisutrate some calculations intermediate evaluations variables are computed. To distinguish these a <span class="math inline">\(\tilde{}\)</span> is used. For example <span class="math inline">\(\tilde{q}_{rz}\)</span> is an intermediate value in the computation of <span class="math inline">\(q_{rz}\)</span>. In some cases these values may evolve across multiple steps. Where needed the superscript <span class="math inline">\(^\left[-\right]\)</span> will be used to indicate the value at the start of the step and <span class="math inline">\(^\left[+\right]\)</span> that at the end.</p></li>
+<li><p>To illustrate some calculations intermediate evaluations variables are computed. To distinguish these a <span class="math inline">\(\tilde{}\)</span> is used. For example <span class="math inline">\(\tilde{q}_{rz}\)</span> is an intermediate value in the computation of <span class="math inline">\(q_{rz}\)</span>. In some cases these values may evolve across multiple steps. Where needed the superscript <span class="math inline">\(^\left[-\right]\)</span> will be used to indicate the value at the start of the step and <span class="math inline">\(^\left[+\right]\)</span> that at the end.</p></li>
 </ul>
 </div>
 <div id="numerical-solution" class="section level1">
@@ -296,16 +298,16 @@
 <a href="#numerical-solution" class="anchor"></a>Numerical Solution</h1>
 <p>The numerical solution implemented in the dynamic TOPMODEL code is based on solving the ODE(s) governing the evolution of each of the stores in the HRUs sequentially while approximating the flux between then.</p>
 <p>The following sections present the solutions to the governing equations in the order they are currently solved in the code for given time step <span class="math inline">\(\Delta t\)</span> (hr) starting at time <span class="math inline">\(t\)</span> over which the input fluxes (<span class="math inline">\(p\)</span> and <span class="math inline">\(e_p\)</span>) are taken to be constant.</p>
-<div id="step-1-initialising-the-channel-storage" class="section level2">
+<div id="step-1-initializing-the-channel-storage" class="section level2">
 <h2 class="hasAnchor">
-<a href="#step-1-initialising-the-channel-storage" class="anchor"></a>Step 1: Initialising the channel storage</h2>
+<a href="#step-1-initializing-the-channel-storage" class="anchor"></a>Step 1: Initializing the channel storage</h2>
 <p>The channel acts as a sink with no outflows. For a single reach: <span class="math display">\[a^{\left[k\right]}\frac{ds^{\left[k\right]}_{ch}}{dt} = 
     \sum\limits_{j} f^{\left[k,j\right]}_{ex}a^{\left[j\right]}l^{\left[j\right]}_{ex}
     + \sum\limits_{j} f^{\left[k,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
     + a^{\left[k\right]}p\]</span> For all channel reaches this can be written in matrix form as <span class="math display">\[\mathbf{A}_{ch}\frac{d\mathbf{s}_{ch}}{dt} = 
     \mathbf{F}_{ex}\mathbf{A}\mathbf{l}_{ex}
     + \mathbf{F}_{sz}\mathbf{A}\mathbf{l}_{sz}
-    + \mathbf{A}_{ch}p\]</span> or equivilently <span class="math display">\[\frac{d\mathbf{s}_{ch}}{dt} = 
+    + \mathbf{A}_{ch}p\]</span> or equivalently <span class="math display">\[\frac{d\mathbf{s}_{ch}}{dt} = 
     \mathbf{A}^{-1}_{ch}\mathbf{F}_{ex}\mathbf{A}\mathbf{l}_{ex}
     + \mathbf{A}_{ch}^{-1}\mathbf{F}_{sz}\mathbf{A}\mathbf{l}_{sz}
     +p\]</span></p>
@@ -314,10 +316,10 @@
 <div id="step-2-surface-excess-redistribution" class="section level2">
 <h2 class="hasAnchor">
 <a href="#step-2-surface-excess-redistribution" class="anchor"></a>Step 2: Surface excess redistribution</h2>
-<p>For the <span class="math inline">\(i\)</span>th hillslope HRU the alteration of the surface excess store is given by <span class="math display">\[ a^{\left[i\right]}\frac{ds^{\left[i\right]}_{ex}}{dt} =  \left(w^{\left[i,i\right]}_{ex}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{ex}
+<p>For the <span class="math inline">\(i\)</span>th hill slope HRU the alteration of the surface excess store is given by <span class="math display">\[ a^{\left[i\right]}\frac{ds^{\left[i\right]}_{ex}}{dt} =  \left(w^{\left[i,i\right]}_{ex}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{ex}
     + \sum\limits_{j \neq i} w^{\left[i,j\right]}_{ex}a^{\left[j\right]}l^{\left[j\right]}_{ex}
     + a^{\left[i\right]}q^{\left[i\right]}_{sz}
-    \]</span> For all the hillslope HRU this can be expressed as: <span class="math display">\[\mathbf{A}\frac{d\mathbf{s}_{ex}}{dt} =  \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{ex}
+    \]</span> For all the hill slope HRU this can be expressed as: <span class="math display">\[\mathbf{A}\frac{d\mathbf{s}_{ex}}{dt} =  \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{ex}
     + \mathbf{A}\mathbf{q}_{sz}\]</span> The surface excess store also passes water to the channel. Let <span class="math inline">\(\mathbf{y}\)</span> be the contribution to the channel storage from surface excess and <span class="math display">\[ \mathbf{x} = \left[ \begin{array}{c} \mathbf{s}_{ex} \\
                        \mathbf{y} \end{array}\right] \]</span> This allows the evolution of <span class="math inline">\(\mathbf{x}\)</span> to be written as <span class="math display">\[
 \left[ \begin{array}{cc} \mathbf{A} &amp; \mathbf{0} \\
@@ -331,8 +333,8 @@
                \left[ \begin{array}{c} \mathbf{q}_{sz} \\
                        \mathbf{0} \end{array}\right]
 \]</span></p>
-<p>Assuming that thereare minimal non-linearities the surface excess stores of the hillslope HRUs are taken to be linear tanks with <span class="math inline">\(l^{\left[i\right]}_{ex} = \frac{1}{T_{ex}} s^{\left[i\right]}_{ex}\)</span></p>
-<p>Substituation of the flow storage relationship and rearrangement gives <span class="math display">\[
+<p>Assuming that there are minimal non-linearities the surface excess stores of the hill slope HRUs are taken to be linear tanks with <span class="math inline">\(l^{\left[i\right]}_{ex} = \frac{1}{T_{ex}} s^{\left[i\right]}_{ex}\)</span></p>
+<p>Substitution of the flow storage relationship and rearrangement gives <span class="math display">\[
      \frac{d\mathbf{x}}{dt} =
      \left[ \begin{array}{cc} \mathbf{A} &amp; \mathbf{0} \\
          \mathbf{0} &amp; \mathbf{A}_{ch} \end{array} \right]^{-1}
@@ -344,7 +346,7 @@
                \left[ \begin{array}{c} \mathbf{q}_{sz} \\
                        \mathbf{0} \end{array}\right]
 \]</span></p>
-<p>The solution of this is carried out through two stages. The first stage redistributes the surface excess storage <span class="math inline">\(\left.\mathbf{s}_{ex}\right\rvert_{t}\)</span> between the hillslope and channel HRUs on the presumption that there is no inflow (<span class="math inline">\(\mathbf{q}_{sz}=\mathbf{0}\)</span>). The second stage, carried out in later steps adds the inflow term.</p>
+<p>The solution of this is carried out through two stages. The first stage redistributes the surface excess storage <span class="math inline">\(\left.\mathbf{s}_{ex}\right\rvert_{t}\)</span> between the hill slope and channel HRUs on the presumption that there is no inflow (<span class="math inline">\(\mathbf{q}_{sz}=\mathbf{0}\)</span>). The second stage, carried out in later steps adds the inflow term.</p>
 <p>Specifically letting <span class="math display">\[ \tilde{\mathbf{x}} = \left[ \begin{array}{c} \tilde{\mathbf{s}}_{ex} \\
                        \tilde{\mathbf{s}}_{ch} \end{array} \right] \]</span> the ODE initial condition problem <span class="math display">\[\frac{d\mathbf{x}}{dt}=\left[ \begin{array}{cc} \mathbf{A} &amp; \mathbf{0} \\
          \mathbf{0} &amp; \mathbf{A}_{ch} \end{array} \right]^{-1}
@@ -357,7 +359,7 @@
 \\ \tilde{\mathbf{s}}_{cg}^{\left[-\right]}\end{array}\right]\]</span> is solve using the eigenvalue method to give <span class="math display">\[
 \left[\begin{array}{c} \tilde{s}_{ex} \\
 \tilde{\mathbf{s}}_{ch}^{\left[+\right]} \end{array}\right]
-\]</span> an intermediate solution to the surface excess and channel storage through the redistribution of the initiual surface excess water.</p>
+\]</span> an intermediate solution to the surface excess and channel storage through the redistribution of the initial surface excess water.</p>
 <div id="comments" class="section level3">
 <h3 class="hasAnchor">
 <a href="#comments" class="anchor"></a>Comments</h3>
@@ -387,9 +389,9 @@
 <h3 class="hasAnchor">
 <a href="#comments-1" class="anchor"></a>Comments</h3>
 <ol style="list-style-type: decimal">
-<li>The assigning of the water fromt he root zone to either the excess storage or unsaturated zone can be considered in two ways:
+<li>The assigning of the water from the root zone to either the excess storage or unsaturated zone can be considered in two ways:
 <ul>
-<li>a concptual choice indicating the beleif that this water is distributed with teh surface rather then saturated zone lateral fluxes.</li>
+<li>a conceptual choice indicating the belief that this water is distributed with the surface rather then saturated zone lateral fluxes.</li>
 <li>a method of ensuring a suitable numerical solution in the unsaturated zone when there is no saturated deficit (see comments below).</li>
 </ul>
 </li>
@@ -399,8 +401,8 @@
 <div id="step-4-unsaturated-zone" class="section level2">
 <h2 class="hasAnchor">
 <a href="#step-4-unsaturated-zone" class="anchor"></a>Step 4: Unsaturated Zone</h2>
-<p>For a single HRU the unsaturated zone represention of a non-linear tank whose time constant is dependent upon the saturation deficit: <span class="math display">\[\frac{ds_{uz}}{dt}=q_{rz}-\frac{s_{uz}}{s_{sz}T_{d}}\]</span></p>
-<p>The formulation does not admit a simple solution. The current code impliments an explicit solution presuming that all the water passed from the root zone is available for flow to the saturated zone. Computationally the following steps are performed:</p>
+<p>For a single HRU the unsaturated zone representation of a non-linear tank whose time constant is dependent upon the saturation deficit: <span class="math display">\[\frac{ds_{uz}}{dt}=q_{rz}-\frac{s_{uz}}{s_{sz}T_{d}}\]</span></p>
+<p>The formulation does not admit a simple solution. The current code implements an explicit solution presuming that all the water passed from the root zone is available for flow to the saturated zone. Computationally the following steps are performed:</p>
 <ul>
 <li><p>Add inflow from the root zone to give <span class="math inline">\(\tilde{s}_{uz} = \left. s_{uz}\right\rvert_{t} + \int_{\Delta t} q_{rz} dt\)</span></p></li>
 <li><p>Compute <span class="math inline">\(q_{uz} = \left\{ \begin{array}{cc}  \min\left(  \frac{\tilde{s}_{uz}}{\left. s_{sz}\right\rvert_{t}T_d}, \frac{\tilde{s}_{uz}}{\Delta t}\right) &amp; \left. s_{sz}\right\rvert_{t} &gt;0 \\ 0 &amp; \mathrm{otherwise} \end{array}\right.\)</span></p></li>
@@ -410,17 +412,17 @@
 <h3 class="hasAnchor">
 <a href="#comments-2" class="anchor"></a>Comments</h3>
 <ol style="list-style-type: decimal">
-<li><p>The approximation above can result in water being left in the unsaturated zone if the later step makes <span class="math inline">\(s_{sz}=0\)</span> while <span class="math inline">\(s_{uz} &gt; 0\)</span>. This may motivate the ‘switch’ in where the outflow from the root zone goes.</p></li>
-<li><p>It is unclear why <span class="math inline">\(q_{uz}=0\)</span> when <span class="math inline">\(\left.s_{sz}\right\rvert_{t} = 0\)</span>. Setting <span class="math inline">\(q_{uz} = \frac{\tilde{s}_{uz}}{\Delta t}\)</span> in this situation would ensure the unsaturated zone is drained into the saturated zone. It would also allow the removal of the ‘switch’ in the root zone outflow if implimented for numerical reasons.</p></li>
+<li><p>The approximation above can result in water being left in the unsaturated zone if the later step makes <span class="math inline">\(s_{sz}=0\)</span> while <span class="math inline">\(s_{uz} &gt; 0\)</span>. This may motivate the “switch” in where the outflow from the root zone goes.</p></li>
+<li><p>It is unclear why <span class="math inline">\(q_{uz}=0\)</span> when <span class="math inline">\(\left.s_{sz}\right\rvert_{t} = 0\)</span>. Setting <span class="math inline">\(q_{uz} = \frac{\tilde{s}_{uz}}{\Delta t}\)</span> in this situation would ensure the unsaturated zone is drained into the saturated zone. It would also allow the removal of the “switch” in the root zone outflow if implemented for numerical reasons.</p></li>
 <li><p>An alternative solution more in keeping with that for the root zone is to approximate the solution to the governing ODE by the solution to <span class="math display">\[\frac{d\tilde{s}_{uz}}{dt}= \frac{1}{\Delta t}\int_{\Delta t} q_{rz} dt - \frac{\tilde{s}_{uz}}{\left.s_{sz}\right\rvert_{t}T_{d}} \quad \left.\tilde{s}_{uz}\right\rvert_{t} = \left.s_{uz}\right\rvert_{t}\]</span> which is given by <span class="math display">\[\left.s_{uz}\right\rvert_{t+\Delta t} = 
         \left.s_{uz}\right\rvert_{t}\exp\left(-\frac{\Delta t}{\left. s_{sz}\right\rvert_{t}T_d}\right)+\frac{1}{\Delta t}\int_{\Delta t} q_{rz} dt\left. s_{sz}\right\rvert_{t}T_d\left(1 - \exp\left(-\frac{\Delta t}{\left. s_{sz}\right\rvert_{t}T_d}\right)\right)\]</span>. Mass balance then gives <span class="math display">\[\int_{\Delta t} q_{uz} dt =  \left.s_{uz}\right\rvert_{t} + \int_{\Delta t} q_{rz} dt - \left.s_{uz}\right\rvert_{t+\Delta t}\]</span> This solution behaves appropriately as the saturated zone wets and negates the need to pass the flux from the root zone directly to the surface excess for numerical reasons.</p></li>
 </ol>
 </div>
 </div>
-<div id="step-4-saturated-zone" class="section level2">
+<div id="step-5-saturated-zone" class="section level2">
 <h2 class="hasAnchor">
-<a href="#step-4-saturated-zone" class="anchor"></a>Step 4: Saturated Zone</h2>
-<p>For the <span class="math inline">\(i\)</span>th hillslope HRU the change in staturated zone storage deficit is given by <span class="math display">\[a^{\left[i\right]}\frac{ds^{\left[i\right]}_{sz}}{dt} = -a^{\left[i\right]}q^{\left[i\right]}_{uz} - \left(w^{\left[i,i\right]}_{sz}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{sz}
+<a href="#step-5-saturated-zone" class="anchor"></a>Step 5: Saturated Zone</h2>
+<p>For the <span class="math inline">\(i\)</span>th hill slope HRU the change in saturated zone storage deficit is given by <span class="math display">\[a^{\left[i\right]}\frac{ds^{\left[i\right]}_{sz}}{dt} = -a^{\left[i\right]}q^{\left[i\right]}_{uz} - \left(w^{\left[i,i\right]}_{sz}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{sz}
     - \sum\limits_{j \neq i} w^{\left[i,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
     + a^{\left[i\right]}q^{\left[i\right]}_{sz}\]</span> For the assumed exponential transmissivity profile: <span class="math display">\[\frac{dl^{\left[i\right]}_{sz}}{dt} = -\frac{l^{\left[i\right]}_{sz}}{m}\frac{ds^{\left[i\right]}_{sz}}{dt}\]</span> which gives <span class="math display">\[-a^{\left[i\right]}\frac{m}{l^{\left[i\right]}_{sz}}\frac{dl^{\left[i\right]}_{sz}}{dt}
     = -a^{\left[i\right]}q^{\left[i\right]}_{uz} - \left(w^{\left[i,i\right]}_{sz}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{sz}
@@ -429,7 +431,7 @@
 <p>The flux <span class="math inline">\(q^{\left[i\right]}_{sz}\)</span> ensures that <span class="math inline">\(s^{\left[i\right]}_{sz} \geq 0\)</span> and <span class="math inline">\(l^{\left[i\right]}_{sz} \leq l^{\left[i\right]}_{szmax}\)</span>. Thus if <span class="math inline">\(s^{\left[i\right]}_{sz} = 0\)</span> or <span class="math inline">\(l^{\left[i\right]}_{sz} = l^{\left[i\right]}_{szmax}\)</span> then <span class="math display">\[a^{\left[i\right]}q^{\left[i\right]}_{sz} = 
     \min\left( a^{\left[i\right]}q^{\left[i\right]}_{uz} + \left(w^{\left[i,i\right]}_{sz}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{sz}
     + \sum\limits_{j \neq i} w^{\left[i,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz},0\right)\]</span> but is zero otherwise.</p>
-<p>Combining the above equations for all Hillslope HRUs gives <span class="math display">\[\mathbf{A}\frac{d\mathbf{s}_{sz}}{dt} = -\mathbf{A}\mathbf{q}_{uz} - \left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
+<p>Combining the above equations for all hill Slope HRUs gives <span class="math display">\[\mathbf{A}\frac{d\mathbf{s}_{sz}}{dt} = -\mathbf{A}\mathbf{q}_{uz} - \left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
     + \mathbf{A}\mathbf{q}_{sz}\]</span> which simplifies to <span class="math display">\[\frac{d\mathbf{s}_{sz}}{dt} = -\mathbf{q}_{uz} - \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
     + \mathbf{q}_{sz}\]</span></p>
 <p>Substituting the transmissivity relationship gives <span class="math display">\[-\mathbf{L}^{-1}_{sz}\mathbf{M}\frac{d\mathbf{l}_{sz}}{dt} = -\mathbf{q}_{uz} - \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
@@ -437,7 +439,7 @@
 <p>The solution of these limited joint set of ODEs are not trivial. The current solution numerically solves the ODE problem <span class="math display">\[-\mathbf{L}^{-1}_{sz}\mathbf{M}\frac{d\mathbf{l}_{sz}}{dt} =
   -\mathbf{q}_{uz} -
   \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
-  \]</span> subject ot the contraints <span class="math inline">\(\frac{dl_{sz}^{\left[i\right]}}{dt} \leq 0\)</span> if <span class="math inline">\(l_{sz}^{\left[i\right]}=l_{szmax}^{\left[i\right]}\)</span> with initial conditions <span class="math inline">\(\left.\mathbf{l}_{sz}\right\rvert_{t}\)</span> to give <span class="math inline">\(\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta t}\)</span>. The flows from the saturated zone to the surface excess storage is estimated from these as <span class="math display">\[
+  \]</span> subject to the constraints <span class="math inline">\(\frac{dl_{sz}^{\left[i\right]}}{dt} \leq 0\)</span> if <span class="math inline">\(l_{sz}^{\left[i\right]}=l_{szmax}^{\left[i\right]}\)</span> with initial conditions <span class="math inline">\(\left.\mathbf{l}_{sz}\right\rvert_{t}\)</span> to give <span class="math inline">\(\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta t}\)</span> using the lsoda algorithm in the  package. The flows from the saturated zone to the surface excess storage is estimated from these as <span class="math display">\[
   \mathbf{q}_{sz} =
   \max\left(\mathbf{A}^{-1}\left(
   \mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta
@@ -466,11 +468,19 @@ t} +
 \left.\mathbf{s}_{ch}\right\rvert_{t+\Delta t} =
 \tilde{\mathbf{s}}_{ch} + \Delta t \mathbf{F}_{sz} \left.\mathbf{l}_{sz}\right\rvert_{t+\Delta
 t}\]</span></p>
+<div id="comments-3" class="section level3">
+<h3 class="hasAnchor">
+<a href="#comments-3" class="anchor"></a>Comments</h3>
+<ol style="list-style-type: decimal">
+<li>The most computationally intensive part of evaluating the gradients required in the numerical solution is evaluating <span class="math inline">\(\mathbf{q}_{sz}\)</span> is the evaluation of <span class="math inline">\(\mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}\)</span>. However this only needs to be evaluated once to get both the flux and storage gradient terms and <span class="math inline">\(\mathbf{q}_sz}\)</span>. This suggests that a potentially more accurate numerical solution using the  package to integrate for <span class="math inline">\(\mathbf{l}_{sz}\)</span>, <span class="math inline">\(\mathbf{s}_{sz}\)</span> and the integral of <span class="math inline">\(\mathbf{q}_{sz}\)</span> may not be that much more computationally expensive.</li>
+<li>An alternative approximate solution can be derived by ignoring the limits on the flux and storage (hence <span class="math inline">\(\mathbf{q}_{sz}\)</span>) and solving the resulting multivariate non-homogeneous ODE problem for <span class="math inline">\(\mathbf{l}_{sz}\)</span>. Implicit estimates for <span class="math inline">\(\mathbf{q}_{sz}\)</span> could then be applied.</li>
+</ol>
 </div>
-<div id="step-5-estimating-channel-flow" class="section level2">
+</div>
+<div id="step-6-estimating-channel-flow" class="section level2">
 <h2 class="hasAnchor">
-<a href="#step-5-estimating-channel-flow" class="anchor"></a>Step 5: Estimating Channel Flow</h2>
-<p>The average flow to the channel over the time step is given by <span class="math inline">\(\frac{ \left.\mathbf{s}_{ch}\right\rvert_{t+\Delta t}}{\Delta t}\)</span></p>
+<a href="#step-6-estimating-channel-flow" class="anchor"></a>Step 6: Estimating Channel Flow</h2>
+<p>The average flow to the channels over the time step in cumecs is given by <span class="math display">\[\frac{ \mathbf{A}_{ch} \left.\mathbf{s}_{ch}\right\rvert_{t+\Delta t}}{3600\Delta t}\]</span></p>
 </div>
 </div>
 <div id="ordinary-differential-equations-solutions" class="section level1">
@@ -485,9 +495,9 @@ t}\]</span></p>
         x\rightarrow x_{0} + at \quad\mathrm{as}\quad b\rightarrow0\\
     \end{array}\]</span></p>
 </div>
-<div id="multiple-variable-non-homogeneous-ode-with-no-input" class="section level2">
+<div id="multiple-variable-homogeneous-ode" class="section level2">
 <h2 class="hasAnchor">
-<a href="#multiple-variable-non-homogeneous-ode-with-no-input" class="anchor"></a>Multiple variable non-homogeneous ODE with no input</h2>
+<a href="#multiple-variable-homogeneous-ode" class="anchor"></a>Multiple variable homogeneous ODE</h2>
 <p>The solution to the initial value problem <span class="math display">\[\frac{d\mathbf{x}\left(t\right)}{dt} = \mathbf{A} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0\]</span> or more compactly <span class="math display">\[\mathbf{x}^{\prime}\left(t\right) = \mathbf{A} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0\]</span> is computed using the eigen value method.</p>
 <p>Suppose <span class="math inline">\(\mathbf{x}\)</span> is of length <span class="math inline">\(n\)</span> and <span class="math inline">\(\mathbf{A}\)</span> has suitably unique eigen values <span class="math inline">\(\mathbf{\lambda}\)</span>. Taking <span class="math inline">\(\mathbf{M}\)</span> to be the matrix of eigen vectors <span class="math display">\[
 \mathbf{x}\left(t\right) = \mathbf{M} \left[\begin{array}{c}
@@ -516,18 +526,18 @@ c_n \exp\left(\lambda_nt\right)
 <li><a href="#notation-and-nomenclature">Notation and nomenclature</a></li>
       <li>
 <a href="#numerical-solution">Numerical Solution</a><ul class="nav nav-pills nav-stacked">
-<li><a href="#step-1-initialising-the-channel-storage">Step 1: Initialising the channel storage</a></li>
+<li><a href="#step-1-initializing-the-channel-storage">Step 1: Initializing the channel storage</a></li>
       <li><a href="#step-2-surface-excess-redistribution">Step 2: Surface excess redistribution</a></li>
       <li><a href="#step-3-root-zone">Step 3: Root Zone</a></li>
       <li><a href="#step-4-unsaturated-zone">Step 4: Unsaturated Zone</a></li>
-      <li><a href="#step-4-saturated-zone">Step 4: Saturated Zone</a></li>
-      <li><a href="#step-5-estimating-channel-flow">Step 5: Estimating Channel Flow</a></li>
+      <li><a href="#step-5-saturated-zone">Step 5: Saturated Zone</a></li>
+      <li><a href="#step-6-estimating-channel-flow">Step 6: Estimating Channel Flow</a></li>
       </ul>
 </li>
       <li>
 <a href="#ordinary-differential-equations-solutions">Ordinary Differential Equations Solutions</a><ul class="nav nav-pills nav-stacked">
 <li><a href="#single-variable-non-homogeneous-ode-with-constant-input">Single variable non-homogeneous ODE with constant input</a></li>
-      <li><a href="#multiple-variable-non-homogeneous-ode-with-no-input">Multiple variable non-homogeneous ODE with no input</a></li>
+      <li><a href="#multiple-variable-homogeneous-ode">Multiple variable homogeneous ODE</a></li>
       </ul>
 </li>
       </ul>
@@ -538,7 +548,7 @@ c_n \exp\left(\lambda_nt\right)
 
 
       <footer><div class="copyright">
-  <p>Developed by Peter Metcalfe, Paul Smith.</p>
+  <p>Developed by Paul Smith, Peter Metcalfe.</p>
 </div>
 
 <div class="pkgdown">

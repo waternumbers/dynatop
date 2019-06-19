@@ -30,7 +30,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
       </span>
     </div>
 
@@ -56,6 +56,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="articles/Performance_Evaluation.html">Code Performance for larger simulations</a>
+    </li>
+    <li>
       <a href="articles/The_solution_of_Dynamic_TOPMODEL.html">The Numerical Solution of Dynamic TOPMODEL</a>
     </li>
   </ul>
@@ -85,47 +88,10 @@
 <div id="dynatop" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
 <a href="#dynatop" class="anchor"></a>dynatop</h1></div>
-<p>This R package coontains the core code to perform a dynamic TOPMODEL simulation.</p>
-<div id="to-do" class="section level2">
-<h2 class="hasAnchor">
-<a href="#to-do" class="anchor"></a>TO DO</h2>
-<ul>
-<li>Provide R and Rcpp version of all functions</li>
-<li>Check parameterisation and definitions in intialisation</li>
-<li>try to fix notes relating to xts and zoo packages in build</li>
-<li>Alter model structure to match GIS</li>
-<li>Write model structure vignette</li>
-</ul>
-</div>
-<div id="suggestions" class="section level2">
-<h2 class="hasAnchor">
-<a href="#suggestions" class="anchor"></a>Suggestions</h2>
-</div>
-<div id="coding" class="section level2">
-<h2 class="hasAnchor">
-<a href="#coding" class="anchor"></a>Coding</h2>
-<ul>
-<li>Move to object oriented programming systle making use of S4 or R5 classes
-<ul>
-<li>May get improved memory usage</li>
-<li>Allows for a more managed growth of complexity by imposing a more rigid style of programming<br>
-</li>
-</ul>
-</li>
-<li>Further checks on eigen vector routing and stability of solution</li>
-<li>Use RcppArmadillo to speed up matrix operations further &amp; can use sparse matrices</li>
-<li>Test speed up of moving further components to Rcpp</li>
-</ul>
-</div>
-<div id="hydrological" class="section level2">
-<h2 class="hasAnchor">
-<a href="#hydrological" class="anchor"></a>Hydrological</h2>
-<ul>
-<li>Improve initialisation of model</li>
-<li>Consider improving calculation of quz</li>
-<li>Consider re-introduction of sd_max</li>
-</ul>
-</div>
+<p>This R package contains the core code to perform a dynamic TOPMODEL simulation. A related package for processing GIS data to set up dynamic TOPMODEL implimentations can be found <a href="https://waternumbers.github.io/dynatopGIS">here</a>.</p>
+<p>These two packages are intended as successors to the original Dynamic TOPMODEL implimentation in R; the <a href="https://CRAN.R-project.org/package=dynatopmodel">dynatopmodel</a>. Currently (as a design choice) not all the features of the original package are implimented.</p>
+<p>If there is a feature or improvement you want or you experience problems please raise an <a href="https://%E2%80%8Bgithub.com/%E2%80%8Bwaternumbers/%E2%80%8Bdynatop/%E2%80%8Bissues">issue</a> (or better still submit a pull request with alterations or fixes!) rather then contact the maintainers directly in the first instance.</p>
+<p>Thanks goes to the original developers of Dynamic TOPMODEL, <a href="https://www.lancaster.ac.uk/lec/about-us/people/keith-beven">Keith Beven</a> and <a href="http://www.bristol.ac.uk/geography/people/jim-e-freer/index.html">Jim Freer</a>, who contributed to the original R port of Dynamic TOPMODEL on which this is based.</p>
 </div>
   </div>
 
@@ -148,8 +114,8 @@
 <div class="developers">
 <h2>Developers</h2>
 <ul class="list-unstyled">
+<li>Paul Smith <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/https://orcid.org/0000-0002-0034-3412" target="orcid.widget"><img src="https://members.orcid.org/sites/default/files/vector_iD_icon.svg" class="orcid" alt="ORCID" height="16"></a> </li>
 <li>Peter Metcalfe <br><small class="roles"> Author </small>  </li>
-<li>Paul Smith <br><small class="roles"> Author, maintainer </small> <a href="https://orcid.org/YOUR-ORCID-ID" target="orcid.widget"><img src="https://members.orcid.org/sites/default/files/vector_iD_icon.svg" class="orcid" alt="ORCID" height="16"></a> </li>
 </ul>
 </div>
 
@@ -157,7 +123,7 @@
 </div>
 
       <footer><div class="copyright">
-  <p>Developed by Peter Metcalfe, Paul Smith.</p>
+  <p>Developed by Paul Smith, Peter Metcalfe.</p>
 </div>
 
 <div class="pkgdown">
