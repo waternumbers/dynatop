@@ -11,7 +11,7 @@ the [dynatopmodel](https://CRAN.R-project.org/package=dynatopmodel). Currently
 implimented. 
 
 If there is a feature or improvement you want or you experience problems
-please raise an [issue](https://​github.com/​waternumbers/​dynatop/​issues)
+please raise an [issue](https://github.com/waternumbers/dynatop/issues)
 (or better still submit a pull request with alterations or fixes!) rather then contact the
 maintainers directly in the first instance.
 

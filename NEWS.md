@@ -1,3 +1,9 @@
+# dynatop 0.0.1
+
+## Other changes
+- Removed vignette data from package to reduce size. Now on github
+- Minor spelling and format changes to vignette
+
 # dynatop 0.0.0.9000
 
 ## Context
