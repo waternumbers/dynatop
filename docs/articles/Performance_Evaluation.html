@@ -30,7 +30,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
       </span>
     </div>
 
@@ -89,18 +89,15 @@
       <h1>Code Performance for larger simulations</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/vignettes/Performance_Evaluation.Rmd"><code>vignettes/Performance_Evaluation.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/../vignettes/Performance_Evaluation.Rmd"><code>../vignettes/Performance_Evaluation.Rmd</code></a></small>
       <div class="hidden name"><code>Performance_Evaluation.Rmd</code></div>
 
     </div>
 
     
     
-<p>This vignette studies the performance of the dynamic TOPMODEL code for ‘larger’ simulations. The term ‘larger’ in given some context in the following section which considers the possible scale of simulations that might be required and the impact of this on the code structure. This highlights potential performance bottlenecks. These bottlenecks are explored by simulation in the following section and based on these soem developments are proposed.</p>
-<div id="scale-of-simulations" class="section level1">
-<h1 class="hasAnchor">
-<a href="#scale-of-simulations" class="anchor"></a>Scale of simulations</h1>
-<p>The scale of a dynamic TOPMODEL simualtions is related to a number of factors given below along with the upper limits considered in the discussion</p>
+<p>This vignette briefly studies the performance of the dynamic TOPMODEL code for ‘larger’ simulations.</p>
+<p>The scale of a dynamic TOPMODEL simulations is related to a number of factors given below along with the upper limits considered in the discussion</p>
 <table class="table">
 <caption>Factor affecting performance and limits considered</caption>
 <thead><tr class="header">
@@ -112,7 +109,7 @@
 <tr class="odd">
 <td align="left">The number of time steps to be evaluated</td>
 <td align="right">1e+06</td>
-<td align="left">Approximatly 30 years of 15 minute data</td>
+<td align="left">Approximately 30 years of 15 minute data</td>
 </tr>
 <tr class="even">
 <td align="left">The number of input series</td>
@@ -120,9 +117,9 @@
 <td align="left">Enough to allow for some representation of spatial input</td>
 </tr>
 <tr class="odd">
-<td align="left">The number of hillslope HRU</td>
+<td align="left">The number of hill slope HRU</td>
 <td align="right">5e+03</td>
-<td align="left">Approximatly 10 hillsope units for each spatial input</td>
+<td align="left">Approximately 10 hill slope units for each spatial input</td>
 </tr>
 <tr class="even">
 <td align="left">The number of channel HRU</td>
@@ -132,15 +129,16 @@
 <tr class="odd">
 <td align="left">The number of computational steps</td>
 <td align="right">3e+06</td>
-<td align="left">Approximatly running 30 years of 15 minute data with 3 sub steps (5 minute step)</td>
+<td align="left">Approximately running 30 years of 15 minute data with 3 sub steps (5 minute step)</td>
 </tr>
 </tbody>
 </table>
-<div id="memory-usage" class="section level2">
-<h2 class="hasAnchor">
-<a href="#memory-usage" class="anchor"></a>Memory usage</h2>
-<p>R has some interesting and at times complex memory usage patterns. A fuller overview of these can be found <a href="http://adv-r.had.co.nz/memory.html">here</a>.</p>
-<p>The dynatop function holds all its values within memory (including swap if enabled). The amount of memory used for the storage of variables can be broken into different classes for which approximate values are shown below. It shows that it is likely that the memory usage is going to be dominated by handling the input and output data.</p>
+<p>In the following section scaling up in terms of size of the input and output data is discussed. The performance of simulations with increasing numbers of hill slope HRUs is then tested and the code profiled to suggest improvements.</p>
+<div id="scaling-the-input-and-output-data" class="section level1">
+<h1 class="hasAnchor">
+<a href="#scaling-the-input-and-output-data" class="anchor"></a>Scaling the input and output data</h1>
+<p>The size of the input data relates to the product of the number of time steps and input series. Similarly the size of the output series relates to the product of the number of time steps and channel HRUs.</p>
+<p>The <code>dynatop</code> function holds all its values within memory (including swap if enabled). The amount of memory used for the storage of variables can be broken into different classes for which approximate values for the limits outlined are shown below.</p>
 <table class="table">
 <caption>Approximate memory usage in MB assuming a 8 bit numeric values</caption>
 <thead><tr class="header">
@@ -157,55 +155,340 @@
 <td align="right">8e+03</td>
 </tr>
 <tr class="odd">
-<td align="left">Storage of hillslope states &amp; parameters</td>
-<td align="right">8e-01</td>
+<td align="left">Storage of hill slope states &amp; parameters</td>
+<td align="right">4e+02</td>
 </tr>
 <tr class="even">
 <td align="left">Storage of channel states</td>
-<td align="right">3e-02</td>
+<td align="right">1e-01</td>
 </tr>
 </tbody>
 </table>
-<p>The simpliest method to address memory usage limits is to split the input data into sequential chunks (e.g. a year at a time) then evaluate them initialising the model with the final states from the previous chunk. Then by reading the input and writing the output for each chunk individually the memory use can be constrained. The  function allows for this, returning the final state and allowing initial states to be provided. It is left to the user to script the remainder based on their specific requirements.</p>
+<p>R has at times quite complex memory usage patterns (see <a href="http://adv-r.had.co.nz/memory.html">here</a> for a fuller introduction) but the above table shows that memory usage is likely to be an issue on many systems area the input and output data size increase.</p>
+<p>The simplest method to address memory usage limits is to split the input data into sequential chunks (e.g. a year at a time) then evaluate them initializing the model with the final states from the previous chunk. Then by reading the input and writing the output for each chunk individually the memory use can be constrained. The <code>dynatop</code> function allows for this, returning the final state and allowing initial states to be provided. It is left to the user to script the remainder based on their specific requirements.</p>
 </div>
-<div id="computational-performance" class="section level2">
-<h2 class="hasAnchor">
-<a href="#computational-performance" class="anchor"></a>Computational performance</h2>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## library(dynatop)</code></pre></div>
-</div>
-</div>
-<div id="appendix" class="section level1">
+<div id="scaling-with-increasing-numbers-of-hill-slope-hrus-and-computational-steps" class="section level1">
 <h1 class="hasAnchor">
-<a href="#appendix" class="anchor"></a>Appendix</h1>
-<p>The simulations were performed on a machine with equiped with Intel Core i7 CPU 920 <span class="citation">@2.67</span> Ghz processors and 11.7 Gb of RAM. The session information is:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/sessionInfo">sessionInfo</a></span>()
-<span class="co">#&gt; R version 3.6.0 (2019-04-26)</span>
-<span class="co">#&gt; Platform: x86_64-suse-linux-gnu (64-bit)</span>
-<span class="co">#&gt; Running under: openSUSE Leap 15.0</span>
+<a href="#scaling-with-increasing-numbers-of-hill-slope-hrus-and-computational-steps" class="anchor"></a>Scaling with increasing numbers of hill slope HRUs and computational steps</h1>
+<p>The computational work load of executing <code>dynatop</code> is dominated by the evaluation of the evolution of the hill slope HRUs. For each computational step the equation given in the <a href="https://waternumbers.github.io/dynatop/articles/The_solution_of_Dynamic_TOPMODEL.html">accompanying vignette</a> are solved. The execution time of the code will therefor will depend on both the number of hill slope HRUs and number of computational steps.</p>
+<p>To test the relationship between simulation time, the number of hill slope HRUs and number of computational time steps an number of simulations are performed based on the data for Brompton. Due to the time taken to evaluate these the data is precompiled and can be reloaded from the package data using</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dynatop)
+<span class="co">#&gt; Loading required package: xts</span>
+<span class="co">#&gt; Loading required package: zoo</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; Matrix products: default</span>
-<span class="co">#&gt; BLAS:   /usr/lib64/R/lib/libRblas.so</span>
-<span class="co">#&gt; LAPACK: /usr/lib64/R/lib/libRlapack.so</span>
+<span class="co">#&gt; Attaching package: 'zoo'</span>
+<span class="co">#&gt; The following objects are masked from 'package:base':</span>
 <span class="co">#&gt; </span>
-<span class="co">#&gt; locale:</span>
-<span class="co">#&gt;  [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C              </span>
-<span class="co">#&gt;  [3] LC_TIME=en_GB.UTF-8        LC_COLLATE=en_GB.UTF-8    </span>
-<span class="co">#&gt;  [5] LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_GB.UTF-8   </span>
-<span class="co">#&gt;  [7] LC_PAPER=en_GB.UTF-8       LC_NAME=C                 </span>
-<span class="co">#&gt;  [9] LC_ADDRESS=C               LC_TELEPHONE=C            </span>
-<span class="co">#&gt; [11] LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       </span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; attached base packages:</span>
-<span class="co">#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     </span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; loaded via a namespace (and not attached):</span>
-<span class="co">#&gt;  [1] Rcpp_1.0.1       knitr_1.23       xml2_1.2.0       magrittr_1.5    </span>
-<span class="co">#&gt;  [5] roxygen2_6.1.1   MASS_7.3-51.4    R6_2.4.0         rlang_0.3.4     </span>
-<span class="co">#&gt;  [9] stringr_1.4.0    highr_0.8        tools_3.6.0      xfun_0.7        </span>
-<span class="co">#&gt; [13] htmltools_0.3.6  commonmark_1.7   yaml_2.2.0       digest_0.6.19   </span>
-<span class="co">#&gt; [17] assertthat_0.2.1 rprojroot_1.3-2  pkgdown_1.3.0    crayon_1.3.4    </span>
-<span class="co">#&gt; [21] fs_1.3.1         memoise_1.1.0    evaluate_0.14    rmarkdown_1.13  </span>
-<span class="co">#&gt; [25] stringi_1.4.3    compiler_3.6.0   desc_1.2.0       backports_1.1.4</span></code></pre></div>
+<span class="co">#&gt;     as.Date, as.Date.numeric</span>
+<span class="co">#&gt; Registered S3 method overwritten by 'xts':</span>
+<span class="co">#&gt;   method     from</span>
+<span class="co">#&gt;   as.zoo.xts zoo</span>
+<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/data">data</a></span>(<span class="st">"performance_record"</span>)</code></pre></div>
+<p>Details of how to recreate the data are in Appendix 2.</p>
+<div id="number-of-hill-slope-hrus" class="section level2">
+<h2 class="hasAnchor">
+<a href="#number-of-hill-slope-hrus" class="anchor"></a>Number of hill slope HRUs</h2>
+<p>Additional hill slope HRUs are generated by replicating the existing hill slope HRUs and associated routing matrices. The number of channels is kept constant as is the length of the simulation and computational time steps (816 steps).</p>
+<p>The following figure shows the performance of the code for increasing numbers of hill slope HRU.</p>
+<p><img src="Performance_Evaluation_files/figure-html/hillslope_scale-1.png" width="700"><img src="Performance_Evaluation_files/figure-html/hillslope_scale-2.png" width="700"></p>
+<p>The initialization cost is clearly seen with the lowest number of hill slope HRU. For larger numbers of hill slope HRUs the performance scaling is worse then linear. Although this is not investigated in detail the profiling suggests that this may be due to matrix operations, particularly since these feature in the evaluation of the gradient calculations used with saturated zone solution and repeatedly called by <code>deSolve</code>,</p>
+</div>
+<div id="number-of-computational-steps" class="section level2">
+<h2 class="hasAnchor">
+<a href="#number-of-computational-steps" class="anchor"></a>Number of computational steps</h2>
+<p>Additional computational time steps are generated by setting the computational step form the original value of 15 minutes to smaller values down to 1 minute. A system with 300 hill slope HRU is used.</p>
+<p><img src="Performance_Evaluation_files/figure-html/comp_step_scale-1.png" width="700"><img src="Performance_Evaluation_files/figure-html/comp_step_scale-2.png" width="700"></p>
+<p>As might be hoped the scaling appears to be approximately linear with the number of computational steps.</p>
+</div>
+</div>
+<div id="code-profiling" class="section level1">
+<h1 class="hasAnchor">
+<a href="#code-profiling" class="anchor"></a>Code profiling</h1>
+<p>The performance of the code is profiled using <code>Rprof</code> for model with 100 hill slope HRUs running for a 816 time steps. A summary of the results are shown in the following table.</p>
+<table class="table">
+<thead><tr class="header">
+<th></th>
+<th align="right">self.time</th>
+<th align="right">self.pct</th>
+<th align="right">total.time</th>
+<th align="right">total.pct</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>“dynatop”</td>
+<td align="right">0.22</td>
+<td align="right">22.45</td>
+<td align="right">0.98</td>
+<td align="right">100.00</td>
+</tr>
+<tr class="even">
+<td>“%*%“</td>
+<td align="right">0.22</td>
+<td align="right">22.45</td>
+<td align="right">0.22</td>
+<td align="right">22.45</td>
+</tr>
+<tr class="odd">
+<td>“func”</td>
+<td align="right">0.12</td>
+<td align="right">12.24</td>
+<td align="right">0.32</td>
+<td align="right">32.65</td>
+</tr>
+<tr class="even">
+<td>“.Call”</td>
+<td align="right">0.04</td>
+<td align="right">4.08</td>
+<td align="right">0.42</td>
+<td align="right">42.86</td>
+</tr>
+<tr class="odd">
+<td>“<anonymous>”</anonymous>
+</td>
+<td align="right">0.04</td>
+<td align="right">4.08</td>
+<td align="right">0.38</td>
+<td align="right">38.78</td>
+</tr>
+<tr class="even">
+<td>“unlist”</td>
+<td align="right">0.04</td>
+<td align="right">4.08</td>
+<td align="right">0.36</td>
+<td align="right">36.73</td>
+</tr>
+<tr class="odd">
+<td>“pmin”</td>
+<td align="right">0.04</td>
+<td align="right">4.08</td>
+<td align="right">0.08</td>
+<td align="right">8.16</td>
+</tr>
+<tr class="even">
+<td>“eval”</td>
+<td align="right">0.02</td>
+<td align="right">2.04</td>
+<td align="right">0.98</td>
+<td align="right">100.00</td>
+</tr>
+<tr class="odd">
+<td>“deSolve::ode”</td>
+<td align="right">0.02</td>
+<td align="right">2.04</td>
+<td align="right">0.54</td>
+<td align="right">55.10</td>
+</tr>
+<tr class="even">
+<td>“checkFunc”</td>
+<td align="right">0.02</td>
+<td align="right">2.04</td>
+<td align="right">0.08</td>
+<td align="right">8.16</td>
+</tr>
+</tbody>
+</table>
+<p>Of the time spent in the <code>dynatop</code> function 55% was spent in <code><a href="https://www.rdocumentation.org/packages/deSolve/topics/ode">deSolve::ode</a></code> which solves the differential equation governing the evolution of the saturated zone fluxes. This includes the time spent evaluating the function for computing the gradient of <span class="math inline">\(\mathbf{l}_{sz}\)</span>. Clearly evaluating the evolution of the saturated zone is the most computationally expensive part of the code. Around 22% of the time is spent evaluating matrix multiplications (labeled “%*%" in the table). These multiplications occur both within and outside the function for computing the gradient of <span class="math inline">\(\mathbf{l}_{sz}\)</span>.</p>
+</div>
+<div id="summary" class="section level1">
+<h1 class="hasAnchor">
+<a href="#summary" class="anchor"></a>Summary</h1>
+<p>The performance analysis above has a number of limitations but is adequate to show that longer simulation are still beyond the scope off the code. Extrapolation based on the limits above and an (optimistic) runtime of 8E-05 seconds per hill slope HRU per time step gives a runtime of approximately 5 days. In the following table we present a non-exhaustive list of potential improvements which could be considered to address this.</p>
+<table class="table">
+<thead><tr class="header">
+<th align="left">Improvement</th>
+<th align="left">Description</th>
+<th align="left">Potential_Improvement</th>
+<th align="left">Effort</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Improved analytical solutions</td>
+<td align="left">A close form solution or approximation to the saturated zone would remove the largest computation cost. Simplification elsewhere may given marginal speed benefits</td>
+<td align="left">Very Large</td>
+<td align="left">High</td>
+</tr>
+<tr class="even">
+<td align="left">Use of <code>Matrix</code> package for matrix operations</td>
+<td align="left">Given at larger scales the redistribution matrices are likely to be sparse use of the <code>Matrix</code> package, which improves the handling of sparse matrices could be considered</td>
+<td align="left">Medium/Large</td>
+<td align="left">Medium</td>
+</tr>
+<tr class="odd">
+<td align="left">Use of the <code>RcppArmadillo</code>
+</td>
+<td align="left">
+<code>RcppArmadillo</code> is an <code>R</code> interface to the Armadillo high performance C++ matrix library. This may further improve performance of matrix calculations</td>
+<td align="left">Medium/Large</td>
+<td align="left">Medium</td>
+</tr>
+<tr class="even">
+<td align="left">Compiled gradient function for <code>deSolve</code>
+</td>
+<td align="left">
+<code>deSolve</code> has the potential to interface directly with a compiled function for evaluating the gradient which may decrease the evaluation time</td>
+<td align="left">Medium/Large</td>
+<td align="left">Medium (Low if done with <code>RcppArmadillo</code>)</td>
+</tr>
+<tr class="odd">
+<td align="left">Parallelization of root and unsaturated zone</td>
+<td align="left">The root and unsaturated zones are evaluated independently for each HRU. There evaluation could be parallelized across multiple processors.</td>
+<td align="left">Medium</td>
+<td align="left">Medium</td>
+</tr>
+<tr class="even">
+<td align="left">Parallelization of Surface excess and saturated zone</td>
+<td align="left">If the matrices controlling the redistribution of the surface excess and saturated fluxes are separable the evaluation of these matrices operation can be readily parallelized. In other cases the use of a linear algebra library making use of multiple threads (implicitly parallelized) could be considered</td>
+<td align="left">Medium</td>
+<td align="left">High</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="appendix-1---machine-details" class="section level1">
+<h1 class="hasAnchor">
+<a href="#appendix-1---machine-details" class="anchor"></a>Appendix 1 - Machine Details</h1>
+<p>The simulations were performed on a machine with equipped with a Intel Core i7 CPU 920 <span class="citation">@2.67</span> Ghz processors and 11.7 Gb of RAM. The session information is:</p>
+<pre><code>#&gt; R version 3.6.0 (2019-04-26)
+#&gt; Platform: x86_64-suse-linux-gnu (64-bit)
+#&gt; Running under: openSUSE Leap 15.0
+#&gt; 
+#&gt; Matrix products: default
+#&gt; BLAS:   /usr/lib64/R/lib/libRblas.so
+#&gt; LAPACK: /usr/lib64/R/lib/libRlapack.so
+#&gt; 
+#&gt; locale:
+#&gt;  [1] LC_CTYPE=en_GB.UTF-8       LC_NUMERIC=C              
+#&gt;  [3] LC_TIME=en_GB.UTF-8        LC_COLLATE=en_GB.UTF-8    
+#&gt;  [5] LC_MONETARY=en_GB.UTF-8    LC_MESSAGES=en_GB.UTF-8   
+#&gt;  [7] LC_PAPER=en_GB.UTF-8       LC_NAME=C                 
+#&gt;  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+#&gt; [11] LC_MEASUREMENT=en_GB.UTF-8 LC_IDENTIFICATION=C       
+#&gt; 
+#&gt; attached base packages:
+#&gt; [1] stats     graphics  grDevices utils     datasets  methods   base     
+#&gt; 
+#&gt; other attached packages:
+#&gt; [1] dynatop_0.0.0.9000 xts_0.11-2         zoo_1.8-6         
+#&gt; 
+#&gt; loaded via a namespace (and not attached):
+#&gt;  [1] Rcpp_1.0.1        pillar_1.4.1      compiler_3.6.0   
+#&gt;  [4] prettyunits_1.0.2 remotes_2.0.4     tools_3.6.0      
+#&gt;  [7] testthat_2.1.1    digest_0.6.19     pkgbuild_1.0.3   
+#&gt; [10] pkgload_1.0.2     evaluate_0.14     tibble_2.1.2     
+#&gt; [13] memoise_1.1.0     lattice_0.20-38   pkgconfig_2.0.2  
+#&gt; [16] rlang_0.3.4       Matrix_1.2-17     rstudioapi_0.10  
+#&gt; [19] cli_1.1.0         commonmark_1.7    yaml_2.2.0       
+#&gt; [22] pkgdown_1.3.0     xopen_1.0.0       xfun_0.7         
+#&gt; [25] xml2_1.2.0        withr_2.1.2       stringr_1.4.0    
+#&gt; [28] knitr_1.23        roxygen2_6.1.1    desc_1.2.0       
+#&gt; [31] fs_1.3.1          devtools_2.0.2    rprojroot_1.3-2  
+#&gt; [34] grid_3.6.0        deSolve_1.21      glue_1.3.1       
+#&gt; [37] R6_2.4.0          processx_3.3.1    rcmdcheck_1.3.3  
+#&gt; [40] rmarkdown_1.13    sessioninfo_1.1.1 rematch2_2.0.1   
+#&gt; [43] purrr_0.3.2       callr_3.2.0       magrittr_1.5     
+#&gt; [46] htmltools_0.3.6   MASS_7.3-51.4     backports_1.1.4  
+#&gt; [49] ps_1.3.0          usethis_1.5.0     assertthat_0.2.1 
+#&gt; [52] stringi_1.4.3     crayon_1.3.4</code></pre>
+</div>
+<div id="appendix-2---reproducing-the-results" class="section level1">
+<h1 class="hasAnchor">
+<a href="#appendix-2---reproducing-the-results" class="anchor"></a>Appendix 2 - Reproducing the results</h1>
+<p>Since the simulation times are long the results discussed in this vignette are stored in a package data. To recreate them on a different systems (or for testing changes) extract the code in this vignette to an R file using</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">output_file &lt;-<span class="st"> "perf_script.R"</span>
+knitr<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/knitr/topics/knit">purl</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/system.file">system.file</a></span>(<span class="st">'doc/Performance_Evaluation.Rmd'</span>,<span class="dt">package=</span><span class="st">'dynatop'</span>),
+            <span class="dt">output =</span> output_file)</code></pre></div>
+<p>then evaluate <em>only</em> the code block below, changing file names and machine description as required. The resulting save data file is in the same format as that of the package data.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rm">rm</a></span>(<span class="dt">list=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/ls">ls</a></span>())
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dynatop)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/data">data</a></span>(<span class="st">'brompton'</span>)
+
+## tidy up the model so it runs
+model &lt;-<span class="st"> </span>brompton<span class="op">$</span>model
+current_total_frac_sat &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colSums">colSums</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/cbind">rbind</a></span>(model<span class="op">$</span>Wsat,model<span class="op">$</span>Fsat) )
+current_total_frac_ex &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colSums">colSums</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/cbind">rbind</a></span>(model<span class="op">$</span>Wex,model<span class="op">$</span>Fex) )
+<span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(current_total_frac_sat[current_total_frac_sat<span class="op">&gt;</span><span class="dv">1</span>])){
+    model<span class="op">$</span>Wsat[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Wsat[,ii]<span class="op">/</span>current_total_frac_sat[ii]
+    model<span class="op">$</span>Fsat[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Fsat[,ii]<span class="op">/</span>current_total_frac_sat[ii]
+}
+<span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(current_total_frac_sat[current_total_frac_ex<span class="op">&gt;</span><span class="dv">1</span>])){
+    model<span class="op">$</span>Wex[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Wex[,ii]<span class="op">/</span>current_total_frac_ex[ii]
+    model<span class="op">$</span>Fex[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Fex[,ii]<span class="op">/</span>current_total_frac_ex[ii]
+}
+
+## create input data
+rain &lt;-<span class="st"> </span><span class="kw"><a href="../reference/resample_xts.html">resample_xts</a></span>(brompton<span class="op">$</span>rain, <span class="dt">dt =</span> <span class="dv">15</span><span class="op">/</span><span class="dv">60</span>)
+obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>(rain,brompton<span class="op">$</span>pet,<span class="dt">all=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))
+obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>(obs,brompton<span class="op">$</span>qobs,<span class="dt">all=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))
+obs[<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/NA">is.na</a></span>(obs)] &lt;-<span class="st"> </span><span class="dv">0</span>
+obs &lt;-<span class="st"> </span>obs[<span class="st">"2012-11-23 12:00::2012-12-01"</span>,]
+
+## function for timing simulations of different sizes
+fperf &lt;-<span class="st"> </span><span class="cf">function</span>(model,obs,number_of_hru,number_of_replicates,
+                  computational_timestep,<span class="dt">return_model=</span><span class="ot">FALSE</span>){
+    ## work out how many replicates to take
+    nhru &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Round">ceiling</a></span>(number_of_hru<span class="op">/</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(model<span class="op">$</span>hillslope))
+    ## replicate hillslopes
+    hill &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/do.call">do.call</a></span>(rbind, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/lapply">replicate</a></span>(nhru, model<span class="op">$</span>hillslope, <span class="dt">simplify=</span><span class="ot">FALSE</span>))
+    hill<span class="op">$</span>id &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(hill)
+    ## construct matrices
+    W &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">as.matrix</a></span>(Matrix<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/Matrix/topics/bdiag">bdiag</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(model<span class="op">$</span>Wex),nhru)))
+    F &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/do.call">do.call</a></span>(cbind, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/lapply">replicate</a></span>(nhru, model<span class="op">$</span>Fex, <span class="dt">simplify=</span><span class="ot">FALSE</span>))
+    <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">rownames</a></span>(W) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">colnames</a></span>(W) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">colnames</a></span>(F) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste</a></span>(hill<span class="op">$</span>id)
+
+    ## put back into model and trim to exact number
+    model<span class="op">$</span>hillslope &lt;-<span class="st"> </span>hill[<span class="dv">1</span><span class="op">:</span>number_of_hru,]
+    model<span class="op">$</span>Wex &lt;-<span class="st"> </span>model<span class="op">$</span>Wsat &lt;-<span class="st"> </span>W[<span class="dv">1</span><span class="op">:</span>number_of_hru,<span class="dv">1</span><span class="op">:</span>number_of_hru,drop=<span class="ot">FALSE</span>]
+    model<span class="op">$</span>Fex &lt;-<span class="st"> </span>model<span class="op">$</span>Fsat &lt;-<span class="st"> </span>F[,<span class="dv">1</span><span class="op">:</span>number_of_hru,drop=<span class="ot">FALSE</span>]
+
+    ## return model if required
+    <span class="cf">if</span>( return_model ){<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/function">return</a></span>(model)}
+    
+    <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/gc">gc</a></span>() ## garbage collection
+
+    ## run replicates of simulation
+    <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/lapply">replicate</a></span>(number_of_replicates,
+              <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/system.time">system.time</a></span>(<span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs,
+                                  <span class="dt">initial_recharge=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/numeric">as.numeric</a></span>(obs[<span class="dv">1</span>,<span class="st">'qobs'</span>]),
+                                  <span class="dt">sim_time_step =</span> computational_timestep)))
+}
+
+## run different numbers of hru
+test_hru &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">10</span>,<span class="dv">100</span>,<span class="dv">500</span>,<span class="dv">1000</span>,<span class="dv">1500</span>)
+out_hru&lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>()
+<span class="cf">for</span>(ii <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/length">length</a></span>(test_hru)){
+    out_hru[[ii]] &lt;-<span class="st"> </span><span class="kw">fperf</span>(model,obs,test_hru[ii],<span class="dv">10</span>,<span class="ot">NULL</span>)
+}
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(out_hru) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste</a></span>(test_hru)
+
+## run different numbers of computational steps 
+test_step &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="fl">7.5</span>,<span class="dv">15</span>)<span class="op">/</span><span class="dv">60</span>
+out_ts&lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>()
+<span class="cf">for</span>(ii <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/length">length</a></span>(test_step)){
+    out_ts[[ii]] &lt;-<span class="st"> </span><span class="kw">fperf</span>(model,obs,<span class="dv">300</span>,<span class="dv">10</span>,test_step[ii])
+}
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(out_ts) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste</a></span>(test_step)
+
+## profile a simulation
+mdl &lt;-<span class="st"> </span><span class="kw">fperf</span>(model,obs,<span class="dv">100</span>,<span class="dv">1</span>,<span class="ot">NULL</span>,<span class="ot">TRUE</span>)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/Rprof">Rprof</a></span>()
+tmp &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(mdl,obs,<span class="dt">initial_recharge=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/numeric">as.numeric</a></span>(obs[<span class="dv">1</span>,<span class="st">'qobs'</span>]))
+<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/Rprof">Rprof</a></span>(<span class="ot">NULL</span>)
+summaryProf &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/summaryRprof">summaryRprof</a></span>()
+
+## store the summary of the machine - CHANGE as required
+machineSummary &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(
+    <span class="dt">cpu =</span> <span class="st">"Intel Core i7 CPU 920 @2.67 Ghz"</span>,
+    <span class="dt">memory =</span> <span class="st">"11.7 Gb"</span>,
+    <span class="dt">summary =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/sessionInfo">sessionInfo</a></span>()
+)
+
+## save output in the same format as that in the package data
+performance_record &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">number_obs =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(obs),
+                           <span class="dt">hru=</span>out_hru,
+                           <span class="dt">comp_step=</span>out_ts,
+                           <span class="dt">profile=</span>summaryProf,
+                           <span class="dt">machine=</span>machineSummary)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/save">save</a></span>(<span class="st">"performance_record"</span>,<span class="dt">file=</span><span class="st">'performance_summary.rda'</span>)</code></pre></div>
 </div>
   </div>
 
@@ -214,13 +497,17 @@
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li>
-<a href="#scale-of-simulations">Scale of simulations</a><ul class="nav nav-pills nav-stacked">
-<li><a href="#memory-usage">Memory usage</a></li>
-      <li><a href="#computational-performance">Computational performance</a></li>
+<li><a href="#scaling-the-input-and-output-data">Scaling the input and output data</a></li>
+      <li>
+<a href="#scaling-with-increasing-numbers-of-hill-slope-hrus-and-computational-steps">Scaling with increasing numbers of hill slope HRUs and computational steps</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#number-of-hill-slope-hrus">Number of hill slope HRUs</a></li>
+      <li><a href="#number-of-computational-steps">Number of computational steps</a></li>
       </ul>
 </li>
-      <li><a href="#appendix">Appendix</a></li>
+      <li><a href="#code-profiling">Code profiling</a></li>
+      <li><a href="#summary">Summary</a></li>
+      <li><a href="#appendix-1---machine-details">Appendix 1 - Machine Details</a></li>
+      <li><a href="#appendix-2---reproducing-the-results">Appendix 2 - Reproducing the results</a></li>
       </ul>
 </div>
       </div>
@@ -229,7 +516,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Peter Metcalfe, Paul Smith.</p>
+  <p>Developed by Paul Smith, Peter Metcalfe.</p>
 </div>
 
 <div class="pkgdown">

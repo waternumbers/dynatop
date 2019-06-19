@@ -49,7 +49,7 @@ initialise_hillslope <- function(model,initial_recharge){
     ## Assume all outflow to river
     X_init <- rbind( diag(nrow(model$Wsat)) - model$Wsat , colSums(model$Fsat) ) %*% diag(hillslope$area)
     y_init <- c( hillslope$area*q_0, sum(hillslope$area)*q_0 )
-    browser()
+    
     hillslope$lsz <- q_0 # assume constant across catchment
     try({
         hillslope$lsz <- solve( t(X_init)%*%X_init, t(X_init)%*%y_init )

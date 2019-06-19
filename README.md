@@ -1,28 +1,21 @@
 # dynatop
 
-This R package coontains the core code to perform a dynamic TOPMODEL
-simulation.
+This R package contains the core code to perform a dynamic TOPMODEL
+simulation. A related package for processing GIS data to set up dynamic TOPMODEL
+implimentations can be found
+[here](https://waternumbers.github.io/dynatopGIS).
 
-## TO DO
-* Provide R and Rcpp version of all functions
-* Check parameterisation and definitions in intialisation
-* try to fix notes relating to xts and zoo packages in build
-* Alter model structure to match GIS
-* Write model structure vignette
+These two packages are intended as successors to the original Dynamic TOPMODEL implimentation in R;
+the [dynatopmodel](https://CRAN.R-project.org/package=dynatopmodel). Currently
+(as a design choice) not all the features of the original package are
+implimented. 
 
-## Suggestions
+If there is a feature or improvement you want or you experience problems
+please raise an [issue](https://​github.com/​waternumbers/​dynatop/​issues)
+(or better still submit a pull request with alterations or fixes!) rather then contact the
+maintainers directly in the first instance.
 
-## Coding
-* Move to object oriented programming systle making use of S4 or R5 classes
-      - May get improved memory usage
-	  - Allows for a more managed growth of complexity by imposing a more rigid
-        style of programming	
-* Further checks on eigen vector routing and stability of solution
-* Use RcppArmadillo to speed up matrix operations further & can use sparse
-  matrices
-* Test speed up of moving further components to Rcpp
-
-## Hydrological
-* Improve initialisation of model
-* Consider improving calculation of quz
-* Consider re-introduction of sd_max
+Thanks goes to the original developers of Dynamic TOPMODEL, [Keith
+Beven](https://www.lancaster.ac.uk/lec/about-us/people/keith-beven) and [Jim
+Freer](http://www.bristol.ac.uk/geography/people/jim-e-freer/index.html), who
+contributed to the original R port of Dynamic TOPMODEL on which this is based.

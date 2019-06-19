@@ -30,7 +30,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
       </span>
     </div>
 
@@ -56,6 +56,9 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/Performance_Evaluation.html">Code Performance for larger simulations</a>
+    </li>
+    <li>
       <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Numerical Solution of Dynamic TOPMODEL</a>
     </li>
   </ul>
@@ -93,10 +96,9 @@
 
     
     
-<p>The purpose of this vignette is to provide an outline of the steps needed to perform a Dynamic TOPMODEL simualtion and introduce the formats of the data input and returned.</p>
+<p>The purpose of this vignette is to provide an outline of the steps needed to perform a Dynamic TOPMODEL simulation and introduce the formats of the data input and returned.</p>
 <p>The data used in this example comes from Brompton and is contained within the package and can be loaded with</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">##devtools::load_all()
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dynatop)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dynatop)
 <span class="co">#&gt; Loading required package: xts</span>
 <span class="co">#&gt; Loading required package: zoo</span>
 <span class="co">#&gt; </span>
@@ -115,15 +117,46 @@
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(brompton<span class="op">$</span>model)
 <span class="co">#&gt; [1] "hillslope" "channel"   "param"     "Wex"       "Wsat"      "Fex"      </span>
 <span class="co">#&gt; [7] "Fsat"</span></code></pre></div>
-<p>which are described in Table &lt;&gt;. The [dynatop_gis]{<a href="http://bbc.co.uk" class="uri">http://bbc.co.uk</a>} package can be used for constructing models and contains further details.</p>
-<p><add table of model parts></add></p>
+<p>which are described in Table &lt;&gt;. The <a href="https://waternumbers.github.io/dynatopGIS">dynatopGIS</a> package can be used for constructing models and contains further details.</p>
+<table class="table">
+<thead><tr class="header">
+<th align="left">name</th>
+<th align="left">Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">hillslope</td>
+<td align="left">data frame of hill slope HRU unit descriptions</td>
+</tr>
+<tr class="even">
+<td align="left">channel</td>
+<td align="left">data frame of channel HRU unit descriptions</td>
+</tr>
+<tr class="odd">
+<td align="left">Wsat</td>
+<td align="left">Matrix controlling saturated zone redistribution between hill slope HRUs</td>
+</tr>
+<tr class="even">
+<td align="left">Wex</td>
+<td align="left">Matrix controlling surface excess redistribution between hill slope HRUs</td>
+</tr>
+<tr class="odd">
+<td align="left">Fsat</td>
+<td align="left">Matrix controlling saturated zone redistribution between hill slope and channel HRUs</td>
+</tr>
+<tr class="even">
+<td align="left">Fex</td>
+<td align="left">Matrix controlling surface excess redistribution between hill slope and channel HRUs</td>
+</tr>
+</tbody>
+</table>
 <div id="checking-the-model" class="section level2">
 <h2 class="hasAnchor">
 <a href="#checking-the-model" class="anchor"></a>Checking the model</h2>
 <p>The structure of the model can be tested:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/check_model.html">check_model</a></span>(brompton<span class="op">$</span>model)
 <span class="co">#&gt; Error in check_model(brompton$model): Saturated flow redistribution fractions sum to greater then 1 for HRUs: 40, 90, 100</span></code></pre></div>
-<p>In this case we can see three warning messages. The two warnings relate to the redistrubution of the flows from the &lt;&gt; hru. In both case sum of the fractions describing the destination of the flows is greater then 1, meaning that flow is artificually generated during the redistrbution. This can be checked manually by</p>
+<p>In this case we can see multiple warning messages. The warnings relate to the redistribution of the flows from the hill slope HRUs. In all cases the sum of the fractions describing the destination of the flows is greater then 1, meaning that flow is artificially generated during the redistribution. This can be checked manually by</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">model &lt;-<span class="st"> </span>brompton<span class="op">$</span>model
 current_total_frac_sat &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colSums">colSums</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/cbind">rbind</a></span>(model<span class="op">$</span>Wsat,model<span class="op">$</span>Fsat) )
 current_total_frac_ex &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colSums">colSums</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/cbind">rbind</a></span>(model<span class="op">$</span>Wex,model<span class="op">$</span>Fex) )</code></pre></div>
@@ -136,14 +169,14 @@ current_total_frac_ex &lt;-<span class="st"> </span><span class="kw"><a href="ht
     model<span class="op">$</span>Wex[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Wex[,ii]<span class="op">/</span>current_total_frac_ex[ii]
     model<span class="op">$</span>Fex[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Fex[,ii]<span class="op">/</span>current_total_frac_ex[ii]
 }</code></pre></div>
-<p>and repeat the check:</p>
+<p>and repeating the check does not produce an error:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="../reference/check_model.html">check_model</a></span>(model)
 <span class="co">#&gt; NULL</span></code></pre></div>
 </div>
 <div id="altering-parameters" class="section level2">
 <h2 class="hasAnchor">
 <a href="#altering-parameters" class="anchor"></a>Altering parameters</h2>
-<p>The parmeter values are stored in the parameter vector <code>model$parameters</code>. Each parameter value has a unique name. In the current model the parameters are all set to their default values:</p>
+<p>The parameter values are stored in the parameter vector <code>model$parameters</code>. Each parameter value has a unique name. In the current model the parameters are all set to their default values:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/print">print</a></span>(model<span class="op">$</span>param)
 <span class="co">#&gt; srz_max_default   srz_0_default   ln_t0_default       m_default </span>
 <span class="co">#&gt;           0.050           0.990          19.000           0.004 </span>
@@ -170,8 +203,8 @@ current_total_frac_ex &lt;-<span class="st"> </span><span class="kw"><a href="ht
 <div id="preparing-input-data" class="section level1">
 <h1 class="hasAnchor">
 <a href="#preparing-input-data" class="anchor"></a>Preparing input data</h1>
-<p>The input to the model is expected to take the form of an <code>xts</code> object with constant time step whose column names are found in the ‘precip’ and ‘pe’ columns of the HRU table in the model. Helpful functions for creating and manipulating  obects can be found [here]{<a href="http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html" class="uri">http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html</a>}</p>
-<p>The precipitation and potential evapotranspiration (PET) inputs for Brompton are contained the  and  variables. However while the PET input comes on a 15 minute time step</p>
+<p>The input to the model is expected to take the form of an <code>xts</code> object with constant time step whose column names are found in the ‘precip_input’ and ‘pet_input’ columns of the HRU table in the model. Helpful functions for creating and manipulating <code>xts</code> objects can be found [here]{<a href="http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html" class="uri">http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html</a>}</p>
+<p>The precipitation and potential evapotranspiration (PET) inputs for Brompton are contained the <code>brompton$rain</code> and <code>brompton$pet</code> variables. However while the PET input comes on a 15 minute time step</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/head">head</a></span>(brompton<span class="op">$</span>pet)
 <span class="co">#&gt;                     pet</span>
 <span class="co">#&gt; 2012-09-01 00:00:00   0</span>
@@ -180,7 +213,7 @@ current_total_frac_ex &lt;-<span class="st"> </span><span class="kw"><a href="ht
 <span class="co">#&gt; 2012-09-01 00:45:00   0</span>
 <span class="co">#&gt; 2012-09-01 01:00:00   0</span>
 <span class="co">#&gt; 2012-09-01 01:15:00   0</span></code></pre></div>
-<p>the precipitation is on a courser hourly timestp</p>
+<p>the precipitation is on a courser hourly time step</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/head">head</a></span>(brompton<span class="op">$</span>rain)
 <span class="co">#&gt; Warning: timezone of object (GMT) is different than current timezone ().</span>
 <span class="co">#&gt;                     rain</span>
@@ -190,12 +223,12 @@ current_total_frac_ex &lt;-<span class="st"> </span><span class="kw"><a href="ht
 <span class="co">#&gt; 2012-09-01 03:00:00    0</span>
 <span class="co">#&gt; 2012-09-01 04:00:00    0</span>
 <span class="co">#&gt; 2012-09-01 05:00:00    0</span></code></pre></div>
-<p>The  function can be used to alter the rainfall to the correct time step</p>
+<p>The <code>resample_xts</code> function can be used to alter the rainfall to the correct time step</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">rain &lt;-<span class="st"> </span><span class="kw"><a href="../reference/resample_xts.html">resample_xts</a></span>(brompton<span class="op">$</span>rain, <span class="dt">dt =</span> <span class="dv">15</span><span class="op">/</span><span class="dv">60</span>)
 <span class="co">#&gt; Warning in resample_xts(brompton$rain, dt = 15/60): Irregularly spaced time</span>
 <span class="co">#&gt; series supplied to resample_xts - proceding with modal timestep, results</span>
 <span class="co">#&gt; are questionable</span></code></pre></div>
-<p>These series can then be merged, to give single xts object</p>
+<p>These series can then be merged, to give single <code>xts</code> object</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>(rain,brompton<span class="op">$</span>pet,<span class="dt">all=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))
 obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>(obs,brompton<span class="op">$</span>qobs,<span class="dt">all=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))</code></pre></div>
 <p>Let’s now check this observed data</p>
@@ -215,7 +248,7 @@ obs[<span class="op">!</span><span class="kw"><a href="https://www.rdocumentatio
 <span class="co">#&gt; </span>
 <span class="co">#&gt; $sub_step</span>
 <span class="co">#&gt; [1] 0.25</span></code></pre></div>
-<p>From the return of check_obs we can see the time step of the data and default number of sub time steps used in the model evaluation which is discussed later.</p>
+<p>From the return of <code>check_obs</code> we can see the time step of the data and default number of sub time steps used in the model evaluation which is discussed later.</p>
 </div>
 <div id="running-dynamic-topmodel" class="section level1">
 <h1 class="hasAnchor">
@@ -223,33 +256,10 @@ obs[<span class="op">!</span><span class="kw"><a href="https://www.rdocumentatio
 <p>The model can be run with the data using the <code>dyantop</code> command. For a event in November 2012 the model can be run with the command</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">## select the event period
 event_period &lt;-<span class="st"> "2012-11-23 12:00::2012-12-01"</span>
-## recharge rate for initialisation
+## recharge rate for initialization
 initial_recharge &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/numeric">as.numeric</a></span>(obs[<span class="st">"2012-11-23 12:00"</span>,<span class="st">'qobs'</span>])
 ## running the model
-sim_<span class="dv">1</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs[event_period,],initial_recharge)
-<span class="co">#&gt; Called from: initialise_hillslope(model, initial_recharge)</span>
-<span class="co">#&gt; debug: hillslope$lsz &lt;- q_0</span>
-<span class="co">#&gt; debug: try({</span>
-<span class="co">#&gt;     hillslope$lsz &lt;- solve(t(X_init) %*% X_init, t(X_init) %*% </span>
-<span class="co">#&gt;         y_init)</span>
-<span class="co">#&gt;     names(hillslope$lsz) &lt;- NULL</span>
-<span class="co">#&gt;     if (any(hillslope$lsz &lt;= 0)) {</span>
-<span class="co">#&gt;         stop("Solution for saturated zone initialisation produced negative or zero flows.\n Using constant recharge across catchment")</span>
-<span class="co">#&gt;     }</span>
-<span class="co">#&gt; })</span>
-<span class="co">#&gt; debug: hillslope$lsz &lt;- solve(t(X_init) %*% X_init, t(X_init) %*% y_init)</span>
-<span class="co">#&gt; debug: names(hillslope$lsz) &lt;- NULL</span>
-<span class="co">#&gt; debug: if (any(hillslope$lsz &lt;= 0)) {</span>
-<span class="co">#&gt;     stop("Solution for saturated zone initialisation produced negative or zero flows.\n Using constant recharge across catchment")</span>
-<span class="co">#&gt; }</span>
-<span class="co">#&gt; debug: hillslope$lsz &lt;- pmin(hillslope$lsz, hillslope$lsz_max)</span>
-<span class="co">#&gt; debug: hillslope$ssz &lt;- -hillslope$m * log(hillslope$lsz/exp(hillslope$ln_t0 - </span>
-<span class="co">#&gt;     hillslope$atb_bar))</span>
-<span class="co">#&gt; debug: hillslope$ssz &lt;- pmax(hillslope$ssz, 0)</span>
-<span class="co">#&gt; debug: hillslope$suz &lt;- hillslope$quz * hillslope$td * hillslope$ssz</span>
-<span class="co">#&gt; debug: hillslope$srz &lt;- pmax(pmin(hillslope$srz_0, 1), 0) * hillslope$srz_max</span>
-<span class="co">#&gt; debug: hillslope$ex &lt;- rep(0, length(hillslope$id))</span>
-<span class="co">#&gt; debug: return(hillslope)</span></code></pre></div>
+sim_<span class="dv">1</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs[event_period,],initial_recharge)</code></pre></div>
 <p>The returned object from <code>dynatop</code> is a list with two elements</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(sim_<span class="dv">1</span>)
 <span class="co">#&gt; [1] "model"         "channel_input"</span>
@@ -266,35 +276,12 @@ sim_<span class="dv">1</span> &lt;-<span class="st"> </span><span class="kw"><a 
 <span class="co">#&gt; 2012-11-23 13:00:00 1.1669022</span>
 <span class="co">#&gt; 2012-11-23 13:15:00 1.1996438</span></code></pre></div>
 <p>which are an <code>xts</code> object of the flows to the channel HRUs at each time step and the model passed to the call augmented with the final states of the simulation.</p>
-<p>In the above simulation the model was initialised using the flow at the start of the event and used the default timestep, which is the time step of the input data. Sub stepping, that is using a finer mueric timestep then the data can improve the stability and quality of the simulations. The &lt;&gt; parameter of the <code>dynatop</code> function can be used to impliment this. For example</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sim_<span class="dv">2</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs[event_period,],initial_recharge,<span class="dt">sim_time_step=</span><span class="dv">5</span><span class="op">/</span><span class="dv">60</span>)
-<span class="co">#&gt; Called from: initialise_hillslope(model, initial_recharge)</span>
-<span class="co">#&gt; debug: hillslope$lsz &lt;- q_0</span>
-<span class="co">#&gt; debug: try({</span>
-<span class="co">#&gt;     hillslope$lsz &lt;- solve(t(X_init) %*% X_init, t(X_init) %*% </span>
-<span class="co">#&gt;         y_init)</span>
-<span class="co">#&gt;     names(hillslope$lsz) &lt;- NULL</span>
-<span class="co">#&gt;     if (any(hillslope$lsz &lt;= 0)) {</span>
-<span class="co">#&gt;         stop("Solution for saturated zone initialisation produced negative or zero flows.\n Using constant recharge across catchment")</span>
-<span class="co">#&gt;     }</span>
-<span class="co">#&gt; })</span>
-<span class="co">#&gt; debug: hillslope$lsz &lt;- solve(t(X_init) %*% X_init, t(X_init) %*% y_init)</span>
-<span class="co">#&gt; debug: names(hillslope$lsz) &lt;- NULL</span>
-<span class="co">#&gt; debug: if (any(hillslope$lsz &lt;= 0)) {</span>
-<span class="co">#&gt;     stop("Solution for saturated zone initialisation produced negative or zero flows.\n Using constant recharge across catchment")</span>
-<span class="co">#&gt; }</span>
-<span class="co">#&gt; debug: hillslope$lsz &lt;- pmin(hillslope$lsz, hillslope$lsz_max)</span>
-<span class="co">#&gt; debug: hillslope$ssz &lt;- -hillslope$m * log(hillslope$lsz/exp(hillslope$ln_t0 - </span>
-<span class="co">#&gt;     hillslope$atb_bar))</span>
-<span class="co">#&gt; debug: hillslope$ssz &lt;- pmax(hillslope$ssz, 0)</span>
-<span class="co">#&gt; debug: hillslope$suz &lt;- hillslope$quz * hillslope$td * hillslope$ssz</span>
-<span class="co">#&gt; debug: hillslope$srz &lt;- pmax(pmin(hillslope$srz_0, 1), 0) * hillslope$srz_max</span>
-<span class="co">#&gt; debug: hillslope$ex &lt;- rep(0, length(hillslope$id))</span>
-<span class="co">#&gt; debug: return(hillslope)</span></code></pre></div>
+<p>In the above simulation the model was initialized using the flow at the start of the event and used the default time step, which is the time step of the input data. Sub stepping, that is using a finer numeric time step then the data can improve the stability and quality of the simulations. The &lt;&gt; parameter of the <code>dynatop</code> function can be used to implement this. For example</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sim_<span class="dv">2</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs[event_period,],initial_recharge,<span class="dt">sim_time_step=</span><span class="dv">5</span><span class="op">/</span><span class="dv">60</span>)</code></pre></div>
 <p>performs the same simulation with a 5 minute time step.</p>
-<p>The output states of a simulation can be used to initialise the a subsequent simulation. We note in doing this that no checks are made of the simulation times periods or of the timesteps used. For example</p>
+<p>The output states of a simulation can be used to initialize the a subsequent simulation. We note in doing this that no checks are made of the simulation times periods or of the time steps used. For example</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">sim_<span class="dv">3</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(sim_<span class="dv">1</span><span class="op">$</span>model,obs[event_period,],<span class="dt">sim_time_step=</span><span class="dv">5</span><span class="op">/</span><span class="dv">60</span>,<span class="dt">use_states=</span><span class="ot">TRUE</span>)</code></pre></div>
-<p>The effects of the different implimentations can be seem in the following graph. Note that the descrepancy between the simulations and observed data is due in part to the absense of any channel routing.</p>
+<p>The effects of the different implementations can be seem in the following graph. Note that the discrepancy between the simulations and observed data is due in part to the absence of any channel routing.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">out &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>(obs,sim_<span class="dv">1</span><span class="op">$</span>channel_input),
                     sim_<span class="dv">2</span><span class="op">$</span>channel_input),
              sim_<span class="dv">3</span><span class="op">$</span>channel_input)
@@ -322,7 +309,7 @@ out<span class="op">$</span>qobs &lt;-<span class="st"> </span>out<span class="o
 
 
       <footer><div class="copyright">
-  <p>Developed by Peter Metcalfe, Paul Smith.</p>
+  <p>Developed by Paul Smith, Peter Metcalfe.</p>
 </div>
 
 <div class="pkgdown">

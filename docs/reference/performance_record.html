@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Changelog • dynatop</title>
+<title>Some summaries of dynatop performance — performance_record • dynatop</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,7 +30,13 @@
 
 
 
-<meta property="og:title" content="Changelog" />
+<meta property="og:title" content="Some summaries of dynatop performance — performance_record" />
+
+<meta property="og:description" content="performance_record contains limited summaries of a computational
+performance of the dynatop function.
+These relate purely to the computational efficency of the code, not the hydrological performance of the model.
+It is used in the generation of the Performance Evaluation vignette which also documents the production of the data." />
+<meta name="twitter:card" content="summary" />
 
 
 
@@ -47,7 +53,7 @@
   </head>
 
   <body>
-    <div class="container template-news">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -117,77 +123,42 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Changelog <small></small></h1>
-      <small>Source: <a href='https://github.com/waternumbers/dynatop/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
+    <h1>Some summaries of dynatop performance</h1>
+    <small class="dont-index">Source: <a href='https://github.com/waternumbers/dynatop/blob/master/R/performance_record.R'><code>R/performance_record.R</code></a></small>
+    <div class="hidden name"><code>performance_record.Rd</code></div>
     </div>
 
-    <div id="dynatop-0-0-0-9000" class="section level1">
-<h1 class="page-header">
-<a href="#dynatop-0-0-0-9000" class="anchor"></a>dynatop 0.0.0.9000</h1>
-<div id="context" class="section level2">
-<h2 class="hasAnchor">
-<a href="#context" class="anchor"></a>Context</h2>
-<p>This package is the result of an almost complete rewrite of the dynatopmodel package formally CRAN and the associated development code (not in the public domain).</p>
-<p>This package contains the code for model evaluation and helpers for preparing time series input data. The package <a href="https://waternumbers.github.io/dynatopGIS/">dynatopGIS</a> contains the tools for preparing models from GIS data.</p>
-</div>
-<div id="new-features" class="section level2">
-<h2 class="hasAnchor">
-<a href="#new-features" class="anchor"></a>New Features</h2>
-<ul>
-<li>New definition of a dynamic TOPMODEL ‘object’
-<ul>
-<li>seperates out GIS data for more compact size</li>
-<li>introduces the concept of Hydrological Response Unit (HRU) types</li>
-<li>Altered HRU definition table to allow for more transparent and easy reparameterisation</li>
-<li>Altered HRU definition table to allow for more transparent use of multiple input series (referenced by name, not input column)</li>
-</ul>
-</li>
-<li>Altered input of time series data to a single xts object containing names columns</li>
-<li>New output list containing:
-<ul>
-<li>model object, with final states of the system</li>
-<li>xts object of flows to channel HRUs</li>
-</ul>
-</li>
-<li>Rewritten initialisation and main execution loop of dynamic TOPMODEL so that
-<ul>
-<li>Chanels are handled explicily not as ‘special cases’ (parameterisations) of hillslope units</li>
-<li>Analytical solution of root zone can handle case where both pet and precip are positive</li>
-<li>Initialisation does not return a new workspace</li>
-</ul>
-</li>
-<li>Vignettes documenting
-<ul>
-<li>use of dynamic TOPMODEL</li>
-<li>Equations and solution methodology</li>
-<li>Performance of code for larger simulations</li>
-</ul>
-</li>
-<li>‘Hard’ checks are now implimented, previously code was performaing various ‘corrections’ sometimes without warning.</li>
-<li>Model simulation can be initialised by passed in states allowing for chinking of the longer simulations.</li>
-</ul>
-</div>
-<div id="regressions-of-note" class="section level2">
-<h2 class="hasAnchor">
-<a href="#regressions-of-note" class="anchor"></a>Regressions of note</h2>
-<ul>
-<li>Plotting functions and performance calculations have not been replicated</li>
-<li>The time delay historgram method for river routing is not implimented</li>
-<li>Model no longer outputs states and fluxes at every time step</li>
-</ul>
-</div>
-</div>
-  </div>
+    <div class="ref-description">
+    
+    <p><code>performance_record</code> contains limited summaries of a computational
+performance of the <code>dynatop</code> function.
+These relate purely to the computational efficency of the code, not the hydrological performance of the model.
+It is used in the generation of the Performance Evaluation vignette which also documents the production of the data.</p>
+    
+    </div>
 
+    <pre class="usage"><span class='fu'><a href='https://www.rdocumentation.org/packages/utils/topics/data'>data</a></span>(<span class='no'>performance_record</span>)</pre>
+        
+    <h2 class="hasAnchor" id="format"><a class="anchor" href="#format"></a>Format</h2>
+
+    <p>An object of class <code>list</code> of length 5.</p>
+    
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p><code><a href='dynatop.html'>dynatop</a></code></p></div>
+    
+
+  </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
-    <div id="tocnav">
-      <h2>Contents</h2>
-      <ul class="nav nav-pills nav-stacked">
-        <li><a href="#dynatop-0-0-0-9000">0.0.0.9000</a></li>
-      </ul>
-    </div>
-  </div>
+    <h2>Contents</h2>
+    <ul class="nav nav-pills nav-stacked">
+      
+      <li><a href="#format">Format</a></li>
 
+      <li><a href="#see-also">See also</a></li>
+          </ul>
+
+  </div>
 </div>
 
       <footer>
