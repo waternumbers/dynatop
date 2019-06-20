@@ -1,5 +1,5 @@
 Package: dynatop
-Title: An Implimentation of Dynamic TOPMODEL Hydrological Modelin R & RCpp
+Title: An Implimentation of Dynamic TOPMODEL Hydrological Modelin R
 Version: 0.0.1
 Authors@R: 
 	   c(person(given = "Paul",

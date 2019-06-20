@@ -405,16 +405,17 @@ t}$$
 1. The most computationally intensive part of evaluating the gradients
    required in the numerical solution is evaluating
    $\mathbf{q}_{sz}$ is the evaluation of
-   $\mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}$. However
+   $\mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}$. However
    this only needs to be evaluated once to get both the flux and storage
    gradient terms 
-   and $\mathbf{q}_sz}$. This suggests that a potentially more accurate numerical
+   and $\mathbf{q}_{sz}$. This suggests that a potentially more accurate numerical
    solution using the \code{deSolve} package to integrate for $\mathbf{l}_{sz}$, $\mathbf{s}_{sz}$ and the integral of
    $\mathbf{q}_{sz}$ may not be that much more computationally expensive.
 2. An alternative approximate solution can be derived by ignoring the limits
    on the flux and storage (hence $\mathbf{q}_{sz}$) and solving the resulting
-   multivariate non-homogeneous ODE problem for $\mathbf{l}_{sz}$. Implicit
-   estimates for $\mathbf{q}_{sz}$ could then be applied.
+   multivariate non-homogeneous ODE problem for estimates of $\mathbf{l}_{sz}$
+   and $\mathbf{s}_{sz}$. These could then be corrected with an implicit
+   estimate of $\mathbf{q}_{sz}$ similar to that above.
 
 ## Step 6: Estimating Channel Flow
 The average flow to the channels over the time step in cumecs is given by 
