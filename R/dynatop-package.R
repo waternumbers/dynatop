@@ -4,8 +4,6 @@
 #'
 #' @name dynatop-package
 #' @docType package
-#' @useDynLib dynatop
 #' @import xts
-#' @importFrom Rcpp sourceCpp
 #' @importFrom stats start end aggregate weighted.mean
 NULL
