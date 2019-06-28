@@ -1,0 +1,31 @@
+---
+title: "Selected References"
+output: rmarkdown::html_vignette
+bibliography: bibliography.bib
+csl: full-inline-no-bib.csl
+nocite: |
+  @Metcalfe2015, @Metcalfe2017, @Metcalfe2017a, @Metcalfe2018
+vignette: >
+  %\VignetteIndexEntry{Selected References}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+The following is a selected list of references relating to Dynamic TOPMODEL,
+in implimentation in R and interesting applications.
+
+# The basis of Dynamic TOPMODEL
+[@Beven2001]
+
+# Implimentations in R
+[@Metcalfe2015]
+
+# Applications
+
+## Natural Flood Management
+[@Metcalfe2017]
+
+[@Metcalfe2017a]
+
+[@Metcalfe2018]
+
+
