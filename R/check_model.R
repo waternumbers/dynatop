@@ -21,17 +21,18 @@ check_model <- function(model){
                                             "precip_input","pet_input",
                                             "srz_max","srz_0","ln_t0","m","td","tex"),
                                    type=c(rep("numeric",4),rep("character",8)),
-                                   is_param <- c(rep(FALSE,6),rep(TRUE,6)),
+                                   is_param = c(rep(FALSE,6),rep(TRUE,6)),
                                    stringsAsFactors=FALSE),
             channel = data.frame(name = c("id","area","precip_input","pet_input"),
                                  type=c(rep("numeric",2),rep("character",2)),
-                                 is_param <- rep(FALSE,4),
+                                 is_param = rep(FALSE,4),
                                  stringsAsFactors=FALSE)
         )
 
         ## check just the HRU tables
         for(ii in names(hru_properties)){
-            idx <- hru_properties[[ii]]$names %in% names(model[[ii]])
+            idx <- hru_properties[[ii]]$name %in% names(model[[ii]])
+            browser()
             if( !all( idx ) ){# check it has required columns
                 stop( paste(c("HRU table",ii,"missing columns:",
                               hru_properties[[ii]]$names[!idx]),collapse=" ") )
@@ -61,7 +62,7 @@ check_model <- function(model){
 
     ## checks only on param
     if(!is.vector(model$param) | !is.numeric(model$param)){
-        stop("param should be a numeric matrix")
+        stop("param should be a numeric vector")
     }
 
     ## END of checks on individual objects return if failed
@@ -81,6 +82,7 @@ check_model <- function(model){
                     unlist( model[[ii]][,tmp] ))
     }
     pnames <- unique(pnames)
+    browser()
     if( !all( pnames %in% names(model$param) ) ){
         stop("Not all parameters are specified")
     }
