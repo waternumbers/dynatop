@@ -6,7 +6,7 @@ Authors@R:
            	family = "Smith",
            	role = c("aut", "cre"),
            	email = "paul@waternumbers.co.uk",
-           	comment = c(ORCID = "https://orcid.org/0000-0002-0034-3412")),
+           	comment = c(ORCID = "0000-0002-0034-3412")),
 		person(given = "Peter",family = "Metcalfe",role = c("aut"))
 	     )
 Description: An R implementation and enhancement of the Dynamic TOPMODEL semi-distributed hydrological model.
