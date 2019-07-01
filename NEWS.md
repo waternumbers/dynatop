@@ -1,7 +1,15 @@
+# dynatop 0.0.2
+
+## Bug fixes
+- Added purl=FALSE where error=TRUE in vignette
+
+## Other changes
+- Removed unused Rcpp functions and library dependencies
+
 # dynatop 0.0.1
 
 ## Other changes
-- Removed vignette data from package to reduce size. Now on github
+- Removed vignette data from package to reduce size. Now on git hub
 - Minor spelling and format changes to vignette
 
 # dynatop 0.0.0.9000
