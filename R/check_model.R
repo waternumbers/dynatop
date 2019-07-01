@@ -32,7 +32,6 @@ check_model <- function(model){
         ## check just the HRU tables
         for(ii in names(hru_properties)){
             idx <- hru_properties[[ii]]$name %in% names(model[[ii]])
-            browser()
             if( !all( idx ) ){# check it has required columns
                 stop( paste(c("HRU table",ii,"missing columns:",
                               hru_properties[[ii]]$names[!idx]),collapse=" ") )
@@ -82,7 +81,6 @@ check_model <- function(model){
                     unlist( model[[ii]][,tmp] ))
     }
     pnames <- unique(pnames)
-    browser()
     if( !all( pnames %in% names(model$param) ) ){
         stop("Not all parameters are specified")
     }
