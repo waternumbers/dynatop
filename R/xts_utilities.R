@@ -70,7 +70,7 @@ resample_xts <- function(obs, dt, is.rate=TRUE){
         idx <- rep(tms, each=fact)
         idx <- idx[1:nrow(obs)]
         if(is.rate){fun=mean}else{fun=sum}
-        obs_agg <- zoo::aggregate(zoo::zoo(obs), by = idx, FUN=fun)
+        obs_agg <- aggregate(zoo::zoo(obs), by = idx, FUN=fun)
         names(obs_agg) <- names(obs)
     }
     

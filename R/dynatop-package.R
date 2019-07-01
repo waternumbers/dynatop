@@ -5,5 +5,6 @@
 #' @name dynatop-package
 #' @docType package
 #' @import xts
+#' @importFrom zoo index
 #' @importFrom stats start end aggregate weighted.mean
 NULL
