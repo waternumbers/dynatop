@@ -1,24 +1,21 @@
 Package: dynatop
 Title: An Implimentation of Dynamic TOPMODEL Hydrological Modelin R
-Version: 0.0.1
+Version: 0.0.2
 Authors@R: 
 	   c(person(given = "Paul",
            	family = "Smith",
            	role = c("aut", "cre"),
            	email = "paul@waternumbers.co.uk",
-           	comment = c(ORCID = "https://orcid.org/0000-0002-0034-3412")),
+           	comment = c(ORCID = "0000-0002-0034-3412")),
 		person(given = "Peter",family = "Metcalfe",role = c("aut"))
 	     )
-Description: An R and Rcpp implementation and enhancement of the Dynamic TOPMODEL semi-distributed hydrological model.
+Description: An R implementation and enhancement of the Dynamic TOPMODEL semi-distributed hydrological model.
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
 Imports:
-	Rcpp,
 	deSolve,
 	zoo
-LinkingTo:
-	Rcpp
 Depends:
 	R (>= 3.5.0),
 	xts
