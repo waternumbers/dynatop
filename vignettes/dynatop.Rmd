@@ -51,7 +51,7 @@ knitr::kable(tmp)
 
 ## Checking the model
 The structure of the model can be tested:
-```{r, test_model, error=TRUE}
+```{r, test_model, error=TRUE, purl=FALSE}
 check_model(brompton$model)
 ```
 In this case we can see multiple warning messages. The warnings relate to
