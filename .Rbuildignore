@@ -1,2 +1,3 @@
 ^docs
 ^cran-comments\.md$ # Comments for CRAN submission
+^\.travis\.yml$

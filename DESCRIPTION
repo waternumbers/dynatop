@@ -24,5 +24,6 @@ URL: https://waternumbers.github.io/dynatop/, https://github.com/waternumbers/dy
 RoxygenNote: 6.1.1
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    covr
 VignetteBuilder: knitr

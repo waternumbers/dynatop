@@ -1,5 +1,10 @@
 # dynatop
 
+<!-- badges: start -->
+[![Travis build status](https://travis-ci.org/waternumbers/dynatop.svg?branch=master)](https://travis-ci.org/waternumbers/dynatop)
+[![Coveralls test coverage](https://coveralls.io/repos/github/waternumbers/dynatop/badge.svg)](https://coveralls.io/r/waternumbers/dynatop?branch=master)
+<!-- badges: end -->
+
 This R package contains the core code to perform a dynamic TOPMODEL
 simulation. A related package for processing GIS data to set up dynamic TOPMODEL
 implementations can be found
@@ -20,7 +25,7 @@ versions of dynamic TOPMODEL, selected references can be found [here](articles/S
 
 Thanks goes to:
 * Peter Metcalfe who developed the original port of Dynamic TOPMODEL to R
-during his PhD sponsored by the [JBA Trust](www.jbatrust.org). 
+during his PhD sponsored by the [JBA Trust](https://www.jbatrust.org). 
 * The original developers of Dynamic TOPMODEL, [Keith
 Beven](https://www.lancaster.ac.uk/lec/about-us/people/keith-beven) and [Jim
 Freer](http://www.bristol.ac.uk/geography/people/jim-e-freer/index.html), who
@@ -35,3 +40,4 @@ the devtools package:
 ```
 devtools::install_github("waternumbers/dynatop")
 ```
+
