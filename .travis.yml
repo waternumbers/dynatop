@@ -8,3 +8,6 @@ os:
   - osx
 after_success:
   - Rscript -e 'covr::coveralls(type = "all")'
+environment:
+  global:
+    WARNINGS_ARE_ERRORS: 1
