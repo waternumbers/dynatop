@@ -124,21 +124,39 @@
       <small>Source: <a href='https://github.com/waternumbers/dynatop/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="dynatop-0-0-1" class="section level1">
+    <div id="dynatop-002" class="section level1">
 <h1 class="page-header">
-<a href="#dynatop-0-0-1" class="anchor"></a>dynatop 0.0.1</h1>
+<a href="#dynatop-002" class="anchor"></a>dynatop 0.0.2</h1>
+<div id="bug-fixes" class="section level2">
+<h2 class="hasAnchor">
+<a href="#bug-fixes" class="anchor"></a>Bug fixes</h2>
+<ul>
+<li>Added purl=FALSE where error=TRUE in vignette</li>
+</ul>
+</div>
 <div id="other-changes" class="section level2">
 <h2 class="hasAnchor">
 <a href="#other-changes" class="anchor"></a>Other changes</h2>
 <ul>
-<li>Removed vignette data from package to reduce size. Now on github</li>
+<li>Removed unused Rcpp functions and library dependencies</li>
+</ul>
+</div>
+</div>
+    <div id="dynatop-001" class="section level1">
+<h1 class="page-header">
+<a href="#dynatop-001" class="anchor"></a>dynatop 0.0.1</h1>
+<div id="other-changes-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#other-changes-1" class="anchor"></a>Other changes</h2>
+<ul>
+<li>Removed vignette data from package to reduce size. Now on git hub</li>
 <li>Minor spelling and format changes to vignette</li>
 </ul>
 </div>
 </div>
-    <div id="dynatop-0-0-0-9000" class="section level1">
+    <div id="dynatop-0009000" class="section level1">
 <h1 class="page-header">
-<a href="#dynatop-0-0-0-9000" class="anchor"></a>dynatop 0.0.0.9000</h1>
+<a href="#dynatop-0009000" class="anchor"></a>dynatop 0.0.0.9000</h1>
 <div id="context" class="section level2">
 <h2 class="hasAnchor">
 <a href="#context" class="anchor"></a>Context</h2>
@@ -149,35 +167,11 @@
 <h2 class="hasAnchor">
 <a href="#new-features" class="anchor"></a>New Features</h2>
 <ul>
-<li>New definition of a dynamic TOPMODEL ‘object’
-<ul>
-<li>seperates out GIS data for more compact size</li>
-<li>introduces the concept of Hydrological Response Unit (HRU) types</li>
-<li>Altered HRU definition table to allow for more transparent and easy reparameterisation</li>
-<li>Altered HRU definition table to allow for more transparent use of multiple input series (referenced by name, not input column)</li>
-</ul>
-</li>
+<li>New definition of a dynamic TOPMODEL ‘object’ - seperates out GIS data for more compact size - introduces the concept of Hydrological Response Unit (HRU) types - Altered HRU definition table to allow for more transparent and easy reparameterisation - Altered HRU definition table to allow for more transparent use of multiple input series (referenced by name, not input column)</li>
 <li>Altered input of time series data to a single xts object containing names columns</li>
-<li>New output list containing:
-<ul>
-<li>model object, with final states of the system</li>
-<li>xts object of flows to channel HRUs</li>
-</ul>
-</li>
-<li>Rewritten initialisation and main execution loop of dynamic TOPMODEL so that
-<ul>
-<li>Chanels are handled explicily not as ‘special cases’ (parameterisations) of hillslope units</li>
-<li>Analytical solution of root zone can handle case where both pet and precip are positive</li>
-<li>Initialisation does not return a new workspace</li>
-</ul>
-</li>
-<li>Vignettes documenting
-<ul>
-<li>use of dynamic TOPMODEL</li>
-<li>Equations and solution methodology</li>
-<li>Performance of code for larger simulations</li>
-</ul>
-</li>
+<li>New output list containing: - model object, with final states of the system - xts object of flows to channel HRUs</li>
+<li>Rewritten initialisation and main execution loop of dynamic TOPMODEL so that - Chanels are handled explicily not as ‘special cases’ (parameterisations) of hillslope units - Analytical solution of root zone can handle case where both pet and precip are positive - Initialisation does not return a new workspace</li>
+<li>Vignettes documenting - use of dynamic TOPMODEL - Equations and solution methodology - Performance of code for larger simulations</li>
 <li>‘Hard’ checks are now implimented, previously code was performaing various ‘corrections’ sometimes without warning.</li>
 <li>Model simulation can be initialised by passed in states allowing for chinking of the longer simulations.</li>
 </ul>
@@ -198,8 +192,9 @@
     <div id="tocnav">
       <h2>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-        <li><a href="#dynatop-0-0-1">0.0.1</a></li>
-        <li><a href="#dynatop-0-0-0-9000">0.0.0.9000</a></li>
+        <li><a href="#dynatop-002">0.0.2</a></li>
+        <li><a href="#dynatop-001">0.0.1</a></li>
+        <li><a href="#dynatop-0009000">0.0.0.9000</a></li>
       </ul>
     </div>
   </div>

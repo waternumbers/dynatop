@@ -175,18 +175,19 @@
 <a href="#scaling-with-increasing-numbers-of-hill-slope-hrus-and-computational-steps" class="anchor"></a>Scaling with increasing numbers of hill slope HRUs and computational steps</h1>
 <p>The computational work load of executing <code>dynatop</code> is dominated by the evaluation of the evolution of the hill slope HRUs. For each computational step the equation given in the <a href="https://waternumbers.github.io/dynatop/articles/The_solution_of_Dynamic_TOPMODEL.html">accompanying vignette</a> are solved. The execution time of the code will therefor will depend on both the number of hill slope HRUs and number of computational steps.</p>
 <p>To test the relationship between simulation time, the number of hill slope HRUs and number of computational time steps an number of simulations are performed based on the data for Brompton. Due to the time taken to evaluate these the data is precompiled and can be reloaded from the package data using</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dynatop)
-<span class="co">#&gt; Loading required package: xts</span>
-<span class="co">#&gt; Loading required package: zoo</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt; Attaching package: 'zoo'</span>
-<span class="co">#&gt; The following objects are masked from 'package:base':</span>
-<span class="co">#&gt; </span>
-<span class="co">#&gt;     as.Date, as.Date.numeric</span>
-<span class="co">#&gt; Registered S3 method overwritten by 'xts':</span>
-<span class="co">#&gt;   method     from</span>
-<span class="co">#&gt;   as.zoo.xts zoo</span>
-<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/data">data</a></span>(<span class="st">"performance_record"</span>)</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dynatop)</a>
+<a class="sourceLine" id="cb1-2" title="2"><span class="co">#&gt; Loading required package: xts</span></a>
+<a class="sourceLine" id="cb1-3" title="3"><span class="co">#&gt; Loading required package: zoo</span></a>
+<a class="sourceLine" id="cb1-4" title="4"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb1-5" title="5"><span class="co">#&gt; Attaching package: 'zoo'</span></a>
+<a class="sourceLine" id="cb1-6" title="6"><span class="co">#&gt; The following objects are masked from 'package:base':</span></a>
+<a class="sourceLine" id="cb1-7" title="7"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb1-8" title="8"><span class="co">#&gt;     as.Date, as.Date.numeric</span></a>
+<a class="sourceLine" id="cb1-9" title="9"><span class="co">#&gt; Registered S3 method overwritten by 'xts':</span></a>
+<a class="sourceLine" id="cb1-10" title="10"><span class="co">#&gt;   method     from</span></a>
+<a class="sourceLine" id="cb1-11" title="11"><span class="co">#&gt;   as.zoo.xts zoo</span></a>
+<a class="sourceLine" id="cb1-12" title="12"><span class="co">#&gt; Loading required package: deSolve</span></a>
+<a class="sourceLine" id="cb1-13" title="13"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/data">data</a></span>(<span class="st">"performance_record"</span>)</a></code></pre></div>
 <p>Details of how to recreate the data are in Appendix 2.</p>
 <div id="number-of-hill-slope-hrus" class="section level2">
 <h2 class="hasAnchor">
@@ -225,7 +226,7 @@
 <td align="right">100.00</td>
 </tr>
 <tr class="even">
-<td>“%*%“</td>
+<td>"%*%"</td>
 <td align="right">0.22</td>
 <td align="right">22.45</td>
 <td align="right">0.22</td>
@@ -290,7 +291,7 @@
 </tr>
 </tbody>
 </table>
-<p>Of the time spent in the <code>dynatop</code> function 55% was spent in <code><a href="https://www.rdocumentation.org/packages/deSolve/topics/ode">deSolve::ode</a></code> which solves the differential equation governing the evolution of the saturated zone fluxes. This includes the time spent evaluating the function for computing the gradient of <span class="math inline">\(\mathbf{l}_{sz}\)</span>. Clearly evaluating the evolution of the saturated zone is the most computationally expensive part of the code. Around 22% of the time is spent evaluating matrix multiplications (labeled “%*%" in the table). These multiplications occur both within and outside the function for computing the gradient of <span class="math inline">\(\mathbf{l}_{sz}\)</span>.</p>
+<p>Of the time spent in the <code>dynatop</code> function 55% was spent in <code><a href="https://www.rdocumentation.org/packages/deSolve/topics/ode">deSolve::ode</a></code> which solves the differential equation governing the evolution of the saturated zone fluxes. This includes the time spent evaluating the function for computing the gradient of <span class="math inline">\(\mathbf{l}_{sz}\)</span>. Clearly evaluating the evolution of the saturated zone is the most computationally expensive part of the code. Around 22% of the time is spent evaluating matrix multiplications (labeled "%*%" in the table). These multiplications occur both within and outside the function for computing the gradient of <span class="math inline">\(\mathbf{l}_{sz}\)</span>.</p>
 </div>
 <div id="summary" class="section level1">
 <h1 class="hasAnchor">
@@ -397,101 +398,101 @@
 <h1 class="hasAnchor">
 <a href="#appendix-2---reproducing-the-results" class="anchor"></a>Appendix 2 - Reproducing the results</h1>
 <p>Since the simulation times are long the results discussed in this vignette are stored in a package data. To recreate them on a different systems (or for testing changes) extract the code in this vignette to an R file using</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">output_file &lt;-<span class="st"> "perf_script.R"</span>
-knitr<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/knitr/topics/knit">purl</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/system.file">system.file</a></span>(<span class="st">'doc/Performance_Evaluation.Rmd'</span>,<span class="dt">package=</span><span class="st">'dynatop'</span>),
-            <span class="dt">output =</span> output_file)</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">output_file &lt;-<span class="st"> "perf_script.R"</span></a>
+<a class="sourceLine" id="cb3-2" title="2">knitr<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/knitr/topics/knit">purl</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/system.file">system.file</a></span>(<span class="st">'doc/Performance_Evaluation.Rmd'</span>,<span class="dt">package=</span><span class="st">'dynatop'</span>),</a>
+<a class="sourceLine" id="cb3-3" title="3">            <span class="dt">output =</span> output_file)</a></code></pre></div>
 <p>then evaluate <em>only</em> the code block below, changing file names and machine description as required. The resulting save data file is in the same format as that of the package data.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rm">rm</a></span>(<span class="dt">list=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/ls">ls</a></span>())
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dynatop)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/data">data</a></span>(<span class="st">'brompton'</span>)
-
-## tidy up the model so it runs
-model &lt;-<span class="st"> </span>brompton<span class="op">$</span>model
-current_total_frac_sat &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colSums">colSums</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/cbind">rbind</a></span>(model<span class="op">$</span>Wsat,model<span class="op">$</span>Fsat) )
-current_total_frac_ex &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colSums">colSums</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/cbind">rbind</a></span>(model<span class="op">$</span>Wex,model<span class="op">$</span>Fex) )
-<span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(current_total_frac_sat[current_total_frac_sat<span class="op">&gt;</span><span class="dv">1</span>])){
-    model<span class="op">$</span>Wsat[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Wsat[,ii]<span class="op">/</span>current_total_frac_sat[ii]
-    model<span class="op">$</span>Fsat[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Fsat[,ii]<span class="op">/</span>current_total_frac_sat[ii]
-}
-<span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(current_total_frac_sat[current_total_frac_ex<span class="op">&gt;</span><span class="dv">1</span>])){
-    model<span class="op">$</span>Wex[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Wex[,ii]<span class="op">/</span>current_total_frac_ex[ii]
-    model<span class="op">$</span>Fex[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Fex[,ii]<span class="op">/</span>current_total_frac_ex[ii]
-}
-
-## create input data
-rain &lt;-<span class="st"> </span><span class="kw"><a href="../reference/resample_xts.html">resample_xts</a></span>(brompton<span class="op">$</span>rain, <span class="dt">dt =</span> <span class="dv">15</span><span class="op">/</span><span class="dv">60</span>)
-obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>(rain,brompton<span class="op">$</span>pet,<span class="dt">all=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))
-obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>(obs,brompton<span class="op">$</span>qobs,<span class="dt">all=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))
-obs[<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/NA">is.na</a></span>(obs)] &lt;-<span class="st"> </span><span class="dv">0</span>
-obs &lt;-<span class="st"> </span>obs[<span class="st">"2012-11-23 12:00::2012-12-01"</span>,]
-
-## function for timing simulations of different sizes
-fperf &lt;-<span class="st"> </span><span class="cf">function</span>(model,obs,number_of_hru,number_of_replicates,
-                  computational_timestep,<span class="dt">return_model=</span><span class="ot">FALSE</span>){
-    ## work out how many replicates to take
-    nhru &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Round">ceiling</a></span>(number_of_hru<span class="op">/</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(model<span class="op">$</span>hillslope))
-    ## replicate hillslopes
-    hill &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/do.call">do.call</a></span>(rbind, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/lapply">replicate</a></span>(nhru, model<span class="op">$</span>hillslope, <span class="dt">simplify=</span><span class="ot">FALSE</span>))
-    hill<span class="op">$</span>id &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(hill)
-    ## construct matrices
-    W &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">as.matrix</a></span>(Matrix<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/Matrix/topics/bdiag">bdiag</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(model<span class="op">$</span>Wex),nhru)))
-    F &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/do.call">do.call</a></span>(cbind, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/lapply">replicate</a></span>(nhru, model<span class="op">$</span>Fex, <span class="dt">simplify=</span><span class="ot">FALSE</span>))
-    <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">rownames</a></span>(W) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">colnames</a></span>(W) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">colnames</a></span>(F) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste</a></span>(hill<span class="op">$</span>id)
-
-    ## put back into model and trim to exact number
-    model<span class="op">$</span>hillslope &lt;-<span class="st"> </span>hill[<span class="dv">1</span><span class="op">:</span>number_of_hru,]
-    model<span class="op">$</span>Wex &lt;-<span class="st"> </span>model<span class="op">$</span>Wsat &lt;-<span class="st"> </span>W[<span class="dv">1</span><span class="op">:</span>number_of_hru,<span class="dv">1</span><span class="op">:</span>number_of_hru,drop=<span class="ot">FALSE</span>]
-    model<span class="op">$</span>Fex &lt;-<span class="st"> </span>model<span class="op">$</span>Fsat &lt;-<span class="st"> </span>F[,<span class="dv">1</span><span class="op">:</span>number_of_hru,drop=<span class="ot">FALSE</span>]
-
-    ## return model if required
-    <span class="cf">if</span>( return_model ){<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/function">return</a></span>(model)}
-    
-    <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/gc">gc</a></span>() ## garbage collection
-
-    ## run replicates of simulation
-    <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/lapply">replicate</a></span>(number_of_replicates,
-              <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/system.time">system.time</a></span>(<span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs,
-                                  <span class="dt">initial_recharge=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/numeric">as.numeric</a></span>(obs[<span class="dv">1</span>,<span class="st">'qobs'</span>]),
-                                  <span class="dt">sim_time_step =</span> computational_timestep)))
-}
-
-## run different numbers of hru
-test_hru &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">10</span>,<span class="dv">100</span>,<span class="dv">500</span>,<span class="dv">1000</span>,<span class="dv">1500</span>)
-out_hru&lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>()
-<span class="cf">for</span>(ii <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/length">length</a></span>(test_hru)){
-    out_hru[[ii]] &lt;-<span class="st"> </span><span class="kw">fperf</span>(model,obs,test_hru[ii],<span class="dv">10</span>,<span class="ot">NULL</span>)
-}
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(out_hru) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste</a></span>(test_hru)
-
-## run different numbers of computational steps 
-test_step &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="fl">7.5</span>,<span class="dv">15</span>)<span class="op">/</span><span class="dv">60</span>
-out_ts&lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>()
-<span class="cf">for</span>(ii <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/length">length</a></span>(test_step)){
-    out_ts[[ii]] &lt;-<span class="st"> </span><span class="kw">fperf</span>(model,obs,<span class="dv">300</span>,<span class="dv">10</span>,test_step[ii])
-}
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(out_ts) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste</a></span>(test_step)
-
-## profile a simulation
-mdl &lt;-<span class="st"> </span><span class="kw">fperf</span>(model,obs,<span class="dv">100</span>,<span class="dv">1</span>,<span class="ot">NULL</span>,<span class="ot">TRUE</span>)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/Rprof">Rprof</a></span>()
-tmp &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(mdl,obs,<span class="dt">initial_recharge=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/numeric">as.numeric</a></span>(obs[<span class="dv">1</span>,<span class="st">'qobs'</span>]))
-<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/Rprof">Rprof</a></span>(<span class="ot">NULL</span>)
-summaryProf &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/summaryRprof">summaryRprof</a></span>()
-
-## store the summary of the machine - CHANGE as required
-machineSummary &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(
-    <span class="dt">cpu =</span> <span class="st">"Intel Core i7 CPU 920 @2.67 Ghz"</span>,
-    <span class="dt">memory =</span> <span class="st">"11.7 Gb"</span>,
-    <span class="dt">summary =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/sessionInfo">sessionInfo</a></span>()
-)
-
-## save output in the same format as that in the package data
-performance_record &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">number_obs =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(obs),
-                           <span class="dt">hru=</span>out_hru,
-                           <span class="dt">comp_step=</span>out_ts,
-                           <span class="dt">profile=</span>summaryProf,
-                           <span class="dt">machine=</span>machineSummary)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/save">save</a></span>(<span class="st">"performance_record"</span>,<span class="dt">file=</span><span class="st">'performance_summary.rda'</span>)</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rm">rm</a></span>(<span class="dt">list=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/ls">ls</a></span>())</a>
+<a class="sourceLine" id="cb4-2" title="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(dynatop)</a>
+<a class="sourceLine" id="cb4-3" title="3"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/data">data</a></span>(<span class="st">'brompton'</span>)</a>
+<a class="sourceLine" id="cb4-4" title="4"></a>
+<a class="sourceLine" id="cb4-5" title="5"><span class="co">## tidy up the model so it runs</span></a>
+<a class="sourceLine" id="cb4-6" title="6">model &lt;-<span class="st"> </span>brompton<span class="op">$</span>model</a>
+<a class="sourceLine" id="cb4-7" title="7">current_total_frac_sat &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colSums">colSums</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/cbind">rbind</a></span>(model<span class="op">$</span>Wsat,model<span class="op">$</span>Fsat) )</a>
+<a class="sourceLine" id="cb4-8" title="8">current_total_frac_ex &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colSums">colSums</a></span>( <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/cbind">rbind</a></span>(model<span class="op">$</span>Wex,model<span class="op">$</span>Fex) )</a>
+<a class="sourceLine" id="cb4-9" title="9"><span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(current_total_frac_sat[current_total_frac_sat<span class="op">&gt;</span><span class="dv">1</span>])){</a>
+<a class="sourceLine" id="cb4-10" title="10">    model<span class="op">$</span>Wsat[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Wsat[,ii]<span class="op">/</span>current_total_frac_sat[ii]</a>
+<a class="sourceLine" id="cb4-11" title="11">    model<span class="op">$</span>Fsat[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Fsat[,ii]<span class="op">/</span>current_total_frac_sat[ii]</a>
+<a class="sourceLine" id="cb4-12" title="12">}</a>
+<a class="sourceLine" id="cb4-13" title="13"><span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(current_total_frac_sat[current_total_frac_ex<span class="op">&gt;</span><span class="dv">1</span>])){</a>
+<a class="sourceLine" id="cb4-14" title="14">    model<span class="op">$</span>Wex[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Wex[,ii]<span class="op">/</span>current_total_frac_ex[ii]</a>
+<a class="sourceLine" id="cb4-15" title="15">    model<span class="op">$</span>Fex[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Fex[,ii]<span class="op">/</span>current_total_frac_ex[ii]</a>
+<a class="sourceLine" id="cb4-16" title="16">}</a>
+<a class="sourceLine" id="cb4-17" title="17"></a>
+<a class="sourceLine" id="cb4-18" title="18"><span class="co">## create input data</span></a>
+<a class="sourceLine" id="cb4-19" title="19">rain &lt;-<span class="st"> </span><span class="kw"><a href="../reference/resample_xts.html">resample_xts</a></span>(brompton<span class="op">$</span>rain, <span class="dt">dt =</span> <span class="dv">15</span><span class="op">/</span><span class="dv">60</span>)</a>
+<a class="sourceLine" id="cb4-20" title="20">obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>(rain,brompton<span class="op">$</span>pet,<span class="dt">all=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))</a>
+<a class="sourceLine" id="cb4-21" title="21">obs &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/merge">merge</a></span>(obs,brompton<span class="op">$</span>qobs,<span class="dt">all=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))</a>
+<a class="sourceLine" id="cb4-22" title="22">obs[<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/NA">is.na</a></span>(obs)] &lt;-<span class="st"> </span><span class="dv">0</span></a>
+<a class="sourceLine" id="cb4-23" title="23">obs &lt;-<span class="st"> </span>obs[<span class="st">"2012-11-23 12:00::2012-12-01"</span>,]</a>
+<a class="sourceLine" id="cb4-24" title="24"></a>
+<a class="sourceLine" id="cb4-25" title="25"><span class="co">## function for timing simulations of different sizes</span></a>
+<a class="sourceLine" id="cb4-26" title="26">fperf &lt;-<span class="st"> </span><span class="cf">function</span>(model,obs,number_of_hru,number_of_replicates,</a>
+<a class="sourceLine" id="cb4-27" title="27">                  computational_timestep,<span class="dt">return_model=</span><span class="ot">FALSE</span>){</a>
+<a class="sourceLine" id="cb4-28" title="28">    <span class="co">## work out how many replicates to take</span></a>
+<a class="sourceLine" id="cb4-29" title="29">    nhru &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Round">ceiling</a></span>(number_of_hru<span class="op">/</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(model<span class="op">$</span>hillslope))</a>
+<a class="sourceLine" id="cb4-30" title="30">    <span class="co">## replicate hillslopes</span></a>
+<a class="sourceLine" id="cb4-31" title="31">    hill &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/do.call">do.call</a></span>(rbind, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/lapply">replicate</a></span>(nhru, model<span class="op">$</span>hillslope, <span class="dt">simplify=</span><span class="ot">FALSE</span>))</a>
+<a class="sourceLine" id="cb4-32" title="32">    hill<span class="op">$</span>id &lt;-<span class="st"> </span><span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(hill)</a>
+<a class="sourceLine" id="cb4-33" title="33">    <span class="co">## construct matrices</span></a>
+<a class="sourceLine" id="cb4-34" title="34">    W &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/matrix">as.matrix</a></span>(Matrix<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/Matrix/topics/bdiag">bdiag</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/rep">rep</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(model<span class="op">$</span>Wex),nhru)))</a>
+<a class="sourceLine" id="cb4-35" title="35">    F &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/do.call">do.call</a></span>(cbind, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/lapply">replicate</a></span>(nhru, model<span class="op">$</span>Fex, <span class="dt">simplify=</span><span class="ot">FALSE</span>))</a>
+<a class="sourceLine" id="cb4-36" title="36">    <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">rownames</a></span>(W) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">colnames</a></span>(W) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/colnames">colnames</a></span>(F) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste</a></span>(hill<span class="op">$</span>id)</a>
+<a class="sourceLine" id="cb4-37" title="37"></a>
+<a class="sourceLine" id="cb4-38" title="38">    <span class="co">## put back into model and trim to exact number</span></a>
+<a class="sourceLine" id="cb4-39" title="39">    model<span class="op">$</span>hillslope &lt;-<span class="st"> </span>hill[<span class="dv">1</span><span class="op">:</span>number_of_hru,]</a>
+<a class="sourceLine" id="cb4-40" title="40">    model<span class="op">$</span>Wex &lt;-<span class="st"> </span>model<span class="op">$</span>Wsat &lt;-<span class="st"> </span>W[<span class="dv">1</span><span class="op">:</span>number_of_hru,<span class="dv">1</span><span class="op">:</span>number_of_hru,drop=<span class="ot">FALSE</span>]</a>
+<a class="sourceLine" id="cb4-41" title="41">    model<span class="op">$</span>Fex &lt;-<span class="st"> </span>model<span class="op">$</span>Fsat &lt;-<span class="st"> </span>F[,<span class="dv">1</span><span class="op">:</span>number_of_hru,drop=<span class="ot">FALSE</span>]</a>
+<a class="sourceLine" id="cb4-42" title="42"></a>
+<a class="sourceLine" id="cb4-43" title="43">    <span class="co">## return model if required</span></a>
+<a class="sourceLine" id="cb4-44" title="44">    <span class="cf">if</span>( return_model ){<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/function">return</a></span>(model)}</a>
+<a class="sourceLine" id="cb4-45" title="45">    </a>
+<a class="sourceLine" id="cb4-46" title="46">    <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/gc">gc</a></span>() <span class="co">## garbage collection</span></a>
+<a class="sourceLine" id="cb4-47" title="47"></a>
+<a class="sourceLine" id="cb4-48" title="48">    <span class="co">## run replicates of simulation</span></a>
+<a class="sourceLine" id="cb4-49" title="49">    <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/lapply">replicate</a></span>(number_of_replicates,</a>
+<a class="sourceLine" id="cb4-50" title="50">              <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/system.time">system.time</a></span>(<span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs,</a>
+<a class="sourceLine" id="cb4-51" title="51">                                  <span class="dt">initial_recharge=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/numeric">as.numeric</a></span>(obs[<span class="dv">1</span>,<span class="st">'qobs'</span>]),</a>
+<a class="sourceLine" id="cb4-52" title="52">                                  <span class="dt">sim_time_step =</span> computational_timestep)))</a>
+<a class="sourceLine" id="cb4-53" title="53">}</a>
+<a class="sourceLine" id="cb4-54" title="54"></a>
+<a class="sourceLine" id="cb4-55" title="55"><span class="co">## run different numbers of hru</span></a>
+<a class="sourceLine" id="cb4-56" title="56">test_hru &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">10</span>,<span class="dv">100</span>,<span class="dv">500</span>,<span class="dv">1000</span>,<span class="dv">1500</span>)</a>
+<a class="sourceLine" id="cb4-57" title="57">out_hru&lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>()</a>
+<a class="sourceLine" id="cb4-58" title="58"><span class="cf">for</span>(ii <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/length">length</a></span>(test_hru)){</a>
+<a class="sourceLine" id="cb4-59" title="59">    out_hru[[ii]] &lt;-<span class="st"> </span><span class="kw">fperf</span>(model,obs,test_hru[ii],<span class="dv">10</span>,<span class="ot">NULL</span>)</a>
+<a class="sourceLine" id="cb4-60" title="60">}</a>
+<a class="sourceLine" id="cb4-61" title="61"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(out_hru) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste</a></span>(test_hru)</a>
+<a class="sourceLine" id="cb4-62" title="62"></a>
+<a class="sourceLine" id="cb4-63" title="63"><span class="co">## run different numbers of computational steps </span></a>
+<a class="sourceLine" id="cb4-64" title="64">test_step &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">5</span>,<span class="fl">7.5</span>,<span class="dv">15</span>)<span class="op">/</span><span class="dv">60</span></a>
+<a class="sourceLine" id="cb4-65" title="65">out_ts&lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>()</a>
+<a class="sourceLine" id="cb4-66" title="66"><span class="cf">for</span>(ii <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/length">length</a></span>(test_step)){</a>
+<a class="sourceLine" id="cb4-67" title="67">    out_ts[[ii]] &lt;-<span class="st"> </span><span class="kw">fperf</span>(model,obs,<span class="dv">300</span>,<span class="dv">10</span>,test_step[ii])</a>
+<a class="sourceLine" id="cb4-68" title="68">}</a>
+<a class="sourceLine" id="cb4-69" title="69"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/names">names</a></span>(out_ts) &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/paste">paste</a></span>(test_step)</a>
+<a class="sourceLine" id="cb4-70" title="70"></a>
+<a class="sourceLine" id="cb4-71" title="71"><span class="co">## profile a simulation</span></a>
+<a class="sourceLine" id="cb4-72" title="72">mdl &lt;-<span class="st"> </span><span class="kw">fperf</span>(model,obs,<span class="dv">100</span>,<span class="dv">1</span>,<span class="ot">NULL</span>,<span class="ot">TRUE</span>)</a>
+<a class="sourceLine" id="cb4-73" title="73"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/Rprof">Rprof</a></span>()</a>
+<a class="sourceLine" id="cb4-74" title="74">tmp &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(mdl,obs,<span class="dt">initial_recharge=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/numeric">as.numeric</a></span>(obs[<span class="dv">1</span>,<span class="st">'qobs'</span>]))</a>
+<a class="sourceLine" id="cb4-75" title="75"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/Rprof">Rprof</a></span>(<span class="ot">NULL</span>)</a>
+<a class="sourceLine" id="cb4-76" title="76">summaryProf &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/summaryRprof">summaryRprof</a></span>()</a>
+<a class="sourceLine" id="cb4-77" title="77"></a>
+<a class="sourceLine" id="cb4-78" title="78"><span class="co">## store the summary of the machine - CHANGE as required</span></a>
+<a class="sourceLine" id="cb4-79" title="79">machineSummary &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(</a>
+<a class="sourceLine" id="cb4-80" title="80">    <span class="dt">cpu =</span> <span class="st">"Intel Core i7 CPU 920 @2.67 Ghz"</span>,</a>
+<a class="sourceLine" id="cb4-81" title="81">    <span class="dt">memory =</span> <span class="st">"11.7 Gb"</span>,</a>
+<a class="sourceLine" id="cb4-82" title="82">    <span class="dt">summary =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/sessionInfo">sessionInfo</a></span>()</a>
+<a class="sourceLine" id="cb4-83" title="83">)</a>
+<a class="sourceLine" id="cb4-84" title="84"></a>
+<a class="sourceLine" id="cb4-85" title="85"><span class="co">## save output in the same format as that in the package data</span></a>
+<a class="sourceLine" id="cb4-86" title="86">performance_record &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">number_obs =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/nrow">nrow</a></span>(obs),</a>
+<a class="sourceLine" id="cb4-87" title="87">                           <span class="dt">hru=</span>out_hru,</a>
+<a class="sourceLine" id="cb4-88" title="88">                           <span class="dt">comp_step=</span>out_ts,</a>
+<a class="sourceLine" id="cb4-89" title="89">                           <span class="dt">profile=</span>summaryProf,</a>
+<a class="sourceLine" id="cb4-90" title="90">                           <span class="dt">machine=</span>machineSummary)</a>
+<a class="sourceLine" id="cb4-91" title="91"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/save">save</a></span>(<span class="st">"performance_record"</span>,<span class="dt">file=</span><span class="st">'performance_summary.rda'</span>)</a></code></pre></div>
 </div>
   </div>
 

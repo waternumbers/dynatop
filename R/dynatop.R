@@ -20,7 +20,7 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
         channel <- model$states$channel
     }else{ # initialise the model
         ## check model is valid - fails if not
-        check_model(model)
+        check_model(model,check_channel=FALSE,verbose=FALSE)
 
         ## initialise the properties and states of the hillslope hru - include check on initial recharge
         hillslope <- initialise_hillslope(model,initial_recharge)
@@ -57,7 +57,14 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
     ## message("Running Dynamic TOPMODEL using ", length(hillslope$id), " hillslope units and ", length(channel$id), " channel units")
 
     for(it in 1:nrow(obs_data)){
-
+        ## for testing deSolve error
+        print(it)
+        if( floor(it/10)==it ){
+            saveRDS(list(hillslope=hillslope,
+                         channel=channel),
+                    "ModelBump.rds")
+        }
+        
         ## Step 1: Initialise channel stores with precipitation
         ## channel$store[] <- 0
         channel$store <- obs_data[it,channel$precip_input]*ts$step
@@ -112,14 +119,15 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
             ## using precalculated inter-group splits
 
             ## Solve the ODE for discharge (ignores limit in flow due to saturation
-            # browser()
+            ## browser()
+            ## removeed deSolve:: to test for error
             res <- deSolve::ode(y=hillslope$lsz,
-                                times=seq(0, ts$sub_step, length.out=2),
-                                func=fun_dlex_dt,
-                                parms=list(Wdash=K_sz,
-                                           m=hillslope$m,
-                                           lsz_max=hillslope$lsz_max,
-                                           quz=hillslope$quz))
+                       times=seq(0, ts$sub_step, length.out=2),
+                       func=fun_dlex_dt,
+                       parms=list(Wdash=K_sz,
+                                  m=hillslope$m,
+                                  lsz_max=hillslope$lsz_max,
+                                  quz=hillslope$quz))
 
             res <- res[-1,-1]; names(res) <- NULL # trim to get only final values and not time
             hillslope$lsz <- res # not due to solution above the equality lsz<=lszmax should hold
