@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function to check the model to be used in a dynamic TOPMODEL run — check_model • dynatop</title>
+<title>Function to compute the time delays between gauges and points in the network — compute_time_delay • dynatop</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Function to check the model to be used in a dynamic TOPMODEL run — check_model" />
+<meta property="og:title" content="Function to compute the time delays between gauges and points in the network — compute_time_delay" />
 
-<meta property="og:description" content="This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model." />
+<meta property="og:description" content="This function computes the time taken for between point in the network TODO" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -123,18 +123,18 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Function to check the model to be used in a dynamic TOPMODEL run</h1>
-    <small class="dont-index">Source: <a href='https://github.com/waternumbers/dynatop/blob/master/R/check_model.R'><code>R/check_model.R</code></a></small>
-    <div class="hidden name"><code>check_model.Rd</code></div>
+    <h1>Function to compute the time delays between gauges and points in the network</h1>
+    <small class="dont-index">Source: <a href='https://github.com/waternumbers/dynatop/blob/master/R/compute_time_delay.R'><code>R/compute_time_delay.R</code></a></small>
+    <div class="hidden name"><code>compute_time_delay.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model.</p>
+    <p>This function computes the time taken for between point in the network TODO</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>check_model</span>(<span class='no'>model</span>, <span class='kw'>check_channel</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>compute_time_delay</span>(<span class='no'>model</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -143,23 +143,15 @@
       <th>model</th>
       <td><p>a dynamic TOPMODEL list object</p></td>
     </tr>
-    <tr>
-      <th>check_channel</th>
-      <td><p>flag indicating is additional checks for channel routing are to be carried out</p></td>
-    </tr>
-    <tr>
-      <th>verbose</th>
-      <td><p>if set prints out further information</p></td>
-    </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>NULL if tests passed, otherwise fails</p>
+    <p>A list with two matrices one of time delays between the foot of reaches and the gauges, one with time differences between point inflow and gauges</p>
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>The checks performed and basic 'sanity' checks. they do not check for the logic of the parameter values nor the consistncy of states and parameters.</p>
+    <p>This is done by a simple search - not very efficent for large networ#' @export</p>
     
 
   </div>

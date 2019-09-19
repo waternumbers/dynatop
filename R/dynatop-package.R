@@ -5,6 +5,7 @@
 #' @name dynatop-package
 #' @docType package
 #' @import xts
+#' @import deSolve
 #' @importFrom zoo index
-#' @importFrom stats start end aggregate weighted.mean
+#' @importFrom stats start end aggregate weighted.mean setNames filter
 NULL

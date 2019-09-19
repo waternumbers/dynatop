@@ -5,11 +5,11 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Numerical Solution of Dynamic TOPMODEL • dynatop</title>
+<title>Time Delay Channel Routing • dynatop</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="The Numerical Solution of Dynamic TOPMODEL">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Time Delay Channel Routing">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -64,6 +64,9 @@
     <li>
       <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Numerical Solution of Dynamic TOPMODEL</a>
     </li>
+    <li>
+      <a href="../articles/Time_Delay_Channel_Routing.html">Time Delay Channel Routing</a>
+    </li>
   </ul>
 </li>
 <li>
@@ -89,20 +92,26 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>The Numerical Solution of Dynamic TOPMODEL</h1>
+      <h1>Time Delay Channel Routing</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/../vignettes/The_solution_of_Dynamic_TOPMODEL.Rmd"><code>../vignettes/The_solution_of_Dynamic_TOPMODEL.Rmd</code></a></small>
-      <div class="hidden name"><code>The_solution_of_Dynamic_TOPMODEL.Rmd</code></div>
+      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/../vignettes/Time_Delay_Channel_Routing.Rmd"><code>../vignettes/Time_Delay_Channel_Routing.Rmd</code></a></small>
+      <div class="hidden name"><code>Time_Delay_Channel_Routing.Rmd</code></div>
 
     </div>
 
     
     
-<p>The dynamic TOPMODEL R package implements a set of numerical solutions to the governing equations of the dynamic TOPMODEL formulation. This vignette documents the formulation and the numerical solutions used. It also outlines a number of potential changes to the code which may improves it.</p>
-<div id="notation-and-nomenclature" class="section level1">
+<p>The <code>dynatop</code> function in the dynamic TOPMODEL R package implements a set of numerical solutions to the governing equations of the dynamic TOPMODEL hillslope formulation. This returns the inflow to the channel reachs specified in the model. This vignette documents the formulation and the numerical solution used to route these channel inflows, along with other diffuse and point inputs to the model.</p>
+<div id="the-time-delay-approach" class="section level1">
 <h1 class="hasAnchor">
-<a href="#notation-and-nomenclature" class="anchor"></a>Notation and nomenclature</h1>
+<a href="#the-time-delay-approach" class="anchor"></a>The time delay approach</h1>
+<p>Consider two points on the river network, <span class="math inline">\(x\)</span> and <span class="math inline">\(g\)</span> where <span class="math inline">\(x\)</span> is upstream of <span class="math inline">\(g\)</span>. The contribution of the inflow to the channel at point <span class="math inline">\(x\)</span> to the instaneous discharge at <span class="math inline">\(g\)</span> at time <span class="math inline">\(t\)</span> is <span class="math inline">\(x\left(t-\delta_x\right)\)</span> where <span class="math inline">\(\delta_x\)</span> is the time taken for the effect of the input at <span class="math inline">\(x\)</span> to reach <span class="math inline">\(g\)</span>.</p>
+<p>The total instaneous discharge at <span class="math inline">\(g\)</span> is give by the integral of the flow contributions of all the points upstream of <span class="math inline">\(g\)</span> inteh river network, denote <span class="math inline">\(\mathcal{X}\)</span>. This gives <span class="math display">\[
+g\left(t\right) = \int\limits_{x\in\mathcal{X}}x\left(t-\delta_x\right)dx
+\]</span></p>
+<p>)$ where _x denoted <span class="math inline">\(g\left(t\right)\)</span> is<br>
+The instataneous flow at time <span class="math inline">\(t\)</span> at a gauged site <span class="math inline">\(g\)</span> on the river networkThe time delay routing approach considers that a point on the channel # Notation and nomenclature</p>
 <p>Consider two types of Hydrological response unit (HRU). The first termed “hill slope” solves the surface, root, unsaturated and saturated zones for ‘similar’ areas of the catchment a each time step. Table [tab:hru_notation] outlines the notation used for describing a “hill slope” HRU.</p>
 <table class="table">
 <caption>Outline of notation for describing “hill slope” HRUs<span data-label="tab:hru_notation"></span>
@@ -526,7 +535,7 @@ c_n \exp\left(\lambda_nt\right)
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#notation-and-nomenclature">Notation and nomenclature</a></li>
+<li><a href="#the-time-delay-approach">The time delay approach</a></li>
       <li>
 <a href="#numerical-solution">Numerical Solution</a><ul class="nav nav-pills nav-stacked">
 <li><a href="#step-1-initializing-the-channel-storage">Step 1: Initializing the channel storage</a></li>

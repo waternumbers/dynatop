@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function to check the model to be used in a dynamic TOPMODEL run — check_model • dynatop</title>
+<title>Function to apply variable time delay routing — time_delay_routing • dynatop</title>
 
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
@@ -30,9 +30,9 @@
 
 
 
-<meta property="og:title" content="Function to check the model to be used in a dynamic TOPMODEL run — check_model" />
+<meta property="og:title" content="Function to apply variable time delay routing — time_delay_routing" />
 
-<meta property="og:description" content="This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model." />
+<meta property="og:description" content="This function makes a model along with the specification of a point and inputs to the channel. It applies a time delay historgram routing based on the channel length and velocities." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -123,18 +123,19 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Function to check the model to be used in a dynamic TOPMODEL run</h1>
-    <small class="dont-index">Source: <a href='https://github.com/waternumbers/dynatop/blob/master/R/check_model.R'><code>R/check_model.R</code></a></small>
-    <div class="hidden name"><code>check_model.Rd</code></div>
+    <h1>Function to apply variable time delay routing</h1>
+    <small class="dont-index">Source: <a href='https://github.com/waternumbers/dynatop/blob/master/R/time_delay_routing.R'><code>R/time_delay_routing.R</code></a></small>
+    <div class="hidden name"><code>time_delay_routing.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model.</p>
+    <p>This function makes a model along with the specification of a point and inputs to the channel. It applies a time delay historgram routing based on the channel length and velocities.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>check_model</span>(<span class='no'>model</span>, <span class='kw'>check_channel</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>time_delay_routing</span>(<span class='no'>model</span>, <span class='no'>channel_inflows</span>, <span class='kw'>point_inflows</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>diffuse_inflows</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>initial_conditions</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/list'>list</a></span>())</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -144,22 +145,26 @@
       <td><p>a dynamic TOPMODEL list object</p></td>
     </tr>
     <tr>
-      <th>check_channel</th>
-      <td><p>flag indicating is additional checks for channel routing are to be carried out</p></td>
+      <th>channel_inflows</th>
+      <td><p>an xts object of flows to the channels</p></td>
     </tr>
     <tr>
-      <th>verbose</th>
-      <td><p>if set prints out further information</p></td>
+      <th>diffuse_inflows</th>
+      <td><p>an xts object of diffuse inflows</p></td>
+    </tr>
+    <tr>
+      <th>inflow_locations</th>
+      <td><p>a list of names vectored specifying the initial conditions</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>NULL if tests passed, otherwise fails</p>
+    <p>An xts object of flows at the guage locations</p>
     
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>The checks performed and basic 'sanity' checks. they do not check for the logic of the parameter values nor the consistncy of states and parameters.</p>
+    <p>Timings are taken from the channel_inflows, other inputs are ignored unless there timings match</p>
     
 
   </div>
