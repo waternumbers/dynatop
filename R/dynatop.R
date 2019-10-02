@@ -9,6 +9,7 @@
 #' 
 #' @export
 dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_states=FALSE){
+    
     # check input and get model timestep
     ts <- check_obs(obs_data,
                     unique( c(unlist(model$hillslope[,c("precip_input","pet_input")]),
@@ -57,25 +58,25 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
     ## message("Running Dynamic TOPMODEL using ", length(hillslope$id), " hillslope units and ", length(channel$id), " channel units")
 
     for(it in 1:nrow(obs_data)){
-        ## for testing deSolve error
-        print(it)
-        if( floor(it/10)==it ){
-            saveRDS(list(hillslope=hillslope,
-                         channel=channel),
-                    "ModelBump.rds")
-        }
-        
+
         ## Step 1: Initialise channel stores with precipitation
         ## channel$store[] <- 0
         channel$store <- obs_data[it,channel$precip_input]*ts$step
 
         ## Step 2: Distribute any surface storage downslope for next time step
   	if(any(hillslope$ex > 0)){
+            
             ## solve eigen routing
+            ## initial volume
+            ex_in[] <- 0 # set all values to zero
             ex_in[ex_idx] <- hillslope$ex
+            ## iv <- sum(diag(c(hillslope$area,channel$area)) %*% ex_in)
             ex_out <- eigen_routing_step(ex_in,ex_eigen,ts$step)
+            ex_out <- pmax(0,ex_out) ## shouldn't be any negative values but...
+            ## fv <- sum(diag(c(hillslope$area,channel$area)) %*% ex_out)
+            ## 100*abs(iv-fv)/iv
             hillslope$ex <- ex_out[ex_idx]
-            #browser()
+            ## shouldn't be any negative values but sometimes there are...
             channel$store <- channel$store + ex_out[-ex_idx]
         }
 
@@ -91,7 +92,7 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
 
             tilde_srz = hillslope$srz*exp(-b*ts$sub_step) +
                 (a/b)*(1-exp(-b*ts$sub_step)) # analytical solution to root zone storage
-            hillslope$srz <- pmin(tilde_srz,hillslope$srz_max)
+            hillslope$srz <- unname( pmin(tilde_srz,hillslope$srz_max) ) # drop names
             integral_qrz <- tilde_srz - hillslope$srz
 
             ## split root zone flow
