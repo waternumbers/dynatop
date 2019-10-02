@@ -103,201 +103,62 @@
     
     
 <p>The <code>dynatop</code> function in the dynamic TOPMODEL R package implements a set of numerical solutions to the governing equations of the dynamic TOPMODEL hillslope formulation. This returns the inflow to the channel reachs specified in the model. This vignette documents the formulation and the numerical solution used to route these channel inflows, along with other diffuse and point inputs to the model.</p>
-<div id="the-time-delay-approach" class="section level1">
+<div id="notation-and-nomenclature" class="section level1">
 <h1 class="hasAnchor">
-<a href="#the-time-delay-approach" class="anchor"></a>The time delay approach</h1>
-<p>Consider two points on the river network, <span class="math inline">\(x\)</span> and <span class="math inline">\(g\)</span> where <span class="math inline">\(x\)</span> is upstream of <span class="math inline">\(g\)</span>. The contribution of the inflow to the channel at point <span class="math inline">\(x\)</span> to the instaneous discharge at <span class="math inline">\(g\)</span> at time <span class="math inline">\(t\)</span> is <span class="math inline">\(x\left(t-\delta_x\right)\)</span> where <span class="math inline">\(\delta_x\)</span> is the time taken for the effect of the input at <span class="math inline">\(x\)</span> to reach <span class="math inline">\(g\)</span>.</p>
-<p>The total instaneous discharge at <span class="math inline">\(g\)</span> is give by the integral of the flow contributions of all the points upstream of <span class="math inline">\(g\)</span> inteh river network, denote <span class="math inline">\(\mathcal{X}\)</span>. This gives <span class="math display">\[
-g\left(t\right) = \int\limits_{x\in\mathcal{X}}x\left(t-\delta_x\right)dx
-\]</span></p>
-<p>)$ where _x denoted <span class="math inline">\(g\left(t\right)\)</span> is<br>
-The instataneous flow at time <span class="math inline">\(t\)</span> at a gauged site <span class="math inline">\(g\)</span> on the river networkThe time delay routing approach considers that a point on the channel # Notation and nomenclature</p>
-<p>Consider two types of Hydrological response unit (HRU). The first termed “hill slope” solves the surface, root, unsaturated and saturated zones for ‘similar’ areas of the catchment a each time step. Table [tab:hru_notation] outlines the notation used for describing a “hill slope” HRU.</p>
+<a href="#notation-and-nomenclature" class="anchor"></a>Notation and nomenclature</h1>
+<p>Table [tab:hru_notation] outlines the notation used in this document.</p>
 <table class="table">
-<caption>Outline of notation for describing “hill slope” HRUs<span data-label="tab:hru_notation"></span>
+<caption>Outline of notation for describing time delay histogram routing HRUs<span data-label="tab:channel_notation"></span>
 </caption>
 <thead><tr class="header">
 <th align="left">Quantity type</th>
 <th align="center">Symbol</th>
-<th align="left">Description</th>
+<th align="center">Description</th>
 <th align="center">unit</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">Storage</td>
-<td align="center"><span class="math inline">\(s_{ex}\)</span></td>
-<td align="left">Surface excess storage</td>
-<td align="center">m</td>
-</tr>
-<tr class="even">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(s_{rz}\)</span></td>
-<td align="left">Root zone storage</td>
-<td align="center">m</td>
-</tr>
-<tr class="odd">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(s_{uz}\)</span></td>
-<td align="left">Unsaturated zone storage</td>
-<td align="center">m</td>
-</tr>
-<tr class="even">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(s_{sz}\)</span></td>
-<td align="left">Saturated zone storage deficit</td>
-<td align="center">m</td>
-</tr>
-<tr class="odd">
-<td align="left">Vertical fluxes within HRU</td>
-<td align="center"><span class="math inline">\(q_{rz}\)</span></td>
-<td align="left">Flow from Root to unsaturated zone</td>
-<td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
+<td align="left">Dischage at the point <span class="math inline">\(x\)</span> at time <span class="math inline">\(t\)</span>
 </td>
-</tr>
-<tr class="even">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(q_{uz}\)</span></td>
-<td align="left">Flow from unsaturated to saturated zone</td>
-<td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
-</td>
-</tr>
-<tr class="odd">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(q_{sz}\)</span></td>
-<td align="left">Flow from saturated zone to surface excess storage</td>
-<td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
-</td>
-</tr>
-<tr class="even">
-<td align="left">Lateral down slope fluxes from HRU</td>
-<td align="center"><span class="math inline">\(l_{ex}\)</span></td>
-<td align="left">Total lateral flux from surface excess</td>
-<td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
-</td>
-</tr>
-<tr class="odd">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(l_{sz}\)</span></td>
-<td align="left">Total lateral flux from saturated zone</td>
-<td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
-</td>
-</tr>
-<tr class="even">
-<td align="left">Other HRU properties</td>
-<td align="center">a</td>
-<td align="left">Area</td>
-<td align="center">m<span class="math inline">\(^2\)</span>
-</td>
-</tr>
-<tr class="odd">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(w^{\left[i,j\right]}_{ex}\)</span></td>
-<td align="left">fraction of <span class="math inline">\(l_{ex}\)</span> going from <span class="math inline">\(j\)</span>th to <span class="math inline">\(i\)</span>th HRU</td>
+<td align="center"><span class="math inline">\(q\left(x,t\right)\)</span></td>
+<td align="center">Instananeous discharge at the point x on the channel network</td>
 <td align="center">-</td>
 </tr>
 <tr class="even">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(w^{\left[i,j\right]}_{sz}\)</span></td>
-<td align="left">fraction of <span class="math inline">\(l_{sz}\)</span> going from <span class="math inline">\(j\)</span>th to <span class="math inline">\(i\)</span>th HRU</td>
+<td align="left">A gauged location</td>
+<td align="center"><span class="math inline">\(g\)</span></td>
+<td align="center">A gagued point on the channel network</td>
 <td align="center">-</td>
 </tr>
 <tr class="odd">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(s_{rzmax}\)</span></td>
-<td align="left">maximum root zone storage</td>
-<td align="center">m</td>
+<td align="left">Channel inflow</td>
+<td align="center"><span class="math inline">\(h\left(x,t\right)\)</span></td>
+<td align="center">Inflow from the hillslope to a point on the channel network</td>
+<td align="center">m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="even">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(T_d\)</span></td>
-<td align="left">Unsaturated zone time constant per m of saturated</td>
-<td align="center">h/m</td>
+<td align="left">Diffuse inflow</td>
+<td align="center"><span class="math inline">\(d\left(x,t\right)\)</span></td>
+<td align="center">Inflow from diffuse inputs to a point on the channel network</td>
+<td align="center">m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="odd">
-<td align="left"></td>
-<td align="center"></td>
-<td align="left">storage deficit.</td>
-<td align="center"></td>
+<td align="left">Diffuse inflow</td>
+<td align="center"><span class="math inline">\(p\left(x,t\right)\)</span></td>
+<td align="center">Inflow from a point source to a point on the channel network</td>
+<td align="center">m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="even">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(T_{ex}\)</span></td>
-<td align="left">Surface excess storage time constant</td>
-<td align="center">h</td>
-</tr>
-<tr class="odd">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(m\)</span></td>
-<td align="left">Exponential transmissivity constant</td>
-<td align="center">-</td>
-</tr>
-</tbody>
-</table>
-<p>The second, termed “chanel” represents the inflow to a length of river channel. As such it acts as a sink collecting water from the “hill slope” HRUs over the course of a time step. Table [tab:ch_notation] outlines the notation for channel HRU.</p>
-<table class="table">
-<caption>Outline of notation for describing “channel” HRUs<span data-label="tab:ch_notation"></span>
-</caption>
-<thead><tr class="header">
-<th></th>
-<th align="right">Symbol D</th>
-<th align="left">escription</th>
-<th align="left">unit</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Storage</td>
-<td align="right"><span class="math inline">\(s_{ch}\)</span></td>
-<td align="left">channel storage</td>
-<td align="left">m</td>
-</tr>
-<tr class="even">
-<td>Other HRU properties</td>
-<td align="right">a</td>
-<td align="left">Area</td>
-<td align="left">m<span class="math inline">\(^2\)</span>
-</td>
-</tr>
-<tr class="odd">
-<td></td>
-<td align="right"><span class="math inline">\(f^{\left[k,j\right]}_{ex}\)</span></td>
-<td align="left">fraction of <span class="math inline">\(l_{ex}\)</span> going from <span class="math inline">\(j\)</span>th hill slope HRU to <span class="math inline">\(k\)</span>th channel HRU</td>
-<td align="left">-</td>
-</tr>
-<tr class="even">
-<td></td>
-<td align="right"><span class="math inline">\(f^{\left[k,j\right]}_{sz}\)</span></td>
-<td align="left">fraction of <span class="math inline">\(l_{sz}\)</span> going from <span class="math inline">\(j\)</span>th hill slope HRU to <span class="math inline">\(k\)</span>th HRU</td>
-<td align="left">-</td>
-</tr>
-</tbody>
-</table>
-<p>From the above a mass conservative system will redirect all flows within the defined catchment hence: <span class="math display">\[\sum\limits_{j} w^{\left[j,i\right]} +
-    \sum\limits_{k} f^{\left[k,i\right]} =1\]</span></p>
-<p>Inputs to the system are given in Table [tab:inputs]. These are treated as being the same for every HRU though the calculations readily allow for them to vary by HRU.</p>
-<table class="table">
-<caption>Eternal inputs to HRUs<span data-label="tab:inputs"></span>
-</caption>
-<thead><tr class="header">
-<th align="center">Symbol</th>
-<th align="left">Description</th>
-<th align="center">unit</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="center"><span class="math inline">\(p\)</span></td>
-<td align="left">Precipitation rate</td>
-<td align="center">m/h</td>
-</tr>
-<tr class="even">
-<td align="center"><span class="math inline">\(e_p\)</span></td>
-<td align="left">Potential evapotranspiration</td>
-<td align="center">m/h</td>
+<td align="left">Velocity</td>
+<td align="center"><span class="math inline">\(v_{ch}\left(x\right)\)</span></td>
+<td align="center">Effective velocity of water convience at a point ont eh channel network</td>
+<td align="center">m/s</td>
 </tr>
 </tbody>
 </table>
 <p>Later we make use of the following:</p>
 <ul>
-<li><p>Superscript notation <span class="math inline">\(^{\left[i\right]}\)</span> to indicate the property of the <span class="math inline">\(i\)</span>th HRU</p></li>
+<li><p>Superscript notation <span class="math inline">\(^{\left[i\right]}\)</span> to indicate the property of the <span class="math inline">\(i\)</span>th channel length</p></li>
 <li><p>Bold lower case letter to indicate the column vector of quantities from all HRUs, e.g. <span class="math inline">\(\mathbf{q}_{rz} = \left(q_{rz}^{\left[1\right]},\ldots,q_{rz}^{\left[n\right]}\right)^{T}\)</span></p></li>
 <li><p>Bold uppercase letters to indicate matrices which may be diagonal if the underlying variables is a vector (e.g. <span class="math inline">\(\mathbf{A}\)</span> is a diagonal matrix of area) or dense (e.g. <span class="math inline">\(W_{sz}\)</span> where the <span class="math inline">\(j\)</span>th element of the <span class="math inline">\(i\)</span>th row is <span class="math inline">\(w_{sz}^{\left[i,j\right]}\)</span>).</p></li>
 <li><p>The identity matrix is written as <span class="math inline">\(\mathbf{I}\)</span>. The notation <span class="math inline">\(\mathbf{0}\)</span> is used to indicate a matrix of vector of zeros whose size can be inferred from its location.</p></li>
@@ -305,10 +166,95 @@ The instataneous flow at time <span class="math inline">\(t\)</span> at a gauged
 <li><p>To illustrate some calculations intermediate evaluations variables are computed. To distinguish these a <span class="math inline">\(\tilde{}\)</span> is used. For example <span class="math inline">\(\tilde{q}_{rz}\)</span> is an intermediate value in the computation of <span class="math inline">\(q_{rz}\)</span>. In some cases these values may evolve across multiple steps. Where needed the superscript <span class="math inline">\(^\left[-\right]\)</span> will be used to indicate the value at the start of the step and <span class="math inline">\(^\left[+\right]\)</span> that at the end.</p></li>
 </ul>
 </div>
+<div id="time-delay-channel-routing" class="section level1">
+<h1 class="hasAnchor">
+<a href="#time-delay-channel-routing" class="anchor"></a>Time Delay Channel Routing</h1>
+<p>Using a time delay routing approach the discharge at the gauge <span class="math inline">\(g\)</span> at time <span class="math inline">\(t\)</span> can be computed from the inflows of the upstream points on the channel newtork <span class="math inline">\(x \in \mathcal{X}\)</span> and the time it takes the effect of the inflow to been seen at the gauge <span class="math inline">\(\delta_{x\rightarrow g}\)</span> as <span class="math display">\[
+q\left(g,t\right) = \int_{x\in\mathcal{X}} h\left(x,t-\delta_{x\rightarrow g}\right) dx
+\]</span></p>
+<p>The conceptualisation of Dynamic Topmodel breaks the channel network down into <span class="math inline">\(n\)</span> disjoint channel HRUs whose inflows contribute to the discharge at the gauge giving <span class="math display">\[
+q\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\delta_{x\rightarrow g}\right) dx = \sum\limits_{i=1}^{n}q_i\left(g,t\right)
+\]</span></p>
+<p>Consider a single channel HRU. It is assumed that:</p>
+<ol style="list-style-type: decimal">
+<li>The channel represents a single reach of river such the a spatial location <span class="math inline">\(x \in \mathcal{X}_{i}\)</span> can be replaced by a unique length <span class="math inline">\(l\)</span> from the head of the reach <span class="math inline">\(x_{i}\)</span>. The maximum value of <span class="math inline">\(l\)</span>, denoted <span class="math inline">\(\tilde{L}_{i}\)</span> is the lower of the length of the reach <span class="math inline">\(L_{i}\)</span> or the distance to the gauge from the head of the reach.</li>
+<li>There is no spatial pattern in the inflow to the reach such that <span class="math inline">\(h\left(x,t\right) = h_{i}\left(t\right) \forall x \in \mathcal{X}_i\)</span>
+</li>
+<li>There is a constant effective velocity <span class="math inline">\(v_i\)</span> within the <span class="math inline">\(i\)</span>th reach.</li>
+</ol>
+<p>Under these assumptions <span class="math display">\[
+q_i\left(g,t\right) = \int_{l=0}^{\tilde{L}_{i}}
+h\left(x_i-l,t-\delta_{x_i\rightarrow g} +
+\delta_{\hat{x}_i\rightarrow x_i +l}\right) dl
+= \int_{l=0}^{\tilde{L}_{i}}
+h_{i}\left(t-\delta_{x_i\rightarrow g} +
+\delta_{x_i\rightarrow x_i +l}\right) dl
+= \int_{l=0}^{\tilde{L}_{i}}
+h_{i}\left(t-\delta_{x_i\rightarrow g} + \frac{l}{v_i}\right)dl
+\]</span></p>
+<p>The integral over the length of the reach can know be rewritten in term of the time to the gauge giving</p>
+<p><span class="math display">\[
+q_i\left(g,t\right) = \int_{t-\delta_{\hat{x}_i\rightarrow g}}^{t-\delta_{\hat{x}_i\rightarrow g}+\frac{\tilde{L}_{i}}{v_i}}
+h_i \left(\tau\right) d\tau
+\]</span></p>
+</div>
 <div id="numerical-solution" class="section level1">
 <h1 class="hasAnchor">
 <a href="#numerical-solution" class="anchor"></a>Numerical Solution</h1>
-<p>The numerical solution implemented in the dynamic TOPMODEL code is based on solving the ODE(s) governing the evolution of each of the stores in the HRUs sequentially while approximating the flux between then.</p>
+<p>We start the numerical solution by seperating the integral up into time steps <span class="math inline">\(\Delta t\)</span>. Let <span class="math inline">\(k^{-}\)</span> be the smallest integer such that <span class="math display">\[
+t - k^{-}\Delta t \leq t-\delta_{\hat{x}_i\rightarrow g}
+\]</span> and <span class="math inline">\(k^{+}\)</span> be the largest integer such that <span class="math display">\[
+t - k^{+}\Delta t \geq t - \delta_{\hat{x}\rightarrow g}+\frac{\tilde{L}}{v_i}
+\]</span></p>
+<p><span class="math display">\[
+q_i\left(g,t\right) = \sum\limits_{j=k^{+}}^{k^{-}-1}\int_{t -
+  \left(j+1\right)\Delta t}^{t - j \Delta t}h_i \left(\tau\right) d\tau
+- \int_{t- k^{-}\Delta t}^{t-\delta_{\hat{x}_i\rightarrow g}}h_i\left(\tau\right) d\tau
+- \int_{t - \delta_{\hat{x}\rightarrow g}+\frac{\tilde{L}}{v_i}}^{t - k^{+}\Delta t}h_i\left(\tau\right) d\tau
+\]</span></p>
+<p>Consider next the output of the <code>dynatop</code> function. In this the value of the channel time series at the <span class="math inline">\(t\)</span> th timestep <span class="math inline">\(H_{i,t}\)</span> corresponds to <span class="math display">\[
+H_{i,t} = \frac{1}{\Delta t} \int_{t-\Delta t}^{t}
+\int_{x\in\mathcal{X}_i}h\left(x,\tau\right)dx d\tau
+= \frac{1}{\Delta t} \int_{t-\Delta t}^{t} L_{i} h_{i}\left(\tau\right) d\tau
+\]</span></p>
+<p>The numerical solution implemented in based on the representations and outputs of the dynamic TOPMODEL hillslope representation as applied in the function <code>dynatop</code>. This breaks the channel network down into <span class="math inline">\(n\)</span> disjoint channel HRUs, each representing a length of river giving</p>
+<p><span class="math display">\[
+\bar{q}\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}}
+\bar{h}\left(x,t-\delta_{x\rightarrow g}\right) dx = \sum\limits_{i=1}^{n}\bar{q}_i\left(g,t\right)
+\]</span></p>
+<p>Consider a single channel HRU that does not contain the gauge. Assume that:</p>
+<ol style="list-style-type: decimal">
+<li>The channel represents a single reach of river the spatial spatial location <span class="math inline">\(x\)</span> can be replaced by replaced by a unique length <span class="math inline">\(l\)</span> from the foot of the reach <span class="math inline">\(\hat{x}_{i}\)</span>.</li>
+<li>There is no spatial pattern in the inflow to the reach such that <span class="math inline">\(h\left(x,t\right) = h_{i}\left(t\right)\)</span>
+</li>
+<li>There is a constant effective velocity <span class="math inline">\(v_i\)</span> within the reach.</li>
+</ol>
+<p>Under these assumptions <span class="math display">\[
+\bar{q}_i\left(g,t\right) = \int_{l=0}^{L_{i}}
+\bar{h}\left(\hat{x}_i+l,t-\delta_{\hat{x}_i\rightarrow g} -
+\delta_{\hat{x}_i+l\rightarrow \hat{x}_i}\right) dl
+= \int_{l=0}^{L_{i}}
+\bar{h}_{i}\left(t-\delta_{\hat{x}_i\rightarrow g} -
+\delta_{\hat{x}_i+l\rightarrow \hat{x}_i}\right) dl
+= \int_{l=0}^{L_{i}}
+\bar{h}_{i}\left(t-\delta_{\hat{x}_i\rightarrow g} - \frac{l}{v_i}\right)dl
+\]</span></p>
+<p>The integral over the length of the reach can know be rewritten in term of the times to the outlet within the reach giving</p>
+<p><span class="math display">\[
+\bar{q}_i\left(g,t\right) = \int_{d=\delta_{\hat{x}_i\rightarrow
+g}}^{\delta_{\hat{x}_i\rightarrow g} +\frac{L_{i}}{v_i}}
+\bar{h}_i \left(t-\tau\right) d\tau
+\]</span></p>
+<p>The <code>dynatop</code> function returns the total inflow to a reach length averaged aver a discrete time step. The numerical solution approximates therefore in time and space.</p>
+<p>Firstly the input t This breaks the channel network down into <span class="math inline">\(n\)</span> disjoint channel HRUs, each representing a length of river giving</p>
+<p><span class="math display">\[
+\bar{q}\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}} \bar{h}\left(x,t-\delta_{x\rightarrow g}\right) dx
+\]</span> <!--
++ \bar{d}\left(x,t-\delta_{x\rightarrow g}\right)+ \bar{p}\left(x,t-\delta_{x\rightarrow g}\right) dx
+\]
+--></p>
+<p>integrated over the for the the whole lengthcode is based on solving the ODE(s) governing the evolution of each of the stores in the HRUs sequentially while approximating the flux between then.</p>
 <p>The following sections present the solutions to the governing equations in the order they are currently solved in the code for given time step <span class="math inline">\(\Delta t\)</span> (hr) starting at time <span class="math inline">\(t\)</span> over which the input fluxes (<span class="math inline">\(p\)</span> and <span class="math inline">\(e_p\)</span>) are taken to be constant.</p>
 <div id="step-1-initializing-the-channel-storage" class="section level2">
 <h2 class="hasAnchor">
@@ -535,7 +481,8 @@ c_n \exp\left(\lambda_nt\right)
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li><a href="#the-time-delay-approach">The time delay approach</a></li>
+<li><a href="#notation-and-nomenclature">Notation and nomenclature</a></li>
+      <li><a href="#time-delay-channel-routing">Time Delay Channel Routing</a></li>
       <li>
 <a href="#numerical-solution">Numerical Solution</a><ul class="nav nav-pills nav-stacked">
 <li><a href="#step-1-initializing-the-channel-storage">Step 1: Initializing the channel storage</a></li>

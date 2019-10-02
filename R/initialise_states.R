@@ -52,8 +52,8 @@ initialise_hillslope <- function(model,initial_recharge){
     
     hillslope$lsz <- q_0 # assume constant across catchment
     try({
-        hillslope$lsz <- solve( t(X_init)%*%X_init, t(X_init)%*%y_init )
-        names(hillslope$lsz) <- NULL
+        hillslope$lsz <- as.numeric( solve( t(X_init)%*%X_init, t(X_init)%*%y_init ) )
+        #        names(hillslope$lsz) <- NULL
         if(any( hillslope$lsz <= 0 )){
             stop("Solution for saturated zone initialisation produced negative or zero flows.\n Using constant recharge across catchment")
         }
