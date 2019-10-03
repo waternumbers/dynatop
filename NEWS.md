@@ -1,3 +1,22 @@
+# dynatop 0.0.3
+
+## New features
+- Added time delay histogram river routing. See vignettes on theory and use.
+
+## Bug fixes
+- Fixed some mass balance issues in dynatop relating to the saturated zone
+  solution in dynatop
+- Improved handling of case of infinite saturated zone deficit
+
+## Breaking changes
+- The model structure has been adapted to allow for the channel connectivity
+  and specification of gauges and inputs on the channel network. See the model
+  object vignette. If using dynatopGIS then rerun create_model.
+  
+## Other changes
+- Fixed minor formating issues in the vignettes
+- Added vignette on checking mass balances
+
 # dynatop 0.0.2
 
 ## Bug fixes

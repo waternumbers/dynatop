@@ -81,6 +81,7 @@ initialise_hillslope <- function(model,initial_recharge){
 
     ## unsaturated storage by inverse of eqn for q_uz in Beven & Wood 1983
     hillslope$suz <- hillslope$quz * hillslope$td * hillslope$ssz
+    hillslope$suz[hillslope$quz==0] <- 0 # catches case of 0 recharge which gives ssz of Inf and NaN values
 
     ## initialise root zone based on fraction constrained within 0,1
     hillslope$srz <- pmax( pmin( hillslope$srz_0, 1) ,0 ) * hillslope$srz_max
