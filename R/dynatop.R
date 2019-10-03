@@ -64,6 +64,7 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
         channel$store <- obs_data[it,channel$precip_input]*ts$step
 
         ## Step 2: Distribute any surface storage downslope for next time step
+        
   	if(any(hillslope$ex > 0)){
             
             ## solve eigen routing
@@ -73,13 +74,11 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
             ## iv <- sum(diag(c(hillslope$area,channel$area)) %*% ex_in)
             ex_out <- eigen_routing_step(ex_in,ex_eigen,ts$step)
             ex_out <- pmax(0,ex_out) ## shouldn't be any negative values but...
-            ## fv <- sum(diag(c(hillslope$area,channel$area)) %*% ex_out)
-            ## 100*abs(iv-fv)/iv
             hillslope$ex <- ex_out[ex_idx]
             ## shouldn't be any negative values but sometimes there are...
             channel$store <- channel$store + ex_out[-ex_idx]
         }
-
+        
         ## set the inputs to the hillslope
         precip <- obs_data[it,hillslope$precip_input]
         pet <- obs_data[it,hillslope$pet_input]
@@ -97,6 +96,7 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
 
             ## split root zone flow
             saturated_index <- hillslope$ssz <= 0 # which areas are saturated
+            
             hillslope$ex[saturated_index] <- hillslope$ex[saturated_index] +
                 integral_qrz[saturated_index] # in saturated zone goes to surface storage
             hillslope$suz[!saturated_index] <- hillslope$suz[!saturated_index] +
@@ -120,7 +120,7 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
             ## using precalculated inter-group splits
 
             ## Solve the ODE for discharge (ignores limit in flow due to saturation
-            ## browser()
+            
             ## removeed deSolve:: to test for error
             res <- deSolve::ode(y=hillslope$lsz,
                        times=seq(0, ts$sub_step, length.out=2),
@@ -132,7 +132,7 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
 
             res <- res[-1,-1]; names(res) <- NULL # trim to get only final values and not time
             hillslope$lsz <- res # not due to solution above the equality lsz<=lszmax should hold
-            #browser()
+      
             ## work out is there is flow to excess due to limit on lsz
             qsz <- pmax(0, hillslope$quz + K_sz %*% hillslope$lsz) * (hillslope$lsz >= hillslope$lsz_max)
             
@@ -142,10 +142,10 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
 
             ## solve for new storage
             tilde_ssz <- hillslope$ssz + grad_ssz*ts$sub_step
-            hillslope_ssz <- pmax(0,tilde_ssz)
+            hillslope$ssz <- pmax(0,tilde_ssz)
 
             ## add extra to surface excess - include component from saturating storage
-            hillslope$ex <- hillslope$ex + (hillslope_ssz - tilde_ssz) + qsz*ts$sub_step
+            hillslope$ex <- hillslope$ex + pmax(0,hillslope$ssz - tilde_ssz,na.rm=TRUE) + qsz*ts$sub_step # pmax handles case when ssz == Inf
 
             ## add flow to channel
             channel$store <- channel$store + (FA_sz %*% hillslope$lsz)*ts$sub_step/channel$area
