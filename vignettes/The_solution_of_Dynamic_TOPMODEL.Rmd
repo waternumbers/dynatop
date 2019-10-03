@@ -1,6 +1,12 @@
 ---
 title: "The Numerical Solution of Dynamic TOPMODEL"
-output: rmarkdown::html_vignette
+output: 
+  bookdown::html_document2:
+    number_sections: false
+    toc: true
+    toc_depth: 2
+pkgdown:
+  as_is: true
 vignette: >
   %\VignetteIndexEntry{The Numerical Solution of Dynamic TOPMODEL}
   %\VignetteEngine{knitr::rmarkdown}
@@ -8,6 +14,7 @@ vignette: >
 ---
 
 ```{r, include = FALSE}
+#output: rmarkdown::html_vignette
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
@@ -23,36 +30,36 @@ a number of potential changes to the code which may improves it.
 Consider two types of Hydrological response unit (HRU). The first termed
 "hill slope" solves the surface, root, unsaturated and saturated zones
 for 'similar' areas of the catchment a each time step.
-Table [tab:hru_notation] outlines the notation used for describing a
+Table \@ref(tab:hru-notation) outlines the notation used for describing a
 "hill slope" HRU.
 
 
-  Quantity type                                   Symbol             Description                                                unit
-  ------------------------------------ ----------------------------- ---------------------------------------------------- -----------------
-  Storage                                        $s_{ex}$            Surface excess storage                                       m
-                                                 $s_{rz}$            Root zone storage                                            m
-                                                 $s_{uz}$            Unsaturated zone storage                                     m
-                                                 $s_{sz}$            Saturated zone storage deficit                               m
-  Vertical fluxes within HRU                     $q_{rz}$            Flow from Root to unsaturated zone                    (m$^3$/s)/m$^2$
-                                                 $q_{uz}$            Flow from unsaturated to saturated zone               (m$^3$/s)/m$^2$
-                                                 $q_{sz}$            Flow from saturated zone to surface excess storage    (m$^3$/s)/m$^2$
-  Lateral down slope fluxes from HRU             $l_{ex}$            Total lateral flux from surface excess                (m$^3$/s)/m$^2$
-                                                 $l_{sz}$            Total lateral flux from saturated zone                (m$^3$/s)/m$^2$
-  Other HRU properties                               a               Area                                                       m$^2$
-                                        $w^{\left[i,j\right]}_{ex}$  fraction of $l_{ex}$ going from $j$th to $i$th HRU           -
-                                        $w^{\left[i,j\right]}_{sz}$  fraction of $l_{sz}$ going from $j$th to $i$th HRU           -
-                                                $s_{rzmax}$          maximum root zone storage                                    m
-                                                   $T_d$             Unsaturated zone time constant per m of saturated           h/m
-                                                                     storage deficit.
-                                                 $T_{ex}$            Surface excess storage time constant                         h
-                                                    $m$              Exponential transmissivity constant                                                -
+  Quantity type                                   Symbol             Description                                                                 unit
+  ------------------------------------ ----------------------------- -------------------------------------------------------------------- -----------------
+  Storage                                        $s_{ex}$            Surface excess storage                                                       m
+                                                 $s_{rz}$            Root zone storage                                                            m
+                                                 $s_{uz}$            Unsaturated zone storage                                                     m
+                                                 $s_{sz}$            Saturated zone storage deficit                                               m
+  Vertical fluxes within HRU                     $q_{rz}$            Flow from Root to unsaturated zone                                    (m$^3$/s)/m$^2$
+                                                 $q_{uz}$            Flow from unsaturated to saturated zone                               (m$^3$/s)/m$^2$
+                                                 $q_{sz}$            Flow from saturated zone to surface excess storage                    (m$^3$/s)/m$^2$
+  Lateral down slope fluxes from HRU             $l_{ex}$            Total lateral flux from surface excess                                (m$^3$/s)/m$^2$
+                                                 $l_{sz}$            Total lateral flux from saturated zone                                (m$^3$/s)/m$^2$
+  Other HRU properties                               a               Area                                                                        m$^2$
+                                        $w^{\left[i,j\right]}_{ex}$  fraction of $l_{ex}$ going from $j$th to $i$th HRU                            -
+                                        $w^{\left[i,j\right]}_{sz}$  fraction of $l_{sz}$ going from $j$th to $i$th HRU                            -
+                                                $s_{rzmax}$          maximum root zone storage                                                     m
+                                                   $T_d$             Unsaturated zone time constant per m of saturated storage deficit.           h/m
+                                                 $l_{szmax}$           Maximum lateral flux from saturated zone                              (m$^3$/s)/m$^2$         
+                                                 $T_{ex}$            Surface excess storage time constant                                          h
+                                                    $m$              Exponential transmissivity constant                                           -     -
 
-  Table: Outline of notation for describing "hill slope"
-  HRUs[]{data-label="tab:hru_notation"}
+  Table: (\#tab:hru-notation) Outline of notation for describing "hill slope"
+  HRUs
 
 The second, termed "chanel" represents the inflow to a length of river
 channel. As such it acts as a sink collecting water from the "hill slope"
-HRUs over the course of a time step. Table [tab:ch\_notation] outlines
+HRUs over the course of a time step. Table \@ref(tab:ch-notation) outlines
 the notation for channel HRU.
 
                                    Symbol             Description                                                                 unit
@@ -62,8 +69,8 @@ the notation for channel HRU.
                           $f^{\left[k,j\right]}_{ex}$  fraction of $l_{ex}$ going from $j$th hill slope HRU to $k$th channel HRU      -
                           $f^{\left[k,j\right]}_{sz}$  fraction of $l_{sz}$ going from $j$th hill slope HRU to $k$th HRU              -
 
-  Table: Outline of notation for describing "channel"
-  HRUs[]{data-label="tab:ch_notation"}
+  Table: (\#tab:ch-notation) Outline of notation for describing "channel"
+  HRUs
 
 
 From the above a mass conservative system will redirect all flows within the
@@ -80,7 +87,7 @@ vary by HRU.
     $p$    Precipitation rate              m/h
    $e_p$   Potential evapotranspiration    m/h
 
-  Table: Eternal inputs to HRUs[]{data-label="tab:inputs"}
+  Table: (\#tab:inputs) Eternal inputs to HRUs
 
 Later we make use of the following:
 
