@@ -62,7 +62,13 @@
       <a href="../articles/Selected_References.html">Selected References</a>
     </li>
     <li>
+      <a href="../articles/The_Model_Object.html">The Model Object</a>
+    </li>
+    <li>
       <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Numerical Solution of Dynamic TOPMODEL</a>
+    </li>
+    <li>
+      <a href="../articles/Time_Delay_Channel_Routing.html">Time Delay Channel Routing</a>
     </li>
   </ul>
 </li>
@@ -122,39 +128,7 @@
 <a class="sourceLine" id="cb3-2" title="2"><span class="co">#&gt; [1] "hillslope"    "channel"      "param"        "Wex"         </span></a>
 <a class="sourceLine" id="cb3-3" title="3"><span class="co">#&gt; [5] "Wsat"         "Fex"          "Fsat"         "point_inflow"</span></a>
 <a class="sourceLine" id="cb3-4" title="4"><span class="co">#&gt; [9] "gauge"</span></a></code></pre></div>
-<p>which are described in Table &lt;&gt;. The <a href="https://waternumbers.github.io/dynatopGIS">dynatopGIS</a> package can be used for constructing models and contains further details.</p>
-<table class="table">
-<thead><tr class="header">
-<th align="left">name</th>
-<th align="left">Description</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="left">hillslope</td>
-<td align="left">data frame of hill slope HRU unit descriptions</td>
-</tr>
-<tr class="even">
-<td align="left">channel</td>
-<td align="left">data frame of channel HRU unit descriptions</td>
-</tr>
-<tr class="odd">
-<td align="left">Wsat</td>
-<td align="left">Matrix controlling saturated zone redistribution between hill slope HRUs</td>
-</tr>
-<tr class="even">
-<td align="left">Wex</td>
-<td align="left">Matrix controlling surface excess redistribution between hill slope HRUs</td>
-</tr>
-<tr class="odd">
-<td align="left">Fsat</td>
-<td align="left">Matrix controlling saturated zone redistribution between hill slope and channel HRUs</td>
-</tr>
-<tr class="even">
-<td align="left">Fex</td>
-<td align="left">Matrix controlling surface excess redistribution between hill slope and channel HRUs</td>
-</tr>
-</tbody>
-</table>
+<p>which are described in <a href="https://waternumbers.github.io/dynatop/articles/The_Model_Object.html">associated vignette</a>. The <a href="https://waternumbers.github.io/dynatopGIS">dynatopGIS</a> package can be used for constructing models.</p>
 <div id="checking-the-model" class="section level2">
 <h2 class="hasAnchor">
 <a href="#checking-the-model" class="anchor"></a>Checking the model</h2>
