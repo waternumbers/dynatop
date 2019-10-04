@@ -5,8 +5,9 @@
 #' @param model a dynamic TOPMODEL list object
 #' @param channel_inflows an xts object of flows to the channels
 #' @param diffuse_inflows an xts object of diffuse inflows
-#' @param inflow_locations a list of names vectored specifying the initial conditions
-#' 
+#' @param point_inflows and xts object of point inflows
+#' @param initial_conditions a list of initial conditions
+#'
 #' @return An xts object of flows at the guage locations
 #'
 #' @details Timings are taken from the channel_inflows, other inputs are ignored unless there timings match
@@ -15,7 +16,7 @@ time_delay_routing <- function(model,channel_inflows,
                                point_inflows=NULL,
                                diffuse_inflows=NULL,
                                initial_conditions=list()){
-    
+
     ## check model including channel
     check_model(model,check_channel=TRUE,verbose=FALSE)
 
@@ -63,13 +64,13 @@ time_delay_routing <- function(model,channel_inflows,
             ic[[ii]][idx] <- initial_conditions[[ii]][idx]
         }
     }
-    
+
     ## add diffuse inflows to channel_inflows
     for(ii in intersect(names(channel_inflows), names(diffuse_inflows))){
         channel_inflows[,ii] <- channel_inflows[,ii] + diffuse_inflows[,ii]
         ic$channel_inflows[ii] <- ic$channel_inflows[ii] + ic$diffuse_inflows[ii]
     }
-    
+
     ## initialise the output
     out <- reclass( matrix(NA,nrow(channel_inflows),
                            nrow(model$gauges)), match.to=channel_inflows)
@@ -77,12 +78,12 @@ time_delay_routing <- function(model,channel_inflows,
 
     ## Compute the time delays
     time_of_travel <- compute_time_delay(model)
-    
+
     ## Loop gauges
     for(ii in model$gauge$name){
         ## initialise the point - set to 0
         out[,ii] <- 0
-        
+
         ## loop channel+diffuse upstream
         upstream_channels <- colnames(time_of_travel$reach_to_gauge)
         upstream_channels <- upstream_channels[is.finite(time_of_travel$reach_to_gauge[ii,])]
@@ -146,6 +147,6 @@ time_delay_routing <- function(model,channel_inflows,
                                           init=ic$channel_inflows[jj])
         }
     }
-    
+
     return(out)
 }

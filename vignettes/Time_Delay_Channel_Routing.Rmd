@@ -76,17 +76,131 @@ $n$ disjoint channel HRUs whose inflows contribute to the discharge at the
 gauge giving
 \[
 q\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}}
-h\left(x,t-\delta_{x\rightarrow g}\right) dx = \sum\limits_{i=1}^{n}q_i\left(g,t\right)
+h\left(x,t-\delta_{x\rightarrow g}\right) dx 
 \]
 
-Consider a single channel HRU. It is assumed that:
+While the instantaneous discharge is usefull it may be more consistent with the conceptualisation of the hillslope HRU model, and with a mass conservative apporach, to model the integral of the discharge over a time step $\Delta t$. In this case a similar relationship holds for the average discharge over the time step in that
+\[
+\frac{1}{\Delta t} \int_{0}^{\Delta t}q\left(g,t-\tau\right) d\tau = \sum\limits_{i=1}^{n} \frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\tau-\delta_{x\rightarrow g}\right) dx d\tau
+\]
 
-1. The channel represents a single reach of river such the a spatial location
-   $x \in \mathcal{X}_{i}$ can be replaced by a unique length $l$ from the
-   head of the reach $x_{i}$. The maximum value of $l$, denoted
-   $\tilde{L}_{i}$ is the lower of the length of the reach $L_{i}$ or the
-   distance to the gauge from the head of the reach.
-2. There is no spatial pattern in the inflow to the reach such that
+# Numerical Solution
+
+Consider the contribution to the gauges flow from a single channel HRU
+\[
+\frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\tau-\delta_{x\rightarrow g}\right) dx d\tau
+\]
+
+To further derive the numerical solution a number of assumpptions are made.
+The first assumption is that the channel represents a single reach of river such the a spatial location $x \in \mathcal{X}_{i}$ can be replaced by a unique length $l$ from the head of the reach. The maximum value of $l$, denoted$\tilde{L}$, is the lower of the length of the reach $L$ or the distance to the gauge from the head of the reach.
+The contribution of the channel HRU to the gauged flow can be expressed as
+\[
+\frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{0}^{\tilde{L}}
+h\left(l,t-\tau-\delta_{l\rightarrow g}\right) dl d\tau
+\]
+
+The second assumption is that there is a constant effecive velocity $v$ withn the reach. The time delay $\delta_{l\rightarrow g}$ can then be written in terms of the time delay for the head of the reach  $\delta_{0\rightarrow g}$ as
+\[
+\delta_{l\rightarrow g} = \delta_{0\rightarrow g} - lv^{-1}
+\]
+The contribution of the channel HRU to the average discharge at the gauge then becomes
+\[
+\frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{0}^{\tilde{L}}
+h\left(l,t-\tau-\delta_{0\rightarrow g}+lv^{-1}\right) dl d\tau
+\]
+
+
+
+
+
+Consider a single channel HRU. Currently for each time step of the model the `dynatop` function returns
+\[
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\tau \right) dx d\tau
+\]
+Taking the time step average inflow at point $x$ as
+\[
+\bar{h}\left(x,t\right) = \frac{1}{\Delta t}\int_{0}^{\Delta t}h\left(x,t-\tau \right) d\tau
+\]
+the output of `dynatop` becomes
+\[
+\int_{x\in\mathcal{X}_{i}}
+\bar{h}\left(x,t \right) dx
+\]
+and the contribution of the channel HRU to the average discharge at the gauge
+\[
+\int_{x\in\mathcal{X}_{i}}
+\bar{h}\left(x,t-\delta_{x\rightarrow g}\right) dx
+\]
+
+
+To further derive the numerical solution a number of assumpptions are made.
+
+The first assumption is that the channel represents a single reach of river such the a spatial location $x \in \mathcal{X}_{i}$ can be replaced by a unique length $l$ from the head of the reach. The maximum value of $l$, denoted$\tilde{L}$, is the lower of the length of the reach $L$ or the distance to the gauge from the head of the reach.
+The output of `dynatop` can thus be expressed as
+\[
+\int_{0}^{L}
+\bar{h}\left(l,t \right) dl
+\]
+and the contribution of the channel HRU to the average discharge at the gauge
+\[
+\int_{0}^{\tilde{L}}
+\bar{h}\left(l,t-\delta_{l\rightarrow g}\right) dl
+\]
+
+
+The second assumption is that there is no spatial pattern in the inflow to the reach so that there is  some spatialy constant inflow $\bar{\bar{h}}\left(t\right)$ that satifies
+\[
+L \bar{\bar{h}}\left(t\right) = \int_{0}^{L}
+\bar{h}\left(l,t \right) dl
+\]
+The contribution of the channel HRU to the average discharge at the gauge then becomes
+\[
+\int_{0}^{\tilde{L}}
+\bar{\bar{h}}\left(t-\delta_{l\rightarrow g}\right) dl
+\]
+
+The third assumption is that there is a constant effecive velocity $v$ withn the reach. The time delay $\delta_{l\rightarrow g}$ can then be written in terms of the time delay for the head of the reach  $\delta_{0\rightarrow g}$ as
+\[
+\delta_{l\rightarrow g} = \delta_{0\rightarrow g} - lv^{-1}
+\]
+The contribution of the channel HRU to the average discharge at the gauge then becomes
+\[
+\int_{0}^{\tilde{L}}
+\bar{\bar{h}}\left(t-\delta_{0\rightarrow g}+lv^{-1}\right) dl
+\]
+
+Following the application of these assumption the integral of the spatial domaiin is in effect an integral over time. This integral requires approximation given that values of $\bar{\bar{h}}\left(t\right)$ are available only at intervals of $\Delta t$.
+
+Let $d_{min}$ be the largest and $d_{max}$ the smallest integers such that $d_{min} < d_{max}$ and
+\[
+t-d_{max}\Delta t \leq
+t-\delta_{0\rightarrow g} <
+t-\delta_{0\rightarrow g}+\tilde{L}v^{-1} \leq
+t-d_{min}\Delta t
+\]
+
+Approximating linearly between the known values of $\bar{\bar{h}}\left(t\right)$ gives
+\[
+\int_{0}^{\tilde{L}}
+\bar{\bar{h}}\left(t-\delta_{0\rightarrow g}+lv^{-1}\right) dl
+=
+\sum\limits_{j=d_{min}}^{d_{max}-1} \int_{0}^{1} \lambda \bar{\bar{h}}\left(t-j\Delta t\right) + \left(1-lambda\right)\bar{\bar{h}}\left(t-\left(j+1\right)\Delta t\right)
+\]
+
+
+Take $\Delta l = v\Delta t$. Let $d_{min}$ be the largest and $d_{max}$ the smallest integers such that $d_{min} < d_{max}$ and
+\[
+t-d_{max}v^{-1}\Delta l \leq
+t-\delta_{0\rightarrow g} <
+t-\delta_{0\rightarrow g}+\tilde{L}v^{-1} \leq
+t-d_{min}v^{-1}\Delta l
+\]
+
+
    $h\left(x,t\right) = h_{i}\left(t\right) \forall x \in \mathcal{X}_i$
 3. There is a constant effective velocity $v_i$ within the $i$th reach.
 
