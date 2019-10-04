@@ -12,9 +12,11 @@ time_delay_routing(model, channel_inflows, point_inflows = NULL,
 
 \item{channel_inflows}{an xts object of flows to the channels}
 
+\item{point_inflows}{and xts object of point inflows}
+
 \item{diffuse_inflows}{an xts object of diffuse inflows}
 
-\item{inflow_locations}{a list of names vectored specifying the initial conditions}
+\item{initial_conditions}{a list of initial conditions}
 }
 \value{
 An xts object of flows at the guage locations

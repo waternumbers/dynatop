@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Time Delay Channel Routing • dynatop</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Time Delay Channel Routing">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
@@ -30,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.3</span>
       </span>
     </div>
 
@@ -38,7 +39,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fa fa-home fa-lg"></span>
+    <span class="fas fa fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -56,10 +57,16 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/Hillslope_HRU_Mass_Balance.html">Hillslope HRU mass balance checks</a>
+    </li>
+    <li>
       <a href="../articles/Performance_Evaluation.html">Code Performance for larger simulations</a>
     </li>
     <li>
       <a href="../articles/Selected_References.html">Selected References</a>
+    </li>
+    <li>
+      <a href="../articles/The_Model_Object.html">The Model Object</a>
     </li>
     <li>
       <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Numerical Solution of Dynamic TOPMODEL</a>
@@ -76,7 +83,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/waternumbers/dynatop">
-    <span class="fa fa-github fa-lg"></span>
+    <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -89,6 +96,7 @@
 <!--/.navbar -->
 
       
+
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
@@ -174,15 +182,70 @@ q\left(g,t\right) = \int_{x\in\mathcal{X}} h\left(x,t-\delta_{x\rightarrow g}\ri
 \]</span></p>
 <p>The conceptualisation of Dynamic Topmodel breaks the channel network down into <span class="math inline">\(n\)</span> disjoint channel HRUs whose inflows contribute to the discharge at the gauge giving <span class="math display">\[
 q\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}}
-h\left(x,t-\delta_{x\rightarrow g}\right) dx = \sum\limits_{i=1}^{n}q_i\left(g,t\right)
+h\left(x,t-\delta_{x\rightarrow g}\right) dx 
 \]</span></p>
-<p>Consider a single channel HRU. It is assumed that:</p>
-<ol style="list-style-type: decimal">
-<li>The channel represents a single reach of river such the a spatial location <span class="math inline">\(x \in \mathcal{X}_{i}\)</span> can be replaced by a unique length <span class="math inline">\(l\)</span> from the head of the reach <span class="math inline">\(x_{i}\)</span>. The maximum value of <span class="math inline">\(l\)</span>, denoted <span class="math inline">\(\tilde{L}_{i}\)</span> is the lower of the length of the reach <span class="math inline">\(L_{i}\)</span> or the distance to the gauge from the head of the reach.</li>
-<li>There is no spatial pattern in the inflow to the reach such that <span class="math inline">\(h\left(x,t\right) = h_{i}\left(t\right) \forall x \in \mathcal{X}_i\)</span>
-</li>
-<li>There is a constant effective velocity <span class="math inline">\(v_i\)</span> within the <span class="math inline">\(i\)</span>th reach.</li>
-</ol>
+<p>While the instantaneous discharge is usefull it may be more consistent with the conceptualisation of the hillslope HRU model, and with a mass conservative apporach, to model the integral of the discharge over a time step <span class="math inline">\(\Delta t\)</span>. In this case a similar relationship holds for the average discharge over the time step in that <span class="math display">\[
+\frac{1}{\Delta t} \int_{0}^{\Delta t}q\left(g,t-\tau\right) d\tau = \sum\limits_{i=1}^{n} \frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\tau-\delta_{x\rightarrow g}\right) dx d\tau
+\]</span></p>
+</div>
+<div id="numerical-solution" class="section level1">
+<h1 class="hasAnchor">
+<a href="#numerical-solution" class="anchor"></a>Numerical Solution</h1>
+<p>Consider a single channel HRU. Currently for each time step of the model the <code>dynatop</code> function returns <span class="math display">\[
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\tau \right) dx d\tau
+\]</span> Taking the time step average inflow at point <span class="math inline">\(x\)</span> as <span class="math display">\[
+\bar{h}\left(x,t\right) = \frac{1}{\Delta t}\int_{0}^{\Delta t}h\left(x,t-\tau \right) d\tau
+\]</span> the output of <code>dynatop</code> becomes <span class="math display">\[
+\int_{x\in\mathcal{X}_{i}}
+\bar{h}\left(x,t \right) dx
+\]</span> and the contribution of the channel HRU to the average discharge at the gauge <span class="math display">\[
+\int_{x\in\mathcal{X}_{i}}
+\bar{h}\left(x,t-\delta_{x\rightarrow g}\right) dx
+\]</span></p>
+<p>To further derive the numerical solution a number of assumpptions are made.</p>
+<p>The first assumption is that the channel represents a single reach of river such the a spatial location <span class="math inline">\(x \in \mathcal{X}_{i}\)</span> can be replaced by a unique length <span class="math inline">\(l\)</span> from the head of the reach. The maximum value of <span class="math inline">\(l\)</span>, denoted<span class="math inline">\(\tilde{L}\)</span>, is the lower of the length of the reach <span class="math inline">\(L\)</span> or the distance to the gauge from the head of the reach. The output of <code>dynatop</code> can thus be expressed as <span class="math display">\[
+\int_{0}^{L}
+\bar{h}\left(l,t \right) dl
+\]</span> and the contribution of the channel HRU to the average discharge at the gauge <span class="math display">\[
+\int_{0}^{\tilde{L}}
+\bar{h}\left(l,t-\delta_{l\rightarrow g}\right) dl
+\]</span></p>
+<p>The second assumption is that there is no spatial pattern in the inflow to the reach so that there is some spatialy constant inflow <span class="math inline">\(\bar{\bar{h}}\left(t\right)\)</span> that satifies <span class="math display">\[
+L \bar{\bar{h}}\left(t\right) = \int_{0}^{L}
+\bar{h}\left(l,t \right) dl
+\]</span> The contribution of the channel HRU to the average discharge at the gauge then becomes <span class="math display">\[
+\int_{0}^{\tilde{L}}
+\bar{\bar{h}}\left(t-\delta_{l\rightarrow g}\right) dl
+\]</span></p>
+<p>The third assumption is that there is a constant effecive velocity <span class="math inline">\(v\)</span> withn the reach. The time delay <span class="math inline">\(\delta_{l\rightarrow g}\)</span> can then be written in terms of the time delay for the head of the reach <span class="math inline">\(\delta_{0\rightarrow g}\)</span> as <span class="math display">\[
+\delta_{l\rightarrow g} = \delta_{0\rightarrow g} - lv^{-1}
+\]</span> The contribution of the channel HRU to the average discharge at the gauge then becomes <span class="math display">\[
+\int_{0}^{\tilde{L}}
+\bar{\bar{h}}\left(t-\delta_{0\rightarrow g}+lv^{-1}\right) dl
+\]</span></p>
+<p>Following the application of these assumption the integral of the spatial domaiin is in effect an integral over time. This integral requires approximation given that values of <span class="math inline">\(\bar{\bar{h}}\left(t\right)\)</span> are available only at intervals of <span class="math inline">\(\Delta t\)</span>.</p>
+<p>Let <span class="math inline">\(d_{min}\)</span> be the largest and <span class="math inline">\(d_{max}\)</span> the smallest integers such that <span class="math inline">\(d_{min} &lt; d_{max}\)</span> and <span class="math display">\[
+t-d_{max}\Delta t \leq
+t-\delta_{0\rightarrow g} &lt;
+t-\delta_{0\rightarrow g}+\tilde{L}v^{-1} \leq
+t-d_{min}\Delta t
+\]</span></p>
+<p>Approximating linearly between the known values of <span class="math inline">\(\bar{\bar{h}}\left(t\right)\)</span> gives <span class="math display">\[
+\int_{0}^{\tilde{L}}
+\bar{\bar{h}}\left(t-\delta_{0\rightarrow g}+lv^{-1}\right) dl
+=
+\sum\limits_{j=d_{min}}^{d_{max}-1} \int_{0}^{1} \lambda \bar{\bar{h}}\left(t-j\Delta t\right) + \left(1-lambda\right)\bar{\bar{h}}\left(t-\left(j+1\right)\Delta t\right)
+\]</span></p>
+<p>Take <span class="math inline">\(\Delta l = v\Delta t\)</span>. Let <span class="math inline">\(d_{min}\)</span> be the largest and <span class="math inline">\(d_{max}\)</span> the smallest integers such that <span class="math inline">\(d_{min} &lt; d_{max}\)</span> and <span class="math display">\[
+t-d_{max}v^{-1}\Delta l \leq
+t-\delta_{0\rightarrow g} &lt;
+t-\delta_{0\rightarrow g}+\tilde{L}v^{-1} \leq
+t-d_{min}v^{-1}\Delta l
+\]</span></p>
+<p><span class="math inline">\(h\left(x,t\right) = h_{i}\left(t\right) \forall x \in \mathcal{X}_i\)</span> 3. There is a constant effective velocity <span class="math inline">\(v_i\)</span> within the <span class="math inline">\(i\)</span>th reach.</p>
 <p>Under these assumptions <span class="math display">\[
 q_i\left(g,t\right) = \int_{l=0}^{\tilde{L}_{i}}
 h\left(x_i-l,t-\delta_{x_i\rightarrow g} +
@@ -199,9 +262,9 @@ q_i\left(g,t\right) = \int_{t-\delta_{\hat{x}_i\rightarrow g}}^{t-\delta_{\hat{x
 h_i \left(\tau\right) d\tau
 \]</span></p>
 </div>
-<div id="numerical-solution" class="section level1">
+<div id="numerical-solution-1" class="section level1">
 <h1 class="hasAnchor">
-<a href="#numerical-solution" class="anchor"></a>Numerical Solution</h1>
+<a href="#numerical-solution-1" class="anchor"></a>Numerical Solution</h1>
 <p>We start the numerical solution by seperating the integral up into time steps <span class="math inline">\(\Delta t\)</span>. Let <span class="math inline">\(k^{-}\)</span> be the smallest integer such that <span class="math display">\[
 t - k^{-}\Delta t \leq t-\delta_{\hat{x}_i\rightarrow g}
 \]</span> and <span class="math inline">\(k^{+}\)</span> be the largest integer such that <span class="math display">\[
@@ -477,14 +540,16 @@ c_n \exp\left(\lambda_nt\right)
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+
         <div id="tocnav">
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
 <li><a href="#notation-and-nomenclature">Notation and nomenclature</a></li>
       <li><a href="#time-delay-channel-routing">Time Delay Channel Routing</a></li>
+      <li><a href="#numerical-solution">Numerical Solution</a></li>
       <li>
-<a href="#numerical-solution">Numerical Solution</a><ul class="nav nav-pills nav-stacked">
+<a href="#numerical-solution-1">Numerical Solution</a><ul class="nav nav-pills nav-stacked">
 <li><a href="#step-1-initializing-the-channel-storage">Step 1: Initializing the channel storage</a></li>
       <li><a href="#step-2-surface-excess-redistribution">Step 2: Surface excess redistribution</a></li>
       <li><a href="#step-3-root-zone">Step 3: Root Zone</a></li>
@@ -506,17 +571,20 @@ c_n \exp\left(\lambda_nt\right)
 </div>
 
 
+
       <footer><div class="copyright">
   <p>Developed by Paul Smith, Peter Metcalfe.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
+
       </footer>
 </div>
 
   
+
 
   </body>
 </html>
