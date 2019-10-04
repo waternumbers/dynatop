@@ -2,6 +2,7 @@
 
 export(check_model)
 export(check_obs)
+export(compute_time_delay)
 export(dynatop)
 export(eigen_routing_setup)
 export(eigen_routing_step)

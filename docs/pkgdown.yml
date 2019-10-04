@@ -1,9 +1,10 @@
-pandoc: '2.7'
+pandoc: 2.7.3
 pkgdown: 1.4.1
 pkgdown_sha: ~
 articles:
+  Checks_of_the_Hillslope_HRU: Checks_of_the_Hillslope_HRU.html
+  Checks_of_the_Time_Delay_Routing: Checks_of_the_Time_Delay_Routing.html
   dynatop: dynatop.html
-  Hillslope_HRU_Mass_Balance: Hillslope_HRU_Mass_Balance.html
   Performance_Evaluation: Performance_Evaluation.html
   Selected_References: Selected_References.html
   The_Model_Object: The_Model_Object.html
