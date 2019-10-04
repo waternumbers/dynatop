@@ -33,21 +33,10 @@ elements
 ```{r model_parts}
 names(brompton$model)
 ```
-which are described in Table <>. The [dynatopGIS](https://waternumbers.github.io/dynatopGIS) package
-can be used for constructing models and contains further details.
-```{r, model_table, echo=FALSE, results='asis'}
-tmp <- data.frame(name=character(0),
-                  Description=character(0),
-                  stringsAsFactors=FALSE)
-tmp[1,] <- c("hillslope","data frame of hill slope HRU unit descriptions")
-tmp[2,] <- c("channel","data frame of channel HRU unit descriptions")
-tmp[3,] <- c("Wsat","Matrix controlling saturated zone redistribution between hill slope HRUs")
-tmp[4,] <- c("Wex","Matrix controlling surface excess redistribution between hill slope HRUs")
-tmp[5,] <- c("Fsat","Matrix controlling saturated zone redistribution between hill slope and channel HRUs")
-tmp[6,] <- c("Fex","Matrix controlling surface excess redistribution between hill slope and channel HRUs")
-
-knitr::kable(tmp)
-```
+which are described in [associated
+vignette](https://waternumbers.github.io/dynatop/articles/The_Model_Object.html). The
+[dynatopGIS](https://waternumbers.github.io/dynatopGIS) package
+can be used for constructing models. 
 
 ## Checking the model
 The structure of the model can be tested:
