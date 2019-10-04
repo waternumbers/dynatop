@@ -4,10 +4,14 @@
 \alias{check_model}
 \title{Function to check the model to be used in a dynamic TOPMODEL run}
 \usage{
-check_model(model)
+check_model(model, check_channel = TRUE, verbose = FALSE)
 }
 \arguments{
 \item{model}{a dynamic TOPMODEL list object}
+
+\item{check_channel}{flag indicating is additional checks for channel routing are to be carried out}
+
+\item{verbose}{if set prints out further information}
 }
 \value{
 NULL if tests passed, otherwise fails

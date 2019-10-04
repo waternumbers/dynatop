@@ -1,0 +1,196 @@
+---
+title: "Checks of the Time Delay Routing"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Checks of the Time Delay Routing}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+The purpose of this vignette is to demonstrate somesimulation checks on the
+computation of time delay routing. It provides both a check for
+the current implimentation of the code and a demonstration for those that may
+be developing more complex systems and want to perform their own test.
+
+The basis of the simulations used in the test catchment contained within the
+package which is loaded with
+```{r, setup}
+rm(list=ls())
+library(dynatop)
+data("test_catchment")
+```
+# An initial inflow series
+Generate an initial inflow series of computed by simulating the test catchment
+```{r initialise_state_func}
+sim_inflows <- dynatop(test_catchment$model,test_catchment$obs,0.0015)$channel_input
+plot(sim_inflows,title="Basic inflows set")
+```
+
+# Check the time delays
+```{r time_delay}
+compute_time_delay(test_catchment$model)
+```
+
+# Check the mass conservation
+These simulations aim to check the mass conservation of the model. 
+
+## Channel inflows
+Firstly we do the channel inflows.
+```{r mb_channel}
+## make empty point inflows
+pf <- sim_inflows; pf[] <- 0
+names(pf) <- c("point_1","point_2")
+
+## High velocity - everything comes out at once...
+## set the velocity very high so it all comes out in one time step
+mdl <- test_catchment$model
+mdl$param["v_ch_default"] <- 10000
+compute_time_delay(mdl) # all values less then 1
+## run routing
+out <- time_delay_routing(mdl,sim_inflows,
+                          point_inflows=pf)
+## mass balance as percentage
+(sum(out[,'outlet']) - sum(sim_inflows))*100/sum(sim_inflows)
+
+
+## break it down over a couple of time steps
+mdl$param["v_ch_default"] <- 5
+compute_time_delay(mdl) # all values less then 1
+## nned to provide zero flow initial conditions
+ic <- list(channel_inflows=c("1"=0,"2"=0))
+## run routing
+out <- time_delay_routing(mdl,sim_inflows,
+                          point_inflows=pf,
+                          initial_conditions=ic)
+## mass balance as percentage
+(sum(out[,'outlet']) - sum(sim_inflows))*100/sum(sim_inflows)
+```
+
+## Diffuse inflows
+The diffuse inflow should return exactly the same results
+```{r mb_diffuse}
+## make empty channel and point inflows
+cf <- sim_inflows; cf[] <- 0
+pf <- cf; names(pf) <- c("point_1","point_2")
+
+## High velocity - everything comes out at once...
+## set the velocity very high so it all comes out in one time step
+mdl <- test_catchment$model
+mdl$param["v_ch_default"] <- 10000
+compute_time_delay(mdl) # all values less then 1
+## run routing
+out <- time_delay_routing(mdl,cf,
+                          diffuse_inflows = sim_inflows,
+                          point_inflows=pf)
+## mass balance as percentage
+(sum(out[,'outlet']) - sum(sim_inflows))*100/sum(sim_inflows)
+
+
+## break it down over a couple of time steps
+mdl$param["v_ch_default"] <- 5
+compute_time_delay(mdl) # all values less then 1
+## nned to provide zero flow initial conditions
+ic <- list(channel_inflows=c("1"=0,"2"=0))
+## run routing
+out <- time_delay_routing(mdl,cf,
+                          diffuse_inflows = sim_inflows,
+                          point_inflows=pf,
+                          initial_conditions=ic)
+## mass balance as percentage
+(sum(out[,'outlet']) - sum(sim_inflows))*100/sum(sim_inflows)
+```
+
+## Point inflow
+The point inflow tests:
+```{r mb_point}
+## make empty channel and point inflows
+pf <- sim_inflows;
+cf <- pf; cf[] <- 0
+names(pf) <- c("point_1","point_2")
+
+## High velocity - everything comes out at once...
+## set the velocity very high so it all comes out in one time step
+mdl <- test_catchment$model
+mdl$param["v_ch_default"] <- 10000
+compute_time_delay(mdl) # all values less then 1
+## run routing
+out <- time_delay_routing(mdl,cf,
+                          point_inflows=pf)
+## mass balance as percentage
+(sum(out[,'outlet']) - sum(sim_inflows))*100/sum(sim_inflows)
+
+
+## break it down over a couple of time steps
+mdl$param["v_ch_default"] <- 0.5
+compute_time_delay(mdl) # all values less then 1
+## nned to provide zero flow initial conditions
+ic <- list(channel_inflows=c("1"=0,"2"=0))
+## run routing
+out <- time_delay_routing(mdl,cf,
+                          point_inflows=pf,
+                          initial_conditions=ic)
+## mass balance as percentage
+(sum(out[,'outlet']) - sum(sim_inflows))*100/sum(sim_inflows)
+```
+
+# Checking a single channel
+The lower of the test catchment channels has two gauges, one at the foot and
+one half way down. Providing inflow only to the lower channel should result in
+half the flow being observed at the mid point gauge.
+```{r half_channel}
+## make empty point inflows
+cf <- sim_inflows
+cf[,"2"] <- 0 # set flow to upper channel to zero
+pf <- sim_inflows; pf[] <- 0
+names(pf) <- c("point_1","point_2")
+
+## High velocity - everything comes out at once...
+## set the velocity very high so it all comes out in one time step
+mdl <- test_catchment$model
+mdl$param["v_ch_default"] <- 10000
+compute_time_delay(mdl) # all values less then 1
+## run routing
+out <- time_delay_routing(mdl,cf,
+                          point_inflows=pf)
+## plot ratio
+plot(out[,'outlet']/out[,'mid_point'])
+
+## break it down over a couple of time steps
+mdl$param["v_ch_default"] <- 5
+compute_time_delay(mdl) # all values less then 1
+## run routing
+out <- time_delay_routing(mdl,cf,
+                          point_inflows=pf)
+## plot ratio
+plot(out[,'outlet']/out[,'mid_point'])
+```
+
+# Supersition
+We should be able to run the reaches seperately and add the results to get the
+same output as running both combined.
+```{r sup}
+## make empty point inflows
+pf <- sim_inflows; pf[] <- 0
+names(pf) <- c("point_1","point_2")
+## make two seperate inflows for the two reaches
+cf1 <- sim_inflows; cf1[,2] <- 0
+cf2 <- sim_inflows; cf2[,1] <- 0
+
+mdl$param["v_ch_default"] <- 0.5
+## simulate
+out <- time_delay_routing(mdl,sim_inflows,point_inflows=pf)
+out1 <- time_delay_routing(mdl,cf1,point_inflows=pf)
+out2 <- time_delay_routing(mdl,cf2,point_inflows=pf)
+
+tmp <- out1 + out2
+max(abs(out-tmp))
+
+plot(cbind(out1[,'outlet'],out2[,'outlet']))
+
+```

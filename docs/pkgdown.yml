@@ -1,9 +1,13 @@
-pandoc: 1.19.2.1
-pkgdown: 1.3.0
+pandoc: 2.7.3
+pkgdown: 1.4.1
 pkgdown_sha: ~
 articles:
+  Checks_of_the_Hillslope_HRU: Checks_of_the_Hillslope_HRU.html
+  Checks_of_the_Time_Delay_Routing: Checks_of_the_Time_Delay_Routing.html
+  dynatop: dynatop.html
   Performance_Evaluation: Performance_Evaluation.html
   Selected_References: Selected_References.html
+  The_Model_Object: The_Model_Object.html
   The_solution_of_Dynamic_TOPMODEL: The_solution_of_Dynamic_TOPMODEL.html
-  dynatop: dynatop.html
+  Time_Delay_Channel_Routing: Time_Delay_Channel_Routing.html
 

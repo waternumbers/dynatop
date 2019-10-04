@@ -1,98 +1,44 @@
 ---
-title: "The Numerical Solution of Dynamic TOPMODEL"
-output: 
-  bookdown::html_document2:
-    number_sections: false
-    toc: true
-    toc_depth: 2
-pkgdown:
-  as_is: true
+title: "Time Delay Channel Routing"
+output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{The Numerical Solution of Dynamic TOPMODEL}
+  %\VignetteIndexEntry{Time Delay Channel Routing}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ```{r, include = FALSE}
-#output: rmarkdown::html_vignette
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
 ```
-The dynamic TOPMODEL R package implements a set of numerical solutions to the
-governing equations of the dynamic TOPMODEL formulation. This vignette
-documents the formulation and the numerical solutions used. It also outlines
-a number of potential changes to the code which may improves it.
+The `dynatop` function in the dynamic TOPMODEL R package implements a set of numerical solutions to the
+governing equations of the dynamic TOPMODEL hillslope formulation. This
+returns the inflow to the channel reachs specified in the model. 
+This vignette documents the formulation and the numerical solution used to route these channel inflows, along with other diffuse and point inputs to the model.
 
 # Notation and nomenclature
 
-Consider two types of Hydrological response unit (HRU). The first termed
-"hill slope" solves the surface, root, unsaturated and saturated zones
-for 'similar' areas of the catchment a each time step.
-Table \@ref(tab:hru-notation) outlines the notation used for describing a
-"hill slope" HRU.
+Table [tab:hru_notation] outlines the notation used in this document.
 
 
-  Quantity type                                   Symbol             Description                                                                 unit
-  ------------------------------------ ----------------------------- -------------------------------------------------------------------- -----------------
-  Storage                                        $s_{ex}$            Surface excess storage                                                       m
-                                                 $s_{rz}$            Root zone storage                                                            m
-                                                 $s_{uz}$            Unsaturated zone storage                                                     m
-                                                 $s_{sz}$            Saturated zone storage deficit                                               m
-  Vertical fluxes within HRU                     $q_{rz}$            Flow from Root to unsaturated zone                                    (m$^3$/s)/m$^2$
-                                                 $q_{uz}$            Flow from unsaturated to saturated zone                               (m$^3$/s)/m$^2$
-                                                 $q_{sz}$            Flow from saturated zone to surface excess storage                    (m$^3$/s)/m$^2$
-  Lateral down slope fluxes from HRU             $l_{ex}$            Total lateral flux from surface excess                                (m$^3$/s)/m$^2$
-                                                 $l_{sz}$            Total lateral flux from saturated zone                                (m$^3$/s)/m$^2$
-  Other HRU properties                               a               Area                                                                        m$^2$
-                                        $w^{\left[i,j\right]}_{ex}$  fraction of $l_{ex}$ going from $j$th to $i$th HRU                            -
-                                        $w^{\left[i,j\right]}_{sz}$  fraction of $l_{sz}$ going from $j$th to $i$th HRU                            -
-                                                $s_{rzmax}$          maximum root zone storage                                                     m
-                                                   $T_d$             Unsaturated zone time constant per m of saturated storage deficit.           h/m
-                                                 $l_{szmax}$           Maximum lateral flux from saturated zone                              (m$^3$/s)/m$^2$         
-                                                 $T_{ex}$            Surface excess storage time constant                                          h
-                                                    $m$              Exponential transmissivity constant                                           -     -
-
-  Table: (\#tab:hru-notation) Outline of notation for describing "hill slope"
-  HRUs
-
-The second, termed "chanel" represents the inflow to a length of river
-channel. As such it acts as a sink collecting water from the "hill slope"
-HRUs over the course of a time step. Table \@ref(tab:ch-notation) outlines
-the notation for channel HRU.
-
-                                   Symbol             Description                                                                 unit
-  ---------------------- ----------------------------- -------------------------------------------------------------------------- -------
-  Storage                          $s_{ch}$            channel storage                                                               m
-  Other HRU properties                 a               Area                                                                        m$^2$
-                          $f^{\left[k,j\right]}_{ex}$  fraction of $l_{ex}$ going from $j$th hill slope HRU to $k$th channel HRU      -
-                          $f^{\left[k,j\right]}_{sz}$  fraction of $l_{sz}$ going from $j$th hill slope HRU to $k$th HRU              -
-
-  Table: (\#tab:ch-notation) Outline of notation for describing "channel"
-  HRUs
-
-
-From the above a mass conservative system will redirect all flows within the
-    defined catchment hence:
-    $$\sum\limits_{j} w^{\left[j,i\right]} +
-    \sum\limits_{k} f^{\left[k,i\right]} =1$$
-
-Inputs to the system are given in Table [tab:inputs]. These are treated as
-being the same for every HRU though the calculations readily allow for them to
-vary by HRU.
-
-   Symbol  Description                     unit
-  -------- ------------------------------ ------
-    $p$    Precipitation rate              m/h
-   $e_p$   Potential evapotranspiration    m/h
-
-  Table: (\#tab:inputs) Eternal inputs to HRUs
+  Quantity type                                   Symbol                    Description                                                                   unit
+  --------------------------------------  -----------------------------   ----------------------------------------------------------------------- -----------------
+  Dischage at the point $x$ at time $t$         $q\left(x,t\right)$           Instananeous discharge at the point x on the channel network                                                 - 
+  A gauged location                                       $g$              A gagued point on the channel network                                                 - 
+  Channel inflow                                $h\left(x,t\right)$        Inflow from the hillslope to a point on the channel network                  m$^3$/s
+  Diffuse inflow                                $d\left(x,t\right)$        Inflow from diffuse inputs to a point on the channel network                  m$^3$/s
+  Diffuse inflow                                $p\left(x,t\right)$        Inflow from a point source to a point on the channel network                  m$^3$/s
+  Velocity                                      $v_{ch}\left(x\right)$     Effective velocity of water convience at a point ont eh channel network       m/s
+  
+  Table: Outline of notation for describing time delay histogram routing
+  HRUs[]{data-label="tab:channel_notation"}
 
 Later we make use of the following:
 
 -   Superscript notation $^{\left[i\right]}$ to indicate the property of
-    the $i$th HRU
+    the $i$th channel length
 
 -   Bold lower case letter to indicate the column vector of quantities from all
     HRUs, e.g.
@@ -117,10 +63,265 @@ Later we make use of the following:
      steps. Where needed the superscript $^\left[-\right]$ will be used to
      indicate the value at the start of the step and $^\left[+\right]$ that at
      the end.
+     
+# Time Delay Channel Routing
+
+Using a time delay routing approach the discharge at the gauge $g$ at time $t$ can be computed from the inflows of the upstream points on the channel newtork $x \in \mathcal{X}$ and the time it takes the effect of the inflow to been seen at the gauge $\delta_{x\rightarrow g}$ as
+\[
+q\left(g,t\right) = \int_{x\in\mathcal{X}} h\left(x,t-\delta_{x\rightarrow g}\right) dx
+\]
+
+The conceptualisation of Dynamic Topmodel breaks the channel network down into
+$n$ disjoint channel HRUs whose inflows contribute to the discharge at the
+gauge giving
+\[
+q\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\delta_{x\rightarrow g}\right) dx 
+\]
+
+While the instantaneous discharge is usefull it may be more consistent with the conceptualisation of the hillslope HRU model, and with a mass conservative apporach, to model the integral of the discharge over a time step $\Delta t$. In this case a similar relationship holds for the average discharge over the time step in that
+\[
+\frac{1}{\Delta t} \int_{0}^{\Delta t}q\left(g,t-\tau\right) d\tau = \sum\limits_{i=1}^{n} \frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\tau-\delta_{x\rightarrow g}\right) dx d\tau
+\]
 
 # Numerical Solution
 
-The numerical solution implemented in the dynamic TOPMODEL code is based
+Consider the contribution to the gauges flow from a single channel HRU
+\[
+\frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\tau-\delta_{x\rightarrow g}\right) dx d\tau
+\]
+
+To further derive the numerical solution a number of assumpptions are made.
+The first assumption is that the channel represents a single reach of river such the a spatial location $x \in \mathcal{X}_{i}$ can be replaced by a unique length $l$ from the head of the reach. The maximum value of $l$, denoted$\tilde{L}$, is the lower of the length of the reach $L$ or the distance to the gauge from the head of the reach.
+The contribution of the channel HRU to the gauged flow can be expressed as
+\[
+\frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{0}^{\tilde{L}}
+h\left(l,t-\tau-\delta_{l\rightarrow g}\right) dl d\tau
+\]
+
+The second assumption is that there is a constant effecive velocity $v$ withn the reach. The time delay $\delta_{l\rightarrow g}$ can then be written in terms of the time delay for the head of the reach  $\delta_{0\rightarrow g}$ as
+\[
+\delta_{l\rightarrow g} = \delta_{0\rightarrow g} - lv^{-1}
+\]
+The contribution of the channel HRU to the average discharge at the gauge then becomes
+\[
+\frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{0}^{\tilde{L}}
+h\left(l,t-\tau-\delta_{0\rightarrow g}+lv^{-1}\right) dl d\tau
+\]
+
+Let $d_{min}$ be the largest and $d_{max}$ the smallest integers such that $d_{min} < d_{max}$ and
+\[
+t-d_{max}\Delta t \leq
+t-\delta_{0\rightarrow g} <
+t-\delta_{0\rightarrow g}+\tilde{L}v^{-1} \leq
+t-d_{min}\Delta t
+\]
+Then taking $\Delta l = v\Delta t$  we can divide the integral up to give
+\[
+\frac{1}{\Delta t}\int_{0}^{\Delta t}\left(
+\int_{0}^{\Delta l} h\left(l,t-\tau-d_{min}v^{-1}-\lambda\Delta l\right) d\lambda
+\right)d\tau
+\]
+
+
+
+Consider a single channel HRU. Currently for each time step of the model the `dynatop` function returns
+\[
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\tau \right) dx d\tau
+\]
+Taking the time step average inflow at point $x$ as
+\[
+\bar{h}\left(x,t\right) = \frac{1}{\Delta t}\int_{0}^{\Delta t}h\left(x,t-\tau \right) d\tau
+\]
+the output of `dynatop` becomes
+\[
+\int_{x\in\mathcal{X}_{i}}
+\bar{h}\left(x,t \right) dx
+\]
+and the contribution of the channel HRU to the average discharge at the gauge
+\[
+\int_{x\in\mathcal{X}_{i}}
+\bar{h}\left(x,t-\delta_{x\rightarrow g}\right) dx
+\]
+
+
+To further derive the numerical solution a number of assumpptions are made.
+
+The first assumption is that the channel represents a single reach of river such the a spatial location $x \in \mathcal{X}_{i}$ can be replaced by a unique length $l$ from the head of the reach. The maximum value of $l$, denoted$\tilde{L}$, is the lower of the length of the reach $L$ or the distance to the gauge from the head of the reach.
+The output of `dynatop` can thus be expressed as
+\[
+\int_{0}^{L}
+\bar{h}\left(l,t \right) dl
+\]
+and the contribution of the channel HRU to the average discharge at the gauge
+\[
+\int_{0}^{\tilde{L}}
+\bar{h}\left(l,t-\delta_{l\rightarrow g}\right) dl
+\]
+
+
+The second assumption is that there is no spatial pattern in the inflow to the reach so that there is  some spatialy constant inflow $\bar{\bar{h}}\left(t\right)$ that satifies
+\[
+L \bar{\bar{h}}\left(t\right) = \int_{0}^{L}
+\bar{h}\left(l,t \right) dl
+\]
+The contribution of the channel HRU to the average discharge at the gauge then becomes
+\[
+\int_{0}^{\tilde{L}}
+\bar{\bar{h}}\left(t-\delta_{l\rightarrow g}\right) dl
+\]
+
+The third assumption is that there is a constant effecive velocity $v$ withn the reach. The time delay $\delta_{l\rightarrow g}$ can then be written in terms of the time delay for the head of the reach  $\delta_{0\rightarrow g}$ as
+\[
+\delta_{l\rightarrow g} = \delta_{0\rightarrow g} - lv^{-1}
+\]
+The contribution of the channel HRU to the average discharge at the gauge then becomes
+\[
+\int_{0}^{\tilde{L}}
+\bar{\bar{h}}\left(t-\delta_{0\rightarrow g}+lv^{-1}\right) dl
+\]
+
+Following the application of these assumption the integral of the spatial domaiin is in effect an integral over time. This integral requires approximation given that values of $\bar{\bar{h}}\left(t\right)$ are available only at intervals of $\Delta t$.
+
+Let $d_{min}$ be the largest and $d_{max}$ the smallest integers such that $d_{min} < d_{max}$ and
+\[
+t-d_{max}\Delta t \leq
+t-\delta_{0\rightarrow g} <
+t-\delta_{0\rightarrow g}+\tilde{L}v^{-1} \leq
+t-d_{min}\Delta t
+\]
+
+Approximating linearly between the known values of $\bar{\bar{h}}\left(t\right)$ gives
+\[
+\int_{0}^{\tilde{L}}
+\bar{\bar{h}}\left(t-\delta_{0\rightarrow g}+lv^{-1}\right) dl
+=
+\sum\limits_{j=d_{min}}^{d_{max}-1} \int_{0}^{1} \lambda \bar{\bar{h}}\left(t-j\Delta t\right) + \left(1-lambda\right)\bar{\bar{h}}\left(t-\left(j+1\right)\Delta t\right)
+\]
+
+
+Take $\Delta l = v\Delta t$. Let $d_{min}$ be the largest and $d_{max}$ the smallest integers such that $d_{min} < d_{max}$ and
+\[
+t-d_{max}v^{-1}\Delta l \leq
+t-\delta_{0\rightarrow g} <
+t-\delta_{0\rightarrow g}+\tilde{L}v^{-1} \leq
+t-d_{min}v^{-1}\Delta l
+\]
+
+
+   $h\left(x,t\right) = h_{i}\left(t\right) \forall x \in \mathcal{X}_i$
+3. There is a constant effective velocity $v_i$ within the $i$th reach.
+
+Under these assumptions
+\[
+q_i\left(g,t\right) = \int_{l=0}^{\tilde{L}_{i}}
+h\left(x_i-l,t-\delta_{x_i\rightarrow g} +
+\delta_{\hat{x}_i\rightarrow x_i +l}\right) dl
+= \int_{l=0}^{\tilde{L}_{i}}
+h_{i}\left(t-\delta_{x_i\rightarrow g} +
+\delta_{x_i\rightarrow x_i +l}\right) dl
+= \int_{l=0}^{\tilde{L}_{i}}
+h_{i}\left(t-\delta_{x_i\rightarrow g} + \frac{l}{v_i}\right)dl
+\]
+
+The integral over the length of the reach can know be rewritten in term of the
+time to the gauge giving
+
+\[
+q_i\left(g,t\right) = \int_{t-\delta_{\hat{x}_i\rightarrow g}}^{t-\delta_{\hat{x}_i\rightarrow g}+\frac{\tilde{L}_{i}}{v_i}}
+h_i \left(\tau\right) d\tau
+\]
+
+# Numerical Solution
+
+We start the numerical solution by seperating the integral up into time steps
+$\Delta t$.
+Let $k^{-}$ be the smallest integer such that 
+\[
+t - k^{-}\Delta t \leq t-\delta_{\hat{x}_i\rightarrow g}
+\] 
+and $k^{+}$ be the largest integer such that 
+\[
+t - k^{+}\Delta t \geq t - \delta_{\hat{x}\rightarrow g}+\frac{\tilde{L}}{v_i}
+\]
+
+\[
+q_i\left(g,t\right) = \sum\limits_{j=k^{+}}^{k^{-}-1}\int_{t -
+  \left(j+1\right)\Delta t}^{t - j \Delta t}h_i \left(\tau\right) d\tau
+- \int_{t- k^{-}\Delta t}^{t-\delta_{\hat{x}_i\rightarrow g}}h_i\left(\tau\right) d\tau
+- \int_{t - \delta_{\hat{x}\rightarrow g}+\frac{\tilde{L}}{v_i}}^{t - k^{+}\Delta t}h_i\left(\tau\right) d\tau
+\]
+
+Consider next the output of the ```dynatop``` function. In this the value of
+the channel time series at the $t$ th timestep $H_{i,t}$ corresponds to
+\[
+H_{i,t} = \frac{1}{\Delta t} \int_{t-\Delta t}^{t}
+\int_{x\in\mathcal{X}_i}h\left(x,\tau\right)dx d\tau
+= \frac{1}{\Delta t} \int_{t-\Delta t}^{t} L_{i} h_{i}\left(\tau\right) d\tau
+\]
+
+
+The numerical solution implemented in based on the representations and outputs
+of the dynamic TOPMODEL hillslope representation as applied in the function
+```dynatop```. This breaks the channel network down into $n$ disjoint channel HRUs, each representing a length of river giving
+
+\[
+\bar{q}\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}}
+\bar{h}\left(x,t-\delta_{x\rightarrow g}\right) dx = \sum\limits_{i=1}^{n}\bar{q}_i\left(g,t\right)
+\]
+
+Consider a single channel HRU that does not contain the gauge. Assume that:
+
+1. The channel represents a single reach of
+river the spatial spatial location $x$ can be replaced by replaced by a unique
+length $l$ from the foot of the reach $\hat{x}_{i}$.
+2. There is no spatial pattern in the inflow to the reach such that
+   $h\left(x,t\right) = h_{i}\left(t\right)$
+3. There is a constant effective velocity $v_i$ within the reach.
+
+Under these assumptions
+\[
+\bar{q}_i\left(g,t\right) = \int_{l=0}^{L_{i}}
+\bar{h}\left(\hat{x}_i+l,t-\delta_{\hat{x}_i\rightarrow g} -
+\delta_{\hat{x}_i+l\rightarrow \hat{x}_i}\right) dl
+= \int_{l=0}^{L_{i}}
+\bar{h}_{i}\left(t-\delta_{\hat{x}_i\rightarrow g} -
+\delta_{\hat{x}_i+l\rightarrow \hat{x}_i}\right) dl
+= \int_{l=0}^{L_{i}}
+\bar{h}_{i}\left(t-\delta_{\hat{x}_i\rightarrow g} - \frac{l}{v_i}\right)dl
+\]
+
+The integral over the length of the reach can know be rewritten in term of the
+times to the outlet within the reach giving
+
+\[
+\bar{q}_i\left(g,t\right) = \int_{d=\delta_{\hat{x}_i\rightarrow
+g}}^{\delta_{\hat{x}_i\rightarrow g} +\frac{L_{i}}{v_i}}
+\bar{h}_i \left(t-\tau\right) d\tau
+\]
+
+
+The ```dynatop``` function returns the total inflow to a reach length averaged
+aver a discrete time step. The numerical solution approximates therefore in
+time and space.
+
+Firstly the input t
+This breaks the channel network down into $n$ disjoint channel HRUs, each representing a length of river giving
+
+\[
+\bar{q}\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}} \bar{h}\left(x,t-\delta_{x\rightarrow g}\right) dx
+\]
+<!--
++ \bar{d}\left(x,t-\delta_{x\rightarrow g}\right)+ \bar{p}\left(x,t-\delta_{x\rightarrow g}\right) dx
+\]
+-->
+
+
+integrated over the for the the whole lengthcode is based
 on solving the ODE(s) governing the evolution of each of the stores in the
 HRUs sequentially while approximating the flux between then.
 

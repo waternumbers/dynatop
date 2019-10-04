@@ -3,11 +3,14 @@
 #' @description This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model.
 #'
 #' @param model a dynamic TOPMODEL list object
+#' @param check_channel flag indicating is additional checks for channel routing are to be carried out
+#' @param verbose if set prints out further information
+#' 
 #' @return NULL if tests passed, otherwise fails
 #'
 #' @details The checks performed and basic 'sanity' checks. they do not check for the logic of the parameter values nor the consistncy of states and parameters.
 #' @export
-check_model <- function(model){
+check_model <- function(model, check_channel=TRUE, verbose=FALSE){
 
     ## First perform checks that rely only on individual components of the model
     
@@ -28,6 +31,28 @@ check_model <- function(model){
                                  is_param = rep(FALSE,4),
                                  stringsAsFactors=FALSE)
         )
+
+        ## add additional properties for channel routing
+        if( check_channel ){
+            hru_properties$channel <- rbind(
+                hru_properties$channel,
+                data.frame(name = c("next_id","length","v_ch"),
+                           type=rep("numeric",3),
+                           is_param = c(rep(FALSE,2),TRUE),
+                           stringsAsFactors=FALSE)
+            )
+            hru_properties$point_inflow <- data.frame(
+                name = c("name","channel_id","fraction"),
+                type=c("character",rep("numeric",2)),
+                is_param = rep(FALSE,3),
+                stringsAsFactors=FALSE)
+            hru_properties$gauge <- data.frame(
+                name = c("name","channel_id","fraction"),
+                type=c("character",rep("numeric",2)),
+                is_param = rep(FALSE,3),
+                stringsAsFactors=FALSE)
+            
+        }
 
         ## check just the HRU tables
         for(ii in names(hru_properties)){
@@ -64,8 +89,49 @@ check_model <- function(model){
         stop("param should be a numeric vector")
     }
 
-    ## END of checks on individual objects return if failed
+    ## checks on channel
+    if( check_channel ){
+        ## check all next_id are valid
+        idx <- !is.na(model$channel$next_id)
+        if( !all( model$channel$next_id[idx] %in%  model$channel$id ) ){
+            stop("Channels routing to channels not in network, set next_id to NA to represent an outflow")
+        }
+        ## check for loops - all reaches at top of system must drain to outfall
+        for(ii in setdiff(model$channel$id,model$channel$next_id)){
+            id <- ii
+            cnt <- 0
+            while(cnt <= nrow(model$channel)){
+                ## work out next id
+                id <- model$channel$next_id[model$channel$id==id]
+                cnt <- cnt + 1
+                ## break if get to outlet
+                if(is.na(id)){break}
+                ## check loop
+                if( id==ii ){
+                    stop(paste("Loop of river flow incorporating channel id",ii))
+                }
+            }
+        }
+ 
+        
+        ## verbose printing of head and tail channels
+        if(verbose){
+            ## print out head channels
+            message(paste("The head channels are:",
+                          paste(setdiff(model$channel$id,model$channel$next_id),
+                                collapse=", "),
+                          sep="\n"))
+            ## print out tail channels
+            message(paste("The channels with outfalls:",
+                          paste(model$channel$id[is.na(model$channel$next_id)],
+                                collapse=", "),
+                          sep="\n"))
+        }
+    }
+    
+    ## END of checks on individual objects 
 
+    
     ## check unique ids
     for(ii in c("hillslope","channel")){
         if( length(unique(model[[ii]]$id)) < nrow(model[[ii]]) ){
@@ -81,11 +147,18 @@ check_model <- function(model){
                     unlist( model[[ii]][,tmp] ))
     }
     pnames <- unique(pnames)
-    if( !all( pnames %in% names(model$param) ) ){
+    ## check the parameters that are set
+    cnames <- names(model$param)
+    if(!check_channel & ("v_ch" %in% names(model$channel))){
+        ## remove the names of the velocity parameters if they exists
+        cnames <- setdiff(cnames,model$channel$v_ch)
+    }
+    
+    if( !all( pnames %in% cnames ) ){
         stop("Not all parameters are specified")
     }
     
-    if( !all( names(model$param) %in% pnames ) ){
+    if( !all( cnames %in% pnames ) ){
         stop("Some parameters are not used")
     }
 
@@ -126,6 +199,22 @@ check_model <- function(model){
              paste(colnames(model$Wex)[tmp>1],collapse=', '))
     }
 
+    ## check point tables
+    if( check_channel ){
+        for(ii in c("gauge","point_inflow")){
+            if( !all( model[[ii]]$channel_id %in%  model$channel$id ) ){
+                stop(paste("Not all",ii,"are on model channels"))
+            }
+            if( !all( (model[[ii]]$fraction <= 1) &
+                      (model[[ii]]$fraction >= 0 ))){
+                stop(paste("Not all",ii,"reach fractions are in [0,1]"))
+            }
+            if( !( length(unique(model[[ii]]$name)) == nrow(model[[ii]])) ){
+                stop(paste(ii,"should have unique names"))
+            }
+        }
+    }
+    
     return(NULL)
 }
 
