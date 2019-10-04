@@ -17,13 +17,19 @@ time_delay_routing <- function(model,channel_inflows,
                                diffuse_inflows=NULL,
                                initial_conditions=list()){
 
+    
     ## check model including channel
     check_model(model,check_channel=TRUE,verbose=FALSE)
 
-    ## check channel_inflows - object type and match model
-    ts <- check_obs(channel_inflows,model$channel[['id']])
+    ## start default initial conditions
+    ic <- list()
 
-    ## check diffuse inflows - time step and variables
+    ## check channel_inflows - object type and match model
+    ts <- check_obs(channel_inflows,as.character(model$channel[['id']]))
+    ic$channel_inflows <- setNames(as.numeric(channel_inflows[1,]),
+                                   names(channel_inflows))
+    
+    ## check diffuse inflows - time step, variables
     use_diffuse <- is.xts(diffuse_inflows)
     if( use_diffuse ){
         tmp <- setdiff(names(diffuse_inflows),paste(model$channel[['id']]))
@@ -32,15 +38,17 @@ time_delay_routing <- function(model,channel_inflows,
                           paste(tmp,collapse=", "),
                           sep="\n"))
         }
-        if( index(diffuse_inflows) != index(channel_inflows) ){
+        if( !all(index(diffuse_inflows) == index(channel_inflows)) ){
             stop("Diffuse inflow data time index does not match that of channel inflows")
         }
+        ic$diffuse_inflows <- setNames(as.numeric(diffuse_inflows[1,]),
+                                       names(diffuse_inflows))
     }
 
     ## check point inflow locations and time series
     if( nrow(model$point_inflow)>0 ){
         if( !is.xts(point_inflows) ){
-            stop("Point inflow series is not an xts object")
+            stop("Point inflow series is required as an xts object")
         }
         tmp <- setdiff(model$point_inflow$name,names(point_inflows))
         if(length(tmp)>0){
@@ -48,71 +56,76 @@ time_delay_routing <- function(model,channel_inflows,
                        paste(tmp,collapse=", "),
                        sep="\n"))
         }
+        if( !all( index(point_inflows) == index(channel_inflows)) ){
+            stop("Diffuse inflow data time index does not match that of channel inflows")
+        }
+        ic$point_inflows <- setNames(as.numeric(point_inflows[1,]),
+                                     names(point_inflows))  
     }
 
-    ## check initial conditions - match model and point inflows - fix if not
-    ic <- list(channel_inflows = setNames(rep(0,ncol(channel_inflows)),
-                                          names(channel_inflows)),
-               diffuse_inflows = setNames(rep(0,ncol(diffuse_inflows)),
-                                          names(diffuse_inflows)),
-               point_inflows = setNames(rep(0,ncol(point_inflows)),
-                                        names(point_inflows))
-               )
-    if(is.list(initial_conditions)){
-        for(ii in intersect(names(ic), names(initial_conditions))){
-            idx <- intersect(names(ic[[ii]]),names(initial_conditions[[ii]]))
-            ic[[ii]][idx] <- initial_conditions[[ii]][idx]
+    ## add alternative initial conditions
+    for(ii in intersect(names(ic),names(initial_conditions))){
+        jj <- intersect(names(ic[[ii]]),names(initial_conditions[[ii]]))
+        ic[[ii]][jj] <- initial_conditions[[ii]][jj]
+    }
+    
+    ## add diffuse inflows to channel_inflows to speed up computations
+    if( use_diffuse ){
+        for(ii in intersect(names(channel_inflows), names(diffuse_inflows))){
+            channel_inflows[,ii] <- channel_inflows[,ii] + diffuse_inflows[,ii]
+            ic$channel_inflows[ii] <- ic$channel_inflows[ii] + ic$diffuse_inflows[ii]
         }
     }
-
-    ## add diffuse inflows to channel_inflows
-    for(ii in intersect(names(channel_inflows), names(diffuse_inflows))){
-        channel_inflows[,ii] <- channel_inflows[,ii] + diffuse_inflows[,ii]
-        ic$channel_inflows[ii] <- ic$channel_inflows[ii] + ic$diffuse_inflows[ii]
-    }
-
+    
     ## initialise the output
     out <- reclass( matrix(NA,nrow(channel_inflows),
-                           nrow(model$gauges)), match.to=channel_inflows)
-    names(out) <- model$gauges$name
+                           nrow(model$gauge)), match.to=channel_inflows)
+    names(out) <- model$gauge$name
 
     ## Compute the time delays
     time_of_travel <- compute_time_delay(model)
 
+    ## function to make polynonial
+    fpoly <- function(h,f){
+        ply <- rep(0,floor(h)+1)
+        idx <- (floor(f)+1):(floor(h)+1)
+        ply[idx] <- 1
+        ## take away potentially partial value around foot
+        idx <- floor(f)+1
+        ply[idx] <- ply[idx] - (f - floor(f))
+        ## take away potentially partial value around head
+        idx <- floor(h)+1
+        ply[idx] <- ply[idx] - (1 - (h - floor(h)))
+        return(ply/sum(ply))
+    }
+    
     ## Loop gauges
     for(ii in model$gauge$name){
         ## initialise the point - set to 0
         out[,ii] <- 0
 
+        
         ## loop channel+diffuse upstream
-        upstream_channels <- colnames(time_of_travel$reach_to_gauge)
-        upstream_channels <- upstream_channels[is.finite(time_of_travel$reach_to_gauge[ii,])]
+        upstream_channels <- colnames(time_of_travel$head_to_gauge)
+        upstream_channels <- upstream_channels[is.finite(time_of_travel$head_to_gauge[ii,])]
         for(jj in upstream_channels){
-            ## time in timesteps to foot and head of channel length
-            tw <- (time_of_travel$reach_to_gauge[ii,jj] +
-                   c(0,time_of_travel$reach_time[jj]))/(3600*ts$time_step)
-            ## time window can be negative if gauge is within reach
-            ## fix this and work out fraction of flow with >0 time
-            twz <- pmax(tw,0)
-            qfrac <- diff(twz)/time_of_travel$reach_time[jj]
-            ## create polynomial
-            ## remember first element is zero time offset in filter
-            ply <- rep(0,floor(twz[2])+1)
-            ## fill with ones
-            idx <- (floor(twz[1])+1):(floor(twz[2])+1)
-            ply[idx] <- 1
-            ## take away potentially partial value around foot
-            idx <- floor(twz[1])+1
-            ply[idx] <- ply[idx] - (1 - (twz[1] - floor(twz[1])))
-            ## take away potentially partial value around head
-            idx <- floor(twz[1])+1
-            ply[idx] <- ply[idx] - (1 - (twz[2] - floor(twz[2])))
-            ## scale includeing  flow fraction
-            ply <- ply*qfrac/sum(ply)
-            ## run filter
-            out[,ii] <- out[,ii] + filter(channel_inflows[,jj],ply,
-                                          method="conv",sides=1,
-                                          init=ic$channel_inflows[jj])
+            ## time in timesteps to foot and head of channel length adjusted for
+            ## in reach gauge
+            h2g <- time_of_travel$head_to_gauge[ii,jj] / ts$step
+            rt <- time_of_travel$reach_time[jj] / ts$step
+            f2g <- pmax(0,h2g-rt)
+            qfrac <- (h2g-f2g)/rt
+            ## generate polynomial
+            ply <- fpoly(h2g,f2g)*qfrac
+            ## evaluate filter
+            npad <- length(ply)-1
+            x <- c(rep(ic$channel_inflows[jj],npad),as.numeric(channel_inflows[,jj]))
+            #browser()
+            tmp <- filter(x,ply,method="conv",sides=1)
+            x <- as.numeric( filter(x,ply,method="conv",sides=1) )
+            if(npad>0){x <- x[-(1:npad)]}
+            out[,ii] <- out[,ii] + x
+            
         }
 
         ## apply point inputs
@@ -120,33 +133,21 @@ time_delay_routing <- function(model,channel_inflows,
         upstream_points <- upstream_points[is.finite(time_of_travel$point_to_gauge[ii,])]
         ## loop points
         for(jj in upstream_points){
-            ## time in timesteps to foot and head of channel length
-            tw <- (time_of_travel$point_to_gauge[ii,jj] +
-                   c(0,ts$time_step))/(3600*ts$time_step)
-            ## time window can be negative if gauge is within reach
-            ## fix this and work out fraction of flow with >0 time
-            twz <- pmax(tw,0)
-            qfrac <- diff(twz)/diff(tw)
-            ## create polynomial
-            ## remember first element is zero time offset in filter
-            ply <- rep(0,floor(twz[2])+1)
-            ## fill with ones
-            idx <- (floor(twz[1])+1):(floor(twz[2])+1)
-            ply[idx] <- 1
-            ## take away potentially partial value around foot
-            idx <- floor(twz[1])+1
-            ply[idx] <- ply[idx] - (1 - (twz[1] - floor(twz[1])))
-            ## take away potentially partial value around head
-            idx <- floor(twz[1])+1
-            ply[idx] <- ply[idx] - (1 - (twz[2] - floor(twz[2])))
-            ## scale includeing  flow fraction
-            ply <- ply*qfrac/sum(ply)
-            ## run filter
-            out[,ii] <- out[,ii] + filter(channel_inflows[,jj],ply,
-                                          method="conv",sides=1,
-                                          init=ic$channel_inflows[jj])
+            p2g <- time_of_travel$point_to_gauge[ii,jj]/ts$step
+            f2g <- floor(p2g)
+            h2g <- floor(p2g)+1
+            ## generate polynomial
+            ply <- fpoly(h2g,f2g)
+            ## evaluate filter - pad for initial conditions           
+            npad <- length(ply)-1
+            x <- c(rep(ic$point_inflows[jj],npad),as.numeric(point_inflows[,jj]))
+            x <- as.numeric( filter(x,ply,method="conv",sides=1) )
+            if(npad>0){x <- x[-(1:npad)]}
+            out[,ii] <- out[,ii] + x
+            
         }
     }
-
+    
+    #out <- reclass( out, match.to=channel_inflows)
     return(out)
 }

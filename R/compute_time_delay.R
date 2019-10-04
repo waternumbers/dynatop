@@ -6,11 +6,13 @@
 #' 
 #' @return A list with two matrices one of time delays between the foot of reaches and the gauges, one with time differences between point inflow and gauges
 #'
-#' @details This is done by a simple search - not very efficent for large networ#' @export
+#' @details This is done by a simple search - not very efficent for large networks. The time returned is in h
+#' @export
 compute_time_delay <- function(model){
     
     ## check the model including the channel
     check_model(model,check_channel=TRUE,verbose=FALSE)
+
     
     ## compute the time to travel down each reach
     reach_time <- setNames(model$channel$length/model$param[model$channel$v_ch],
@@ -19,51 +21,49 @@ compute_time_delay <- function(model){
     ## get the next reach as a string
     next_reach <- setNames(paste(model$channel$next_id),
                            model$channel$id)
-    
-    ## compute times for foot of one rech to foot of another
-    foot_to_foot <- matrix(NA,nrow(model$channel),nrow(model$channel),
+
+    ## compute times from the head of one reach to the head of another
+    head_to_head <- matrix(NA,nrow(model$channel),nrow(model$channel),
                            dimnames=list(model$channel$id,
                                          model$channel$id))
-    for(ii in row.names(foot_to_foot)){
+    ## one row for one starting channel
+    for(ii in row.names(head_to_head)){
         id <- ii
         ts <- 0
         while(id %in% names(reach_time)){
-            foot_to_foot[ii,id] <- ts
+            head_to_head[ii,id] <- ts
             ts <- ts + reach_time[id]
             id <- next_reach[id]
         }
     }
+    #browser()
+    ## time from head of reach to gauge
+    head_to_gauge <- matrix(NA,nrow(model$gauge),nrow(model$channel),
+                            dimnames=list(model$gauge$name,
+                                          model$channel$id))
+    for(ii in 1:nrow(model$gauge)){
+        gr <- paste(model$gauge$channel_id[ii])
+        head_to_gauge[ii,] <- head_to_head[colnames(head_to_gauge),gr] +
+            (model$gauge$fraction[ii]*reach_time[gr])
+    }
+
     
-    ## work out time to gauges
-    reach_to_gauge <- matrix(NA,nrow(model$gauge),nrow(model$channel),
+    point_to_gauge <- matrix(NA,nrow(model$gauge),nrow(model$point_inflow),
                              dimnames=list(model$gauge$name,
-                                           model$channel$id))
+                                           model$point_inflow$name))
     for(ii in 1:nrow(model$gauge)){
         gr <- paste(model$gauge$channel_id[ii])
-        ## time to foot of the gauged reach
-        reach_to_gauge[ii,] <- foot_to_foot[colnames(reach_to_gauge),gr]
-        ## correct for time above foot
-        reach_to_gauge[ii,] <- reach_to_gauge[ii,] -
-            (1-model$gauge$fraction[ii])*reach_time[gr]
+        for(jj in 1:nrow(model$point_inflow)){      
+            ir <- paste(model$point_inflow$channel_id[jj])
+            point_to_gauge[ii,jj] <- head_to_head[ir,gr] +
+                (model$gauge$fraction[ii]*reach_time[gr]) -
+                (model$point_inflow$fraction[jj]*reach_time[ir])
+        }
     }
-    ## times between point inflows and gauges
-    point_to_gauge <- matrix(NA,nrow(model$gauges),nrow(model$point_inflow))
-    pr <- paste(model$point_inflow$channel_id[ii])
-    for(ii in 1:nrow(model$gauge)){
-        gr <- paste(model$gauge$channel_id[ii])
-        reach_to_gauge[ii,] <- foot_to_foot[colnames(reach_to_gauge),gr]
-        ## correct for time above foot of gauge
-        reach_to_gauge[ii,] <- reach_to_gauge[ii,] -
-            (1-model$gauge$fraction[ii])*reach_time[gr]
-        ## correct for time above foot of point
-        reach_to_gauge[ii,] <- reach_to_gauge[ii,] +
-            (1-model$point_inflow$fraction)*reach_time[pr]
-    }
+    point_to_gauge[point_to_gauge<0] <- NA
     
-    return(list(foot_to_foot=foot_to_foot,
-                point_to_gauge=point_to_gauge,
-                reach_to_gauge=reach_to_gauge,
-                reach_time=reach_time))
+    return(list(point_to_gauge=point_to_gauge/3600,
+                head_to_gauge=head_to_gauge/3600,
+                reach_time=reach_time/3600))
 }
 
-        
