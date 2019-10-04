@@ -57,7 +57,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/Hillslope_HRU_Mass_Balance.html">Hillslope HRU mass balance checks</a>
+      <a href="../articles/Checks_of_the_Hillslope_HRU.html">Checks of the Hillslope HRU</a>
+    </li>
+    <li>
+      <a href="../articles/Checks_of_the_Time_Delay_Routing.html">Checks of the Time Delay Routing</a>
     </li>
     <li>
       <a href="../articles/Performance_Evaluation.html">Code Performance for larger simulations</a>
@@ -121,25 +124,25 @@ object oriented style adopted in the a package.</p>
 Started”</a> vignette.</p>
 <p>The model strucutre will be documented with reference to the model in the test
 catchment data supplied with the package. This can be loaded with</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(dynatop)</a>
-<a class="sourceLine" id="cb1-2" title="2"><span class="co">#&gt; Loading required package: xts</span></a>
-<a class="sourceLine" id="cb1-3" title="3"><span class="co">#&gt; Warning: package 'xts' was built under R version 3.5.3</span></a>
-<a class="sourceLine" id="cb1-4" title="4"><span class="co">#&gt; Loading required package: zoo</span></a>
-<a class="sourceLine" id="cb1-5" title="5"><span class="co">#&gt; Warning: package 'zoo' was built under R version 3.5.3</span></a>
-<a class="sourceLine" id="cb1-6" title="6"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb1-7" title="7"><span class="co">#&gt; Attaching package: 'zoo'</span></a>
-<a class="sourceLine" id="cb1-8" title="8"><span class="co">#&gt; The following objects are masked from 'package:base':</span></a>
-<a class="sourceLine" id="cb1-9" title="9"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb1-10" title="10"><span class="co">#&gt;     as.Date, as.Date.numeric</span></a>
-<a class="sourceLine" id="cb1-11" title="11"><span class="co">#&gt; Loading required package: deSolve</span></a>
-<a class="sourceLine" id="cb1-12" title="12"><span class="co">#&gt; Warning: package 'deSolve' was built under R version 3.5.3</span></a>
-<a class="sourceLine" id="cb1-13" title="13"><span class="kw"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(<span class="st">"brompton"</span>)</a>
-<a class="sourceLine" id="cb1-14" title="14">model &lt;-<span class="st"> </span>brompton<span class="op">$</span>model</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(dynatop)</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="co">#&gt; Loading required package: xts</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; Warning: package 'xts' was built under R version 3.5.3</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="co">#&gt; Loading required package: zoo</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="co">#&gt; Warning: package 'zoo' was built under R version 3.5.3</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="co">#&gt; </span></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="co">#&gt; Attaching package: 'zoo'</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="co">#&gt; </span></span>
+<span id="cb1-10"><a href="#cb1-10"></a><span class="co">#&gt;     as.Date, as.Date.numeric</span></span>
+<span id="cb1-11"><a href="#cb1-11"></a><span class="co">#&gt; Loading required package: deSolve</span></span>
+<span id="cb1-12"><a href="#cb1-12"></a><span class="co">#&gt; Warning: package 'deSolve' was built under R version 3.5.3</span></span>
+<span id="cb1-13"><a href="#cb1-13"></a><span class="kw"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(<span class="st">"brompton"</span>)</span>
+<span id="cb1-14"><a href="#cb1-14"></a>model &lt;-<span class="st"> </span>brompton<span class="op">$</span>model</span></code></pre></div>
 <p>The top level of the model contains the following elements:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(brompton<span class="op">$</span>model)</a>
-<a class="sourceLine" id="cb2-2" title="2"><span class="co">#&gt; [1] "hillslope"    "channel"      "param"        "Wex"         </span></a>
-<a class="sourceLine" id="cb2-3" title="3"><span class="co">#&gt; [5] "Wsat"         "Fex"          "Fsat"         "point_inflow"</span></a>
-<a class="sourceLine" id="cb2-4" title="4"><span class="co">#&gt; [9] "gauge"</span></a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(brompton<span class="op">$</span>model)</span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="co">#&gt; [1] "hillslope"    "channel"      "param"        "Wex"         </span></span>
+<span id="cb2-3"><a href="#cb2-3"></a><span class="co">#&gt; [5] "Wsat"         "Fex"          "Fsat"         "point_inflow"</span></span>
+<span id="cb2-4"><a href="#cb2-4"></a><span class="co">#&gt; [9] "gauge"</span></span></code></pre></div>
 <p>These are oulined in Table <a href="#tab:model-table">1</a> and described in more detail in the sections
 below.</p>
 <table class="table">
@@ -198,21 +201,21 @@ below.</p>
 <a href="#hillslope-hru-table" class="anchor"></a>Hillslope HRU table</h2>
 <p>Each row of the hillslope HRU table describes a single hillslope HRU, the
 input series in expects and parameters. In this example it looks like:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(model<span class="op">$</span>hillslope)</a>
-<a class="sourceLine" id="cb3-2" title="2"><span class="co">#&gt;   id    area atb_bar      s_bar precip_input pet_input         srz_max</span></a>
-<a class="sourceLine" id="cb3-3" title="3"><span class="co">#&gt; 2 30  331000    7.86 0.05256529         rain       pet srz_max_default</span></a>
-<a class="sourceLine" id="cb3-4" title="4"><span class="co">#&gt; 3 40  628500    8.19 0.05763197         rain       pet srz_max_default</span></a>
-<a class="sourceLine" id="cb3-5" title="5"><span class="co">#&gt; 4 50 1171200    8.43 0.04004142         rain       pet srz_max_default</span></a>
-<a class="sourceLine" id="cb3-6" title="6"><span class="co">#&gt; 5 60 2197600    8.49 0.04009436         rain       pet srz_max_default</span></a>
-<a class="sourceLine" id="cb3-7" title="7"><span class="co">#&gt; 6 70 3458160    8.62 0.03851967         rain       pet srz_max_default</span></a>
-<a class="sourceLine" id="cb3-8" title="8"><span class="co">#&gt; 7 80 5131320    8.75 0.03557941         rain       pet srz_max_default</span></a>
-<a class="sourceLine" id="cb3-9" title="9"><span class="co">#&gt;           srz_0         ln_t0         m         td         tex</span></a>
-<a class="sourceLine" id="cb3-10" title="10"><span class="co">#&gt; 2 srz_0_default ln_t0_default m_default td_default tex_default</span></a>
-<a class="sourceLine" id="cb3-11" title="11"><span class="co">#&gt; 3 srz_0_default ln_t0_default m_default td_default tex_default</span></a>
-<a class="sourceLine" id="cb3-12" title="12"><span class="co">#&gt; 4 srz_0_default ln_t0_default m_default td_default tex_default</span></a>
-<a class="sourceLine" id="cb3-13" title="13"><span class="co">#&gt; 5 srz_0_default ln_t0_default m_default td_default tex_default</span></a>
-<a class="sourceLine" id="cb3-14" title="14"><span class="co">#&gt; 6 srz_0_default ln_t0_default m_default td_default tex_default</span></a>
-<a class="sourceLine" id="cb3-15" title="15"><span class="co">#&gt; 7 srz_0_default ln_t0_default m_default td_default tex_default</span></a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(model<span class="op">$</span>hillslope)</span>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="co">#&gt;   id    area atb_bar      s_bar precip_input pet_input         srz_max</span></span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="co">#&gt; 2 30  331000    7.86 0.05256529         rain       pet srz_max_default</span></span>
+<span id="cb3-4"><a href="#cb3-4"></a><span class="co">#&gt; 3 40  628500    8.19 0.05763197         rain       pet srz_max_default</span></span>
+<span id="cb3-5"><a href="#cb3-5"></a><span class="co">#&gt; 4 50 1171200    8.43 0.04004142         rain       pet srz_max_default</span></span>
+<span id="cb3-6"><a href="#cb3-6"></a><span class="co">#&gt; 5 60 2197600    8.49 0.04009436         rain       pet srz_max_default</span></span>
+<span id="cb3-7"><a href="#cb3-7"></a><span class="co">#&gt; 6 70 3458160    8.62 0.03851967         rain       pet srz_max_default</span></span>
+<span id="cb3-8"><a href="#cb3-8"></a><span class="co">#&gt; 7 80 5131320    8.75 0.03557941         rain       pet srz_max_default</span></span>
+<span id="cb3-9"><a href="#cb3-9"></a><span class="co">#&gt;           srz_0         ln_t0         m         td         tex</span></span>
+<span id="cb3-10"><a href="#cb3-10"></a><span class="co">#&gt; 2 srz_0_default ln_t0_default m_default td_default tex_default</span></span>
+<span id="cb3-11"><a href="#cb3-11"></a><span class="co">#&gt; 3 srz_0_default ln_t0_default m_default td_default tex_default</span></span>
+<span id="cb3-12"><a href="#cb3-12"></a><span class="co">#&gt; 4 srz_0_default ln_t0_default m_default td_default tex_default</span></span>
+<span id="cb3-13"><a href="#cb3-13"></a><span class="co">#&gt; 5 srz_0_default ln_t0_default m_default td_default tex_default</span></span>
+<span id="cb3-14"><a href="#cb3-14"></a><span class="co">#&gt; 6 srz_0_default ln_t0_default m_default td_default tex_default</span></span>
+<span id="cb3-15"><a href="#cb3-15"></a><span class="co">#&gt; 7 srz_0_default ln_t0_default m_default td_default tex_default</span></span></code></pre></div>
 <p>The individual columns are documented in Table <a href="#tab:hillslope-table">2</a>. With the exception of the
 id, area, atb_bar and s_bar columns the table does not contain numeric values
 but the names of either time series to find in the forecing data or parameters
@@ -295,9 +298,9 @@ in <code>model$param</code>.</p>
 <a href="#channel-hru-table" class="anchor"></a>Channel HRU table</h2>
 <p>Each row of the channel HRU table describes a single hillslope HRU, the
 input series in expects and parameters. In this example it looks like:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(model<span class="op">$</span>channel)</a>
-<a class="sourceLine" id="cb4-2" title="2"><span class="co">#&gt;   id  area precip_input pet_input next_id         v_ch length</span></a>
-<a class="sourceLine" id="cb4-3" title="3"><span class="co">#&gt; 1  1 13560         rain       pet      NA v_ch_default   1500</span></a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(model<span class="op">$</span>channel)</span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="co">#&gt;   id  area precip_input pet_input next_id         v_ch length</span></span>
+<span id="cb4-3"><a href="#cb4-3"></a><span class="co">#&gt; 1  1 13560         rain       pet      NA v_ch_default   1500</span></span></code></pre></div>
 <p>The individual columns are documented in Table <a href="#tab:channel-table">3</a>. With the exception of the
 id, area, next_id and length the table does not contain numeric values
 but the names of either time series to find in the forecing data or parameters
@@ -356,11 +359,11 @@ in <code>model$param</code>.</p>
 <p>The paraemter vector is a named numneric vector of parameter values. The names
 should correspond to those specified in the hillslope and channel tables. In
 this case:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">model<span class="op">$</span>param</a>
-<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt; srz_max_default   srz_0_default   ln_t0_default       m_default </span></a>
-<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt;           0.050           0.990          19.000           0.004 </span></a>
-<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt;      td_default     tex_default    v_ch_default </span></a>
-<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt;          20.000         100.000          10.000</span></a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>model<span class="op">$</span>param</span>
+<span id="cb5-2"><a href="#cb5-2"></a><span class="co">#&gt; srz_max_default   srz_0_default   ln_t0_default       m_default </span></span>
+<span id="cb5-3"><a href="#cb5-3"></a><span class="co">#&gt;           0.050           0.990          19.000           0.004 </span></span>
+<span id="cb5-4"><a href="#cb5-4"></a><span class="co">#&gt;      td_default     tex_default    v_ch_default </span></span>
+<span id="cb5-5"><a href="#cb5-5"></a><span class="co">#&gt;          20.000         100.000          10.000</span></span></code></pre></div>
 </div>
 <div id="redistribution-matrices-wsat-wex-fsat-fex" class="section level2">
 <h2 class="hasAnchor">
@@ -372,16 +375,16 @@ are named in keeping with the values of the id columns in the hillslope and
 channel tables.</p>
 <p>In the case of Wex and Wsat which characterise the movements between the
 hillslope HRUs it can be seen that the names are the same in both cases:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(model<span class="op">$</span>Wex)</a>
-<a class="sourceLine" id="cb6-2" title="2"><span class="co">#&gt; [1] "30"  "40"  "50"  "60"  "70"  "80"  "90"  "100"</span></a>
-<a class="sourceLine" id="cb6-3" title="3"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(model<span class="op">$</span>Wex)</a>
-<a class="sourceLine" id="cb6-4" title="4"><span class="co">#&gt; [1] "30"  "40"  "50"  "60"  "70"  "80"  "90"  "100"</span></a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(model<span class="op">$</span>Wex)</span>
+<span id="cb6-2"><a href="#cb6-2"></a><span class="co">#&gt; [1] "30"  "40"  "50"  "60"  "70"  "80"  "90"  "100"</span></span>
+<span id="cb6-3"><a href="#cb6-3"></a><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(model<span class="op">$</span>Wex)</span>
+<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt; [1] "30"  "40"  "50"  "60"  "70"  "80"  "90"  "100"</span></span></code></pre></div>
 <p>In Fex and Fsat the row names relate to the channel id values while the column
 names relate to the hillslope id values</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(model<span class="op">$</span>Fex)</a>
-<a class="sourceLine" id="cb7-2" title="2"><span class="co">#&gt; [1] "30"  "40"  "50"  "60"  "70"  "80"  "90"  "100"</span></a>
-<a class="sourceLine" id="cb7-3" title="3"><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(model<span class="op">$</span>Fex)</a>
-<a class="sourceLine" id="cb7-4" title="4"><span class="co">#&gt; [1] "1"</span></a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(model<span class="op">$</span>Fex)</span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="co">#&gt; [1] "30"  "40"  "50"  "60"  "70"  "80"  "90"  "100"</span></span>
+<span id="cb7-3"><a href="#cb7-3"></a><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(model<span class="op">$</span>Fex)</span>
+<span id="cb7-4"><a href="#cb7-4"></a><span class="co">#&gt; [1] "1"</span></span></code></pre></div>
 </div>
 <div id="point-inflows" class="section level2">
 <h2 class="hasAnchor">
@@ -390,9 +393,9 @@ names relate to the hillslope id values</p>
 network at which inflows can occur. The strucutre of the data frame exactly
 matchs that of the gauge specifications (see Table @ref{tab:gauge-table}). In the current catchment there are no
 inflows so the table is left blank:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">model<span class="op">$</span>point_inflow</a>
-<a class="sourceLine" id="cb8-2" title="2"><span class="co">#&gt; [1] name       channel_id fraction  </span></a>
-<a class="sourceLine" id="cb8-3" title="3"><span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>model<span class="op">$</span>point_inflow</span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="co">#&gt; [1] name       channel_id fraction  </span></span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></span></code></pre></div>
 </div>
 <div id="gauge-locations" class="section level2">
 <h2 class="hasAnchor">
@@ -426,10 +429,10 @@ inflows so the table is left blank:</p>
 </tbody>
 </table>
 <p>The current example has two gauges:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1">model<span class="op">$</span>gauge</a>
-<a class="sourceLine" id="cb9-2" title="2"><span class="co">#&gt;        name channel_id fraction</span></a>
-<a class="sourceLine" id="cb9-3" title="3"><span class="co">#&gt; 1    outlet          1        1</span></a>
-<a class="sourceLine" id="cb9-4" title="4"><span class="co">#&gt; 2 mid_point          1        1</span></a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>model<span class="op">$</span>gauge</span>
+<span id="cb9-2"><a href="#cb9-2"></a><span class="co">#&gt;        name channel_id fraction</span></span>
+<span id="cb9-3"><a href="#cb9-3"></a><span class="co">#&gt; 1    outlet          1        1</span></span>
+<span id="cb9-4"><a href="#cb9-4"></a><span class="co">#&gt; 2 mid_point          1        1</span></span></code></pre></div>
 </div>
   </div>
 

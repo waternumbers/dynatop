@@ -16,5 +16,5 @@ A list with two matrices one of time delays between the foot of reaches and the 
 This function computes the time taken for between point in the network TODO
 }
 \details{
-This is done by a simple search - not very efficent for large networ#' @export
+This is done by a simple search - not very efficent for large networks. The time returned is in h
 }

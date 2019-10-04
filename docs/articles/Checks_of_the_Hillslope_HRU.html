@@ -5,12 +5,12 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hillslope HRU mass balance checks • dynatop</title>
+<title>Checks of the Hillslope HRU • dynatop</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="Hillslope HRU mass balance checks">
+<script src="../pkgdown.js"></script><meta property="og:title" content="Checks of the Hillslope HRU">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
@@ -57,7 +57,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/Hillslope_HRU_Mass_Balance.html">Hillslope HRU mass balance checks</a>
+      <a href="../articles/Checks_of_the_Hillslope_HRU.html">Checks of the Hillslope HRU</a>
+    </li>
+    <li>
+      <a href="../articles/Checks_of_the_Time_Delay_Routing.html">Checks of the Time Delay Routing</a>
     </li>
     <li>
       <a href="../articles/Performance_Evaluation.html">Code Performance for larger simulations</a>
@@ -100,162 +103,162 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>Hillslope HRU mass balance checks</h1>
+      <h1>Checks of the Hillslope HRU</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/../vignettes/Hillslope_HRU_Mass_Balance.Rmd"><code>../vignettes/Hillslope_HRU_Mass_Balance.Rmd</code></a></small>
-      <div class="hidden name"><code>Hillslope_HRU_Mass_Balance.Rmd</code></div>
+      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/../vignettes/Checks_of_the_Hillslope_HRU.Rmd"><code>../vignettes/Checks_of_the_Hillslope_HRU.Rmd</code></a></small>
+      <div class="hidden name"><code>Checks_of_the_Hillslope_HRU.Rmd</code></div>
 
     </div>
 
     
     
-<p>The purpose of this vignette is to demonstrate the simulation of mass balance checks on the computation of hillslope elements. It provides both a check for the current implimentation of the code and a demonstration for those that may be developing more complex systems and want to perform their own test.</p>
+<p>The purpose of this vignette is to demonstrate some simulation checks on the computation of hillslope elements. It provides both a check for the current implimentation of the code and a demonstration for those that may be developing more complex systems and want to perform their own test.</p>
 <p>The basis of the simulations used in the test catchment contained within the package which is loaded with</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/rm.html">rm</a></span>(<span class="dt">list=</span><span class="kw"><a href="https://rdrr.io/r/base/ls.html">ls</a></span>())</a>
-<a class="sourceLine" id="cb1-2" title="2"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(dynatop)</a>
-<a class="sourceLine" id="cb1-3" title="3"><span class="co">#&gt; Loading required package: xts</span></a>
-<a class="sourceLine" id="cb1-4" title="4"><span class="co">#&gt; Warning: package 'xts' was built under R version 3.5.3</span></a>
-<a class="sourceLine" id="cb1-5" title="5"><span class="co">#&gt; Loading required package: zoo</span></a>
-<a class="sourceLine" id="cb1-6" title="6"><span class="co">#&gt; Warning: package 'zoo' was built under R version 3.5.3</span></a>
-<a class="sourceLine" id="cb1-7" title="7"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb1-8" title="8"><span class="co">#&gt; Attaching package: 'zoo'</span></a>
-<a class="sourceLine" id="cb1-9" title="9"><span class="co">#&gt; The following objects are masked from 'package:base':</span></a>
-<a class="sourceLine" id="cb1-10" title="10"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb1-11" title="11"><span class="co">#&gt;     as.Date, as.Date.numeric</span></a>
-<a class="sourceLine" id="cb1-12" title="12"><span class="co">#&gt; Loading required package: deSolve</span></a>
-<a class="sourceLine" id="cb1-13" title="13"><span class="co">#&gt; Warning: package 'deSolve' was built under R version 3.5.3</span></a>
-<a class="sourceLine" id="cb1-14" title="14"><span class="kw"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(<span class="st">"test_catchment"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw"><a href="https://rdrr.io/r/base/rm.html">rm</a></span>(<span class="dt">list=</span><span class="kw"><a href="https://rdrr.io/r/base/ls.html">ls</a></span>())</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(dynatop)</span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; Loading required package: xts</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="co">#&gt; Warning: package 'xts' was built under R version 3.5.3</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="co">#&gt; Loading required package: zoo</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="co">#&gt; Warning: package 'zoo' was built under R version 3.5.3</span></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="co">#&gt; </span></span>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="co">#&gt; Attaching package: 'zoo'</span></span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
+<span id="cb1-10"><a href="#cb1-10"></a><span class="co">#&gt; </span></span>
+<span id="cb1-11"><a href="#cb1-11"></a><span class="co">#&gt;     as.Date, as.Date.numeric</span></span>
+<span id="cb1-12"><a href="#cb1-12"></a><span class="co">#&gt; Loading required package: deSolve</span></span>
+<span id="cb1-13"><a href="#cb1-13"></a><span class="co">#&gt; Warning: package 'deSolve' was built under R version 3.5.3</span></span>
+<span id="cb1-14"><a href="#cb1-14"></a><span class="kw"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(<span class="st">"test_catchment"</span>)</span></code></pre></div>
 <div id="computing-the-volume-of-water-in-the-hillslope" class="section level1">
 <h1 class="hasAnchor">
 <a href="#computing-the-volume-of-water-in-the-hillslope" class="anchor"></a>Computing the volume of water in the hillslope</h1>
 <p>The volume of water in the hillslope can be computed from the states of the system upto an additive constant. The volume in each hillslope HRU is given by the sum of the surface excess, root zone, unsaturated zone and saturated zone storages multiplied by the surface area. However only the storage deficit of saturated zone is known. We therefore subtract this value and treat the unknown maximum saturated zone storage as an unknown additive constant. Note that this can result in apparently negatoive storages, but is adequate for the purposes of assessing changes to storage.</p>
 <p>In R this is implimented by the following function whose result is in m<span class="math inline">\(^3\)</span>.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">hillslope_volume &lt;-<span class="st"> </span><span class="cf">function</span>(mdl,<span class="dt">ignore_ssz=</span><span class="ot">FALSE</span>){</a>
-<a class="sourceLine" id="cb2-2" title="2">  tmp &lt;-<span class="st"> </span>mdl<span class="op">$</span>states<span class="op">$</span>hillslope</a>
-<a class="sourceLine" id="cb2-3" title="3">  <span class="cf">if</span>(<span class="op">!</span>ignore_ssz){</a>
-<a class="sourceLine" id="cb2-4" title="4">    <span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>( tmp<span class="op">$</span>area <span class="op">*</span><span class="st"> </span>(tmp<span class="op">$</span>ex <span class="op">+</span><span class="st"> </span>tmp<span class="op">$</span>srz <span class="op">+</span><span class="st"> </span>tmp<span class="op">$</span>suz <span class="op">-</span><span class="st"> </span>tmp<span class="op">$</span>ssz) )</a>
-<a class="sourceLine" id="cb2-5" title="5">  }<span class="cf">else</span>{</a>
-<a class="sourceLine" id="cb2-6" title="6">    <span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>( tmp<span class="op">$</span>area <span class="op">*</span><span class="st"> </span>(tmp<span class="op">$</span>ex <span class="op">+</span><span class="st"> </span>tmp<span class="op">$</span>srz <span class="op">+</span><span class="st"> </span>tmp<span class="op">$</span>suz) )</a>
-<a class="sourceLine" id="cb2-7" title="7">  }</a>
-<a class="sourceLine" id="cb2-8" title="8">}</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>hillslope_volume &lt;-<span class="st"> </span><span class="cf">function</span>(mdl,<span class="dt">ignore_ssz=</span><span class="ot">FALSE</span>){</span>
+<span id="cb2-2"><a href="#cb2-2"></a>  tmp &lt;-<span class="st"> </span>mdl<span class="op">$</span>states<span class="op">$</span>hillslope</span>
+<span id="cb2-3"><a href="#cb2-3"></a>  <span class="cf">if</span>(<span class="op">!</span>ignore_ssz){</span>
+<span id="cb2-4"><a href="#cb2-4"></a>    <span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>( tmp<span class="op">$</span>area <span class="op">*</span><span class="st"> </span>(tmp<span class="op">$</span>ex <span class="op">+</span><span class="st"> </span>tmp<span class="op">$</span>srz <span class="op">+</span><span class="st"> </span>tmp<span class="op">$</span>suz <span class="op">-</span><span class="st"> </span>tmp<span class="op">$</span>ssz) )</span>
+<span id="cb2-5"><a href="#cb2-5"></a>  }<span class="cf">else</span>{</span>
+<span id="cb2-6"><a href="#cb2-6"></a>    <span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>( tmp<span class="op">$</span>area <span class="op">*</span><span class="st"> </span>(tmp<span class="op">$</span>ex <span class="op">+</span><span class="st"> </span>tmp<span class="op">$</span>srz <span class="op">+</span><span class="st"> </span>tmp<span class="op">$</span>suz) )</span>
+<span id="cb2-7"><a href="#cb2-7"></a>  }</span>
+<span id="cb2-8"><a href="#cb2-8"></a>}</span></code></pre></div>
 </div>
 <div id="initialising-the-model" class="section level1">
 <h1 class="hasAnchor">
 <a href="#initialising-the-model" class="anchor"></a>Initialising the model</h1>
 <p>In calling <code>dynatop</code> the states can either be provided as part of the model structure of can be initialised internally. Since the package does not export a function for initialising the states within the model structure the follwoing function is used:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1">init_model &lt;-<span class="st"> </span><span class="cf">function</span>(mdl, recharge){</a>
-<a class="sourceLine" id="cb3-2" title="2">  mdl<span class="op">$</span>states &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>()</a>
-<a class="sourceLine" id="cb3-3" title="3">  mdl<span class="op">$</span>states<span class="op">$</span>hillslope &lt;-<span class="st"> </span><span class="kw"><a href="../reference/initialise_hru.html">initialise_hillslope</a></span>(mdl,recharge)</a>
-<a class="sourceLine" id="cb3-4" title="4">  mdl<span class="op">$</span>states<span class="op">$</span>channel &lt;-<span class="st"> </span><span class="kw"><a href="../reference/initialise_hru.html">initialise_channel</a></span>(mdl)</a>
-<a class="sourceLine" id="cb3-5" title="5">  <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span>(mdl)</a>
-<a class="sourceLine" id="cb3-6" title="6">}  </a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>init_model &lt;-<span class="st"> </span><span class="cf">function</span>(mdl, recharge){</span>
+<span id="cb3-2"><a href="#cb3-2"></a>  mdl<span class="op">$</span>states &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/list.html">list</a></span>()</span>
+<span id="cb3-3"><a href="#cb3-3"></a>  mdl<span class="op">$</span>states<span class="op">$</span>hillslope &lt;-<span class="st"> </span><span class="kw"><a href="../reference/initialise_hru.html">initialise_hillslope</a></span>(mdl,recharge)</span>
+<span id="cb3-4"><a href="#cb3-4"></a>  mdl<span class="op">$</span>states<span class="op">$</span>channel &lt;-<span class="st"> </span><span class="kw"><a href="../reference/initialise_hru.html">initialise_channel</a></span>(mdl)</span>
+<span id="cb3-5"><a href="#cb3-5"></a>  <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span>(mdl)</span>
+<span id="cb3-6"><a href="#cb3-6"></a>}  </span></code></pre></div>
 <p>However for testing it is useful to be able to manipulate the states manually.</p>
 </div>
 <div id="saturated-zone-drain-down" class="section level1">
 <h1 class="hasAnchor">
 <a href="#saturated-zone-drain-down" class="anchor"></a>Saturated zone drain down</h1>
 <p>This check tests the performance of the saturated zone solution when there is no flow from the unsaturated zone.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="co">## create a zero input and output forcing series</span></a>
-<a class="sourceLine" id="cb4-2" title="2">obs &lt;-<span class="st"> </span>test_catchment<span class="op">$</span>obs</a>
-<a class="sourceLine" id="cb4-3" title="3">obs<span class="op">$</span>rain[] &lt;-<span class="st"> </span>obs<span class="op">$</span>pet[] &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb4-4" title="4"></a>
-<a class="sourceLine" id="cb4-5" title="5"><span class="co">## initialise the model and set all stores except saturated zone to 0</span></a>
-<a class="sourceLine" id="cb4-6" title="6">initial_mdl &lt;-<span class="st"> </span><span class="kw">init_model</span>(test_catchment<span class="op">$</span>model,<span class="fl">0.015</span>)</a>
-<a class="sourceLine" id="cb4-7" title="7"><span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"ex"</span>,<span class="st">"srz"</span>,<span class="st">"suz"</span>)){</a>
-<a class="sourceLine" id="cb4-8" title="8">  initial_mdl<span class="op">$</span>states<span class="op">$</span>hillslope[[ii]][] &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb4-9" title="9">}</a>
-<a class="sourceLine" id="cb4-10" title="10"></a>
-<a class="sourceLine" id="cb4-11" title="11"><span class="co">## simulate the model and seperate the output</span></a>
-<a class="sourceLine" id="cb4-12" title="12">out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(initial_mdl,obs,<span class="dt">use_states=</span><span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb4-13" title="13"></a>
-<a class="sourceLine" id="cb4-14" title="14"><span class="co">## volume balance</span></a>
-<a class="sourceLine" id="cb4-15" title="15">initial_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(initial_mdl)</a>
-<a class="sourceLine" id="cb4-16" title="16">final_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(out<span class="op">$</span>model)</a>
-<a class="sourceLine" id="cb4-17" title="17">channel_vol &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>channel_input) <span class="op">*</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/diff.html">diff</a></span>(<span class="kw">.index</span>(out<span class="op">$</span>channel_input)))</a>
-<a class="sourceLine" id="cb4-18" title="18"></a>
-<a class="sourceLine" id="cb4-19" title="19"><span class="co">## error as an average depth</span></a>
-<a class="sourceLine" id="cb4-20" title="20"><span class="kw"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span>(initial_vol <span class="op">-</span><span class="st"> </span>(final_vol <span class="op">+</span><span class="st"> </span>channel_vol)) <span class="op">/</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>model<span class="op">$</span>states<span class="op">$</span>hillslope<span class="op">$</span>area)</a>
-<a class="sourceLine" id="cb4-21" title="21"><span class="co">#&gt; [1] 0.0001258917</span></a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co">## create a zero input and output forcing series</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a>obs &lt;-<span class="st"> </span>test_catchment<span class="op">$</span>obs</span>
+<span id="cb4-3"><a href="#cb4-3"></a>obs<span class="op">$</span>rain[] &lt;-<span class="st"> </span>obs<span class="op">$</span>pet[] &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb4-4"><a href="#cb4-4"></a></span>
+<span id="cb4-5"><a href="#cb4-5"></a><span class="co">## initialise the model and set all stores except saturated zone to 0</span></span>
+<span id="cb4-6"><a href="#cb4-6"></a>initial_mdl &lt;-<span class="st"> </span><span class="kw">init_model</span>(test_catchment<span class="op">$</span>model,<span class="fl">0.015</span>)</span>
+<span id="cb4-7"><a href="#cb4-7"></a><span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"ex"</span>,<span class="st">"srz"</span>,<span class="st">"suz"</span>)){</span>
+<span id="cb4-8"><a href="#cb4-8"></a>  initial_mdl<span class="op">$</span>states<span class="op">$</span>hillslope[[ii]][] &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb4-9"><a href="#cb4-9"></a>}</span>
+<span id="cb4-10"><a href="#cb4-10"></a></span>
+<span id="cb4-11"><a href="#cb4-11"></a><span class="co">## simulate the model and seperate the output</span></span>
+<span id="cb4-12"><a href="#cb4-12"></a>out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(initial_mdl,obs,<span class="dt">use_states=</span><span class="ot">TRUE</span>)</span>
+<span id="cb4-13"><a href="#cb4-13"></a></span>
+<span id="cb4-14"><a href="#cb4-14"></a><span class="co">## volume balance</span></span>
+<span id="cb4-15"><a href="#cb4-15"></a>initial_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(initial_mdl)</span>
+<span id="cb4-16"><a href="#cb4-16"></a>final_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(out<span class="op">$</span>model)</span>
+<span id="cb4-17"><a href="#cb4-17"></a>channel_vol &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>channel_input) <span class="op">*</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/diff.html">diff</a></span>(<span class="kw">.index</span>(out<span class="op">$</span>channel_input)))</span>
+<span id="cb4-18"><a href="#cb4-18"></a></span>
+<span id="cb4-19"><a href="#cb4-19"></a><span class="co">## error as an average depth</span></span>
+<span id="cb4-20"><a href="#cb4-20"></a><span class="kw"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span>(initial_vol <span class="op">-</span><span class="st"> </span>(final_vol <span class="op">+</span><span class="st"> </span>channel_vol)) <span class="op">/</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>model<span class="op">$</span>states<span class="op">$</span>hillslope<span class="op">$</span>area)</span>
+<span id="cb4-21"><a href="#cb4-21"></a><span class="co">#&gt; [1] 0.0001258917</span></span></code></pre></div>
 </div>
 <div id="saturated-and-unsaturated-zone-drain-down" class="section level1">
 <h1 class="hasAnchor">
 <a href="#saturated-and-unsaturated-zone-drain-down" class="anchor"></a>Saturated and unsaturated zone drain down</h1>
 <p>We repeat the saturated zone drain down test with initial unsaturated zone storage but no forcing inputs.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="co">## create a zero input and output forcing series</span></a>
-<a class="sourceLine" id="cb5-2" title="2">obs &lt;-<span class="st"> </span>test_catchment<span class="op">$</span>obs</a>
-<a class="sourceLine" id="cb5-3" title="3">obs<span class="op">$</span>rain[] &lt;-<span class="st"> </span>obs<span class="op">$</span>pet[] &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb5-4" title="4"></a>
-<a class="sourceLine" id="cb5-5" title="5"><span class="co">## initialise the model and set all stores except saturated zone to 0</span></a>
-<a class="sourceLine" id="cb5-6" title="6">initial_mdl &lt;-<span class="st"> </span><span class="kw">init_model</span>(test_catchment<span class="op">$</span>model,<span class="fl">0.015</span>)</a>
-<a class="sourceLine" id="cb5-7" title="7"><span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"ex"</span>,<span class="st">"srz"</span>)){</a>
-<a class="sourceLine" id="cb5-8" title="8">  initial_mdl<span class="op">$</span>states<span class="op">$</span>hillslope[[ii]][] &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb5-9" title="9">}</a>
-<a class="sourceLine" id="cb5-10" title="10"></a>
-<a class="sourceLine" id="cb5-11" title="11"><span class="co">## simulate the model and seperate the output</span></a>
-<a class="sourceLine" id="cb5-12" title="12">out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(initial_mdl,obs,<span class="dt">use_states=</span><span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb5-13" title="13"></a>
-<a class="sourceLine" id="cb5-14" title="14"><span class="co">## volume balance</span></a>
-<a class="sourceLine" id="cb5-15" title="15">initial_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(initial_mdl)</a>
-<a class="sourceLine" id="cb5-16" title="16">final_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(out<span class="op">$</span>model)</a>
-<a class="sourceLine" id="cb5-17" title="17">channel_vol &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>channel_input) <span class="op">*</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/diff.html">diff</a></span>(<span class="kw">.index</span>(out<span class="op">$</span>channel_input)))</a>
-<a class="sourceLine" id="cb5-18" title="18"></a>
-<a class="sourceLine" id="cb5-19" title="19"><span class="co">## error as an average depth</span></a>
-<a class="sourceLine" id="cb5-20" title="20"><span class="kw"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span>(initial_vol <span class="op">-</span><span class="st"> </span>(final_vol <span class="op">+</span><span class="st"> </span>channel_vol)) <span class="op">/</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>model<span class="op">$</span>states<span class="op">$</span>hillslope<span class="op">$</span>area)</a>
-<a class="sourceLine" id="cb5-21" title="21"><span class="co">#&gt; [1] 0.0001691302</span></a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="co">## create a zero input and output forcing series</span></span>
+<span id="cb5-2"><a href="#cb5-2"></a>obs &lt;-<span class="st"> </span>test_catchment<span class="op">$</span>obs</span>
+<span id="cb5-3"><a href="#cb5-3"></a>obs<span class="op">$</span>rain[] &lt;-<span class="st"> </span>obs<span class="op">$</span>pet[] &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb5-4"><a href="#cb5-4"></a></span>
+<span id="cb5-5"><a href="#cb5-5"></a><span class="co">## initialise the model and set all stores except saturated zone to 0</span></span>
+<span id="cb5-6"><a href="#cb5-6"></a>initial_mdl &lt;-<span class="st"> </span><span class="kw">init_model</span>(test_catchment<span class="op">$</span>model,<span class="fl">0.015</span>)</span>
+<span id="cb5-7"><a href="#cb5-7"></a><span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"ex"</span>,<span class="st">"srz"</span>)){</span>
+<span id="cb5-8"><a href="#cb5-8"></a>  initial_mdl<span class="op">$</span>states<span class="op">$</span>hillslope[[ii]][] &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb5-9"><a href="#cb5-9"></a>}</span>
+<span id="cb5-10"><a href="#cb5-10"></a></span>
+<span id="cb5-11"><a href="#cb5-11"></a><span class="co">## simulate the model and seperate the output</span></span>
+<span id="cb5-12"><a href="#cb5-12"></a>out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(initial_mdl,obs,<span class="dt">use_states=</span><span class="ot">TRUE</span>)</span>
+<span id="cb5-13"><a href="#cb5-13"></a></span>
+<span id="cb5-14"><a href="#cb5-14"></a><span class="co">## volume balance</span></span>
+<span id="cb5-15"><a href="#cb5-15"></a>initial_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(initial_mdl)</span>
+<span id="cb5-16"><a href="#cb5-16"></a>final_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(out<span class="op">$</span>model)</span>
+<span id="cb5-17"><a href="#cb5-17"></a>channel_vol &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>channel_input) <span class="op">*</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/diff.html">diff</a></span>(<span class="kw">.index</span>(out<span class="op">$</span>channel_input)))</span>
+<span id="cb5-18"><a href="#cb5-18"></a></span>
+<span id="cb5-19"><a href="#cb5-19"></a><span class="co">## error as an average depth</span></span>
+<span id="cb5-20"><a href="#cb5-20"></a><span class="kw"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span>(initial_vol <span class="op">-</span><span class="st"> </span>(final_vol <span class="op">+</span><span class="st"> </span>channel_vol)) <span class="op">/</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>model<span class="op">$</span>states<span class="op">$</span>hillslope<span class="op">$</span>area)</span>
+<span id="cb5-21"><a href="#cb5-21"></a><span class="co">#&gt; [1] 0.0001691302</span></span></code></pre></div>
 </div>
 <div id="surface-excess-movement" class="section level1">
 <h1 class="hasAnchor">
 <a href="#surface-excess-movement" class="anchor"></a>Surface excess movement</h1>
 <p>This tests the solution to the redistribution of surface storage with no additional inflows</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="co">## create a zero input and output forcing series</span></a>
-<a class="sourceLine" id="cb6-2" title="2">obs &lt;-<span class="st"> </span>test_catchment<span class="op">$</span>obs</a>
-<a class="sourceLine" id="cb6-3" title="3">obs<span class="op">$</span>rain[] &lt;-<span class="st"> </span>obs<span class="op">$</span>pet[] &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb6-4" title="4"></a>
-<a class="sourceLine" id="cb6-5" title="5"><span class="co">## initialise the model as 'dry' except for surface excess</span></a>
-<a class="sourceLine" id="cb6-6" title="6">initial_mdl &lt;-<span class="st"> </span><span class="kw">init_model</span>(test_catchment<span class="op">$</span>model,<span class="dv">0</span>)</a>
-<a class="sourceLine" id="cb6-7" title="7"><span class="co">#&gt; Error in try({ : </span></a>
-<a class="sourceLine" id="cb6-8" title="8"><span class="co">#&gt;   Solution for saturated zone initialisation produced negative or zero flows.</span></a>
-<a class="sourceLine" id="cb6-9" title="9"><span class="co">#&gt;  Using constant recharge across catchment</span></a>
-<a class="sourceLine" id="cb6-10" title="10">initial_mdl<span class="op">$</span>states<span class="op">$</span>hillslope<span class="op">$</span>srz[] &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb6-11" title="11">initial_mdl<span class="op">$</span>states<span class="op">$</span>hillslope<span class="op">$</span>ex[] &lt;-<span class="st"> </span><span class="fl">0.1</span></a>
-<a class="sourceLine" id="cb6-12" title="12"></a>
-<a class="sourceLine" id="cb6-13" title="13"><span class="co">## simulate the model and seperate the output</span></a>
-<a class="sourceLine" id="cb6-14" title="14">out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(initial_mdl,obs,<span class="dt">use_states=</span><span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb6-15" title="15"></a>
-<a class="sourceLine" id="cb6-16" title="16"><span class="co">## volume balance</span></a>
-<a class="sourceLine" id="cb6-17" title="17"></a>
-<a class="sourceLine" id="cb6-18" title="18">initial_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(initial_mdl,<span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb6-19" title="19">final_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(out<span class="op">$</span>model,<span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb6-20" title="20">channel_vol &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>channel_input) <span class="op">*</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/diff.html">diff</a></span>(<span class="kw">.index</span>(out<span class="op">$</span>channel_input)))</a>
-<a class="sourceLine" id="cb6-21" title="21"></a>
-<a class="sourceLine" id="cb6-22" title="22"><span class="co"># error as percent</span></a>
-<a class="sourceLine" id="cb6-23" title="23"><span class="kw"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span>(initial_vol <span class="op">-</span><span class="st"> </span>(final_vol <span class="op">+</span><span class="st"> </span>channel_vol)) <span class="op">/</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(initial_vol)<span class="op">*</span><span class="dv">100</span></a>
-<a class="sourceLine" id="cb6-24" title="24"><span class="co">#&gt; [1] 0.1175767</span></a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="co">## create a zero input and output forcing series</span></span>
+<span id="cb6-2"><a href="#cb6-2"></a>obs &lt;-<span class="st"> </span>test_catchment<span class="op">$</span>obs</span>
+<span id="cb6-3"><a href="#cb6-3"></a>obs<span class="op">$</span>rain[] &lt;-<span class="st"> </span>obs<span class="op">$</span>pet[] &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb6-4"><a href="#cb6-4"></a></span>
+<span id="cb6-5"><a href="#cb6-5"></a><span class="co">## initialise the model as 'dry' except for surface excess</span></span>
+<span id="cb6-6"><a href="#cb6-6"></a>initial_mdl &lt;-<span class="st"> </span><span class="kw">init_model</span>(test_catchment<span class="op">$</span>model,<span class="dv">0</span>)</span>
+<span id="cb6-7"><a href="#cb6-7"></a><span class="co">#&gt; Error in try({ : </span></span>
+<span id="cb6-8"><a href="#cb6-8"></a><span class="co">#&gt;   Solution for saturated zone initialisation produced negative or zero flows.</span></span>
+<span id="cb6-9"><a href="#cb6-9"></a><span class="co">#&gt;  Using constant recharge across catchment</span></span>
+<span id="cb6-10"><a href="#cb6-10"></a>initial_mdl<span class="op">$</span>states<span class="op">$</span>hillslope<span class="op">$</span>srz[] &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb6-11"><a href="#cb6-11"></a>initial_mdl<span class="op">$</span>states<span class="op">$</span>hillslope<span class="op">$</span>ex[] &lt;-<span class="st"> </span><span class="fl">0.1</span></span>
+<span id="cb6-12"><a href="#cb6-12"></a></span>
+<span id="cb6-13"><a href="#cb6-13"></a><span class="co">## simulate the model and seperate the output</span></span>
+<span id="cb6-14"><a href="#cb6-14"></a>out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(initial_mdl,obs,<span class="dt">use_states=</span><span class="ot">TRUE</span>)</span>
+<span id="cb6-15"><a href="#cb6-15"></a></span>
+<span id="cb6-16"><a href="#cb6-16"></a><span class="co">## volume balance</span></span>
+<span id="cb6-17"><a href="#cb6-17"></a></span>
+<span id="cb6-18"><a href="#cb6-18"></a>initial_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(initial_mdl,<span class="ot">TRUE</span>)</span>
+<span id="cb6-19"><a href="#cb6-19"></a>final_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(out<span class="op">$</span>model,<span class="ot">TRUE</span>)</span>
+<span id="cb6-20"><a href="#cb6-20"></a>channel_vol &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>channel_input) <span class="op">*</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/diff.html">diff</a></span>(<span class="kw">.index</span>(out<span class="op">$</span>channel_input)))</span>
+<span id="cb6-21"><a href="#cb6-21"></a></span>
+<span id="cb6-22"><a href="#cb6-22"></a><span class="co"># error as percent</span></span>
+<span id="cb6-23"><a href="#cb6-23"></a><span class="kw"><a href="https://rdrr.io/r/base/MathFun.html">abs</a></span>(initial_vol <span class="op">-</span><span class="st"> </span>(final_vol <span class="op">+</span><span class="st"> </span>channel_vol)) <span class="op">/</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(initial_vol)<span class="op">*</span><span class="dv">100</span></span>
+<span id="cb6-24"><a href="#cb6-24"></a><span class="co">#&gt; [1] 0.1175767</span></span></code></pre></div>
 </div>
 <div id="all-model-with-no-evapotranspiration-losses" class="section level1">
 <h1 class="hasAnchor">
 <a href="#all-model-with-no-evapotranspiration-losses" class="anchor"></a>All model with no evapotranspiration losses</h1>
 <p>This tests the solution assuming there is no loss to evapotranspiration. testing beyond this requires the recording ot the losses to evapotranspiration.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="co">## create a zero input and output forcing series</span></a>
-<a class="sourceLine" id="cb7-2" title="2">obs &lt;-<span class="st"> </span>test_catchment<span class="op">$</span>obs</a>
-<a class="sourceLine" id="cb7-3" title="3">obs<span class="op">$</span>pet[] &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb7-4" title="4"></a>
-<a class="sourceLine" id="cb7-5" title="5"><span class="co">## initialise the model as 'dry' except for surface excess</span></a>
-<a class="sourceLine" id="cb7-6" title="6">initial_mdl &lt;-<span class="st"> </span><span class="kw">init_model</span>(test_catchment<span class="op">$</span>model,<span class="fl">0.015</span>)</a>
-<a class="sourceLine" id="cb7-7" title="7"></a>
-<a class="sourceLine" id="cb7-8" title="8"><span class="co">## simulate the model and seperate the output</span></a>
-<a class="sourceLine" id="cb7-9" title="9">out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(initial_mdl,obs,<span class="dt">use_states=</span><span class="ot">TRUE</span>)</a>
-<a class="sourceLine" id="cb7-10" title="10"></a>
-<a class="sourceLine" id="cb7-11" title="11"><span class="co">## volume balance</span></a>
-<a class="sourceLine" id="cb7-12" title="12">initial_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(initial_mdl)</a>
-<a class="sourceLine" id="cb7-13" title="13">final_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(out<span class="op">$</span>model)</a>
-<a class="sourceLine" id="cb7-14" title="14">channel_vol &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>channel_input) <span class="op">*</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/diff.html">diff</a></span>(<span class="kw">.index</span>(out<span class="op">$</span>channel_input)))</a>
-<a class="sourceLine" id="cb7-15" title="15">rain_vol &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(obs<span class="op">$</span>rain) <span class="op">*</span><span class="st"> </span>(<span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/diff.html">diff</a></span>(<span class="kw">.index</span>(out<span class="op">$</span>channel_input)))<span class="op">/</span><span class="dv">3600</span>) <span class="op">*</span></a>
-<a class="sourceLine" id="cb7-16" title="16"><span class="st">  </span>(<span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>model<span class="op">$</span>states<span class="op">$</span>hillslope<span class="op">$</span>area) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>model<span class="op">$</span>states<span class="op">$</span>channel<span class="op">$</span>area))</a>
-<a class="sourceLine" id="cb7-17" title="17"><span class="co"># error as average over catchment</span></a>
-<a class="sourceLine" id="cb7-18" title="18">((initial_vol <span class="op">+</span><span class="st"> </span>rain_vol)<span class="op">-</span><span class="st"> </span>(final_vol <span class="op">+</span><span class="st"> </span>channel_vol)) <span class="op">/</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>model<span class="op">$</span>states<span class="op">$</span>hillslope<span class="op">$</span>area)</a>
-<a class="sourceLine" id="cb7-19" title="19"><span class="co">#&gt; [1] 0.001266055</span></a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="co">## create a zero input and output forcing series</span></span>
+<span id="cb7-2"><a href="#cb7-2"></a>obs &lt;-<span class="st"> </span>test_catchment<span class="op">$</span>obs</span>
+<span id="cb7-3"><a href="#cb7-3"></a>obs<span class="op">$</span>pet[] &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb7-4"><a href="#cb7-4"></a></span>
+<span id="cb7-5"><a href="#cb7-5"></a><span class="co">## initialise the model as 'dry' except for surface excess</span></span>
+<span id="cb7-6"><a href="#cb7-6"></a>initial_mdl &lt;-<span class="st"> </span><span class="kw">init_model</span>(test_catchment<span class="op">$</span>model,<span class="fl">0.015</span>)</span>
+<span id="cb7-7"><a href="#cb7-7"></a></span>
+<span id="cb7-8"><a href="#cb7-8"></a><span class="co">## simulate the model and seperate the output</span></span>
+<span id="cb7-9"><a href="#cb7-9"></a>out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(initial_mdl,obs,<span class="dt">use_states=</span><span class="ot">TRUE</span>)</span>
+<span id="cb7-10"><a href="#cb7-10"></a></span>
+<span id="cb7-11"><a href="#cb7-11"></a><span class="co">## volume balance</span></span>
+<span id="cb7-12"><a href="#cb7-12"></a>initial_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(initial_mdl)</span>
+<span id="cb7-13"><a href="#cb7-13"></a>final_vol &lt;-<span class="st"> </span><span class="kw">hillslope_volume</span>(out<span class="op">$</span>model)</span>
+<span id="cb7-14"><a href="#cb7-14"></a>channel_vol &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>channel_input) <span class="op">*</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/diff.html">diff</a></span>(<span class="kw">.index</span>(out<span class="op">$</span>channel_input)))</span>
+<span id="cb7-15"><a href="#cb7-15"></a>rain_vol &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(obs<span class="op">$</span>rain) <span class="op">*</span><span class="st"> </span>(<span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/diff.html">diff</a></span>(<span class="kw">.index</span>(out<span class="op">$</span>channel_input)))<span class="op">/</span><span class="dv">3600</span>) <span class="op">*</span></span>
+<span id="cb7-16"><a href="#cb7-16"></a><span class="st">  </span>(<span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>model<span class="op">$</span>states<span class="op">$</span>hillslope<span class="op">$</span>area) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>model<span class="op">$</span>states<span class="op">$</span>channel<span class="op">$</span>area))</span>
+<span id="cb7-17"><a href="#cb7-17"></a><span class="co"># error as average over catchment</span></span>
+<span id="cb7-18"><a href="#cb7-18"></a>((initial_vol <span class="op">+</span><span class="st"> </span>rain_vol)<span class="op">-</span><span class="st"> </span>(final_vol <span class="op">+</span><span class="st"> </span>channel_vol)) <span class="op">/</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(out<span class="op">$</span>model<span class="op">$</span>states<span class="op">$</span>hillslope<span class="op">$</span>area)</span>
+<span id="cb7-19"><a href="#cb7-19"></a><span class="co">#&gt; [1] 0.001266055</span></span></code></pre></div>
 </div>
   </div>
 

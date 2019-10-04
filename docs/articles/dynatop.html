@@ -57,7 +57,10 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/Hillslope_HRU_Mass_Balance.html">Hillslope HRU mass balance checks</a>
+      <a href="../articles/Checks_of_the_Hillslope_HRU.html">Checks of the Hillslope HRU</a>
+    </li>
+    <li>
+      <a href="../articles/Checks_of_the_Time_Delay_Routing.html">Checks of the Time Delay Routing</a>
     </li>
     <li>
       <a href="../articles/Performance_Evaluation.html">Code Performance for larger simulations</a>
@@ -112,167 +115,167 @@
     
 <p>The purpose of this vignette is to provide an outline of the steps needed to perform a Dynamic TOPMODEL simulation and introduce the formats of the data input and returned.</p>
 <p>The data used in this example comes from Brompton and is contained within the package and can be loaded with</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(dynatop)</a>
-<a class="sourceLine" id="cb1-2" title="2"><span class="co">#&gt; Loading required package: xts</span></a>
-<a class="sourceLine" id="cb1-3" title="3"><span class="co">#&gt; Warning: package 'xts' was built under R version 3.5.3</span></a>
-<a class="sourceLine" id="cb1-4" title="4"><span class="co">#&gt; Loading required package: zoo</span></a>
-<a class="sourceLine" id="cb1-5" title="5"><span class="co">#&gt; Warning: package 'zoo' was built under R version 3.5.3</span></a>
-<a class="sourceLine" id="cb1-6" title="6"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb1-7" title="7"><span class="co">#&gt; Attaching package: 'zoo'</span></a>
-<a class="sourceLine" id="cb1-8" title="8"><span class="co">#&gt; The following objects are masked from 'package:base':</span></a>
-<a class="sourceLine" id="cb1-9" title="9"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb1-10" title="10"><span class="co">#&gt;     as.Date, as.Date.numeric</span></a>
-<a class="sourceLine" id="cb1-11" title="11"><span class="co">#&gt; Loading required package: deSolve</span></a>
-<a class="sourceLine" id="cb1-12" title="12"><span class="co">#&gt; Warning: package 'deSolve' was built under R version 3.5.3</span></a>
-<a class="sourceLine" id="cb1-13" title="13"><span class="kw"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(<span class="st">"brompton"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(dynatop)</span>
+<span id="cb1-2"><a href="#cb1-2"></a><span class="co">#&gt; Loading required package: xts</span></span>
+<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; Warning: package 'xts' was built under R version 3.5.3</span></span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="co">#&gt; Loading required package: zoo</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a><span class="co">#&gt; Warning: package 'zoo' was built under R version 3.5.3</span></span>
+<span id="cb1-6"><a href="#cb1-6"></a><span class="co">#&gt; </span></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="co">#&gt; Attaching package: 'zoo'</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
+<span id="cb1-9"><a href="#cb1-9"></a><span class="co">#&gt; </span></span>
+<span id="cb1-10"><a href="#cb1-10"></a><span class="co">#&gt;     as.Date, as.Date.numeric</span></span>
+<span id="cb1-11"><a href="#cb1-11"></a><span class="co">#&gt; Loading required package: deSolve</span></span>
+<span id="cb1-12"><a href="#cb1-12"></a><span class="co">#&gt; Warning: package 'deSolve' was built under R version 3.5.3</span></span>
+<span id="cb1-13"><a href="#cb1-13"></a><span class="kw"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(<span class="st">"brompton"</span>)</span></code></pre></div>
 <p>which returns the following variables</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(brompton)</a>
-<a class="sourceLine" id="cb2-2" title="2"><span class="co">#&gt; [1] "model" "rain"  "pet"   "qobs"</span></a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(brompton)</span>
+<span id="cb2-2"><a href="#cb2-2"></a><span class="co">#&gt; [1] "model" "rain"  "pet"   "qobs"</span></span></code></pre></div>
 <p>In the following # The model structure A dynamic TOPMODEL is described in a list object. The list has the following elements</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(brompton<span class="op">$</span>model)</a>
-<a class="sourceLine" id="cb3-2" title="2"><span class="co">#&gt; [1] "hillslope"    "channel"      "param"        "Wex"         </span></a>
-<a class="sourceLine" id="cb3-3" title="3"><span class="co">#&gt; [5] "Wsat"         "Fex"          "Fsat"         "point_inflow"</span></a>
-<a class="sourceLine" id="cb3-4" title="4"><span class="co">#&gt; [9] "gauge"</span></a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(brompton<span class="op">$</span>model)</span>
+<span id="cb3-2"><a href="#cb3-2"></a><span class="co">#&gt; [1] "hillslope"    "channel"      "param"        "Wex"         </span></span>
+<span id="cb3-3"><a href="#cb3-3"></a><span class="co">#&gt; [5] "Wsat"         "Fex"          "Fsat"         "point_inflow"</span></span>
+<span id="cb3-4"><a href="#cb3-4"></a><span class="co">#&gt; [9] "gauge"</span></span></code></pre></div>
 <p>which are described in <a href="https://waternumbers.github.io/dynatop/articles/The_Model_Object.html">associated vignette</a>. The <a href="https://waternumbers.github.io/dynatopGIS">dynatopGIS</a> package can be used for constructing models.</p>
 <div id="checking-the-model" class="section level2">
 <h2 class="hasAnchor">
 <a href="#checking-the-model" class="anchor"></a>Checking the model</h2>
 <p>The structure of the model can be tested:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw"><a href="../reference/check_model.html">check_model</a></span>(brompton<span class="op">$</span>model)</a>
-<a class="sourceLine" id="cb4-2" title="2"><span class="co">#&gt; Error in check_model(brompton$model): Saturated flow redistribution fractions sum to greater then 1 for HRUs: 40, 90, 100</span></a></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw"><a href="../reference/check_model.html">check_model</a></span>(brompton<span class="op">$</span>model)</span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="co">#&gt; Error in check_model(brompton$model): Saturated flow redistribution fractions sum to greater then 1 for HRUs: 40, 90, 100</span></span></code></pre></div>
 <p>In this case we can see multiple warning messages. The warnings relate to the redistribution of the flows from the hill slope HRUs. In all cases the sum of the fractions describing the destination of the flows is greater then 1, meaning that flow is artificially generated during the redistribution. This can be checked manually by</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">model &lt;-<span class="st"> </span>brompton<span class="op">$</span>model</a>
-<a class="sourceLine" id="cb5-2" title="2">current_total_frac_sat &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colSums</a></span>( <span class="kw"><a href="https://rdrr.io/r/base/cbind.html">rbind</a></span>(model<span class="op">$</span>Wsat,model<span class="op">$</span>Fsat) )</a>
-<a class="sourceLine" id="cb5-3" title="3">current_total_frac_ex &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colSums</a></span>( <span class="kw"><a href="https://rdrr.io/r/base/cbind.html">rbind</a></span>(model<span class="op">$</span>Wex,model<span class="op">$</span>Fex) )</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>model &lt;-<span class="st"> </span>brompton<span class="op">$</span>model</span>
+<span id="cb5-2"><a href="#cb5-2"></a>current_total_frac_sat &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colSums</a></span>( <span class="kw"><a href="https://rdrr.io/r/base/cbind.html">rbind</a></span>(model<span class="op">$</span>Wsat,model<span class="op">$</span>Fsat) )</span>
+<span id="cb5-3"><a href="#cb5-3"></a>current_total_frac_ex &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/colSums.html">colSums</a></span>( <span class="kw"><a href="https://rdrr.io/r/base/cbind.html">rbind</a></span>(model<span class="op">$</span>Wex,model<span class="op">$</span>Fex) )</span></code></pre></div>
 <p>We can readily fix this:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1"><span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(current_total_frac_sat[current_total_frac_sat<span class="op">&gt;</span><span class="dv">1</span>])){</a>
-<a class="sourceLine" id="cb6-2" title="2">    model<span class="op">$</span>Wsat[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Wsat[,ii]<span class="op">/</span>current_total_frac_sat[ii]</a>
-<a class="sourceLine" id="cb6-3" title="3">    model<span class="op">$</span>Fsat[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Fsat[,ii]<span class="op">/</span>current_total_frac_sat[ii]</a>
-<a class="sourceLine" id="cb6-4" title="4">}</a>
-<a class="sourceLine" id="cb6-5" title="5"><span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(current_total_frac_sat[current_total_frac_ex<span class="op">&gt;</span><span class="dv">1</span>])){</a>
-<a class="sourceLine" id="cb6-6" title="6">    model<span class="op">$</span>Wex[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Wex[,ii]<span class="op">/</span>current_total_frac_ex[ii]</a>
-<a class="sourceLine" id="cb6-7" title="7">    model<span class="op">$</span>Fex[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Fex[,ii]<span class="op">/</span>current_total_frac_ex[ii]</a>
-<a class="sourceLine" id="cb6-8" title="8">}</a></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(current_total_frac_sat[current_total_frac_sat<span class="op">&gt;</span><span class="dv">1</span>])){</span>
+<span id="cb6-2"><a href="#cb6-2"></a>    model<span class="op">$</span>Wsat[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Wsat[,ii]<span class="op">/</span>current_total_frac_sat[ii]</span>
+<span id="cb6-3"><a href="#cb6-3"></a>    model<span class="op">$</span>Fsat[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Fsat[,ii]<span class="op">/</span>current_total_frac_sat[ii]</span>
+<span id="cb6-4"><a href="#cb6-4"></a>}</span>
+<span id="cb6-5"><a href="#cb6-5"></a><span class="cf">for</span>(ii <span class="cf">in</span> <span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(current_total_frac_sat[current_total_frac_ex<span class="op">&gt;</span><span class="dv">1</span>])){</span>
+<span id="cb6-6"><a href="#cb6-6"></a>    model<span class="op">$</span>Wex[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Wex[,ii]<span class="op">/</span>current_total_frac_ex[ii]</span>
+<span id="cb6-7"><a href="#cb6-7"></a>    model<span class="op">$</span>Fex[,ii] &lt;-<span class="st"> </span>model<span class="op">$</span>Fex[,ii]<span class="op">/</span>current_total_frac_ex[ii]</span>
+<span id="cb6-8"><a href="#cb6-8"></a>}</span></code></pre></div>
 <p>and repeating the check does not produce an error:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw"><a href="../reference/check_model.html">check_model</a></span>(model)</a>
-<a class="sourceLine" id="cb7-2" title="2"><span class="co">#&gt; NULL</span></a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw"><a href="../reference/check_model.html">check_model</a></span>(model)</span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="co">#&gt; NULL</span></span></code></pre></div>
 </div>
 <div id="altering-parameters" class="section level2">
 <h2 class="hasAnchor">
 <a href="#altering-parameters" class="anchor"></a>Altering parameters</h2>
 <p>The parameter values are stored in the parameter vector <code>model$parameters</code>. Each parameter value has a unique name. In the current model the parameters are all set to their default values:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>(model<span class="op">$</span>param)</a>
-<a class="sourceLine" id="cb8-2" title="2"><span class="co">#&gt; srz_max_default   srz_0_default   ln_t0_default       m_default </span></a>
-<a class="sourceLine" id="cb8-3" title="3"><span class="co">#&gt;           0.050           0.990          19.000           0.004 </span></a>
-<a class="sourceLine" id="cb8-4" title="4"><span class="co">#&gt;      td_default     tex_default    v_ch_default </span></a>
-<a class="sourceLine" id="cb8-5" title="5"><span class="co">#&gt;          20.000         100.000          10.000</span></a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>(model<span class="op">$</span>param)</span>
+<span id="cb8-2"><a href="#cb8-2"></a><span class="co">#&gt; srz_max_default   srz_0_default   ln_t0_default       m_default </span></span>
+<span id="cb8-3"><a href="#cb8-3"></a><span class="co">#&gt;           0.050           0.990          19.000           0.004 </span></span>
+<span id="cb8-4"><a href="#cb8-4"></a><span class="co">#&gt;      td_default     tex_default    v_ch_default </span></span>
+<span id="cb8-5"><a href="#cb8-5"></a><span class="co">#&gt;          20.000         100.000          10.000</span></span></code></pre></div>
 <p>The relationship between the parameters and the HRUs are given in the columns of the HRU tables e.g.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="co">## unsaturated zone time constant</span></a>
-<a class="sourceLine" id="cb9-2" title="2"><span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>( model<span class="op">$</span>hillslope[,<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">'id'</span>,<span class="st">'td'</span>)])</a>
-<a class="sourceLine" id="cb9-3" title="3"><span class="co">#&gt;    id         td</span></a>
-<a class="sourceLine" id="cb9-4" title="4"><span class="co">#&gt; 2  30 td_default</span></a>
-<a class="sourceLine" id="cb9-5" title="5"><span class="co">#&gt; 3  40 td_default</span></a>
-<a class="sourceLine" id="cb9-6" title="6"><span class="co">#&gt; 4  50 td_default</span></a>
-<a class="sourceLine" id="cb9-7" title="7"><span class="co">#&gt; 5  60 td_default</span></a>
-<a class="sourceLine" id="cb9-8" title="8"><span class="co">#&gt; 6  70 td_default</span></a>
-<a class="sourceLine" id="cb9-9" title="9"><span class="co">#&gt; 7  80 td_default</span></a>
-<a class="sourceLine" id="cb9-10" title="10"><span class="co">#&gt; 8  90 td_default</span></a>
-<a class="sourceLine" id="cb9-11" title="11"><span class="co">#&gt; 9 100 td_default</span></a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co">## unsaturated zone time constant</span></span>
+<span id="cb9-2"><a href="#cb9-2"></a><span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>( model<span class="op">$</span>hillslope[,<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">'id'</span>,<span class="st">'td'</span>)])</span>
+<span id="cb9-3"><a href="#cb9-3"></a><span class="co">#&gt;    id         td</span></span>
+<span id="cb9-4"><a href="#cb9-4"></a><span class="co">#&gt; 2  30 td_default</span></span>
+<span id="cb9-5"><a href="#cb9-5"></a><span class="co">#&gt; 3  40 td_default</span></span>
+<span id="cb9-6"><a href="#cb9-6"></a><span class="co">#&gt; 4  50 td_default</span></span>
+<span id="cb9-7"><a href="#cb9-7"></a><span class="co">#&gt; 5  60 td_default</span></span>
+<span id="cb9-8"><a href="#cb9-8"></a><span class="co">#&gt; 6  70 td_default</span></span>
+<span id="cb9-9"><a href="#cb9-9"></a><span class="co">#&gt; 7  80 td_default</span></span>
+<span id="cb9-10"><a href="#cb9-10"></a><span class="co">#&gt; 8  90 td_default</span></span>
+<span id="cb9-11"><a href="#cb9-11"></a><span class="co">#&gt; 9 100 td_default</span></span></code></pre></div>
 <p>Altering parameter values requires changing there values in the parameter vector. For this catchment all HRU have the same parameter values. This could be altered by changing parameter names in the HRU table and adding these parameters to the parameter vector.</p>
 <p>In this case we change the parameter vectors to me more representative of the catchment</p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1">model<span class="op">$</span>param[<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"srz_max_default"</span>,<span class="st">"srz_0_default"</span>,<span class="st">"ln_t0_default"</span>,</a>
-<a class="sourceLine" id="cb10-2" title="2">              <span class="st">"m_default"</span>,<span class="st">"td_default"</span>,<span class="st">"tex_default"</span>)] &lt;-</a>
-<a class="sourceLine" id="cb10-3" title="3"><span class="st">    </span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0.1</span>,<span class="fl">0.98</span>,<span class="fl">1.15</span>,<span class="fl">0.0044</span>,<span class="dv">33</span>,<span class="fl">0.02</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a>model<span class="op">$</span>param[<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"srz_max_default"</span>,<span class="st">"srz_0_default"</span>,<span class="st">"ln_t0_default"</span>,</span>
+<span id="cb10-2"><a href="#cb10-2"></a>              <span class="st">"m_default"</span>,<span class="st">"td_default"</span>,<span class="st">"tex_default"</span>)] &lt;-</span>
+<span id="cb10-3"><a href="#cb10-3"></a><span class="st">    </span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fl">0.1</span>,<span class="fl">0.98</span>,<span class="fl">1.15</span>,<span class="fl">0.0044</span>,<span class="dv">33</span>,<span class="fl">0.02</span>)</span></code></pre></div>
 </div>
 <div id="preparing-input-data" class="section level1">
 <h1 class="hasAnchor">
 <a href="#preparing-input-data" class="anchor"></a>Preparing input data</h1>
 <p>The input to the model is expected to take the form of an <code>xts</code> object with constant time step whose column names are found in the ‘precip_input’ and ‘pet_input’ columns of the HRU table in the model. Helpful functions for creating and manipulating <code>xts</code> objects can be found [here]{<a href="http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html" class="uri">http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html</a>}</p>
 <p>The precipitation and potential evapotranspiration (PET) inputs for Brompton are contained the <code>brompton$rain</code> and <code>brompton$pet</code> variables. However while the PET input comes on a 15 minute time step</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(brompton<span class="op">$</span>pet)</a>
-<a class="sourceLine" id="cb11-2" title="2"><span class="co">#&gt;                     pet</span></a>
-<a class="sourceLine" id="cb11-3" title="3"><span class="co">#&gt; 2012-09-01 00:00:00   0</span></a>
-<a class="sourceLine" id="cb11-4" title="4"><span class="co">#&gt; 2012-09-01 00:15:00   0</span></a>
-<a class="sourceLine" id="cb11-5" title="5"><span class="co">#&gt; 2012-09-01 00:30:00   0</span></a>
-<a class="sourceLine" id="cb11-6" title="6"><span class="co">#&gt; 2012-09-01 00:45:00   0</span></a>
-<a class="sourceLine" id="cb11-7" title="7"><span class="co">#&gt; 2012-09-01 01:00:00   0</span></a>
-<a class="sourceLine" id="cb11-8" title="8"><span class="co">#&gt; 2012-09-01 01:15:00   0</span></a></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(brompton<span class="op">$</span>pet)</span>
+<span id="cb11-2"><a href="#cb11-2"></a><span class="co">#&gt;                     pet</span></span>
+<span id="cb11-3"><a href="#cb11-3"></a><span class="co">#&gt; 2012-09-01 00:00:00   0</span></span>
+<span id="cb11-4"><a href="#cb11-4"></a><span class="co">#&gt; 2012-09-01 00:15:00   0</span></span>
+<span id="cb11-5"><a href="#cb11-5"></a><span class="co">#&gt; 2012-09-01 00:30:00   0</span></span>
+<span id="cb11-6"><a href="#cb11-6"></a><span class="co">#&gt; 2012-09-01 00:45:00   0</span></span>
+<span id="cb11-7"><a href="#cb11-7"></a><span class="co">#&gt; 2012-09-01 01:00:00   0</span></span>
+<span id="cb11-8"><a href="#cb11-8"></a><span class="co">#&gt; 2012-09-01 01:15:00   0</span></span></code></pre></div>
 <p>the precipitation is on a courser hourly time step</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1"><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(brompton<span class="op">$</span>rain)</a>
-<a class="sourceLine" id="cb12-2" title="2"><span class="co">#&gt; Warning: timezone of object (GMT) is different than current timezone ().</span></a>
-<a class="sourceLine" id="cb12-3" title="3"><span class="co">#&gt;                     rain</span></a>
-<a class="sourceLine" id="cb12-4" title="4"><span class="co">#&gt; 2012-09-01 00:00:00    0</span></a>
-<a class="sourceLine" id="cb12-5" title="5"><span class="co">#&gt; 2012-09-01 01:00:00    0</span></a>
-<a class="sourceLine" id="cb12-6" title="6"><span class="co">#&gt; 2012-09-01 02:00:00    0</span></a>
-<a class="sourceLine" id="cb12-7" title="7"><span class="co">#&gt; 2012-09-01 03:00:00    0</span></a>
-<a class="sourceLine" id="cb12-8" title="8"><span class="co">#&gt; 2012-09-01 04:00:00    0</span></a>
-<a class="sourceLine" id="cb12-9" title="9"><span class="co">#&gt; 2012-09-01 05:00:00    0</span></a></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(brompton<span class="op">$</span>rain)</span>
+<span id="cb12-2"><a href="#cb12-2"></a><span class="co">#&gt; Warning: timezone of object (GMT) is different than current timezone ().</span></span>
+<span id="cb12-3"><a href="#cb12-3"></a><span class="co">#&gt;                     rain</span></span>
+<span id="cb12-4"><a href="#cb12-4"></a><span class="co">#&gt; 2012-09-01 00:00:00    0</span></span>
+<span id="cb12-5"><a href="#cb12-5"></a><span class="co">#&gt; 2012-09-01 01:00:00    0</span></span>
+<span id="cb12-6"><a href="#cb12-6"></a><span class="co">#&gt; 2012-09-01 02:00:00    0</span></span>
+<span id="cb12-7"><a href="#cb12-7"></a><span class="co">#&gt; 2012-09-01 03:00:00    0</span></span>
+<span id="cb12-8"><a href="#cb12-8"></a><span class="co">#&gt; 2012-09-01 04:00:00    0</span></span>
+<span id="cb12-9"><a href="#cb12-9"></a><span class="co">#&gt; 2012-09-01 05:00:00    0</span></span></code></pre></div>
 <p>The <code>resample_xts</code> function can be used to alter the rainfall to the correct time step</p>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1">rain &lt;-<span class="st"> </span><span class="kw"><a href="../reference/resample_xts.html">resample_xts</a></span>(brompton<span class="op">$</span>rain, <span class="dt">dt =</span> <span class="dv">15</span><span class="op">/</span><span class="dv">60</span>)</a>
-<a class="sourceLine" id="cb13-2" title="2"><span class="co">#&gt; Warning in resample_xts(brompton$rain, dt = 15/60): Irregularly spaced time</span></a>
-<a class="sourceLine" id="cb13-3" title="3"><span class="co">#&gt; series supplied to resample_xts - proceding with modal timestep, results</span></a>
-<a class="sourceLine" id="cb13-4" title="4"><span class="co">#&gt; are questionable</span></a></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a>rain &lt;-<span class="st"> </span><span class="kw"><a href="../reference/resample_xts.html">resample_xts</a></span>(brompton<span class="op">$</span>rain, <span class="dt">dt =</span> <span class="dv">15</span><span class="op">/</span><span class="dv">60</span>)</span>
+<span id="cb13-2"><a href="#cb13-2"></a><span class="co">#&gt; Warning in resample_xts(brompton$rain, dt = 15/60): Irregularly spaced time</span></span>
+<span id="cb13-3"><a href="#cb13-3"></a><span class="co">#&gt; series supplied to resample_xts - proceding with modal timestep, results</span></span>
+<span id="cb13-4"><a href="#cb13-4"></a><span class="co">#&gt; are questionable</span></span></code></pre></div>
 <p>These series can then be merged, to give single <code>xts</code> object</p>
-<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" title="1">obs &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/merge.html">merge</a></span>(rain,brompton<span class="op">$</span>pet,<span class="dt">all=</span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))</a>
-<a class="sourceLine" id="cb14-2" title="2">obs &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/merge.html">merge</a></span>(obs,brompton<span class="op">$</span>qobs,<span class="dt">all=</span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))</a></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>obs &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/merge.html">merge</a></span>(rain,brompton<span class="op">$</span>pet,<span class="dt">all=</span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))</span>
+<span id="cb14-2"><a href="#cb14-2"></a>obs &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/merge.html">merge</a></span>(obs,brompton<span class="op">$</span>qobs,<span class="dt">all=</span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="ot">TRUE</span>,<span class="ot">FALSE</span>))</span></code></pre></div>
 <p>Let’s now check this observed data</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" title="1"><span class="kw"><a href="../reference/check_obs.html">check_obs</a></span>(obs, <span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>( <span class="kw"><a href="https://rdrr.io/r/base/unlist.html">unlist</a></span>(model<span class="op">$</span>hillslope[,<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"precip_input"</span>,<span class="st">"pet_input"</span>)]),</a>
-<a class="sourceLine" id="cb15-2" title="2">                      <span class="kw"><a href="https://rdrr.io/r/base/unlist.html">unlist</a></span>(model<span class="op">$</span>channel[,<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"precip_input"</span>,<span class="st">"pet_input"</span>)])))</a>
-<a class="sourceLine" id="cb15-3" title="3"><span class="co">#&gt; Error in check_obs(obs, unique(unlist(model$hillslope[, c("precip_input", : There are non finite values in the required time series</span></a></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a><span class="kw"><a href="../reference/check_obs.html">check_obs</a></span>(obs, <span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>( <span class="kw"><a href="https://rdrr.io/r/base/unlist.html">unlist</a></span>(model<span class="op">$</span>hillslope[,<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"precip_input"</span>,<span class="st">"pet_input"</span>)]),</span>
+<span id="cb15-2"><a href="#cb15-2"></a>                      <span class="kw"><a href="https://rdrr.io/r/base/unlist.html">unlist</a></span>(model<span class="op">$</span>channel[,<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"precip_input"</span>,<span class="st">"pet_input"</span>)])))</span>
+<span id="cb15-3"><a href="#cb15-3"></a><span class="co">#&gt; Error in check_obs(obs, unique(unlist(model$hillslope[, c("precip_input", : There are non finite values in the required time series</span></span></code></pre></div>
 <p>The check fails with a warning since there are non-finite values in the data. This requires more detailed investigation but as a simple fix</p>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" title="1"><span class="co">## replace all non finite values with 0</span></a>
-<a class="sourceLine" id="cb16-2" title="2">obs[<span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/is.finite.html">is.finite</a></span>(obs)] &lt;-<span class="st"> </span><span class="dv">0</span></a>
-<a class="sourceLine" id="cb16-3" title="3"><span class="kw"><a href="../reference/check_obs.html">check_obs</a></span>(obs, <span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>( <span class="kw"><a href="https://rdrr.io/r/base/unlist.html">unlist</a></span>(model<span class="op">$</span>hillslope[,<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"precip_input"</span>,<span class="st">"pet_input"</span>)]),</a>
-<a class="sourceLine" id="cb16-4" title="4">                      <span class="kw"><a href="https://rdrr.io/r/base/unlist.html">unlist</a></span>(model<span class="op">$</span>channel[,<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"precip_input"</span>,<span class="st">"pet_input"</span>)])))</a>
-<a class="sourceLine" id="cb16-5" title="5"><span class="co">#&gt; $step</span></a>
-<a class="sourceLine" id="cb16-6" title="6"><span class="co">#&gt; [1] 0.25</span></a>
-<a class="sourceLine" id="cb16-7" title="7"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb16-8" title="8"><span class="co">#&gt; $n_sub_step</span></a>
-<a class="sourceLine" id="cb16-9" title="9"><span class="co">#&gt; [1] 1</span></a>
-<a class="sourceLine" id="cb16-10" title="10"><span class="co">#&gt; </span></a>
-<a class="sourceLine" id="cb16-11" title="11"><span class="co">#&gt; $sub_step</span></a>
-<a class="sourceLine" id="cb16-12" title="12"><span class="co">#&gt; [1] 0.25</span></a></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="co">## replace all non finite values with 0</span></span>
+<span id="cb16-2"><a href="#cb16-2"></a>obs[<span class="op">!</span><span class="kw"><a href="https://rdrr.io/r/base/is.finite.html">is.finite</a></span>(obs)] &lt;-<span class="st"> </span><span class="dv">0</span></span>
+<span id="cb16-3"><a href="#cb16-3"></a><span class="kw"><a href="../reference/check_obs.html">check_obs</a></span>(obs, <span class="kw"><a href="https://rdrr.io/r/base/unique.html">unique</a></span>( <span class="kw"><a href="https://rdrr.io/r/base/unlist.html">unlist</a></span>(model<span class="op">$</span>hillslope[,<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"precip_input"</span>,<span class="st">"pet_input"</span>)]),</span>
+<span id="cb16-4"><a href="#cb16-4"></a>                      <span class="kw"><a href="https://rdrr.io/r/base/unlist.html">unlist</a></span>(model<span class="op">$</span>channel[,<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"precip_input"</span>,<span class="st">"pet_input"</span>)])))</span>
+<span id="cb16-5"><a href="#cb16-5"></a><span class="co">#&gt; $step</span></span>
+<span id="cb16-6"><a href="#cb16-6"></a><span class="co">#&gt; [1] 0.25</span></span>
+<span id="cb16-7"><a href="#cb16-7"></a><span class="co">#&gt; </span></span>
+<span id="cb16-8"><a href="#cb16-8"></a><span class="co">#&gt; $n_sub_step</span></span>
+<span id="cb16-9"><a href="#cb16-9"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb16-10"><a href="#cb16-10"></a><span class="co">#&gt; </span></span>
+<span id="cb16-11"><a href="#cb16-11"></a><span class="co">#&gt; $sub_step</span></span>
+<span id="cb16-12"><a href="#cb16-12"></a><span class="co">#&gt; [1] 0.25</span></span></code></pre></div>
 <p>From the return of <code>check_obs</code> we can see the time step of the data and default number of sub time steps used in the model evaluation which is discussed later.</p>
 </div>
 <div id="running-dynamic-topmodel" class="section level1">
 <h1 class="hasAnchor">
 <a href="#running-dynamic-topmodel" class="anchor"></a>Running dynamic TOPMODEL</h1>
 <p>The model can be run with the data using the <code>dyantop</code> command. For a event in November 2012 the model can be run with the command</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" title="1"><span class="co">## select the event period</span></a>
-<a class="sourceLine" id="cb17-2" title="2">event_period &lt;-<span class="st"> "2012-11-23 12:00::2012-12-01"</span></a>
-<a class="sourceLine" id="cb17-3" title="3"><span class="co">## recharge rate for initialization</span></a>
-<a class="sourceLine" id="cb17-4" title="4">initial_recharge &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span>(obs[<span class="st">"2012-11-23 12:00"</span>,<span class="st">'qobs'</span>])</a>
-<a class="sourceLine" id="cb17-5" title="5"><span class="co">## running the model</span></a>
-<a class="sourceLine" id="cb17-6" title="6">sim_<span class="dv">1</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs[event_period,],initial_recharge)</a></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="co">## select the event period</span></span>
+<span id="cb17-2"><a href="#cb17-2"></a>event_period &lt;-<span class="st"> "2012-11-23 12:00::2012-12-01"</span></span>
+<span id="cb17-3"><a href="#cb17-3"></a><span class="co">## recharge rate for initialization</span></span>
+<span id="cb17-4"><a href="#cb17-4"></a>initial_recharge &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/numeric.html">as.numeric</a></span>(obs[<span class="st">"2012-11-23 12:00"</span>,<span class="st">'qobs'</span>])</span>
+<span id="cb17-5"><a href="#cb17-5"></a><span class="co">## running the model</span></span>
+<span id="cb17-6"><a href="#cb17-6"></a>sim_<span class="dv">1</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs[event_period,],initial_recharge)</span></code></pre></div>
 <p>The returned object from <code>dynatop</code> is a list with two elements</p>
-<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(sim_<span class="dv">1</span>)</a>
-<a class="sourceLine" id="cb18-2" title="2"><span class="co">#&gt; [1] "model"         "channel_input"</span></a>
-<a class="sourceLine" id="cb18-3" title="3"><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(sim_<span class="dv">1</span><span class="op">$</span>model)</a>
-<a class="sourceLine" id="cb18-4" title="4"><span class="co">#&gt;  [1] "hillslope"    "channel"      "param"        "Wex"         </span></a>
-<a class="sourceLine" id="cb18-5" title="5"><span class="co">#&gt;  [5] "Wsat"         "Fex"          "Fsat"         "point_inflow"</span></a>
-<a class="sourceLine" id="cb18-6" title="6"><span class="co">#&gt;  [9] "gauge"        "states"</span></a>
-<a class="sourceLine" id="cb18-7" title="7"><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(sim_<span class="dv">1</span><span class="op">$</span>channel_input)</a>
-<a class="sourceLine" id="cb18-8" title="8"><span class="co">#&gt; Warning: timezone of object (GMT) is different than current timezone ().</span></a>
-<a class="sourceLine" id="cb18-9" title="9"><span class="co">#&gt;                             1</span></a>
-<a class="sourceLine" id="cb18-10" title="10"><span class="co">#&gt; 2012-11-23 12:00:00 0.8795540</span></a>
-<a class="sourceLine" id="cb18-11" title="11"><span class="co">#&gt; 2012-11-23 12:15:00 0.9926841</span></a>
-<a class="sourceLine" id="cb18-12" title="12"><span class="co">#&gt; 2012-11-23 12:30:00 1.0690530</span></a>
-<a class="sourceLine" id="cb18-13" title="13"><span class="co">#&gt; 2012-11-23 12:45:00 1.1246788</span></a>
-<a class="sourceLine" id="cb18-14" title="14"><span class="co">#&gt; 2012-11-23 13:00:00 1.1669022</span></a>
-<a class="sourceLine" id="cb18-15" title="15"><span class="co">#&gt; 2012-11-23 13:15:00 1.1996438</span></a></code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(sim_<span class="dv">1</span>)</span>
+<span id="cb18-2"><a href="#cb18-2"></a><span class="co">#&gt; [1] "model"         "channel_input"</span></span>
+<span id="cb18-3"><a href="#cb18-3"></a><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(sim_<span class="dv">1</span><span class="op">$</span>model)</span>
+<span id="cb18-4"><a href="#cb18-4"></a><span class="co">#&gt;  [1] "hillslope"    "channel"      "param"        "Wex"         </span></span>
+<span id="cb18-5"><a href="#cb18-5"></a><span class="co">#&gt;  [5] "Wsat"         "Fex"          "Fsat"         "point_inflow"</span></span>
+<span id="cb18-6"><a href="#cb18-6"></a><span class="co">#&gt;  [9] "gauge"        "states"</span></span>
+<span id="cb18-7"><a href="#cb18-7"></a><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(sim_<span class="dv">1</span><span class="op">$</span>channel_input)</span>
+<span id="cb18-8"><a href="#cb18-8"></a><span class="co">#&gt; Warning: timezone of object (GMT) is different than current timezone ().</span></span>
+<span id="cb18-9"><a href="#cb18-9"></a><span class="co">#&gt;                             1</span></span>
+<span id="cb18-10"><a href="#cb18-10"></a><span class="co">#&gt; 2012-11-23 12:00:00 0.8795540</span></span>
+<span id="cb18-11"><a href="#cb18-11"></a><span class="co">#&gt; 2012-11-23 12:15:00 0.9926841</span></span>
+<span id="cb18-12"><a href="#cb18-12"></a><span class="co">#&gt; 2012-11-23 12:30:00 1.0690530</span></span>
+<span id="cb18-13"><a href="#cb18-13"></a><span class="co">#&gt; 2012-11-23 12:45:00 1.1246788</span></span>
+<span id="cb18-14"><a href="#cb18-14"></a><span class="co">#&gt; 2012-11-23 13:00:00 1.1669022</span></span>
+<span id="cb18-15"><a href="#cb18-15"></a><span class="co">#&gt; 2012-11-23 13:15:00 1.1996438</span></span></code></pre></div>
 <p>which are an <code>xts</code> object of the flows to the channel HRUs at each time step and the model passed to the call augmented with the final states of the simulation.</p>
 <p>In the above simulation the model was initialized using the flow at the start of the event and used the default time step, which is the time step of the input data. Sub stepping, that is using a finer numeric time step then the data can improve the stability and quality of the simulations. The &lt;&gt; parameter of the <code>dynatop</code> function can be used to implement this. For example</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" title="1">sim_<span class="dv">2</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs[event_period,],initial_recharge,<span class="dt">sim_time_step=</span><span class="dv">5</span><span class="op">/</span><span class="dv">60</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a>sim_<span class="dv">2</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(model,obs[event_period,],initial_recharge,<span class="dt">sim_time_step=</span><span class="dv">5</span><span class="op">/</span><span class="dv">60</span>)</span></code></pre></div>
 <p>performs the same simulation with a 5 minute time step.</p>
 <p>The output states of a simulation can be used to initialize the a subsequent simulation. We note in doing this that no checks are made of the simulation times periods or of the time steps used. For example</p>
-<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" title="1">sim_<span class="dv">3</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(sim_<span class="dv">1</span><span class="op">$</span>model,obs[event_period,],<span class="dt">sim_time_step=</span><span class="dv">5</span><span class="op">/</span><span class="dv">60</span>,<span class="dt">use_states=</span><span class="ot">TRUE</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a>sim_<span class="dv">3</span> &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(sim_<span class="dv">1</span><span class="op">$</span>model,obs[event_period,],<span class="dt">sim_time_step=</span><span class="dv">5</span><span class="op">/</span><span class="dv">60</span>,<span class="dt">use_states=</span><span class="ot">TRUE</span>)</span></code></pre></div>
 <p>The effects of the different implementations can be seem in the following graph. Note that the discrepancy between the simulations and observed data is due in part to the absence of any channel routing.</p>
-<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb21-1" title="1">out &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/merge.html">merge</a></span>( <span class="kw"><a href="https://rdrr.io/r/base/merge.html">merge</a></span>( <span class="kw"><a href="https://rdrr.io/r/base/merge.html">merge</a></span>(obs,sim_<span class="dv">1</span><span class="op">$</span>channel_input),</a>
-<a class="sourceLine" id="cb21-2" title="2">                    sim_<span class="dv">2</span><span class="op">$</span>channel_input),</a>
-<a class="sourceLine" id="cb21-3" title="3">             sim_<span class="dv">3</span><span class="op">$</span>channel_input)</a>
-<a class="sourceLine" id="cb21-4" title="4"><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(out) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(obs),<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span>,<span class="st">'sim_3'</span>)</a>
-<a class="sourceLine" id="cb21-5" title="5">out<span class="op">$</span>qobs &lt;-<span class="st"> </span>out<span class="op">$</span>qobs<span class="op">*</span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(model<span class="op">$</span>hillslope<span class="op">$</span>area)<span class="op">/</span><span class="dv">3600</span></a>
-<a class="sourceLine" id="cb21-6" title="6"><span class="kw"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(out[event_period,<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">'qobs'</span>,<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span>,<span class="st">'sim_3'</span>)])</a></code></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a>out &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/merge.html">merge</a></span>( <span class="kw"><a href="https://rdrr.io/r/base/merge.html">merge</a></span>( <span class="kw"><a href="https://rdrr.io/r/base/merge.html">merge</a></span>(obs,sim_<span class="dv">1</span><span class="op">$</span>channel_input),</span>
+<span id="cb21-2"><a href="#cb21-2"></a>                    sim_<span class="dv">2</span><span class="op">$</span>channel_input),</span>
+<span id="cb21-3"><a href="#cb21-3"></a>             sim_<span class="dv">3</span><span class="op">$</span>channel_input)</span>
+<span id="cb21-4"><a href="#cb21-4"></a><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(out) &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(obs),<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span>,<span class="st">'sim_3'</span>)</span>
+<span id="cb21-5"><a href="#cb21-5"></a>out<span class="op">$</span>qobs &lt;-<span class="st"> </span>out<span class="op">$</span>qobs<span class="op">*</span><span class="kw"><a href="https://rdrr.io/r/base/sum.html">sum</a></span>(model<span class="op">$</span>hillslope<span class="op">$</span>area)<span class="op">/</span><span class="dv">3600</span></span>
+<span id="cb21-6"><a href="#cb21-6"></a><span class="kw"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(out[event_period,<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">'qobs'</span>,<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span>,<span class="st">'sim_3'</span>)])</span></code></pre></div>
 <p><img src="dynatop_files/figure-html/final_plot-1.png" width="700"></p>
 </div>
   </div>

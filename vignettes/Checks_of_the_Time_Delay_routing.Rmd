@@ -29,7 +29,7 @@ data("test_catchment")
 Generate an initial inflow series of computed by simulating the test catchment
 ```{r initialise_state_func}
 sim_inflows <- dynatop(test_catchment$model,test_catchment$obs,0.0015)$channel_input
-plot(ex_inflows,title="Basic inflows set")
+plot(sim_inflows,title="Basic inflows set")
 ```
 
 # Check the time delays
