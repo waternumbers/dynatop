@@ -1,8 +1,8 @@
 ---
-title: "Hillslope HRU mass balance checks"
+title: "Checks of the Hillslope HRU"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Hillslope HRU mass balance checks}
+  %\VignetteIndexEntry{Checks of the Hillslope HRU}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -13,8 +13,7 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
-The purpose of this vignette is to demonstrate the simulation of mass balance
-checks on the computation of hillslope elements. It provides both a check for
+The purpose of this vignette is to demonstrate some simulation checks on the computation of hillslope elements. It provides both a check for
 the current implimentation of the code and a demonstration for those that may
 be developing more complex systems and want to perform their own test.
 

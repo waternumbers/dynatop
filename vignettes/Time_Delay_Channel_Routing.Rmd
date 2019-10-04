@@ -111,7 +111,19 @@ The contribution of the channel HRU to the average discharge at the gauge then b
 h\left(l,t-\tau-\delta_{0\rightarrow g}+lv^{-1}\right) dl d\tau
 \]
 
-
+Let $d_{min}$ be the largest and $d_{max}$ the smallest integers such that $d_{min} < d_{max}$ and
+\[
+t-d_{max}\Delta t \leq
+t-\delta_{0\rightarrow g} <
+t-\delta_{0\rightarrow g}+\tilde{L}v^{-1} \leq
+t-d_{min}\Delta t
+\]
+Then taking $\Delta l = v\Delta t$  we can divide the integral up to give
+\[
+\frac{1}{\Delta t}\int_{0}^{\Delta t}\left(
+\int_{0}^{\Delta l} h\left(l,t-\tau-d_{min}v^{-1}-\lambda\Delta l\right) d\lambda
+\right)d\tau
+\]
 
 
 
