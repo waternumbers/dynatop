@@ -79,609 +79,104 @@ q\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}}
 h\left(x,t-\delta_{x\rightarrow g}\right) dx 
 \]
 
-While the instantaneous discharge is usefull it may be more consistent with the conceptualisation of the hillslope HRU model, and with a mass conservative apporach, to model the integral of the discharge over a time step $\Delta t$. In this case a similar relationship holds for the average discharge over the time step in that
-\[
-\frac{1}{\Delta t} \int_{0}^{\Delta t}q\left(g,t-\tau\right) d\tau = \sum\limits_{i=1}^{n} \frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
-h\left(x,t-\tau-\delta_{x\rightarrow g}\right) dx d\tau
-\]
+<!-- While the instantaneous discharge is usefull it may be more consistent with the conceptualisation of the hillslope HRU model, and with a mass conservative apporach, to model the integral of the discharge over a time step $\Delta t$. In this case a similar relationship holds for the average discharge over the time step in that -->
+<!-- \[ -->
+<!-- \frac{1}{\Delta t} \int_{0}^{\Delta t}q\left(g,t-\tau\right) d\tau = \sum\limits_{i=1}^{n} \frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}} -->
+<!-- h\left(x,t-\tau-\delta_{x\rightarrow g}\right) dx d\tau -->
+<!-- \] -->
 
 # Numerical Solution
 
+
 Consider the contribution to the gauges flow from a single channel HRU
 \[
-\frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
-h\left(x,t-\tau-\delta_{x\rightarrow g}\right) dx d\tau
+\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\delta_{x\rightarrow g}\right) dx d\tau
 \]
 
 To further derive the numerical solution a number of assumpptions are made.
 The first assumption is that the channel represents a single reach of river such the a spatial location $x \in \mathcal{X}_{i}$ can be replaced by a unique length $l$ from the head of the reach. The maximum value of $l$, denoted$\tilde{L}$, is the lower of the length of the reach $L$ or the distance to the gauge from the head of the reach.
 The contribution of the channel HRU to the gauged flow can be expressed as
 \[
-\frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{0}^{\tilde{L}}
-h\left(l,t-\tau-\delta_{l\rightarrow g}\right) dl d\tau
+\int_{0}^{\tilde{L}}
+h\left(l,t-\delta_{l\rightarrow g}\right) dl
 \]
 
-The second assumption is that there is a constant effecive velocity $v$ withn the reach. The time delay $\delta_{l\rightarrow g}$ can then be written in terms of the time delay for the head of the reach  $\delta_{0\rightarrow g}$ as
+The second assumption is that there is a constant effecive velocity $v$ within the reach. The time delay $\delta_{l\rightarrow g}$ can then be written in terms of the time delay for the head of the reach  $\delta_{0\rightarrow g}$ as
 \[
 \delta_{l\rightarrow g} = \delta_{0\rightarrow g} - lv^{-1}
 \]
-The contribution of the channel HRU to the average discharge at the gauge then becomes
+The contribution of the channel HRU to the discharge at the gauge then becomes
 \[
-\frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{0}^{\tilde{L}}
-h\left(l,t-\tau-\delta_{0\rightarrow g}+lv^{-1}\right) dl d\tau
+\int_{0}^{\tilde{L}}
+h\left(l,t-\delta_{0\rightarrow g}+lv^{-1}\right) dl
 \]
 
+Since the model is solved in discrete time the interal can be divided up into
+time steps.
 Let $d_{min}$ be the largest and $d_{max}$ the smallest integers such that $d_{min} < d_{max}$ and
 \[
-t-d_{max}\Delta t \leq
-t-\delta_{0\rightarrow g} <
-t-\delta_{0\rightarrow g}+\tilde{L}v^{-1} \leq
-t-d_{min}\Delta t
+d_{min}\Delta t < \delta_{0\rightarrow g}-\tilde{L}v^{-1} <
+\delta_{0\rightarrow g} < d_{max}\Delta t
 \]
 Then taking $\Delta l = v\Delta t$  we can divide the integral up to give
 \[
-\frac{1}{\Delta t}\int_{0}^{\Delta t}\left(
-\int_{0}^{\Delta l} h\left(l,t-\tau-d_{min}v^{-1}-\lambda\Delta l\right) d\lambda
-\right)d\tau
+\sum\limits_{j=d_{min}}^{d_{max}-1} \int_{0}^{\Delta l}
+h\left(l,t-j\Delta lv^{-1}-\lambda v^{-1}\right) d\lambda
+- \int_{0}^{\delta_{0\rightarrow g}-\tilde{L}v^{-1} - d_{min}\Delta lv^{-1}}
+h\left(l,t-d_{min}\Delta lv^{-1}-\lambda v^{-1}\right) d\lambda
+- \int_{\delta_{0\rightarrow g} - \left(d_{max}-1\right)\Delta
+  lv^{-1}}^{\Delta l} h\left(l,t-\left(d_{max}-1\right)\Delta lv^{-1}-\lambda v^{-1}\right) d\lambda
 \]
 
+The second assumption is that there is no spatial pattern in the inflow to the
+reach and constant inflow over time steps so that we can write 
+\[
+h\left(l,t-\tau\right) = \bar{h}_{t} \quad \forall
+l\in\left(0,L\right),\tau\in\left(0,\Delta t\right)
+\]
+an express the contribution to the gauged flow as
+\[
+\sum\limits_{j=d_{min}}^{d_{max}-1} \Delta l \bar{h}_{t-j\Delta lv^{-1}}
+- \left(\delta_{0\rightarrow g}v - d_{min}\Delta l - \tilde{L}\right)
+\bar{h}_{t-d_{min}\Delta l v^{-1}}
+- \left( d_{max}\Delta l - \delta_{0\rightarrow g}v \right) \bar{h}_{t-\left(d_{max}-1\right)\Delta lv^{-1}}
+\]
 
+This can now be expressed in terms of a polynomial of the the backward shift operator $z^{-1}$
+\[
+B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
+d_{min}\Delta l - \tilde{L}\right)\right) + \Delta l z^{-1} + \ldots + \Delta l
+z^{-(d_{max}-d_{min}-1)} + \left(\Delta l - \left(d_{max}\Delta l - \delta_{0\rightarrow g}v\right)\right) z^{-(d_{max}-d_{min}-1)}
+\]
+as
+\[
+B\left(z^{-1}\right) \bar{h}_{t-d_{min}\Delta t}
+\]
 
-Consider a single channel HRU. Currently for each time step of the model the `dynatop` function returns
+This shows that the instanaeous flow at the outlet can be approximated
+from the $\bar{h}_{t-d_{min}\Delta t}$ by a linear operation.
+It remains to be shown that $\bar{h}_{t-d_{min}\Delta t}$ can be related to
+the output of the `dynatop` function which is
 \[
 \frac{1}{\Delta t}
 \int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
 h\left(x,t-\tau \right) dx d\tau
 \]
-Taking the time step average inflow at point $x$ as
+Under the channel routing assumptions
 \[
-\bar{h}\left(x,t\right) = \frac{1}{\Delta t}\int_{0}^{\Delta t}h\left(x,t-\tau \right) d\tau
-\]
-the output of `dynatop` becomes
-\[
-\int_{x\in\mathcal{X}_{i}}
-\bar{h}\left(x,t \right) dx
-\]
-and the contribution of the channel HRU to the average discharge at the gauge
-\[
-\int_{x\in\mathcal{X}_{i}}
-\bar{h}\left(x,t-\delta_{x\rightarrow g}\right) dx
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\tau \right) dx d\tau =
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t}\int_{0}^{L}
+h\left(l,t-\tau \right) dl d\tau =
+L \bar{h}_{t}
 \]
 
-
-To further derive the numerical solution a number of assumpptions are made.
-
-The first assumption is that the channel represents a single reach of river such the a spatial location $x \in \mathcal{X}_{i}$ can be replaced by a unique length $l$ from the head of the reach. The maximum value of $l$, denoted$\tilde{L}$, is the lower of the length of the reach $L$ or the distance to the gauge from the head of the reach.
-The output of `dynatop` can thus be expressed as
-\[
-\int_{0}^{L}
-\bar{h}\left(l,t \right) dl
-\]
-and the contribution of the channel HRU to the average discharge at the gauge
-\[
-\int_{0}^{\tilde{L}}
-\bar{h}\left(l,t-\delta_{l\rightarrow g}\right) dl
-\]
-
-
-The second assumption is that there is no spatial pattern in the inflow to the reach so that there is  some spatialy constant inflow $\bar{\bar{h}}\left(t\right)$ that satifies
-\[
-L \bar{\bar{h}}\left(t\right) = \int_{0}^{L}
-\bar{h}\left(l,t \right) dl
-\]
-The contribution of the channel HRU to the average discharge at the gauge then becomes
-\[
-\int_{0}^{\tilde{L}}
-\bar{\bar{h}}\left(t-\delta_{l\rightarrow g}\right) dl
-\]
-
-The third assumption is that there is a constant effecive velocity $v$ withn the reach. The time delay $\delta_{l\rightarrow g}$ can then be written in terms of the time delay for the head of the reach  $\delta_{0\rightarrow g}$ as
-\[
-\delta_{l\rightarrow g} = \delta_{0\rightarrow g} - lv^{-1}
-\]
-The contribution of the channel HRU to the average discharge at the gauge then becomes
-\[
-\int_{0}^{\tilde{L}}
-\bar{\bar{h}}\left(t-\delta_{0\rightarrow g}+lv^{-1}\right) dl
-\]
-
-Following the application of these assumption the integral of the spatial domaiin is in effect an integral over time. This integral requires approximation given that values of $\bar{\bar{h}}\left(t\right)$ are available only at intervals of $\Delta t$.
-
-Let $d_{min}$ be the largest and $d_{max}$ the smallest integers such that $d_{min} < d_{max}$ and
-\[
-t-d_{max}\Delta t \leq
-t-\delta_{0\rightarrow g} <
-t-\delta_{0\rightarrow g}+\tilde{L}v^{-1} \leq
-t-d_{min}\Delta t
-\]
-
-Approximating linearly between the known values of $\bar{\bar{h}}\left(t\right)$ gives
-\[
-\int_{0}^{\tilde{L}}
-\bar{\bar{h}}\left(t-\delta_{0\rightarrow g}+lv^{-1}\right) dl
-=
-\sum\limits_{j=d_{min}}^{d_{max}-1} \int_{0}^{1} \lambda \bar{\bar{h}}\left(t-j\Delta t\right) + \left(1-lambda\right)\bar{\bar{h}}\left(t-\left(j+1\right)\Delta t\right)
-\]
-
-
-Take $\Delta l = v\Delta t$. Let $d_{min}$ be the largest and $d_{max}$ the smallest integers such that $d_{min} < d_{max}$ and
-\[
-t-d_{max}v^{-1}\Delta l \leq
-t-\delta_{0\rightarrow g} <
-t-\delta_{0\rightarrow g}+\tilde{L}v^{-1} \leq
-t-d_{min}v^{-1}\Delta l
-\]
-
-
-   $h\left(x,t\right) = h_{i}\left(t\right) \forall x \in \mathcal{X}_i$
-3. There is a constant effective velocity $v_i$ within the $i$th reach.
-
-Under these assumptions
-\[
-q_i\left(g,t\right) = \int_{l=0}^{\tilde{L}_{i}}
-h\left(x_i-l,t-\delta_{x_i\rightarrow g} +
-\delta_{\hat{x}_i\rightarrow x_i +l}\right) dl
-= \int_{l=0}^{\tilde{L}_{i}}
-h_{i}\left(t-\delta_{x_i\rightarrow g} +
-\delta_{x_i\rightarrow x_i +l}\right) dl
-= \int_{l=0}^{\tilde{L}_{i}}
-h_{i}\left(t-\delta_{x_i\rightarrow g} + \frac{l}{v_i}\right)dl
-\]
-
-The integral over the length of the reach can know be rewritten in term of the
-time to the gauge giving
-
-\[
-q_i\left(g,t\right) = \int_{t-\delta_{\hat{x}_i\rightarrow g}}^{t-\delta_{\hat{x}_i\rightarrow g}+\frac{\tilde{L}_{i}}{v_i}}
-h_i \left(\tau\right) d\tau
-\]
-
-# Numerical Solution
-
-We start the numerical solution by seperating the integral up into time steps
-$\Delta t$.
-Let $k^{-}$ be the smallest integer such that 
-\[
-t - k^{-}\Delta t \leq t-\delta_{\hat{x}_i\rightarrow g}
-\] 
-and $k^{+}$ be the largest integer such that 
-\[
-t - k^{+}\Delta t \geq t - \delta_{\hat{x}\rightarrow g}+\frac{\tilde{L}}{v_i}
-\]
-
-\[
-q_i\left(g,t\right) = \sum\limits_{j=k^{+}}^{k^{-}-1}\int_{t -
-  \left(j+1\right)\Delta t}^{t - j \Delta t}h_i \left(\tau\right) d\tau
-- \int_{t- k^{-}\Delta t}^{t-\delta_{\hat{x}_i\rightarrow g}}h_i\left(\tau\right) d\tau
-- \int_{t - \delta_{\hat{x}\rightarrow g}+\frac{\tilde{L}}{v_i}}^{t - k^{+}\Delta t}h_i\left(\tau\right) d\tau
-\]
-
-Consider next the output of the ```dynatop``` function. In this the value of
-the channel time series at the $t$ th timestep $H_{i,t}$ corresponds to
-\[
-H_{i,t} = \frac{1}{\Delta t} \int_{t-\Delta t}^{t}
-\int_{x\in\mathcal{X}_i}h\left(x,\tau\right)dx d\tau
-= \frac{1}{\Delta t} \int_{t-\Delta t}^{t} L_{i} h_{i}\left(\tau\right) d\tau
-\]
-
-
-The numerical solution implemented in based on the representations and outputs
-of the dynamic TOPMODEL hillslope representation as applied in the function
-```dynatop```. This breaks the channel network down into $n$ disjoint channel HRUs, each representing a length of river giving
-
-\[
-\bar{q}\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}}
-\bar{h}\left(x,t-\delta_{x\rightarrow g}\right) dx = \sum\limits_{i=1}^{n}\bar{q}_i\left(g,t\right)
-\]
-
-Consider a single channel HRU that does not contain the gauge. Assume that:
-
-1. The channel represents a single reach of
-river the spatial spatial location $x$ can be replaced by replaced by a unique
-length $l$ from the foot of the reach $\hat{x}_{i}$.
-2. There is no spatial pattern in the inflow to the reach such that
-   $h\left(x,t\right) = h_{i}\left(t\right)$
-3. There is a constant effective velocity $v_i$ within the reach.
-
-Under these assumptions
-\[
-\bar{q}_i\left(g,t\right) = \int_{l=0}^{L_{i}}
-\bar{h}\left(\hat{x}_i+l,t-\delta_{\hat{x}_i\rightarrow g} -
-\delta_{\hat{x}_i+l\rightarrow \hat{x}_i}\right) dl
-= \int_{l=0}^{L_{i}}
-\bar{h}_{i}\left(t-\delta_{\hat{x}_i\rightarrow g} -
-\delta_{\hat{x}_i+l\rightarrow \hat{x}_i}\right) dl
-= \int_{l=0}^{L_{i}}
-\bar{h}_{i}\left(t-\delta_{\hat{x}_i\rightarrow g} - \frac{l}{v_i}\right)dl
-\]
-
-The integral over the length of the reach can know be rewritten in term of the
-times to the outlet within the reach giving
-
-\[
-\bar{q}_i\left(g,t\right) = \int_{d=\delta_{\hat{x}_i\rightarrow
-g}}^{\delta_{\hat{x}_i\rightarrow g} +\frac{L_{i}}{v_i}}
-\bar{h}_i \left(t-\tau\right) d\tau
-\]
-
-
-The ```dynatop``` function returns the total inflow to a reach length averaged
-aver a discrete time step. The numerical solution approximates therefore in
-time and space.
-
-Firstly the input t
-This breaks the channel network down into $n$ disjoint channel HRUs, each representing a length of river giving
-
-\[
-\bar{q}\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}} \bar{h}\left(x,t-\delta_{x\rightarrow g}\right) dx
-\]
-<!--
-+ \bar{d}\left(x,t-\delta_{x\rightarrow g}\right)+ \bar{p}\left(x,t-\delta_{x\rightarrow g}\right) dx
-\]
--->
-
-
-integrated over the for the the whole lengthcode is based
-on solving the ODE(s) governing the evolution of each of the stores in the
-HRUs sequentially while approximating the flux between then.
-
-The following sections present the solutions to the governing equations
-in the order they are currently solved in the code for given time
-step $\Delta t$ (hr) starting at time $t$ over which the input fluxes ($p$ and $e_p$) are
-taken to be constant.
-
-## Step 1: Initializing the channel storage
-The channel acts as a sink with no outflows. For a single reach:
-$$a^{\left[k\right]}\frac{ds^{\left[k\right]}_{ch}}{dt} = 
-    \sum\limits_{j} f^{\left[k,j\right]}_{ex}a^{\left[j\right]}l^{\left[j\right]}_{ex}
-    + \sum\limits_{j} f^{\left[k,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
-    + a^{\left[k\right]}p$$
-For all channel reaches this can be written in matrix form as
-$$\mathbf{A}_{ch}\frac{d\mathbf{s}_{ch}}{dt} = 
-    \mathbf{F}_{ex}\mathbf{A}\mathbf{l}_{ex}
-    + \mathbf{F}_{sz}\mathbf{A}\mathbf{l}_{sz}
-    + \mathbf{A}_{ch}p$$ 
-or equivalently
-$$\frac{d\mathbf{s}_{ch}}{dt} = 
-    \mathbf{A}^{-1}_{ch}\mathbf{F}_{ex}\mathbf{A}\mathbf{l}_{ex}
-    + \mathbf{A}_{ch}^{-1}\mathbf{F}_{sz}\mathbf{A}\mathbf{l}_{sz}
-    +p$$
-
-The solution presumes that $\left.\mathbf{s}_{ch}\right\rvert_{t}=\mathbf{0}$
-with the integral of each of the summed terms being evaluated individually to
-give the total $\left.\mathbf{s}_{ch}\right\rvert_{t+\Delta t}$.
-The easiest of these terms to integrate is the precipitation input which gives
-\[ \tilde{\mathbf{s}}_{ch} = \mathbf{I}p\Delta t \]
-
-## Step 2: Surface excess redistribution
-
-For the $i$th hill slope HRU the alteration of the surface excess store is
-given by
-\[ a^{\left[i\right]}\frac{ds^{\left[i\right]}_{ex}}{dt} =  \left(w^{\left[i,i\right]}_{ex}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{ex}
-    + \sum\limits_{j \neq i} w^{\left[i,j\right]}_{ex}a^{\left[j\right]}l^{\left[j\right]}_{ex}
-    + a^{\left[i\right]}q^{\left[i\right]}_{sz}
-	\] 
-For all the hill slope HRU this can be expressed as:
-$$\mathbf{A}\frac{d\mathbf{s}_{ex}}{dt} =  \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{ex}
-    + \mathbf{A}\mathbf{q}_{sz}$$
-The surface excess store also passes water to the channel. Let $\mathbf{y}$ be
-the contribution to the channel storage from surface excess and 
-\[ \mathbf{x} = \left[ \begin{array}{c} \mathbf{s}_{ex} \\
-                       \mathbf{y} \end{array}\right] \]
-This allows the evolution of $\mathbf{x}$ to be written as
-$$
-\left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
-         \mathbf{0} & \mathbf{A}_{ch} \end{array} \right]
-     \frac{d\mathbf{x}}{dt} =
-	      \left[ \begin{array}{c} \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A} \\
-              \mathbf{F}_{ex}\mathbf{A} \end{array}\right]
-          \mathbf{l}_{ex} +
-          \left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
-                   \mathbf{0} & \mathbf{A}_{ch} \end{array} \right]
-			   \left[ \begin{array}{c} \mathbf{q}_{sz} \\
-                       \mathbf{0} \end{array}\right]
-$$
-					   
-Assuming that there are minimal non-linearities the surface excess stores of
-the hill slope HRUs are taken to be linear tanks with
-$l^{\left[i\right]}_{ex} = \frac{1}{T_{ex}} s^{\left[i\right]}_{ex}$
-
-Substitution of the flow storage relationship and rearrangement gives
-$$
-     \frac{d\mathbf{x}}{dt} =
-	 \left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
-         \mathbf{0} & \mathbf{A}_{ch} \end{array} \right]^{-1}
-	      \left[ \begin{array}{cc}
-		  \begin{array}{c} \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{T}^{-1}_{ex} \\
-              \mathbf{F}_{ex}\mathbf{A}\mathbf{T}^{-1}_{ex} \end{array} & \mathbf{0} \end{array}
-			  \right]
-          \mathbf{x} +
-			   \left[ \begin{array}{c} \mathbf{q}_{sz} \\
-                       \mathbf{0} \end{array}\right]
-$$
-	
-The solution of this is carried out through two stages. The first
-stage redistributes the surface excess storage $\left.\mathbf{s}_{ex}\right\rvert_{t}$ between the
-hill slope and channel HRUs on the presumption that there is no inflow
-($\mathbf{q}_{sz}=\mathbf{0}$). The second stage, carried out in later steps
-adds the inflow term.
-
-Specifically letting
-\[ \tilde{\mathbf{x}} = \left[ \begin{array}{c} \tilde{\mathbf{s}}_{ex} \\
-                       \tilde{\mathbf{s}}_{ch} \end{array} \right] \]
-the ODE initial condition problem
-$$\frac{d\mathbf{x}}{dt}=\left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
-         \mathbf{0} & \mathbf{A}_{ch} \end{array} \right]^{-1}
-	      \left[ \begin{array}{cc}
-		  \begin{array}{c} \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{T}^{-1}_{ex} \\
-              \mathbf{F}_{ex}\mathbf{A}\mathbf{T}^{-1}_{ex} \end{array} & \mathbf{0} \end{array}
-			  \right]
-          \mathbf{x} \quad \mathbf{x}_{0} = \left[\begin{array}{c}
-                                                    \left.\mathbf{s}_{ex}\right\rvert_t
-\\ \tilde{\mathbf{s}}_{cg}^{\left[-\right]}\end{array}\right]$$ 
-is solve using the eigenvalue method to give
-$$
-\left[\begin{array}{c} \tilde{s}_{ex} \\
-\tilde{\mathbf{s}}_{ch}^{\left[+\right]} \end{array}\right]
-$$
-an intermediate solution to the surface excess and channel storage through the
-redistribution of the initial surface excess water.
-
-### Comments
-
-1. The flow to the channel is possibly underestimated since $\mathbf{q}_{sz}$
-   may be positive.
-1. The possible inflow to the surface store from the root zone is not
-   currently included in the description since it is unclear if this is a
-   numeric or conceptual feature.
-1. Since the only interaction between the other stores and the surface excess
-   is  $\mathbf{q}_{sz}$ this step could be evaluated later with an estimate
-   of $\mathbf{q}_{sz}$
-
-## Step 3: Root Zone
-
-For a single HRU
-$$\frac{ds_{rz}}{dt}=p-\frac{s_{rx}}{s_{rzmax}}e_{p}-q_{rz}$$ where
-$$q_{rz} = \left\{ \begin{array}{cc}
-    0 & s_{rx} \leq s_{rzmax}\\
-    p-\frac{s_{rx}}{s_{rzmax}}e_{p} & s_{rx} > s_{rzmax}
-    \end{array} \right.$$
-
-The root zone is solved as a two step process. Firstly the ODE
-$$\frac{d\tilde{s}_{rz}}{dt}=p-\frac{e_{p}}{s_{rzmax}}\tilde{s}_{rz} \quad  \left. \tilde{s}_{rz}\right\rvert_{t} = \left. s_{rz}\right\rvert_{t}$$
-to give $$\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} = 
-    \left. s_{rz}\right\rvert_{t} \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta t\right) + p\frac{ s_{srmax}}{e_p}\left(1 - \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta t\right)\right)$$
-which can be though off as the unconstrained root zone storage. Then
-from this
-$$\left. s_{rz}\right\rvert_{t + \Delta t} = \min\left(\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t}, s_{rzmax}\right)$$
-and the total water passed from the root zone is
-$\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} - \left. s_{rz}\right\rvert_{t + \Delta t}$.
-
-The water passed from the root zone can be passed wither to the surface excess
-storage or the unsaturated zone. If $\left. s_{sd}\right\rvert_{t} = 0$ the water is passed to the
-surface excess store, that is 
-$$ \tilde{s}_{ex}^{\left[+\right]} =
-   \tilde{s}_{ex}^{\left[-\right]} +
- \left.\tilde{s}_{rz}\right\rvert_{t + \Delta t} -
- \left. s_{rz}\right\rvert_{t + \Delta t}$$ 
-and $\int_{\Delta t} q_{rz} dt = 0$, otherwise
-$$\int_{\Delta t} q_{rz} dt = \left. \tilde{s}_{rz}\right\rvert_{t + \Delta
-  t} - \left. s_{rz}\right\rvert_{t + \Delta t}$$ 
-and $\tilde{s}_{ex}^{\left[+\right]} = \tilde{s}_{ex}^{\left[-\right]}$
-
-### Comments
-1.  The assigning of the water from the root zone to either the excess storage
-    or unsaturated zone can be considered in two ways:
-	- a conceptual choice indicating the belief that this water is distributed
-    with the surface rather then saturated zone lateral fluxes.
-	- a method of ensuring a suitable numerical solution in the unsaturated
-    zone when there is no saturated deficit (see comments below).
-
-## Step 4: Unsaturated Zone
-For a single HRU the unsaturated zone representation of a non-linear tank whose time
-constant is dependent upon the saturation deficit:
-$$\frac{ds_{uz}}{dt}=q_{rz}-\frac{s_{uz}}{s_{sz}T_{d}}$$
-
-The formulation does not admit a simple solution. The current code implements
-an explicit solution presuming that all the water passed from the root zone is
-available for flow to the saturated zone. Computationally the following
-steps are performed:
-
--   Add inflow from the root zone to give
-    $\tilde{s}_{uz} = \left. s_{uz}\right\rvert_{t} + \int_{\Delta t} q_{rz} dt$
-
--   Compute $q_{uz} = \left\{ \begin{array}{cc}
-        \min\left(
-        \frac{\tilde{s}_{uz}}{\left. s_{sz}\right\rvert_{t}T_d}, \frac{\tilde{s}_{uz}}{\Delta t}\right) & \left. s_{sz}\right\rvert_{t} >0 \\ 0 & \mathrm{otherwise} \end{array}\right.$
-
--   Set
-    $\left. s_{uz}\right\rvert_{t+\Delta t} = \tilde{s}_{uz} - q_{uz} \Delta t$
-
-### Comments
-
-1.  The approximation above can result in water being left in the
-    unsaturated zone if the later step makes $s_{sz}=0$ while
-    $s_{uz} > 0$. This may motivate the "switch" in where the outflow
-    from the root zone goes.
-
-1.  It is unclear why $q_{uz}=0$ when $\left.s_{sz}\right\rvert_{t} = 0$. Setting
-    $q_{uz} = \frac{\tilde{s}_{uz}}{\Delta t}$ in this situation would ensure the unsaturated
-    zone is drained into the saturated zone. It would also allow the removal
-    of the "switch" in the root zone outflow if implemented for numerical reasons.
-
-1.  An alternative solution more in keeping with that for the root zone is to approximate the
-    solution to the governing ODE by the solution to
-    $$\frac{d\tilde{s}_{uz}}{dt}= \frac{1}{\Delta t}\int_{\Delta t} q_{rz} dt - \frac{\tilde{s}_{uz}}{\left.s_{sz}\right\rvert_{t}T_{d}} \quad \left.\tilde{s}_{uz}\right\rvert_{t} = \left.s_{uz}\right\rvert_{t}$$
-    which is given by $$\left.s_{uz}\right\rvert_{t+\Delta t} = 
-            \left.s_{uz}\right\rvert_{t}\exp\left(-\frac{\Delta t}{\left. s_{sz}\right\rvert_{t}T_d}\right)+\frac{1}{\Delta t}\int_{\Delta t} q_{rz} dt\left. s_{sz}\right\rvert_{t}T_d\left(1 - \exp\left(-\frac{\Delta t}{\left. s_{sz}\right\rvert_{t}T_d}\right)\right)$$.
-    Mass balance then gives
-    $$\int_{\Delta t} q_{uz} dt =  \left.s_{uz}\right\rvert_{t} + \int_{\Delta t} q_{rz} dt - \left.s_{uz}\right\rvert_{t+\Delta t}$$
-    This solution behaves appropriately as the saturated zone wets and
-    negates the need to pass the flux from the root zone directly to the
-    surface excess for numerical reasons.
-
-## Step 5: Saturated Zone
-
-For the $i$th hill slope HRU the change in saturated zone storage deficit is
-given by 
-$$a^{\left[i\right]}\frac{ds^{\left[i\right]}_{sz}}{dt} = -a^{\left[i\right]}q^{\left[i\right]}_{uz} - \left(w^{\left[i,i\right]}_{sz}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{sz}
-    - \sum\limits_{j \neq i} w^{\left[i,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
-    + a^{\left[i\right]}q^{\left[i\right]}_{sz}$$ 
-For the assumed exponential transmissivity profile:
-$$\frac{dl^{\left[i\right]}_{sz}}{dt} = -\frac{l^{\left[i\right]}_{sz}}{m}\frac{ds^{\left[i\right]}_{sz}}{dt}$$
-which gives
-$$-a^{\left[i\right]}\frac{m}{l^{\left[i\right]}_{sz}}\frac{dl^{\left[i\right]}_{sz}}{dt}
-    = -a^{\left[i\right]}q^{\left[i\right]}_{uz} - \left(w^{\left[i,i\right]}_{sz}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{sz}
-    - \sum\limits_{j \neq i} w^{\left[i,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
-    + a^{\left[i\right]}q^{\left[i\right]}_{sz}$$
-
-The flux $q^{\left[i\right]}_{sz}$ ensures that
-$s^{\left[i\right]}_{sz} \geq 0$ and
-$l^{\left[i\right]}_{sz} \leq l^{\left[i\right]}_{szmax}$. Thus if
-$s^{\left[i\right]}_{sz} = 0$ or
-$l^{\left[i\right]}_{sz} = l^{\left[i\right]}_{szmax}$ then
-$$a^{\left[i\right]}q^{\left[i\right]}_{sz} = 
-    \min\left( a^{\left[i\right]}q^{\left[i\right]}_{uz} + \left(w^{\left[i,i\right]}_{sz}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{sz}
-    + \sum\limits_{j \neq i} w^{\left[i,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz},0\right)$$
-but is zero otherwise.
-
-Combining the above equations for all hill Slope HRUs gives
-$$\mathbf{A}\frac{d\mathbf{s}_{sz}}{dt} = -\mathbf{A}\mathbf{q}_{uz} - \left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
-    + \mathbf{A}\mathbf{q}_{sz}$$ which simplifies to
-$$\frac{d\mathbf{s}_{sz}}{dt} = -\mathbf{q}_{uz} - \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
-    + \mathbf{q}_{sz}$$
-
-Substituting the transmissivity relationship gives
-$$-\mathbf{L}^{-1}_{sz}\mathbf{M}\frac{d\mathbf{l}_{sz}}{dt} = -\mathbf{q}_{uz} - \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
-    + \mathbf{q}_{sz}$$
-
-The solution of these limited joint set of ODEs are not trivial. The current
-solution numerically solves the ODE problem 
-$$-\mathbf{L}^{-1}_{sz}\mathbf{M}\frac{d\mathbf{l}_{sz}}{dt} =
-  -\mathbf{q}_{uz} -
-  \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
-  $$
-  subject to the constraints $\frac{dl_{sz}^{\left[i\right]}}{dt} \leq 0$ if
-  $l_{sz}^{\left[i\right]}=l_{szmax}^{\left[i\right]}$ with initial conditions
-  $\left.\mathbf{l}_{sz}\right\rvert_{t}$ to give
-  $\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta t}$ using the lsoda algorithm in the
-\code{deSolve} package. The flows from the
-  saturated zone to the surface excess storage is estimated from these as
-  $$
-  \mathbf{q}_{sz} =
-  \max\left(\mathbf{A}^{-1}\left(
-  \mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta
-  t}+\mathbf{q}_{uz},
-  \mathbf{0}\right)
-  $$
-where the maximum is taken element wise.
-
-Then an initial estimate of the storage deficit is given by
-$$ \tilde{\mathbf{s}}_{sz} = \left. \mathbf{s}_{sz}\right\rvert_{t} +
- \Delta t \left.\frac{d\mathbf{s}_{sz}}{dt}\right\rvert_{t+\Delta t} $$
- where the gradient term is evaluated as
- $$ \left.\frac{d\mathbf{s}_{sz}}{dt}\right\rvert_{t+\Delta t}=
- -\mathbf{q}_{uz} -
- \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}\right\rvert_{t
-   + \Delta t}
-    + \left.\mathbf{q}_{sz}\right\rvert_{t
-   + \Delta t}$$
-
-The resulting saturated storage deficit is computed from this as
-$$
-  \left.\mathbf{s}_{sz}\right\rvert_{t + \Delta t} =
-  \max\left( \tilde{\mathbf{s}}_{sz},
-  \mathbf{0}\right)
-  $$
-
-The final estimate of the surface excess store can now be computed by adding
-the volume of water coming from the saturated zone to give
-$$
-\left.\mathbf{s}_{ex}\right\rvert_{t+\Delta t} =
-\tilde{\mathbf{s}}_{ex} + \Delta t \left.\mathbf{q}_{sz}\right\rvert_{t+\Delta
-t} +
-\left.\mathbf{s}_{sz}\right\rvert_{t + \Delta t} - \tilde{\mathbf{s}}_{sz}
-$$
-
-The flow from the saturated zone to the river channels is used to give
-$$
-\left.\mathbf{s}_{ch}\right\rvert_{t+\Delta t} =
-\tilde{\mathbf{s}}_{ch} + \Delta t \mathbf{F}_{sz} \left.\mathbf{l}_{sz}\right\rvert_{t+\Delta
-t}$$
-
-### Comments
-1. The most computationally intensive part of evaluating the gradients
-   required in the numerical solution is evaluating
-   $\mathbf{q}_{sz}$ is the evaluation of
-   $\mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}$. However
-   this only needs to be evaluated once to get both the flux and storage
-   gradient terms 
-   and $\mathbf{q}_{sz}$. This suggests that a potentially more accurate numerical
-   solution using the \code{deSolve} package to integrate for $\mathbf{l}_{sz}$, $\mathbf{s}_{sz}$ and the integral of
-   $\mathbf{q}_{sz}$ may not be that much more computationally expensive.
-2. An alternative approximate solution can be derived by ignoring the limits
-   on the flux and storage (hence $\mathbf{q}_{sz}$) and solving the resulting
-   multivariate non-homogeneous ODE problem for estimates of $\mathbf{l}_{sz}$
-   and $\mathbf{s}_{sz}$. These could then be corrected with an implicit
-   estimate of $\mathbf{q}_{sz}$ similar to that above.
-
-## Step 6: Estimating Channel Flow
-The average flow to the channels over the time step in cumecs is given by 
-$$\frac{ \mathbf{A}_{ch} \left.\mathbf{s}_{ch}\right\rvert_{t+\Delta t}}{3600\Delta t}$$
-
-
-# Ordinary Differential Equations Solutions
-
-For completeness the solutions to the ODEs made use of above are
-documented here.
-
-## Single variable non-homogeneous ODE with constant input
-
-The initial condition
-problem$$\frac{dx\left(t\right)}{dt} = a - b x\left(t\right) \quad x\left(0\right) = x_0$$
-or more compactly
-$$x^{\prime}\left(t\right) = a - b x\left(t\right) \quad x\left(t_0\right) = x_0$$
-involves the solution of first order linear system. This can be solved
-explicitly using an ‘integrating factor’. Let
-$\mu = \exp\left(\int\limits_t b dt\right) = \exp\left(bt\right)$.
-Multiplying both sides by $\mu$ then integrating (noting the LHS is the
-result of the product formula in differentiation) gives
-$$\exp\left(bt\right) x = \int\limits_{t} a\exp\left(bt\right) dt = \frac{a}{b}\exp\left(bt\right) + K$$
-The constant $K$ can be evaluates using the initial conditions as
-$K=x_{0}-\frac{a}{b}$. Substitution and rearrangement then gives
-$$x = x_{0}\exp\left(-bt\right) + \frac{a}{b}\left(1-\exp\left(-bt\right)\right)$$
-Note that $$\begin{array}{c}
-        x\rightarrow0 \quad\mathrm{as}\quad b\rightarrow\infty\\
-        x\rightarrow x_{0} + at \quad\mathrm{as}\quad b\rightarrow0\\
-    \end{array}$$
-
-## Multiple variable homogeneous ODE
-
-The solution to the initial value problem
-$$\frac{d\mathbf{x}\left(t\right)}{dt} = \mathbf{A} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0$$
-or more compactly
-$$\mathbf{x}^{\prime}\left(t\right) = \mathbf{A} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0$$
-is computed using the eigen value method.
-
-Suppose $\mathbf{x}$ is of length $n$ and $\mathbf{A}$ has suitably unique eigen values
-$\mathbf{\lambda}$. Taking $\mathbf{M}$ to be the matrix of eigen vectors
-$$
-\mathbf{x}\left(t\right) = \mathbf{M} \left[\begin{array}{c}
-c_1 \exp\left(\lambda_1t\right) \\
-\vdots \\
-c_n \exp\left(\lambda_nt\right)
-\end{array}
-\right]
-$$
-where the constant $\mathbf{c}$ can be estimated from the initial conditions
-at time 0 as
-$$ \mathbf{c} = \mathbf{M}^{-1} \mathbf{x}_{0} $$
-
-
-<!-- By the method of “Variation of Parameters for Systems” the solution to -->
-<!-- the initial value problem -->
-<!-- $$\frac{d\mathbf{x}\left(t\right)}{dt} = \mathbf{a} - \mathbf{B} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0$$ -->
-<!-- or more compactly -->
-<!-- $$\mathbf{x}^{\prime}\left(t\right) = \mathbf{a} - \mathbf{B} \mathbf{x}\left(t\right) \quad \mathbf{x}\left(t_0\right) = \mathbf{x}_0$$ -->
-<!-- is given by -->
-<!-- $$\mathbf{x}\left(t\right) = e^{\mathbf{B}t}\mathbf{x}_0 + e^{\mathbf{B}t}\int_{t_0}^{t} e^{r\mathbf{B}} \mathbf{a} dr$$ -->
+The contribution to the discharge at the channel outlet is therefore a linear
+filtering of the output of `dynatop`. From summing the coeffiecnts of
+$B\left(z^{-1}\right)$ the fraction of the `dynatop` output returned as
+discharge at the gauge is $\tilde{L}/L$. This implies mass conservation the
+inputs of channel HRUs above the gauge, while if the gauge is sited within the
+HRU mass is proportional to the fraction fo the reach above it.
