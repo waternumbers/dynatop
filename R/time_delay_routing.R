@@ -87,15 +87,18 @@ time_delay_routing <- function(model,channel_inflows,
 
     ## function to make polynonial
     fpoly <- function(h,f){
-        ply <- rep(0,floor(h)+1)
-        idx <- (floor(f)+1):(floor(h)+1)
+        if(f>h){stop("Interval for polynomial compution if wrong")}            
+        dmax <- floor(h)+1
+        dmin <- floor(f)
+        ply <- rep(0,dmax)
+        idx <- (dmin+1):dmax
         ply[idx] <- 1
-        ## take away potentially partial value around foot
-        idx <- floor(f)+1
-        ply[idx] <- ply[idx] - (f - floor(f))
-        ## take away potentially partial value around head
-        idx <- floor(h)+1
-        ply[idx] <- ply[idx] - (1 - (h - floor(h)))
+        if(h!=f){
+            ## take away potentially partial value around foot
+            ply[dmin+1] <- ply[dmin+1] - (f - floor(f))
+            ## take away potentially partial value around head
+            ply[dmax] <- ply[dmax] - (1 - (h - floor(h)))
+        }
         return(ply/sum(ply))
     }
     
@@ -135,7 +138,7 @@ time_delay_routing <- function(model,channel_inflows,
         for(jj in upstream_points){
             p2g <- time_of_travel$point_to_gauge[ii,jj]/ts$step
             f2g <- floor(p2g)
-            h2g <- floor(p2g)+1
+            h2g <- floor(p2g)
             ## generate polynomial
             ply <- fpoly(h2g,f2g)
             ## evaluate filter - pad for initial conditions           

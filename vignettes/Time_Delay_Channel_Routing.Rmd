@@ -34,35 +34,6 @@ Table [tab:hru_notation] outlines the notation used in this document.
   
   Table: Outline of notation for describing time delay histogram routing
   HRUs[]{data-label="tab:channel_notation"}
-
-Later we make use of the following:
-
--   Superscript notation $^{\left[i\right]}$ to indicate the property of
-    the $i$th channel length
-
--   Bold lower case letter to indicate the column vector of quantities from all
-    HRUs, e.g.
-    $\mathbf{q}_{rz} = \left(q_{rz}^{\left[1\right]},\ldots,q_{rz}^{\left[n\right]}\right)^{T}$
-
--   Bold uppercase letters to indicate matrices which may be diagonal if
-    the underlying variables is a vector (e.g. $\mathbf{A}$ is a
-    diagonal matrix of area) or dense (e.g. $W_{sz}$ where the $j$th
-    element of the $i$th row is $w_{sz}^{\left[i,j\right]}$). 
-	
--	The identity matrix is written as $\mathbf{I}$. The notation $\mathbf{0}$
-     is used to indicate a matrix of vector of zeros whose size can be inferred
-     from its location.
-
--   The notation $\left.x\right\rvert_t$ to indicate the value of the
-    variable $x$ at time $t$
-	
--	To illustrate some calculations intermediate evaluations variables are
-     computed. To distinguish these a $\tilde{}$ is used. For example
-	 $\tilde{q}_{rz}$ is an intermediate value in the computation of
-     $q_{rz}$. In some cases these values may evolve across multiple
-     steps. Where needed the superscript $^\left[-\right]$ will be used to
-     indicate the value at the start of the step and $^\left[+\right]$ that at
-     the end.
      
 # Time Delay Channel Routing
 
@@ -79,14 +50,7 @@ q\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}}
 h\left(x,t-\delta_{x\rightarrow g}\right) dx 
 \]
 
-<!-- While the instantaneous discharge is usefull it may be more consistent with the conceptualisation of the hillslope HRU model, and with a mass conservative apporach, to model the integral of the discharge over a time step $\Delta t$. In this case a similar relationship holds for the average discharge over the time step in that -->
-<!-- \[ -->
-<!-- \frac{1}{\Delta t} \int_{0}^{\Delta t}q\left(g,t-\tau\right) d\tau = \sum\limits_{i=1}^{n} \frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}} -->
-<!-- h\left(x,t-\tau-\delta_{x\rightarrow g}\right) dx d\tau -->
-<!-- \] -->
-
 # Numerical Solution
-
 
 Consider the contribution to the gauges flow from a single channel HRU
 \[
@@ -143,15 +107,25 @@ an express the contribution to the gauged flow as
 - \left( d_{max}\Delta l - \delta_{0\rightarrow g}v \right) \bar{h}_{t-\left(d_{max}-1\right)\Delta lv^{-1}}
 \]
 
-This can now be expressed in terms of a polynomial of the the backward shift operator $z^{-1}$
+This can now be expressed in terms of a polynomial of the the backward shift
+operator $z^{-1}$ as $B\left(z^{-1}\right) \bar{h}_{t-d_{min}\Delta t}$ where 
+
+- for $d_{max}=d_{min}+1$
+\[
+B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
+d_{min}\Delta l - \tilde{L}\right) - \left(d_{max}\Delta l -
+\delta_{0\rightarrow g}v\right)\right)  = \tilde{L}
+\]
+- for $d_{max}=d_{min}+2$
+\[
+B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
+d_{min}\Delta l - \tilde{L}\right)\right) + \left(\Delta l - \left(d_{max}\Delta l - \delta_{0\rightarrow g}v\right)\right) z^{-1}
+\]
+- for $d_{max}>d_{min}+2$
 \[
 B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
 d_{min}\Delta l - \tilde{L}\right)\right) + \Delta l z^{-1} + \ldots + \Delta l
-z^{-(d_{max}-d_{min}-1)} + \left(\Delta l - \left(d_{max}\Delta l - \delta_{0\rightarrow g}v\right)\right) z^{-(d_{max}-d_{min}-1)}
-\]
-as
-\[
-B\left(z^{-1}\right) \bar{h}_{t-d_{min}\Delta t}
+z^{-(d_{max}-d_{min}-2)} + \left(\Delta l - \left(d_{max}\Delta l - \delta_{0\rightarrow g}v\right)\right) z^{-(d_{max}-d_{min}-1)}
 \]
 
 This shows that the instanaeous flow at the outlet can be approximated
@@ -180,3 +154,40 @@ $B\left(z^{-1}\right)$ the fraction of the `dynatop` output returned as
 discharge at the gauge is $\tilde{L}/L$. This implies mass conservation the
 inputs of channel HRUs above the gauge, while if the gauge is sited within the
 HRU mass is proportional to the fraction fo the reach above it.
+
+# Diffuse and Point inputs
+
+Diffuse input are considered as external inputs that occur over the whole
+channel HRU while point inputs occur at a given location on the channel
+network.
+
+## Diffuse inputs
+
+Diffuse inputs are handled in exactly the same way as hillslope inputs. In
+this case the each value in the input time series is expected to be the total
+volume of input over the time step (m$^3$) dived by length of the time step
+($s$) to give an effective time averaged flow (m$^3$/s) to the HRU, that is:
+\[
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+d\left(x,t-\tau \right) dx d\tau
+\]
+
+## Point inputs
+
+Since the contributions to the simualted discharge at the gauge can be
+computed individually and summed it is possible to think of a point input as
+notional channel with infinitesimally small length. This results
+$d_{max}=d_{min}+1$ and a ratio $\tilde{L}/L=1$. 
+
+In this case that each value in the input time series is inflow averaged over
+the preceeding time step, that is
+\[
+\bar{p}_{t} = 
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t} p\left(x,t-\tau \right) d\tau
+\]
+The assumptions used for hillslope routing above lead to contribution to the
+outflow being $\bar{p}_{t-d_{min}\Delta t}$.
+
+

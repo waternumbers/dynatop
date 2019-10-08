@@ -2,7 +2,7 @@
 title: "Using Dynamic TOPMODEL"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{The Model Object}
+  %\VignetteIndexEntry{Using Dynamic TOPMODEL}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
