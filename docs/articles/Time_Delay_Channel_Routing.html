@@ -165,15 +165,6 @@
 </tr>
 </tbody>
 </table>
-<p>Later we make use of the following:</p>
-<ul>
-<li><p>Superscript notation <span class="math inline">\(^{\left[i\right]}\)</span> to indicate the property of the <span class="math inline">\(i\)</span>th channel length</p></li>
-<li><p>Bold lower case letter to indicate the column vector of quantities from all HRUs, e.g. <span class="math inline">\(\mathbf{q}_{rz} = \left(q_{rz}^{\left[1\right]},\ldots,q_{rz}^{\left[n\right]}\right)^{T}\)</span></p></li>
-<li><p>Bold uppercase letters to indicate matrices which may be diagonal if the underlying variables is a vector (e.g. <span class="math inline">\(\mathbf{A}\)</span> is a diagonal matrix of area) or dense (e.g. <span class="math inline">\(W_{sz}\)</span> where the <span class="math inline">\(j\)</span>th element of the <span class="math inline">\(i\)</span>th row is <span class="math inline">\(w_{sz}^{\left[i,j\right]}\)</span>).</p></li>
-<li><p>The identity matrix is written as <span class="math inline">\(\mathbf{I}\)</span>. The notation <span class="math inline">\(\mathbf{0}\)</span> is used to indicate a matrix of vector of zeros whose size can be inferred from its location.</p></li>
-<li><p>The notation <span class="math inline">\(\left.x\right\rvert_t\)</span> to indicate the value of the variable <span class="math inline">\(x\)</span> at time <span class="math inline">\(t\)</span></p></li>
-<li><p>To illustrate some calculations intermediate evaluations variables are computed. To distinguish these a <span class="math inline">\(\tilde{}\)</span> is used. For example <span class="math inline">\(\tilde{q}_{rz}\)</span> is an intermediate value in the computation of <span class="math inline">\(q_{rz}\)</span>. In some cases these values may evolve across multiple steps. Where needed the superscript <span class="math inline">\(^\left[-\right]\)</span> will be used to indicate the value at the start of the step and <span class="math inline">\(^\left[+\right]\)</span> that at the end.</p></li>
-</ul>
 </div>
 <div id="time-delay-channel-routing" class="section level1">
 <h1 class="hasAnchor">
@@ -185,11 +176,6 @@ q\left(g,t\right) = \int_{x\in\mathcal{X}} h\left(x,t-\delta_{x\rightarrow g}\ri
 q\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}}
 h\left(x,t-\delta_{x\rightarrow g}\right) dx 
 \]</span></p>
-<!-- While the instantaneous discharge is usefull it may be more consistent with the conceptualisation of the hillslope HRU model, and with a mass conservative apporach, to model the integral of the discharge over a time step $\Delta t$. In this case a similar relationship holds for the average discharge over the time step in that -->
-<!-- \[ -->
-<!-- \frac{1}{\Delta t} \int_{0}^{\Delta t}q\left(g,t-\tau\right) d\tau = \sum\limits_{i=1}^{n} \frac{1}{\Delta t}\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}} -->
-<!-- h\left(x,t-\tau-\delta_{x\rightarrow g}\right) dx d\tau -->
-<!-- \] -->
 </div>
 <div id="numerical-solution" class="section level1">
 <h1 class="hasAnchor">
@@ -228,13 +214,26 @@ l\in\left(0,L\right),\tau\in\left(0,\Delta t\right)
 \bar{h}_{t-d_{min}\Delta l v^{-1}}
 - \left( d_{max}\Delta l - \delta_{0\rightarrow g}v \right) \bar{h}_{t-\left(d_{max}-1\right)\Delta lv^{-1}}
 \]</span></p>
-<p>This can now be expressed in terms of a polynomial of the the backward shift operator <span class="math inline">\(z^{-1}\)</span> <span class="math display">\[
+<p>This can now be expressed in terms of a polynomial of the the backward shift operator <span class="math inline">\(z^{-1}\)</span> as <span class="math inline">\(B\left(z^{-1}\right) \bar{h}_{t-d_{min}\Delta t}\)</span> where</p>
+<ul>
+<li>for <span class="math inline">\(d_{max}=d_{min}+1\)</span> <span class="math display">\[
+B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
+d_{min}\Delta l - \tilde{L}\right) - \left(d_{max}\Delta l -
+\delta_{0\rightarrow g}v\right)\right)  = \tilde{L}
+\]</span>
+</li>
+<li>for <span class="math inline">\(d_{max}=d_{min}+2\)</span> <span class="math display">\[
+B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
+d_{min}\Delta l - \tilde{L}\right)\right) + \left(\Delta l - \left(d_{max}\Delta l - \delta_{0\rightarrow g}v\right)\right) z^{-1}
+\]</span>
+</li>
+<li>for <span class="math inline">\(d_{max}&gt;d_{min}+2\)</span> <span class="math display">\[
 B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
 d_{min}\Delta l - \tilde{L}\right)\right) + \Delta l z^{-1} + \ldots + \Delta l
-z^{-(d_{max}-d_{min}-1)} + \left(\Delta l - \left(d_{max}\Delta l - \delta_{0\rightarrow g}v\right)\right) z^{-(d_{max}-d_{min}-1)}
-\]</span> as <span class="math display">\[
-B\left(z^{-1}\right) \bar{h}_{t-d_{min}\Delta t}
-\]</span></p>
+z^{-(d_{max}-d_{min}-2)} + \left(\Delta l - \left(d_{max}\Delta l - \delta_{0\rightarrow g}v\right)\right) z^{-(d_{max}-d_{min}-1)}
+\]</span>
+</li>
+</ul>
 <p>This shows that the instanaeous flow at the outlet can be approximated from the <span class="math inline">\(\bar{h}_{t-d_{min}\Delta t}\)</span> by a linear operation. It remains to be shown that <span class="math inline">\(\bar{h}_{t-d_{min}\Delta t}\)</span> can be related to the output of the <code>dynatop</code> function which is <span class="math display">\[
 \frac{1}{\Delta t}
 \int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
@@ -250,6 +249,30 @@ L \bar{h}_{t}
 \]</span></p>
 <p>The contribution to the discharge at the channel outlet is therefore a linear filtering of the output of <code>dynatop</code>. From summing the coeffiecnts of <span class="math inline">\(B\left(z^{-1}\right)\)</span> the fraction of the <code>dynatop</code> output returned as discharge at the gauge is <span class="math inline">\(\tilde{L}/L\)</span>. This implies mass conservation the inputs of channel HRUs above the gauge, while if the gauge is sited within the HRU mass is proportional to the fraction fo the reach above it.</p>
 </div>
+<div id="diffuse-and-point-inputs" class="section level1">
+<h1 class="hasAnchor">
+<a href="#diffuse-and-point-inputs" class="anchor"></a>Diffuse and Point inputs</h1>
+<p>Diffuse input are considered as external inputs that occur over the whole channel HRU while point inputs occur at a given location on the channel network.</p>
+<div id="diffuse-inputs" class="section level2">
+<h2 class="hasAnchor">
+<a href="#diffuse-inputs" class="anchor"></a>Diffuse inputs</h2>
+<p>Diffuse inputs are handled in exactly the same way as hillslope inputs. In this case the each value in the input time series is expected to be the total volume of input over the time step (m<span class="math inline">\(^3\)</span>) dived by length of the time step (<span class="math inline">\(s\)</span>) to give an effective time averaged flow (m<span class="math inline">\(^3\)</span>/s) to the HRU, that is: <span class="math display">\[
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+d\left(x,t-\tau \right) dx d\tau
+\]</span></p>
+</div>
+<div id="point-inputs" class="section level2">
+<h2 class="hasAnchor">
+<a href="#point-inputs" class="anchor"></a>Point inputs</h2>
+<p>Since the contributions to the simualted discharge at the gauge can be computed individually and summed it is possible to think of a point input as notional channel with infinitesimally small length. This results <span class="math inline">\(d_{max}=d_{min}+1\)</span> and a ratio <span class="math inline">\(\tilde{L}/L=1\)</span>.</p>
+<p>In this case that each value in the input time series is inflow averaged over the preceeding time step, that is <span class="math display">\[
+\bar{p}_{t} = 
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t} p\left(x,t-\tau \right) d\tau
+\]</span> The assumptions used for hillslope routing above lead to contribution to the outflow being <span class="math inline">\(\bar{p}_{t-d_{min}\Delta t}\)</span>.</p>
+</div>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -260,6 +283,12 @@ L \bar{h}_{t}
 <li><a href="#notation-and-nomenclature">Notation and nomenclature</a></li>
       <li><a href="#time-delay-channel-routing">Time Delay Channel Routing</a></li>
       <li><a href="#numerical-solution">Numerical Solution</a></li>
+      <li>
+<a href="#diffuse-and-point-inputs">Diffuse and Point inputs</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#diffuse-inputs">Diffuse inputs</a></li>
+      <li><a href="#point-inputs">Point inputs</a></li>
+      </ul>
+</li>
       </ul>
 </div>
       </div>

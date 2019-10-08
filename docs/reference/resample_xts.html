@@ -8,25 +8,21 @@
 
 <title>Functions to resample an xts time series — resample_xts • dynatop</title>
 
-
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous" />
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
 
 <!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous" />
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
 
 <!-- clipboard.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script>
 
-<!-- headroom.js -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
+<!-- sticky kit -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -34,11 +30,10 @@
 
 
 
-
 <meta property="og:title" content="Functions to resample an xts time series — resample_xts" />
+
 <meta property="og:description" content="Takes an xts time series object and resamples then to a new time step." />
 <meta name="twitter:card" content="summary" />
-
 
 
 
@@ -50,7 +45,6 @@
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
-
 
 
   </head>
@@ -77,7 +71,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fa fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -98,7 +92,7 @@
       <a href="../articles/Checks_of_the_Hillslope_HRU.html">Checks of the Hillslope HRU</a>
     </li>
     <li>
-      <a href="../articles/Checks_of_the_Time_Delay_Routing.html">Checks of the Time Delay Routing</a>
+      <a href="../articles/Checks_of_the_Time_Delay_routing.html">Checks of the Time Delay Routing</a>
     </li>
     <li>
       <a href="../articles/Performance_Evaluation.html">Code Performance for larger simulations</a>
@@ -121,10 +115,11 @@
   <a href="../news/index.html">Changelog</a>
 </li>
       </ul>
+      
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/waternumbers/dynatop">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fa fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -135,7 +130,6 @@
 </div><!--/.navbar -->
 
       
-
       </header>
 
 <div class="row">
@@ -147,11 +141,13 @@
     </div>
 
     <div class="ref-description">
+    
     <p>Takes an xts time series object and resamples then to a new time step.</p>
+    
     </div>
 
     <pre class="usage"><span class='fu'>resample_xts</span>(<span class='no'>obs</span>, <span class='no'>dt</span>, <span class='kw'>is.rate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
-
+    
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
@@ -168,41 +164,43 @@
       <td><p>If TRUE then these are rates i.e m/hr. Otherwise they are absolute values across the interval and are scaled before return by a factor equal to the ratio of the old interval to the new interval.</p></td>
     </tr>
     </table>
-
+    
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>An xts object with the new timestep</p>
+    
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Time series of observation data are often of different temporal resolutions, however the input to most hydrological models, as is the case with the Dynamic TOPMODEL, requires those data at the same interval. This provides a method to resample a collection of such data to a single interval.</p>
 <p>Because of the methods used the results:
 - are not accurate when the input data does not have a constant timestep. The code issued a warnign and proceeds assuming the data are equally spaced with the modal timestep.
 - do not guarentee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.</p>
-
-
+    
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># Resample Brompton rainfall to 15 minute intervals</span>
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>require</a></span>(<span class='no'>dynatop</span>)
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>"brompton"</span>)
+<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/library'>require</a></span>(<span class='no'>dynatop</span>)
+<span class='fu'><a href='https://www.rdocumentation.org/packages/utils/topics/data'>data</a></span>(<span class='st'>"brompton"</span>)
 
 <span class='no'>obs</span> <span class='kw'>&lt;-</span> <span class='fu'>resample_xts</span>(<span class='no'>brompton</span>$<span class='no'>rain</span>, <span class='kw'>dt</span><span class='kw'>=</span><span class='fl'>15</span>/<span class='fl'>60</span>)</div><div class='output co'>#&gt; <span class='warning'>Warning: Irregularly spaced time series supplied to resample_xts - proceding with modal timestep, results are questionable</span></div><div class='input'>
 <span class='co'># check totals for Sept - Oct 2012</span>
-<span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span>(<span class='no'>obs</span>$<span class='no'>rain</span>*<span class='fl'>15</span>/<span class='fl'>60</span>, <span class='kw'>na.rm</span><span class='kw'>=</span><span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; [1] 0.317</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span>(<span class='no'>brompton</span>$<span class='no'>rain</span>, <span class='kw'>na.rm</span><span class='kw'>=</span><span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; [1] 0.317</div><div class='input'>
+<span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/sum'>sum</a></span>(<span class='no'>obs</span>$<span class='no'>rain</span>*<span class='fl'>15</span>/<span class='fl'>60</span>, <span class='kw'>na.rm</span><span class='kw'>=</span><span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; [1] 0.317</div><div class='input'><span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/sum'>sum</a></span>(<span class='no'>brompton</span>$<span class='no'>rain</span>, <span class='kw'>na.rm</span><span class='kw'>=</span><span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; [1] 0.317</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
+      
       <li><a href="#value">Value</a></li>
+
       <li><a href="#details">Details</a></li>
+      
       <li><a href="#examples">Examples</a></li>
     </ul>
 
   </div>
 </div>
-
 
       <footer>
       <div class="copyright">
@@ -210,16 +208,13 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
 </div>
-
       </footer>
    </div>
 
   
 
-
   </body>
 </html>
-
 

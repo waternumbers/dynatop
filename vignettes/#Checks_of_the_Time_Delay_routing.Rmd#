@@ -137,6 +137,7 @@ out <- time_delay_routing(mdl,cf,
                           initial_conditions=ic)
 ## mass balance as percentage
 (sum(out[,'outlet']) - sum(pf))*100/sum(pf)
+
 ```
 
 # Checking a single channel
