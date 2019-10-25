@@ -74,6 +74,9 @@
       <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Numerical Solution of Dynamic TOPMODEL</a>
     </li>
     <li>
+      <a href="../articles/The_solution_of_Dynamic_TOPMODEL_revised.html">Towards a better Numerical Solution of Dynamic TOPMODEL</a>
+    </li>
+    <li>
       <a href="../articles/Time_Delay_Channel_Routing.html">Time Delay Channel Routing</a>
     </li>
   </ul>
@@ -113,8 +116,7 @@
     
 <p>The dynamic TOPMODEL R package implements a set of numerical solutions to the
 governing equations of the dynamic TOPMODEL formulation. This vignette
-documents the formulation and the numerical solutions used. It also outlines
-a number of potential changes to the code which may improves it.</p>
+documents the formulation and the numerical solutions used for the “hill slope” elements.</p>
 <div id="notation-and-nomenclature" class="section level1">
 <h1 class="hasAnchor">
 <a href="#notation-and-nomenclature" class="anchor"></a>Notation and nomenclature</h1>
@@ -245,9 +247,8 @@ HRUs</caption>
 </tr>
 </tbody>
 </table>
-<p>The second, termed “chanel” represents the inflow to a length of river
-channel. As such it acts as a sink collecting water from the “hill slope”
-HRUs over the course of a time step. Table <a href="#tab:ch-notation">2</a> outlines
+<p>The second, termed “channel” represents a length of river
+channel. This document is concerned only with the solution of the “hill slope” HRUs. It does not deal with the routing of the water within the channel. As such channel HRUs acts as sinks collecting water from the “hill slope” HRUs over the course of a time step. Table <a href="#tab:ch-notation">2</a> outlines
 the notation for channel HRU.</p>
 <table class="table">
 <caption>
