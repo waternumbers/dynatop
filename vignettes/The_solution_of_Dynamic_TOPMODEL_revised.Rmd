@@ -33,35 +33,39 @@ Table \@ref(tab:hru-notation) outlines the notation used for describing a
 "hill slope" HRU.
 
 
-  Quantity type                                   Symbol             Description                                                                 unit
-  ------------------------------------ ----------------------------- -------------------------------------------------------------------- -----------------
-  Storage                                        $s_{ex}$            Surface excess storage                                                       m
-                                                 $s_{rz}$            Root zone storage                                                            m
-                                                 $s_{uz}$            Unsaturated zone storage                                                     m
-                                                 $s_{sz}$            Saturated zone storage deficit                                               m
-  Vertical fluxes within HRU                     $q_{rz}$            Flow from Root to unsaturated zone                                    (m$^3$/s)/m$^2$
-                                                 $q_{uz}$            Flow from unsaturated to saturated zone                               (m$^3$/s)/m$^2$
-                                                 $q_{sz}$            Flow from saturated zone to surface excess storage                    (m$^3$/s)/m$^2$
-  Lateral down slope fluxes from HRU             $l_{ex}$            Total lateral flux from surface excess                                (m$^3$/s)/m$^2$
-                                                 $l_{sz}$            Total lateral flux from saturated zone                                (m$^3$/s)/m$^2$
-  Other HRU properties                               a               Area                                                                        m$^2$
-                                        $w^{\left[i,j\right]}_{ex}$  fraction of $l_{ex}$ going from $j$th to $i$th HRU                            -
-                                        $w^{\left[i,j\right]}_{sz}$  fraction of $l_{sz}$ going from $j$th to $i$th HRU                            -
-                                                $s_{rzmax}$          maximum root zone storage                                                     m
-                                                   $T_d$             Unsaturated zone time constant per m of saturated storage deficit.           h/m
-                                                 $l_{szmax}$           Maximum lateral flux from saturated zone                              (m$^3$/s)/m$^2$         
-                                                 $T_{ex}$            Surface excess storage time constant                                          h
-                                                    $m$              Exponential transmissivity constant                                           -     -
+  Quantity type                                   Symbol                 Description                                                                 unit
+  ------------------------------------ -----------------------------     -------------------------------------------------------------------- -----------------
+  Storage                                        $s_{ex}$                Surface excess storage                                                       m
+                                                 $s_{rz}$                Root zone storage                                                            m
+                                                 $s_{uz}$                Unsaturated zone storage                                                     m
+                                                 $s_{sz}$                Saturated zone storage deficit                                               m
+  Vertical fluxes within HRU                     $q_{rz \rightarrow uz}$ Flow from the root zone to the unsaturated zone                        (m$^3$/s)/m$^2$
+                                                 $q_{rz \rightarrow ex}$ Flow from the root zone to the surface excess storage                  (m$^3$/s)/m$^2$  
+                                                 $q_{uz}$                Flow from unsaturated to saturated zone                                (m$^3$/s)/m$^2$
+                                                 $q_{sz}$                Flow from saturated zone to surface excess storage                    (m$^3$/s)/m$^2$
+  Lateral down slope fluxes from HRU             $l_{ex}$                Total lateral flux from surface excess                                (m$^3$/s)/m$^2$
+                                                 $l_{sz}$                Total lateral flux from saturated zone                                (m$^3$/s)/m$^2$
+  Other HRU properties                               a                   Area                                                                        m$^2$
+                                        $w^{\left[i,j\right]}_{ex}$      fraction of $l_{ex}$ going from $j$th to $i$th HRU                            -
+                                        $w^{\left[i,j\right]}_{sz}$      fraction of $l_{sz}$ going from $j$th to $i$th HRU                            -
+                                                $s_{rzmax}$              maximum root zone storage                                                     m
+                                                   $T_d$                 Unsaturated zone time constant per m of saturated storage deficit.           h/m
+                                                 $l_{szmax}$             Maximum lateral flux from saturated zone                              (m$^3$/s)/m$^2$         
+                                                 $T_{ex}$                Surface excess storage time constant                                          h
+                                                    $m$                  Exponential transmissivity constant                                           -     -
 
   Table: (\#tab:hru-notation) Outline of notation for describing "hill slope"
   HRUs
 
 The second, termed "channel" represents a length of river
-channel. This document is concerned onlydoes not deal with the routing of the water within the channel As such it acts as a sink collecting water from the "hill slope"
+channel. This document is concerned only with the computation of the inflow to
+the channel. It does not deal with the routing of the
+water within the channel. As such it considers the channel HRUs to act as a sink collecting water from the
+"hill slope" 
 HRUs over the course of a time step. Table \@ref(tab:ch-notation) outlines
 the notation for channel HRU.
 
-                                   Symbol             Description                                                                 unit
+                                   Symbol              Description                                                                 unit
   ---------------------- ----------------------------- -------------------------------------------------------------------------- -------
   Storage                          $s_{ch}$            channel storage                                                               m
   Other HRU properties                 a               Area                                                                        m$^2$
@@ -103,7 +107,7 @@ Later we make use of the following:
     element of the $i$th row is $w_{sz}^{\left[i,j\right]}$). 
 	
 -	The identity matrix is written as $\mathbf{I}$. The notation $\mathbf{0}$
-     is used to indicate a matrix of vector of zeros whose size can be inferred
+     is used to indicate a matrix or vector of zeros whose size can be inferred
      from its location.
 
 -   The notation $\left.x\right\rvert_t$ to indicate the value of the
@@ -158,10 +162,11 @@ given by
 \[ a^{\left[i\right]}\frac{ds^{\left[i\right]}_{ex}}{dt} =  \left(w^{\left[i,i\right]}_{ex}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{ex}
     + \sum\limits_{j \neq i} w^{\left[i,j\right]}_{ex}a^{\left[j\right]}l^{\left[j\right]}_{ex}
     + a^{\left[i\right]}q^{\left[i\right]}_{sz}
+	+ a^{\left[i\right]}q^{\left[i\right]}_{rz \rightarrow ex}
 	\] 
 For all the hill slope HRU this can be expressed as:
 $$\mathbf{A}\frac{d\mathbf{s}_{ex}}{dt} =  \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{ex}
-    + \mathbf{A}\mathbf{q}_{sz}$$
+    + \mathbf{A}\mathbf{q}_{sz} + \mathbf{A}\mathbf{q}_{rz \rightarrow ex}$$
 The surface excess store also passes water to the channel. Let $\mathbf{y}$ be
 the contribution to the channel storage from surface excess and 
 \[ \mathbf{x} = \left[ \begin{array}{c} \mathbf{s}_{ex} \\
@@ -176,7 +181,7 @@ $$
           \mathbf{l}_{ex} +
           \left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
                    \mathbf{0} & \mathbf{A}_{ch} \end{array} \right]
-			   \left[ \begin{array}{c} \mathbf{q}_{sz} \\
+			   \left[ \begin{array}{c} \mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex} \\
                        \mathbf{0} \end{array}\right]
 $$
 					   
@@ -194,14 +199,14 @@ $$
               \mathbf{F}_{ex}\mathbf{A}\mathbf{T}^{-1}_{ex} \end{array} & \mathbf{0} \end{array}
 			  \right]
           \mathbf{x} +
-			   \left[ \begin{array}{c} \mathbf{q}_{sz} \\
+			   \left[ \begin{array}{c} \mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex}\\
                        \mathbf{0} \end{array}\right]
 $$
 	
 The solution of this is carried out through two stages. The first
 stage redistributes the surface excess storage $\left.\mathbf{s}_{ex}\right\rvert_{t}$ between the
-hill slope and channel HRUs on the presumption that there is no inflow
-($\mathbf{q}_{sz}=\mathbf{0}$). The second stage, carried out in later steps
+hill slope and channel HRUs on the presumption that there is no inflows
+($\mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex} =\mathbf{0}$). The second stage, carried out in later steps
 adds the inflow term.
 
 Specifically letting
@@ -227,24 +232,19 @@ redistribution of the initial surface excess water.
 
 ### Comments
 
-1. The flow to the channel is possibly underestimated since $\mathbf{q}_{sz}$
+1. The flow to the channel and neighbouring hillslope HRUs is possibly underestimated since the possible flows from the
+   saturated zone ($\mathbf{q}_{sz}$) and root zone ($\mathbf{q}_{rz
+   \rightarrow ex}$)
    may be positive.
-1. The possible inflow to the surface store from the root zone is not
-   currently included in the description since it is unclear if this is a
-   numeric or conceptual feature.
-1. Since the only interaction between the other stores and the surface excess
-   is  $\mathbf{q}_{sz}$ this step could be evaluated later with an estimate
-   of $\mathbf{q}_{sz}$
+1. The only interaction between the other stores and the surface excess
+   are flows to the surface excess. This step could be evaluated later with
+   the estimates of these fluxes.
 
 ## Step 3: Root Zone
 
 For a single HRU
-$$\frac{ds_{rz}}{dt}=p-\frac{s_{rx}}{s_{rzmax}}e_{p}-q_{rz}$$ where
-$$q_{rz} = \left\{ \begin{array}{cc}
-    0 & s_{rx} \leq s_{rzmax}\\
-    p-\frac{s_{rx}}{s_{rzmax}}e_{p} & s_{rx} > s_{rzmax}
-    \end{array} \right.$$
-
+$$\frac{ds_{rz}}{dt}=p-\frac{s_{rx}}{s_{rzmax}}e_{p}-q_{rz\rightarrow ex} - q_{rz\rightarrow uz}$$
+	
 The root zone is solved as a two step process. Firstly the ODE
 $$\frac{d\tilde{s}_{rz}}{dt}=p-\frac{e_{p}}{s_{rzmax}}\tilde{s}_{rz} \quad  \left. \tilde{s}_{rz}\right\rvert_{t} = \left. s_{rz}\right\rvert_{t}$$
 to give $$\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} = 
@@ -255,75 +255,59 @@ $$\left. s_{rz}\right\rvert_{t + \Delta t} = \min\left(\left. \tilde{s}_{rz}\rig
 and the total water passed from the root zone is
 $\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} - \left. s_{rz}\right\rvert_{t + \Delta t}$.
 
-The water passed from the root zone can be passed wither to the surface excess
-storage or the unsaturated zone. If $\left. s_{sd}\right\rvert_{t} = 0$ the water is passed to the
-surface excess store, that is 
+The water passed from the root zone can be passed either to the surface excess
+storage or the unsaturated zone. If $\left. s_{sd}\right\rvert_{t} = 0$ the
+flux from the root zone is passed to the
+surface excess store giving a revised estimate of
 $$ \tilde{s}_{ex}^{\left[+\right]} =
    \tilde{s}_{ex}^{\left[-\right]} +
  \left.\tilde{s}_{rz}\right\rvert_{t + \Delta t} -
  \left. s_{rz}\right\rvert_{t + \Delta t}$$ 
-and $\int_{\Delta t} q_{rz} dt = 0$, otherwise
-$$\int_{\Delta t} q_{rz} dt = \left. \tilde{s}_{rz}\right\rvert_{t + \Delta
-  t} - \left. s_{rz}\right\rvert_{t + \Delta t}$$ 
-and $\tilde{s}_{ex}^{\left[+\right]} = \tilde{s}_{ex}^{\left[-\right]}$
-
-### Comments
-1.  The assigning of the water from the root zone to either the excess storage
-    or unsaturated zone can be considered in two ways:
-	- a conceptual choice indicating the belief that this water is distributed
-    with the surface rather then saturated zone lateral fluxes.
-	- a method of ensuring a suitable numerical solution in the unsaturated
-    zone when there is no saturated deficit (see comments below).
+and $\int_{\Delta t} q_{rz \rightarrow uz} dt = 0$.
+If $\left. s_{sd}\right\rvert_{t} > 0$ then the flux from the root zone is
+passed to the unsaturated zone store by taking
+\[
+\int_{\Delta t} q_{rz \rightarrow uz} dt =
+\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} -
+\left. s_{rz}\right\rvert_{t + \Delta t}
+\] 
+and $\int_{\Delta t} q_{rz \rightarrow ex} dt = 0$.
 
 ## Step 4: Unsaturated Zone
 For a single HRU the unsaturated zone representation of a non-linear tank whose time
 constant is dependent upon the saturation deficit:
 $$\frac{ds_{uz}}{dt}=q_{rz}-\frac{s_{uz}}{s_{sz}T_{d}}$$
 
-The formulation does not admit a simple solution. The current code implements
-an explicit solution presuming that all the water passed from the root zone is
-available for flow to the saturated zone. Computationally the following
-steps are performed:
+In keeping with that for the root zone is to approximate the
+solution to the governing ODE by the solution to
+$$\frac{d\tilde{s}_{uz}}{dt}= \frac{1}{\Delta t}\int_{\Delta t} q_{rz} dt - \frac{\tilde{s}_{uz}}{\left.s_{sz}\right\rvert_{t}T_{d}} \quad \left.\tilde{s}_{uz}\right\rvert_{t} = \left.s_{uz}\right\rvert_{t}$$
+which is given by 
+\[
+\left.\bar{s}_{uz}\right\rvert_{t+\Delta t} = 
+\left.s_{uz}\right\rvert_{t}\exp\left(-\frac{\Delta
+  t}{\left. s_{sz}\right\rvert_{t}T_d}\right)+\frac{1}{\Delta t}\int_{\Delta
+  t} q_{rz} dt\left. s_{sz}\right\rvert_{t}T_d\left(1 -
+\exp\left(-\frac{\Delta t}{\left. s_{sz}\right\rvert_{t}T_{d}}\right)\right)
+\]
+Mass balance then gives
+\[
+\int_{\Delta t} q_{uz} dt =  \left.s_{uz}\right\rvert_{t} + \int_{\Delta t}
+q_{rz} dt - \left.\bar{s}_{uz}\right\rvert_{t+\Delta t}
+\]
 
--   Add inflow from the root zone to give
-    $\tilde{s}_{uz} = \left. s_{uz}\right\rvert_{t} + \int_{\Delta t} q_{rz} dt$
-
--   Compute $q_{uz} = \left\{ \begin{array}{cc}
-        \min\left(
-        \frac{\tilde{s}_{uz}}{\left. s_{sz}\right\rvert_{t}T_d}, \frac{\tilde{s}_{uz}}{\Delta t}\right) & \left. s_{sz}\right\rvert_{t} >0 \\ 0 & \mathrm{otherwise} \end{array}\right.$
-
--   Set
-    $\left. s_{uz}\right\rvert_{t+\Delta t} = \tilde{s}_{uz} - q_{uz} \Delta t$
-
-### Comments
-
-1.  The approximation above can result in water being left in the
-    unsaturated zone if the later step makes $s_{sz}=0$ while
-    $s_{uz} > 0$. This may motivate the "switch" in where the outflow
-    from the root zone goes.
-
-1.  It is unclear why $q_{uz}=0$ when $\left.s_{sz}\right\rvert_{t} = 0$. Setting
-    $q_{uz} = \frac{\tilde{s}_{uz}}{\Delta t}$ in this situation would ensure the unsaturated
-    zone is drained into the saturated zone. It would also allow the removal
-    of the "switch" in the root zone outflow if implemented for numerical reasons.
-
-1.  An alternative solution more in keeping with that for the root zone is to approximate the
-    solution to the governing ODE by the solution to
-    $$\frac{d\tilde{s}_{uz}}{dt}= \frac{1}{\Delta t}\int_{\Delta t} q_{rz} dt - \frac{\tilde{s}_{uz}}{\left.s_{sz}\right\rvert_{t}T_{d}} \quad \left.\tilde{s}_{uz}\right\rvert_{t} = \left.s_{uz}\right\rvert_{t}$$
-    which is given by $$\left.s_{uz}\right\rvert_{t+\Delta t} = 
-            \left.s_{uz}\right\rvert_{t}\exp\left(-\frac{\Delta t}{\left. s_{sz}\right\rvert_{t}T_d}\right)+\frac{1}{\Delta t}\int_{\Delta t} q_{rz} dt\left. s_{sz}\right\rvert_{t}T_d\left(1 - \exp\left(-\frac{\Delta t}{\left. s_{sz}\right\rvert_{t}T_d}\right)\right)$$.
-    Mass balance then gives
-    $$\int_{\Delta t} q_{uz} dt =  \left.s_{uz}\right\rvert_{t} + \int_{\Delta t} q_{rz} dt - \left.s_{uz}\right\rvert_{t+\Delta t}$$
-    This solution behaves appropriately as the saturated zone wets and
-    negates the need to pass the flux from the root zone directly to the
-    surface excess for numerical reasons.
-
+The above solution ensures that $\left.\bar{s}_{uz}\right\rvert_{t+\Delta t}$
+equals 0 if $\left.s_{sz}\right\rvert_{t}=0$. However to ensure that
+$\left.s_{uz}\right\rvert_{t+\Delta t} =0$ if $\left.s_{sz}\right\rvert_{t+\Delta
+  t}=0$ the estimate $\left.\bar{s}_{uz}\right\rvert_{t+\Delta t}$ is revised
+  after computation of the saturated zone.
+  
 ## Step 5: Saturated Zone
 
 For the $i$th hill slope HRU the change in saturated zone storage deficit is
 given by 
 $$a^{\left[i\right]}\frac{ds^{\left[i\right]}_{sz}}{dt} = -a^{\left[i\right]}q^{\left[i\right]}_{uz} - \left(w^{\left[i,i\right]}_{sz}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{sz}
-    - \sum\limits_{j \neq i} w^{\left[i,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
+    - \sum\limits_{j \neq i}
+    w^{\left[i,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
     + a^{\left[i\right]}q^{\left[i\right]}_{sz}$$ 
 For the assumed exponential transmissivity profile:
 $$\frac{dl^{\left[i\right]}_{sz}}{dt} = -\frac{l^{\left[i\right]}_{sz}}{m}\frac{ds^{\left[i\right]}_{sz}}{dt}$$
@@ -353,38 +337,58 @@ Substituting the transmissivity relationship gives
 $$-\mathbf{L}^{-1}_{sz}\mathbf{M}\frac{d\mathbf{l}_{sz}}{dt} = -\mathbf{q}_{uz} - \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
     + \mathbf{q}_{sz}$$
 
-The solution of these limited joint set of ODEs are not trivial. The current
-solution numerically solves the ODE problem 
-$$-\mathbf{L}^{-1}_{sz}\mathbf{M}\frac{d\mathbf{l}_{sz}}{dt} =
-  -\mathbf{q}_{uz} -
-  \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
-  $$
-  subject to the constraints $\frac{dl_{sz}^{\left[i\right]}}{dt} \leq 0$ if
+The solution of these limited joint set of ODEs are not trivial. 
+
+### The current solution 
+
+This numerically solves the ODE problem 
+
+\[
+-\mathbf{L}^{-1}_{sz}\mathbf{M}\frac{d\mathbf{l}_{sz}}{dt} =
+-\mathbf{q}_{uz} -
+\mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
+\]
+
+subject to the constraints $\frac{dl_{sz}^{\left[i\right]}}{dt} \leq 0$ if
   $l_{sz}^{\left[i\right]}=l_{szmax}^{\left[i\right]}$ with initial conditions
   $\left.\mathbf{l}_{sz}\right\rvert_{t}$ to give
   $\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta t}$ using the lsoda algorithm in the
-\code{deSolve} package. The flows from the
-  saturated zone to the surface excess storage is estimated from these as
-  $$
-  \mathbf{q}_{sz} =
-  \max\left(\mathbf{A}^{-1}\left(
-  \mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta
-  t}+\mathbf{q}_{uz},
-  \mathbf{0}\right)
-  $$
-where the maximum is taken element wise.
+`deSolve` package. 
 
-Then an initial estimate of the storage deficit is given by
-$$ \tilde{\mathbf{s}}_{sz} = \left. \mathbf{s}_{sz}\right\rvert_{t} +
- \Delta t \left.\frac{d\mathbf{s}_{sz}}{dt}\right\rvert_{t+\Delta t} $$
- where the gradient term is evaluated as
- $$ \left.\frac{d\mathbf{s}_{sz}}{dt}\right\rvert_{t+\Delta t}=
- -\mathbf{q}_{uz} -
- \mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}\right\rvert_{t
-   + \Delta t}
-    + \left.\mathbf{q}_{sz}\right\rvert_{t
-   + \Delta t}$$
+The flows from the saturated zone to the surface excess storage due to
+exceeding the maximum lateral flow are denoted $\bar{\mathbf{q}}_{sz}$. They
+are computed from
+\[
+\mathbf{g} = \mathbf{A}^{-1}\left(
+\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta
+  t}+\mathbf{q}_{uz}
+\]
+for each HRU as
+\[
+\bar{q}^{\left[i\right]}_{sz} = \left\{
+\begin{array}{cc}
+  0 & \left. l^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t} <
+  l^{\left[i\right]}_{szmax} \\
+  g^{\left[i\right]} & \left. l^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t} =
+  l^{\left[i\right]}_{szmax} \& g^{\left[i\right]} >0 \\
+\end{array}
+\right.
+\]
 
+An initial estimate of the storage deficit is given by
+\[
+\tilde{\mathbf{s}}_{sz} = \left. \mathbf{s}_{sz}\right\rvert_{t} +
+\Delta t \left.\frac{d\mathbf{s}_{sz}}{dt}\right\rvert_{t+\Delta t}
+\]
+where the gradient term is evaluated as
+\[
+\left.\frac{d\mathbf{s}_{sz}}{dt}\right\rvert_{t+\Delta t}=
+-\mathbf{q}_{uz} -
+\mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\left.\mathbf{l}_{sz}\right\rvert_{t
+  + \Delta t}
++ \tilde{\mathbf{q}}_{sz}
+\]
+  
 The resulting saturated storage deficit is computed from this as
 $$
   \left.\mathbf{s}_{sz}\right\rvert_{t + \Delta t} =
@@ -392,13 +396,23 @@ $$
   \mathbf{0}\right)
   $$
 
+The estimate of $\mathbf{s}_{uz}$ if now altered to reflect
+$\left.\mathbf{s}_{sz}\right\rvert_{t + \Delta t}$.
+If $\left.s^{\left[i\right]}_{sz}\right\rvert_{t + \Delta t} =0$ then 
+$\left.\mathbf{s}_{uz}\right\rvert_{t + \Delta t} = 0$ and 
+$\hat{\mathbf{s}}^{\left[i\right]}_{sz} =
+ \bar{\mathbf{s}}^{\left[i\right]}_{sz} -
+ \bar{\mathbf{s}}^{\left[i\right]}_{uz}$. 
+ Otherwise $\left.\mathbf{s}_{uz}\right\rvert_{t + \Delta t}
+			=\bar{\mathbf{s}}^{\left[i\right]}_{uz}$ and $\hat{\mathbf{s}}^{\left[i\right]}_{sz} =
+ \bar{\mathbf{s}}^{\left[i\right]}_{sz}$.
+
 The final estimate of the surface excess store can now be computed by adding
 the volume of water coming from the saturated zone to give
 $$
 \left.\mathbf{s}_{ex}\right\rvert_{t+\Delta t} =
-\tilde{\mathbf{s}}_{ex} + \Delta t \left.\mathbf{q}_{sz}\right\rvert_{t+\Delta
-t} +
-\left.\mathbf{s}_{sz}\right\rvert_{t + \Delta t} - \tilde{\mathbf{s}}_{sz}
+\tilde{\mathbf{s}}_{ex} + \Delta t \bar{\mathbf{q}}_{sz} +
+\left.\mathbf{s}_{sz}\right\rvert_{t + \Delta t} - \hat{\mathbf{s}}_{sz}
 $$
 
 The flow from the saturated zone to the river channels is used to give
@@ -407,21 +421,145 @@ $$
 \tilde{\mathbf{s}}_{ch} + \Delta t \mathbf{F}_{sz} \left.\mathbf{l}_{sz}\right\rvert_{t+\Delta
 t}$$
 
-### Comments
-1. The most computationally intensive part of evaluating the gradients
-   required in the numerical solution is evaluating
-   $\mathbf{q}_{sz}$ is the evaluation of
+#### Comments
+1. The most computationally intensive part of algorithm is the numeric
+   integration of the $\mathbf{l}_{sz}$. To date this is making larger
+   simulations such as the Kent impractical. Avoiding this would make life
+   much easier.
+2. It is not clear if the above is mass conservative. Note that most
+   compuationally expensive operation is the evaluation of 
    $\mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}$. However
    this only needs to be evaluated once to get both the flux and storage
-   gradient terms 
-   and $\mathbf{q}_{sz}$. This suggests that a potentially more accurate numerical
-   solution using the \code{deSolve} package to integrate for $\mathbf{l}_{sz}$, $\mathbf{s}_{sz}$ and the integral of
+   gradient terms. 
+   and $\mathbf{q}. This suggests that the potentially more accurate numerical
+   solution is to use the \code{deSolve} package to integrate for $\mathbf{l}_{sz}$, $\mathbf{s}_{sz}$ and the integral of
    $\mathbf{q}_{sz}$ may not be that much more computationally expensive.
-2. An alternative approximate solution can be derived by ignoring the limits
-   on the flux and storage (hence $\mathbf{q}_{sz}$) and solving the resulting
-   multivariate non-homogeneous ODE problem for estimates of $\mathbf{l}_{sz}$
-   and $\mathbf{s}_{sz}$. These could then be corrected with an implicit
-   estimate of $\mathbf{q}_{sz}$ similar to that above.
+
+### An alternative solution
+
+This solution is based on a initial simplification based on subsitution of the
+current lateral flux term to give
+\[
+\mathbf{K} = \left. \mathbf{L}^{-1}_{sz}\right\rvert_{t}\mathbf{M}
+\]
+All values in $\mathbf{K}$ are greater or equal to zero by definition.
+
+To evaluate $\mathbf{z}$ the contribution to the channel storage from the saturated zone in the current time step let
+\[
+\mathbf{x} = \left[ \begin{array}{c} \mathbf{s}_{sz} \\
+    \mathbf{z} \end{array}\right] 
+\]
+Taking
+\[
+\hat{\mathbf{A}} = \left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
+    \mathbf{0} & \mathbf{A}_{ch} \end{array} \right]
+\]
+the evolution of $\mathbf{x}$ to be written as
+\[
+\hat{\mathbf{A}}\frac{d\mathbf{x}}{dt} =
+-\hat{\mathbf{A}} \left[\begin{array}{c} \mathbf{q}_{uz}
+    \\ \mathbf{0} \end{array}\right]
+- \left[ \begin{array}{cc} \left(\mathbf{W}_{ex}-\mathbf{I}\right) & \mathbf{0} \\
+    \mathbf{F}_{ex} & \mathbf{0} \end{array}\right]
+\hat{\mathbf{A}}\mathbf{x}
++ \hat{\mathbf{A}} \left[\begin{array}{c} \mathbf{q}_{sz}
+    \\ \mathbf{0} \end{array}\right]
+\]
+or more compactly
+\[
+\frac{d\mathbf{x}}{dt} =
+- \left[\begin{array}{c} \mathbf{q}_{uz}
+    \\ \mathbf{0} \end{array}\right]
+- \hat{\mathbf{A}}^{-1} \left[ \begin{array}{cc} \left(\mathbf{W}_{ex}-\mathbf{I}\right) & \mathbf{0} \\
+    \mathbf{F}_{ex} & \mathbf{0} \end{array}\right]
+\hat{\mathbf{A}}\mathbf{x}
++ \left[\begin{array}{c} \mathbf{q}_{sz}
+    \\ \mathbf{0} \end{array}\right]
+\]
+
+An approximation of the two governing equations can be written as
+\[
+\left.\mathbf{s}_{sz}\right\rvert_{t+\delta t} -
+\left.\mathbf{s}_{sz}\right\rvert_{t}
+=  -\int_{\delta t}\mathbf{q}_{uz}dt
+- \int_{\Delta
+  t}\mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
+dt
++ \int_{\Delta t} \mathbf{q}_{sz} dt
+\]
+and
+\[
+-\mathbf{K}\left( \left.\mathbf{l}_{sz}\right\rvert_{t+\delta t} -
+\left.\mathbf{l}_{sz}\right\rvert_{t}\right)
+=  -\int_{\delta t}\mathbf{q}_{uz}dt
+- \int_{\Delta
+  t}\mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
+dt
++ \int_{\Delta t} \mathbf{q}_{sz} dt
+\]
+The term $\int_{\delta t}\mathbf{q}_{uz}dt$ is given by the solution of the
+previous step. The term 
+\[\int_{\Delta
+  t}\mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
+  dt
+\]
+can be solved using the eigen value method with initial condition
+$\left.\mathbf{l}_{sz}\right\rvert_{t}$.
+The final term $\int_{\Delta t} \mathbf{q}_{sz} dt$ requires approximation and
+is absed on the bounds on the storage and flux variables.
+
+Following a similar pattern to earlier solutions we derive unbounded estimates as
+\[
+\bar{\mathbf{s}}_{sz} = 
+\left.\mathbf{s}_{sz}\right\rvert_{t}
+-\int_{\delta t}\mathbf{q}_{uz}dt
+- \int_{\Delta
+  t}\mathbf{A}^{-1}\left(\mathbf{W}_{sz}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
+dt
+\]
+and 
+\[
+\bar{\mathbf{l}}_{sz} = 
+\left.\mathbf{l}_{sz}\right\rvert_{t}
++\mathbf{K}^{-1}\left(\int_{\delta t}\mathbf{q}_{uz}dt
++ \int_{\Delta
+  t}\mathbf{A}^{-1}\left(\mathbf{W}_{sz}+\mathbf{I}\right)\mathbf{A}\mathbf{l}_{sz}
+dt\right)
+\]
+
+
+Since $\mathbf{q}_{sz} \geq 0$ 
+\[
+\int_{\Delta t} \mathbf{q}_{sz} dt \geq 0
+\]
+Since  $\mathbf{s}_{sz} \geq 0$
+\[
+\int_{\Delta t} \mathbf{q}_{sz} dt \geq -\bar{\mathbf{s}}_{sz}
+\]
+Since  $0 \leq \mathbf{l}_{sz} \leq \mathbf{l}_{szmax}$
+\[
+\mathbf{K}\bar{\mathbf{l}} \geq \int_{\Delta t} \mathbf{q}_{sz} dt \geq \mathbf{K}\left(\bar{\mathbf{l}}_{sz}-\mathbf{l}_{szmax}\right)
+\]
+
+Take $\int_{\Delta t} \mathbf{q}_{sz} dt$ to be the smallest
+value satifying the upper limits on flow and saturation, that is
+\[
+\int_{\Delta t} \mathbf{q}_{sz} dt = \max\left(\mathbf{0},-\bar{\mathbf{s}}_{sz},\mathbf{K}\left(\bar{\mathbf{l}}_{sz}-\mathbf{l}_{szmax}\right)\right)
+\]
+This gives
+\[
+\left.\mathbf{s}_{sz}\right\rvert_{t+\Delta t} = \bar{\mathbf{s}}_{sz} + \max\left(\mathbf{0},-\bar{\mathbf{s}}_{sz},\mathbf{K}\left(\bar{\mathbf{l}}_{sz}-\mathbf{l}_{szmax}\right)\right) 
+\]
+and
+\[
+\left.\mathbf{l}_{sz}\right\rvert_{t+\Delta t} = \max\left(\mathbf{0},
+\bar{\mathbf{l}}_{sz} -\mathbf{K} \max\left(\mathbf{0},-\bar{\mathbf{s}}_{sz},\mathbf{K}\left(\bar{\mathbf{l}}_{sz}-\mathbf{l}_{szmax}\right)\right) \right)
+\]
+where the maximum ensures a non-negative flux in the case that the upper limit
+on $\int_{\Delta t} \mathbf{q}_{sz} dt$ is not met.
+
+#### Comments
+1. alsdkjf
 
 ## Step 6: Estimating Channel Flow
 The average flow to the channels over the time step in cumecs is given by 

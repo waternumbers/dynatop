@@ -23,6 +23,6 @@ fun_dlex_dt <- function(t, y, parms)
     ##imax = res > parms$lsz_max & res > 0; # original constrains gradient to qbf_max - why??
     imax <- y >= parms$lsz_max & res > 0;
   # base flows cannnot increase beyond maximum allowed
-  res = res * (1-imax)
+  #res = res * (1-imax) - commented out for testing
   return(list(res))
 }

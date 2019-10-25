@@ -51,13 +51,15 @@ compute_time_delay <- function(model){
     point_to_gauge <- matrix(NA,nrow(model$gauge),nrow(model$point_inflow),
                              dimnames=list(model$gauge$name,
                                            model$point_inflow$name))
-    for(ii in 1:nrow(model$gauge)){
-        gr <- paste(model$gauge$channel_id[ii])
-        for(jj in 1:nrow(model$point_inflow)){      
-            ir <- paste(model$point_inflow$channel_id[jj])
-            point_to_gauge[ii,jj] <- head_to_head[ir,gr] +
-                (model$gauge$fraction[ii]*reach_time[gr]) -
-                (model$point_inflow$fraction[jj]*reach_time[ir])
+    if( nrow(model$point_inflow)>0 ){
+        for(ii in 1:nrow(model$gauge)){
+            gr <- paste(model$gauge$channel_id[ii])
+            for(jj in 1:nrow(model$point_inflow)){      
+                ir <- paste(model$point_inflow$channel_id[jj])
+                point_to_gauge[ii,jj] <- head_to_head[ir,gr] +
+                    (model$gauge$fraction[ii]*reach_time[gr]) -
+                    (model$point_inflow$fraction[jj]*reach_time[ir])
+            }
         }
     }
     point_to_gauge[point_to_gauge<0] <- NA
