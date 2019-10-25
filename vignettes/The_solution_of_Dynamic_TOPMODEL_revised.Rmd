@@ -1,5 +1,5 @@
 ---
-title: "The Numerical Solution of Dynamic TOPMODEL"
+title: "Towards a better Numerical Solution of Dynamic TOPMODEL"
 output: 
   bookdown::html_document2:
     number_sections: false
@@ -8,7 +8,7 @@ output:
 pkgdown:
   as_is: true
 vignette: >
-  %\VignetteIndexEntry{The Numerical Solution of Dynamic TOPMODEL}
+  %\VignetteIndexEntry{Towards a better Numerical Solution of Dynamic TOPMODEL}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -20,6 +20,9 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+
+** This is a working document outlining the improved numerical solution for Dynamic TOPMODEL**
+
 The dynamic TOPMODEL R package implements a set of numerical solutions to the
 governing equations of the dynamic TOPMODEL formulation. This vignette
 documents the formulation and the numerical solutions used for the "hill slope" elements.

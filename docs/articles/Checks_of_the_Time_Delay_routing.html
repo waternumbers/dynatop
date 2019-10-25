@@ -74,6 +74,9 @@
       <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Numerical Solution of Dynamic TOPMODEL</a>
     </li>
     <li>
+      <a href="../articles/The_solution_of_Dynamic_TOPMODEL_revised.html">Towards a better Numerical Solution of Dynamic TOPMODEL</a>
+    </li>
+    <li>
       <a href="../articles/Time_Delay_Channel_Routing.html">Time Delay Channel Routing</a>
     </li>
   </ul>
@@ -316,7 +319,7 @@
 <a class="sourceLine" id="cb6-31" title="31"></a>
 <a class="sourceLine" id="cb6-32" title="32"><span class="co">## break it down over a couple of time steps</span></a>
 <a class="sourceLine" id="cb6-33" title="33">mdl<span class="op">$</span>param[<span class="st">"v_ch_default"</span>] &lt;-<span class="st"> </span><span class="fl">0.5</span></a>
-<a class="sourceLine" id="cb6-34" title="34"><span class="kw"><a href="../reference/compute_time_delay.html">compute_time_delay</a></span>(mdl) <span class="co"># all values less then 1</span></a>
+<a class="sourceLine" id="cb6-34" title="34"><span class="kw"><a href="../reference/compute_time_delay.html">compute_time_delay</a></span>(mdl) </a>
 <a class="sourceLine" id="cb6-35" title="35"><span class="co">#&gt; $point_to_gauge</span></a>
 <a class="sourceLine" id="cb6-36" title="36"><span class="co">#&gt;           point_1  point_2</span></a>
 <a class="sourceLine" id="cb6-37" title="37"><span class="co">#&gt; outlet          0 2.222222</span></a>
@@ -330,14 +333,14 @@
 <a class="sourceLine" id="cb6-45" title="45"><span class="co">#&gt; $reach_time</span></a>
 <a class="sourceLine" id="cb6-46" title="46"><span class="co">#&gt;         1         2 </span></a>
 <a class="sourceLine" id="cb6-47" title="47"><span class="co">#&gt; 0.8333333 2.7777778</span></a>
-<a class="sourceLine" id="cb6-48" title="48"><span class="co">## nned to provide zero flow initial conditions</span></a>
+<a class="sourceLine" id="cb6-48" title="48"><span class="co">## need to provide zero flow initial conditions</span></a>
 <a class="sourceLine" id="cb6-49" title="49">ic &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">channel_inflows=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"1"</span>=<span class="dv">0</span>,<span class="st">"2"</span>=<span class="dv">0</span>))</a>
 <a class="sourceLine" id="cb6-50" title="50"><span class="co">## run routing</span></a>
 <a class="sourceLine" id="cb6-51" title="51">out &lt;-<span class="st"> </span><span class="kw"><a href="../reference/time_delay_routing.html">time_delay_routing</a></span>(mdl,cf,</a>
 <a class="sourceLine" id="cb6-52" title="52">                          <span class="dt">point_inflows=</span>pf,</a>
 <a class="sourceLine" id="cb6-53" title="53">                          <span class="dt">initial_conditions=</span>ic)</a>
 <a class="sourceLine" id="cb6-54" title="54"><span class="co">## mass balance as percentage</span></a>
-<a class="sourceLine" id="cb6-55" title="55">(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sum">sum</a></span>(out[,<span class="st">'outlet'</span>]) <span class="op">-</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sum">sum</a></span>(sim_inflows))<span class="op">*</span><span class="dv">100</span><span class="op">/</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sum">sum</a></span>(sim_inflows)</a>
+<a class="sourceLine" id="cb6-55" title="55">(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sum">sum</a></span>(out[,<span class="st">'outlet'</span>]) <span class="op">-</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sum">sum</a></span>(pf))<span class="op">*</span><span class="dv">100</span><span class="op">/</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/sum">sum</a></span>(pf)</a>
 <a class="sourceLine" id="cb6-56" title="56"><span class="co">#&gt; [1] 0.7350303</span></a></code></pre></div>
 </div>
 </div>
