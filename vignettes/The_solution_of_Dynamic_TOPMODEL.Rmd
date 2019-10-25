@@ -57,8 +57,7 @@ Table \@ref(tab:hru-notation) outlines the notation used for describing a
   HRUs
 
 The second, termed "channel" represents a length of river
-channel. This document is concerned onlydoes not deal with the routing of the water within the channel As such it acts as a sink collecting water from the "hill slope"
-HRUs over the course of a time step. Table \@ref(tab:ch-notation) outlines
+channel. This document is concerned only with the solution of the "hill slope" HRUs. It does not deal with the routing of the water within the channel. As such channel HRUs acts as sinks collecting water from the "hill slope" HRUs over the course of a time step. Table \@ref(tab:ch-notation) outlines
 the notation for channel HRU.
 
                                    Symbol             Description                                                                 unit
