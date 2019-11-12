@@ -24,57 +24,60 @@ knitr::opts_chunk$set(
 ** This is a working document outlining the improved numerical solution for Dynamic TOPMODEL**
 
 The dynamic TOPMODEL R package implements a set of numerical solutions to the
-governing equations of the dynamic TOPMODEL formulation. This vignette
-documents the formulation and the numerical solutions used for the "hill slope" elements.
+governing equations of the dynamic TOPMODEL formulation. One of the underlying
+principles of dynamic TOPMODEL is that the landscape can be broken up into
+hydrologically similar regions, or Hydrological Response Units (HRUs), where
+all the area within an HRU behaves in a hydrologically similar fashion.
+
+While a Hydrological Response Unit (HRU) has typically been thought of as an
+area of hillslope the idea may be generalised more broadly. 
+This documents considers two types of HRU. The first termed
+"hill slope" solves the surface, root, unsaturated and saturated zones
+for 'similar' areas of the catchment a each time step.
+The second termed "channel" represents a length of river channel. 
+In the following the "hill slope" HRU is considered in detail. The "channel"
+HRU is refered to only to the extend that an outcome of the computation is the
+integral of the flux from the catchment hillslopes to each "channel" HRU.
 
 # Notation and nomenclature
 
-Consider two types of Hydrological response unit (HRU). The first termed
-"hill slope" solves the surface, root, unsaturated and saturated zones
-for 'similar' areas of the catchment a each time step.
 Table \@ref(tab:hru-notation) outlines the notation used for describing a
 "hill slope" HRU.
 
 
-  Quantity type                                   Symbol                 Description                                                                 unit
-  ------------------------------------ -----------------------------     -------------------------------------------------------------------- -----------------
-  Storage                                        $s_{ex}$                Surface excess storage                                                       m
-                                                 $s_{rz}$                Root zone storage                                                            m
-                                                 $s_{uz}$                Unsaturated zone storage                                                     m
-                                                 $s_{sz}$                Saturated zone storage deficit                                               m
-  Vertical fluxes within HRU                     $q_{rz \rightarrow uz}$ Flow from the root zone to the unsaturated zone                        (m$^3$/s)/m$^2$
-                                                 $q_{rz \rightarrow ex}$ Flow from the root zone to the surface excess storage                  (m$^3$/s)/m$^2$  
-                                                 $q_{uz}$                Flow from unsaturated to saturated zone                                (m$^3$/s)/m$^2$
-                                                 $q_{sz}$                Flow from saturated zone to surface excess storage                    (m$^3$/s)/m$^2$
-  Lateral down slope fluxes from HRU             $l_{ex}$                Total lateral flux from surface excess                                (m$^3$/s)/m$^2$
-                                                 $l_{sz}$                Total lateral flux from saturated zone                                (m$^3$/s)/m$^2$
-  Other HRU properties                               a                   Area                                                                        m$^2$
-                                        $w^{\left[i,j\right]}_{ex}$      fraction of $l_{ex}$ going from $j$th to $i$th HRU                            -
-                                        $w^{\left[i,j\right]}_{sz}$      fraction of $l_{sz}$ going from $j$th to $i$th HRU                            -
-                                                $s_{rzmax}$              maximum root zone storage                                                     m
-                                                   $T_d$                 Unsaturated zone time constant per m of saturated storage deficit.           h/m
-                                                 $l_{szmax}$             Maximum lateral flux from saturated zone                              (m$^3$/s)/m$^2$         
-                                                 $T_{ex}$                Surface excess storage time constant                                          h
-                                                    $m$                  Exponential transmissivity constant                                           -     -
+  Quantity type                                   Symbol                   Description                                                                 unit
+  ------------------------------------ -----------------------------       -------------------------------------------------------------------- -----------------
+  Storage                                        $s_{ex}$                  Surface excess storage                                                       m
+                                                 $s_{rz}$                  Root zone storage                                                            m
+                                                 $s_{uz}$                  Unsaturated zone storage                                                     m
+                                                 $s_{sz}$                  Saturated zone storage deficit                                               m
+  Vertical fluxes within HRU               $q_{rz \rightarrow uz}$         Flow from the root zone to the unsaturated zone                        (m$^3$/s)/m$^2$
+                                           $q_{rz \rightarrow ex}$         Flow from the root zone to the surface excess storage                  (m$^3$/s)/m$^2$ 
+                                           $q_{uz \rightarrow sz}$                  Flow from unsaturated to saturated zone                                (m$^3$/s)/m$^2$
+                                                 $q_{sz \rightarrow ex}$                  Flow from saturated zone to surface excess storage                    (m$^3$/s)/m$^2$
+  Lateral down slope fluxes from HRU             $l_{ex}$                  Total lateral flux from surface excess store                              (m$^3$/s)/m$^2$
+                                                 $l_{sz}$                  Total lateral flux from saturated zone                                (m$^3$/s)/m$^2$
+  Other HRU properties                               a                     Area                                                                        m$^2$
+                                         $w^{\left[i,j\right]}_{ex}$       Fraction of $l_{ex}$ going from $j$th to $i$th "hill slope" HRU              -
+                                         $w^{\left[i,j\right]}_{sz}$       Fraction of $l_{sz}$ going from $j$th to $i$th "hill slope" HRU              -
+                                         $f^{\left[k,j\right]}_{ex}$       Fraction of $l_{ex}$ going from $j$th hill slope HRU to $k$th channel HRU    -
+                                         $f^{\left[k,j\right]}_{sz}$       Fraction of $l_{sz}$ going from $j$th hill slope HRU to $k$th channel HRU    -                                        
+                                         $s_{rzmax}$                Maximum root zone storage                                                     m
+                                                   $T_d$                   Unsaturated zone time constant per m of saturated storage deficit.           h/m
+                                                 $l_{szmax}$               Maximum lateral flux from saturated zone                              (m$^3$/s)/m$^2$         
+                                                 $T_{ex}$                  Surface excess storage time constant                                          h
+                                                    $m$                    Exponential transmissivity constant                                           -     -
 
   Table: (\#tab:hru-notation) Outline of notation for describing "hill slope"
   HRUs
 
-The second, termed "channel" represents a length of river
-channel. This document is concerned only with the computation of the inflow to
-the channel. It does not deal with the routing of the
-water within the channel. As such it considers the channel HRUs to act as a sink collecting water from the
-"hill slope" 
-HRUs over the course of a time step. Table \@ref(tab:ch-notation) outlines
-the notation for channel HRU.
+Table \@ref(tab:ch-notation) outlines
+the additional notation for properties of the channel HRU which are used.
 
                                    Symbol              Description                                                                 unit
   ---------------------- ----------------------------- -------------------------------------------------------------------------- -------
-  Storage                          $s_{ch}$            channel storage                                                               m
-  Other HRU properties                 a               Area                                                                        m$^2$
-                          $f^{\left[k,j\right]}_{ex}$  fraction of $l_{ex}$ going from $j$th hill slope HRU to $k$th channel HRU      -
-                          $f^{\left[k,j\right]}_{sz}$  fraction of $l_{sz}$ going from $j$th hill slope HRU to $k$th HRU              -
-
+  Other HRU properties              a_{ch}               Area   m$^2$
+                                    v_{ch}             Total inflow from hillslope   m$^3$
   Table: (\#tab:ch-notation) Outline of notation for describing "channel"
   HRUs
 
@@ -124,7 +127,32 @@ Later we make use of the following:
      indicate the value at the start of the step and $^\left[+\right]$ that at
      the end.
 
-# Numerical Solution
+# Total Flux to channel HRUs
+
+It is presumed that, from the perspective ofthe hillslope the channel acts as
+a sink. That is there is no feedback from the channel to the hillslope. 
+For a single reach:
+\[
+\frac{dv^{\left[k\right]}_{ch}}{dt} = 
+    \sum\limits_{j} f^{\left[k,j\right]}_{ex}a^{\left[j\right]}l^{\left[j\right]}_{ex}
+    + \sum\limits_{j} f^{\left[k,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
+    + a_{ch}^{\left[k\right]}p
+\]
+	
+For all channel reaches this can be written in matrix form as
+\[
+\frac{d\mathbf{v}_{ch}}{dt} = 
+    \mathbf{F}_{ex}\mathbf{A}\mathbf{l}_{ex}
+    + \mathbf{F}_{sz}\mathbf{A}\mathbf{l}_{sz}
+    + \mathbf{A}_{ch}p
+\]
+
+The solution presumes that $\left.\mathbf{v}_{ch}\right\rvert_{t}=\mathbf{0}$
+with the integral of each of the summed terms being evaluated individually to
+give the total $\left.\mathbf{v}_{ch}\right\rvert_{t+\Delta t}$, the total
+flux to the channel over the timestep.
+
+# Numerical Solution of the Hill slope HRUs
 
 The numerical solution implemented in the dynamic TOPMODEL code is based
 on solving the ODE(s) governing the evolution of each of the stores in the
@@ -135,30 +163,7 @@ in the order they are currently solved in the code for given time
 step $\Delta t$ (hr) starting at time $t$ over which the input fluxes ($p$ and $e_p$) are
 taken to be constant.
 
-## Step 1: Initializing the channel storage
-The channel acts as a sink with no outflows. For a single reach:
-$$a^{\left[k\right]}\frac{ds^{\left[k\right]}_{ch}}{dt} = 
-    \sum\limits_{j} f^{\left[k,j\right]}_{ex}a^{\left[j\right]}l^{\left[j\right]}_{ex}
-    + \sum\limits_{j} f^{\left[k,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
-    + a^{\left[k\right]}p$$
-For all channel reaches this can be written in matrix form as
-$$\mathbf{A}_{ch}\frac{d\mathbf{s}_{ch}}{dt} = 
-    \mathbf{F}_{ex}\mathbf{A}\mathbf{l}_{ex}
-    + \mathbf{F}_{sz}\mathbf{A}\mathbf{l}_{sz}
-    + \mathbf{A}_{ch}p$$ 
-or equivalently
-$$\frac{d\mathbf{s}_{ch}}{dt} = 
-    \mathbf{A}^{-1}_{ch}\mathbf{F}_{ex}\mathbf{A}\mathbf{l}_{ex}
-    + \mathbf{A}_{ch}^{-1}\mathbf{F}_{sz}\mathbf{A}\mathbf{l}_{sz}
-    +p$$
-
-The solution presumes that $\left.\mathbf{s}_{ch}\right\rvert_{t}=\mathbf{0}$
-with the integral of each of the summed terms being evaluated individually to
-give the total $\left.\mathbf{s}_{ch}\right\rvert_{t+\Delta t}$.
-The easiest of these terms to integrate is the precipitation input which gives
-\[ \tilde{\mathbf{s}}_{ch} = \mathbf{I}p\Delta t \]
-
-## Step 2: Surface excess redistribution
+## Step 1: Surface excess redistribution
 
 For the $i$th hill slope HRU the alteration of the surface excess store is
 given by
@@ -166,72 +171,91 @@ given by
     + \sum\limits_{j \neq i} w^{\left[i,j\right]}_{ex}a^{\left[j\right]}l^{\left[j\right]}_{ex}
     + a^{\left[i\right]}q^{\left[i\right]}_{sz}
 	+ a^{\left[i\right]}q^{\left[i\right]}_{rz \rightarrow ex}
-	\] 
+\]
+	
 For all the hill slope HRU this can be expressed as:
-$$\mathbf{A}\frac{d\mathbf{s}_{ex}}{dt} =  \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{ex}
-    + \mathbf{A}\mathbf{q}_{sz} + \mathbf{A}\mathbf{q}_{rz \rightarrow ex}$$
-The surface excess store also passes water to the channel. Let $\mathbf{y}$ be
-the contribution to the channel storage from surface excess and 
-\[ \mathbf{x} = \left[ \begin{array}{c} \mathbf{s}_{ex} \\
-                       \mathbf{y} \end{array}\right] \]
+\[
+\mathbf{A}\frac{d\mathbf{s}_{ex}}{dt} =  \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{ex}
++ \mathbf{A}\mathbf{q}_{sz \rigtharrow ex}
++ \mathbf{A}\mathbf{q}_{rz \rightarrow ex}
+- \mathbf{A}\mathbf{q}_{ex \rightarrow rz}
+\]
+
+The surface excess store also passes water to the channel. Let $\mathbf{v}_{ex
+\rightarrow ch}$ be volume contributed to the channel HRUs from the surface
+excess store and 
+\[
+\mathbf{x} = \left[ \begin{array}{c} \mathbf{s}_{ex} \\
+    \mathbf{v}_{ex \rightarrow ch} \end{array}\right] 
+\]
+
 This allows the evolution of $\mathbf{x}$ to be written as
-$$
+\[
 \left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
-         \mathbf{0} & \mathbf{A}_{ch} \end{array} \right]
+         \mathbf{0} & \mathbf{I} \end{array} \right]
      \frac{d\mathbf{x}}{dt} =
 	      \left[ \begin{array}{c} \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A} \\
               \mathbf{F}_{ex}\mathbf{A} \end{array}\right]
           \mathbf{l}_{ex} +
           \left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
-                   \mathbf{0} & \mathbf{A}_{ch} \end{array} \right]
-			   \left[ \begin{array}{c} \mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex} \\
+                   \mathbf{0} & \mathbf{I} \end{array} \right]
+			   \left[ \begin{array}{c} \mathbf{q}_{sz \rightarrow ex} +
+                   \mathbf{q}_{rz \rightarrow ex} - \mathbf{q}_{ex \rightarrow rz} \\
                        \mathbf{0} \end{array}\right]
-$$
-					   
+\]
+
 Assuming that there are minimal non-linearities the surface excess stores of
 the hill slope HRUs are taken to be linear tanks with
 $l^{\left[i\right]}_{ex} = \frac{1}{T_{ex}} s^{\left[i\right]}_{ex}$
 
 Substitution of the flow storage relationship and rearrangement gives
-$$
+\[
      \frac{d\mathbf{x}}{dt} =
 	 \left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
-         \mathbf{0} & \mathbf{A}_{ch} \end{array} \right]^{-1}
+         \mathbf{0} & \mathbf{I} \end{array} \right]^{-1}
 	      \left[ \begin{array}{cc}
 		  \begin{array}{c} \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{T}^{-1}_{ex} \\
               \mathbf{F}_{ex}\mathbf{A}\mathbf{T}^{-1}_{ex} \end{array} & \mathbf{0} \end{array}
 			  \right]
           \mathbf{x} +
-			   \left[ \begin{array}{c} \mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex}\\
+			   \left[ \begin{array}{c} \mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex}- \mathbf{q}_{ex \rightarrow rz}\\
                        \mathbf{0} \end{array}\right]
-$$
+\]
 	
-The solution of this is carried out through two stages. The first
-stage redistributes the surface excess storage $\left.\mathbf{s}_{ex}\right\rvert_{t}$ between the
-hill slope and channel HRUs on the presumption that there is no inflows
-($\mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex} =\mathbf{0}$). The second stage, carried out in later steps
-adds the inflow term.
+The solution of this is carried out through two stages. 
+The first stage redistributes the surface excess storage
+$\left.\mathbf{s}_{ex}\right\rvert_{t}$ 
+between the hill slope and channel HRUs while ignoring the potential
+vertical flux within the HRUs (
+$\mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex} - \mathbf{q}_{ex \rightarrow
+  rz}=\mathbf{0}$
+). The second stage, carried out in later steps corrects for the vertical fluxes.
 
 Specifically letting
 \[ \tilde{\mathbf{x}} = \left[ \begin{array}{c} \tilde{\mathbf{s}}_{ex} \\
-                       \tilde{\mathbf{s}}_{ch} \end{array} \right] \]
+                       \tilde{\mathbf{v}}_{ex \rigtharrow ch} \end{array} \right] \]
 the ODE initial condition problem
-$$\frac{d\mathbf{x}}{dt}=\left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
-         \mathbf{0} & \mathbf{A}_{ch} \end{array} \right]^{-1}
+\[
+\frac{d\mathbf{x}}{dt}=\left[ \begin{array}{cc} \mathbf{A} & \mathbf{0} \\
+         \mathbf{0} & \mathbf{I} \end{array} \right]^{-1}
 	      \left[ \begin{array}{cc}
 		  \begin{array}{c} \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{T}^{-1}_{ex} \\
               \mathbf{F}_{ex}\mathbf{A}\mathbf{T}^{-1}_{ex} \end{array} & \mathbf{0} \end{array}
 			  \right]
           \mathbf{x} \quad \mathbf{x}_{0} = \left[\begin{array}{c}
                                                     \left.\mathbf{s}_{ex}\right\rvert_t
-\\ \tilde{\mathbf{s}}_{cg}^{\left[-\right]}\end{array}\right]$$ 
+                                                    \\ \mathbf{0}\end{array}\right]
+\]
+
 is solve using the eigenvalue method to give
-$$
+\[
 \left[\begin{array}{c} \tilde{s}_{ex} \\
-\tilde{\mathbf{s}}_{ch}^{\left[+\right]} \end{array}\right]
-$$
-an intermediate solution to the surface excess and channel storage through the
-redistribution of the initial surface excess water.
+    \left.\tilde{\mathbf{v}}_{ex \rigtharrow ch}\right\rvert_{t+\Delta t} -
+    \left.\tilde{\mathbf{v}}_{ex \rigtharrow ch}\right\rvert_{t}
+  \end{array}\right]
+\]
+This represents an intermediate solution to the surface excess storage and
+approximation to the flux from the surface excess store to the channel HRUs.
 
 ### Comments
 
@@ -239,24 +263,45 @@ redistribution of the initial surface excess water.
    saturated zone ($\mathbf{q}_{sz}$) and root zone ($\mathbf{q}_{rz
    \rightarrow ex}$)
    may be positive.
-1. The only interaction between the other stores and the surface excess
-   are flows to the surface excess. This step could be evaluated later with
-   the estimates of these fluxes.
 
-## Step 3: Root Zone
+## Step 2: Root Zone
 
 For a single HRU
-$$\frac{ds_{rz}}{dt}=p-\frac{s_{rx}}{s_{rzmax}}e_{p}-q_{rz\rightarrow ex} - q_{rz\rightarrow uz}$$
-	
-The root zone is solved as a two step process. Firstly the ODE
-$$\frac{d\tilde{s}_{rz}}{dt}=p-\frac{e_{p}}{s_{rzmax}}\tilde{s}_{rz} \quad  \left. \tilde{s}_{rz}\right\rvert_{t} = \left. s_{rz}\right\rvert_{t}$$
-to give $$\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} = 
-    \left. s_{rz}\right\rvert_{t} \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta t\right) + p\frac{ s_{srmax}}{e_p}\left(1 - \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta t\right)\right)$$
+\[
+\frac{ds_{rz}}{dt}=p + q_{ex \rightarrow rz} -\frac{s_{rx}}{s_{rzmax}}e_{p}-q_{rz\rightarrow ex} - q_{rz\rightarrow uz}
+\]
+Assuming all the water in the surface excess store is avaialbe to the root
+zone so long as $q_{ex \rightarrow rz} \leq q_{exmax}$ the integral of the
+flow from the surface excess store can be approximated by
+\[
+\int\limits_{\Delta t} \tilde{q}_{ex \rightarrow rz} dt =
+\min\left(q_{exmax}\Delta t,\tilde{s}\right)
+\]
+Using this the root zone is solved as a two step process. Firstly the ODE
+\[
+\frac{d\tilde{s}_{rz}}{dt}=p + \frac{1}{\Delta t}\int\limits_{\Delta t}
+\tilde{q}_{ex \rightarrow rz} dt -\frac{e_{p}}{s_{rzmax}}\tilde{s}_{rz} \quad
+\left. \tilde{s}_{rz}\right\rvert_{t} = \left. s_{rz}\right\rvert_{t}
+\]
+is solved to give
+\[
+\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} = 
+\left. s_{rz}\right\rvert_{t} \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta
+t\right) + \left(p + \frac{1}{\Delta t}\int\limits_{\Delta t}\right)\frac{
+  s_{srmax}}{e_p}\left(1 - \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta
+t\right)\right)
+\]
 which can be though off as the unconstrained root zone storage. Then
 from this
-$$\left. s_{rz}\right\rvert_{t + \Delta t} = \min\left(\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t}, s_{rzmax}\right)$$
+\[
+\left. s_{rz}\right\rvert_{t + \Delta t} =
+\min\left(\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t}, s_{rzmax}\right)
+\]
 and the total water passed from the root zone is
-$\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} - \left. s_{rz}\right\rvert_{t + \Delta t}$.
+\[
+\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} -
+\left. s_{rz}\right\rvert_{t + \Delta t}
+\]
 
 The water passed from the root zone can be passed either to the surface excess
 storage or the unsaturated zone. If $\left. s_{sd}\right\rvert_{t} = 0$ the
@@ -560,6 +605,12 @@ and
 \]
 where the maximum ensures a non-negative flux in the case that the upper limit
 on $\int_{\Delta t} \mathbf{q}_{sz} dt$ is not met.
+
+## tidying up
+The easiest of these terms to integrate is the precipitation input which gives
+
+\[ \tilde{\mathbf{s}}_{ch} = \mathbf{I}p\Delta t \]
+
 
 #### Comments
 1. alsdkjf

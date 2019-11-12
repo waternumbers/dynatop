@@ -116,15 +116,23 @@
     
 <p>** This is a working document outlining the improved numerical solution for Dynamic TOPMODEL**</p>
 <p>The dynamic TOPMODEL R package implements a set of numerical solutions to the
-governing equations of the dynamic TOPMODEL formulation. This vignette
-documents the formulation and the numerical solutions used for the “hill slope” elements.</p>
+governing equations of the dynamic TOPMODEL formulation. One of the underlying
+principles of dynamic TOPMODEL is that the landscape can be broken up into
+hydrologically similar regions, or Hydrological Response Units (HRUs), where
+all the area within an HRU behaves in a hydrologically similar fashion.</p>
+<p>While a Hydrological Response Unit (HRU) has typically been thought of as an
+area of hillslope the idea may be generalised more broadly.
+This documents considers two types of HRU. The first termed
+“hill slope” solves the surface, root, unsaturated and saturated zones
+for ‘similar’ areas of the catchment a each time step.
+The second termed “channel” represents a length of river channel.
+In the following the “hill slope” HRU is considered in detail. The “channel”
+HRU is refered to only to the extend that an outcome of the computation is the
+integral of the flux from the catchment hillslopes to each “channel” HRU.</p>
 <div id="notation-and-nomenclature" class="section level1">
 <h1 class="hasAnchor">
 <a href="#notation-and-nomenclature" class="anchor"></a>Notation and nomenclature</h1>
-<p>Consider two types of Hydrological response unit (HRU). The first termed
-“hill slope” solves the surface, root, unsaturated and saturated zones
-for ‘similar’ areas of the catchment a each time step.
-Table <a href="#tab:hru-notation">1</a> outlines the notation used for describing a
+<p>Table <a href="#tab:hru-notation">1</a> outlines the notation used for describing a
 “hill slope” HRU.</p>
 <table class="table">
 <caption>
@@ -177,14 +185,14 @@ HRUs</caption>
 </tr>
 <tr class="odd">
 <td align="left"></td>
-<td align="center"><span class="math inline">\(q_{uz}\)</span></td>
+<td align="center"><span class="math inline">\(q_{uz \rightarrow sz}\)</span></td>
 <td align="left">Flow from unsaturated to saturated zone</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
 <tr class="even">
 <td align="left"></td>
-<td align="center"><span class="math inline">\(q_{sz}\)</span></td>
+<td align="center"><span class="math inline">\(q_{sz \rightarrow ex}\)</span></td>
 <td align="left">Flow from saturated zone to surface excess storage</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
@@ -192,7 +200,7 @@ HRUs</caption>
 <tr class="odd">
 <td align="left">Lateral down slope fluxes from HRU</td>
 <td align="center"><span class="math inline">\(l_{ex}\)</span></td>
-<td align="left">Total lateral flux from surface excess</td>
+<td align="left">Total lateral flux from surface excess store</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
@@ -213,19 +221,32 @@ HRUs</caption>
 <tr class="even">
 <td align="left"></td>
 <td align="center"><span class="math inline">\(w^{\left[i,j\right]}_{ex}\)</span></td>
-<td align="left">fraction of <span class="math inline">\(l_{ex}\)</span> going from <span class="math inline">\(j\)</span>th to <span class="math inline">\(i\)</span>th HRU</td>
+<td align="left">Fraction of <span class="math inline">\(l_{ex}\)</span> going from <span class="math inline">\(j\)</span>th to <span class="math inline">\(i\)</span>th “hill slope” HRU</td>
 <td align="center">-</td>
 </tr>
 <tr class="odd">
 <td align="left"></td>
 <td align="center"><span class="math inline">\(w^{\left[i,j\right]}_{sz}\)</span></td>
-<td align="left">fraction of <span class="math inline">\(l_{sz}\)</span> going from <span class="math inline">\(j\)</span>th to <span class="math inline">\(i\)</span>th HRU</td>
+<td align="left">Fraction of <span class="math inline">\(l_{sz}\)</span> going from <span class="math inline">\(j\)</span>th to <span class="math inline">\(i\)</span>th “hill slope” HRU</td>
 <td align="center">-</td>
 </tr>
 <tr class="even">
 <td align="left"></td>
-<td align="center"><span class="math inline">\(s_{rzmax}\)</span></td>
-<td align="left">maximum root zone storage</td>
+<td align="center"><span class="math inline">\(f^{\left[k,j\right]}_{ex}\)</span></td>
+<td align="left">Fraction of <span class="math inline">\(l_{ex}\)</span> going from <span class="math inline">\(j\)</span>th hill slope HRU to <span class="math inline">\(k\)</span>th channel</td>
+<td align="center">HRU -</td>
+</tr>
+<tr class="odd">
+<td align="left"></td>
+<td align="center"><span class="math inline">\(f^{\left[k,j\right]}_{sz}\)</span></td>
+<td align="left">Fraction of <span class="math inline">\(l_{sz}\)</span> going from <span class="math inline">\(j\)</span>th hill slope HRU to <span class="math inline">\(k\)</span>th channel</td>
+<td align="center">HRU -</td>
+</tr>
+<tr class="even">
+<td align="left"></td>
+<td align="center">
+<span class="math inline">\(s_{rzmax}\)</span> Maximum</td>
+<td align="left">root zone storage</td>
 <td align="center">m</td>
 </tr>
 <tr class="odd">
@@ -255,17 +276,9 @@ HRUs</caption>
 </tr>
 </tbody>
 </table>
-<p>The second, termed “channel” represents a length of river
-channel. This document is concerned only with the computation of the inflow to
-the channel. It does not deal with the routing of the
-water within the channel. As such it considers the channel HRUs to act as a sink collecting water from the
-“hill slope”
-HRUs over the course of a time step. Table <a href="#tab:ch-notation">2</a> outlines
-the notation for channel HRU.</p>
+<p>Table <a href="#tab:ch-notation"><strong>??</strong></a> outlines
+the additional notation for properties of the channel HRU which are used.</p>
 <table class="table">
-<caption>
-<span id="tab:ch-notation">Table 2: </span> Outline of notation for describing “channel”
-HRUs</caption>
 <thead><tr class="header">
 <th></th>
 <th align="center">Symbol</th>
@@ -274,29 +287,30 @@ HRUs</caption>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>Storage</td>
-<td align="center"><span class="math inline">\(s_{ch}\)</span></td>
-<td align="left">channel storage</td>
-<td align="center">m</td>
+<td>Other HRU properties</td>
+<td align="center">a_{ch}</td>
+<td align="left">Area m<span class="math inline">\(^2\)</span>
+</td>
+<td align="center"></td>
 </tr>
 <tr class="even">
-<td>Other HRU properties</td>
-<td align="center">a</td>
-<td align="left">Area</td>
-<td align="center">m<span class="math inline">\(^2\)</span>
+<td></td>
+<td align="center">v_{ch}</td>
+<td align="left">Total inflow from hillslope m<span class="math inline">\(^3\)</span>
 </td>
+<td align="center"></td>
 </tr>
 <tr class="odd">
-<td></td>
-<td align="center"><span class="math inline">\(f^{\left[k,j\right]}_{ex}\)</span></td>
-<td align="left">fraction of <span class="math inline">\(l_{ex}\)</span> going from <span class="math inline">\(j\)</span>th hill slope HRU to <span class="math inline">\(k\)</span>th channel HRU</td>
-<td align="center">-</td>
+<td>Table: (#tab:ch-notati</td>
+<td align="center">on) Outline of notation for de</td>
+<td align="left">scribing “channel”</td>
+<td align="center"></td>
 </tr>
 <tr class="even">
-<td></td>
-<td align="center"><span class="math inline">\(f^{\left[k,j\right]}_{sz}\)</span></td>
-<td align="left">fraction of <span class="math inline">\(l_{sz}\)</span> going from <span class="math inline">\(j\)</span>th hill slope HRU to <span class="math inline">\(k\)</span>th HRU</td>
-<td align="center">-</td>
+<td>HRUs</td>
+<td align="center"></td>
+<td align="left"></td>
+<td align="center"></td>
 </tr>
 </tbody>
 </table>
@@ -309,7 +323,7 @@ being the same for every HRU though the calculations readily allow for them to
 vary by HRU.</p>
 <table class="table">
 <caption>
-<span id="tab:inputs">Table 3: </span> Eternal inputs to HRUs</caption>
+<span id="tab:inputs">Table 2: </span> Eternal inputs to HRUs</caption>
 <thead><tr class="header">
 <th align="center">Symbol</th>
 <th align="left">Description</th>
@@ -353,9 +367,33 @@ indicate the value at the start of the step and <span class="math inline">\(^\le
 the end.</p></li>
 </ul>
 </div>
-<div id="numerical-solution" class="section level1">
+<div id="total-flux-to-channel-hrus" class="section level1">
 <h1 class="hasAnchor">
-<a href="#numerical-solution" class="anchor"></a>Numerical Solution</h1>
+<a href="#total-flux-to-channel-hrus" class="anchor"></a>Total Flux to channel HRUs</h1>
+<p>It is presumed that, from the perspective ofthe hillslope the channel acts as
+a sink. That is there is no feedback from the channel to the hillslope.
+For a single reach:
+<span class="math display">\[
+\frac{dv^{\left[k\right]}_{ch}}{dt} = 
+    \sum\limits_{j} f^{\left[k,j\right]}_{ex}a^{\left[j\right]}l^{\left[j\right]}_{ex}
+    + \sum\limits_{j} f^{\left[k,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
+    + a_{ch}^{\left[k\right]}p
+\]</span></p>
+<p>For all channel reaches this can be written in matrix form as
+<span class="math display">\[
+\frac{d\mathbf{v}_{ch}}{dt} = 
+    \mathbf{F}_{ex}\mathbf{A}\mathbf{l}_{ex}
+    + \mathbf{F}_{sz}\mathbf{A}\mathbf{l}_{sz}
+    + \mathbf{A}_{ch}p
+\]</span></p>
+<p>The solution presumes that <span class="math inline">\(\left.\mathbf{v}_{ch}\right\rvert_{t}=\mathbf{0}\)</span>
+with the integral of each of the summed terms being evaluated individually to
+give the total <span class="math inline">\(\left.\mathbf{v}_{ch}\right\rvert_{t+\Delta t}\)</span>, the total
+flux to the channel over the timestep.</p>
+</div>
+<div id="numerical-solution-of-the-hill-slope-hrus" class="section level1">
+<h1 class="hasAnchor">
+<a href="#numerical-solution-of-the-hill-slope-hrus" class="anchor"></a>Numerical Solution of the Hill slope HRUs</h1>
 <p>The numerical solution implemented in the dynamic TOPMODEL code is based
 on solving the ODE(s) governing the evolution of each of the stores in the
 HRUs sequentially while approximating the flux between then.</p>
@@ -363,58 +401,41 @@ HRUs sequentially while approximating the flux between then.</p>
 in the order they are currently solved in the code for given time
 step <span class="math inline">\(\Delta t\)</span> (hr) starting at time <span class="math inline">\(t\)</span> over which the input fluxes (<span class="math inline">\(p\)</span> and <span class="math inline">\(e_p\)</span>) are
 taken to be constant.</p>
-<div id="step-1-initializing-the-channel-storage" class="section level2">
+<div id="step-1-surface-excess-redistribution" class="section level2">
 <h2 class="hasAnchor">
-<a href="#step-1-initializing-the-channel-storage" class="anchor"></a>Step 1: Initializing the channel storage</h2>
-<p>The channel acts as a sink with no outflows. For a single reach:
-<span class="math display">\[a^{\left[k\right]}\frac{ds^{\left[k\right]}_{ch}}{dt} = 
-    \sum\limits_{j} f^{\left[k,j\right]}_{ex}a^{\left[j\right]}l^{\left[j\right]}_{ex}
-    + \sum\limits_{j} f^{\left[k,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz}
-    + a^{\left[k\right]}p\]</span>
-For all channel reaches this can be written in matrix form as
-<span class="math display">\[\mathbf{A}_{ch}\frac{d\mathbf{s}_{ch}}{dt} = 
-    \mathbf{F}_{ex}\mathbf{A}\mathbf{l}_{ex}
-    + \mathbf{F}_{sz}\mathbf{A}\mathbf{l}_{sz}
-    + \mathbf{A}_{ch}p\]</span>
-or equivalently
-<span class="math display">\[\frac{d\mathbf{s}_{ch}}{dt} = 
-    \mathbf{A}^{-1}_{ch}\mathbf{F}_{ex}\mathbf{A}\mathbf{l}_{ex}
-    + \mathbf{A}_{ch}^{-1}\mathbf{F}_{sz}\mathbf{A}\mathbf{l}_{sz}
-    +p\]</span></p>
-<p>The solution presumes that <span class="math inline">\(\left.\mathbf{s}_{ch}\right\rvert_{t}=\mathbf{0}\)</span>
-with the integral of each of the summed terms being evaluated individually to
-give the total <span class="math inline">\(\left.\mathbf{s}_{ch}\right\rvert_{t+\Delta t}\)</span>.
-The easiest of these terms to integrate is the precipitation input which gives
-<span class="math display">\[ \tilde{\mathbf{s}}_{ch} = \mathbf{I}p\Delta t \]</span></p>
-</div>
-<div id="step-2-surface-excess-redistribution" class="section level2">
-<h2 class="hasAnchor">
-<a href="#step-2-surface-excess-redistribution" class="anchor"></a>Step 2: Surface excess redistribution</h2>
+<a href="#step-1-surface-excess-redistribution" class="anchor"></a>Step 1: Surface excess redistribution</h2>
 <p>For the <span class="math inline">\(i\)</span>th hill slope HRU the alteration of the surface excess store is
 given by
 <span class="math display">\[ a^{\left[i\right]}\frac{ds^{\left[i\right]}_{ex}}{dt} =  \left(w^{\left[i,i\right]}_{ex}-1\right)a^{\left[i\right]}l^{\left[i\right]}_{ex}
     + \sum\limits_{j \neq i} w^{\left[i,j\right]}_{ex}a^{\left[j\right]}l^{\left[j\right]}_{ex}
     + a^{\left[i\right]}q^{\left[i\right]}_{sz}
     + a^{\left[i\right]}q^{\left[i\right]}_{rz \rightarrow ex}
-    \]</span>
-For all the hill slope HRU this can be expressed as:
-<span class="math display">\[\mathbf{A}\frac{d\mathbf{s}_{ex}}{dt} =  \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{ex}
-    + \mathbf{A}\mathbf{q}_{sz} + \mathbf{A}\mathbf{q}_{rz \rightarrow ex}\]</span>
-The surface excess store also passes water to the channel. Let <span class="math inline">\(\mathbf{y}\)</span> be
-the contribution to the channel storage from surface excess and
-<span class="math display">\[ \mathbf{x} = \left[ \begin{array}{c} \mathbf{s}_{ex} \\
-                       \mathbf{y} \end{array}\right] \]</span>
-This allows the evolution of <span class="math inline">\(\mathbf{x}\)</span> to be written as
+\]</span></p>
+<p>For all the hill slope HRU this can be expressed as:
+<span class="math display">\[
+\mathbf{A}\frac{d\mathbf{s}_{ex}}{dt} =  \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{l}_{ex}
++ \mathbf{A}\mathbf{q}_{sz \rigtharrow ex}
++ \mathbf{A}\mathbf{q}_{rz \rightarrow ex}
+- \mathbf{A}\mathbf{q}_{ex \rightarrow rz}
+\]</span></p>
+<p>The surface excess store also passes water to the channel. Let <span class="math inline">\(\mathbf{v}_{ex \rightarrow ch}\)</span> be volume contributed to the channel HRUs from the surface
+excess store and
+<span class="math display">\[
+\mathbf{x} = \left[ \begin{array}{c} \mathbf{s}_{ex} \\
+    \mathbf{v}_{ex \rightarrow ch} \end{array}\right] 
+\]</span></p>
+<p>This allows the evolution of <span class="math inline">\(\mathbf{x}\)</span> to be written as
 <span class="math display">\[
 \left[ \begin{array}{cc} \mathbf{A} &amp; \mathbf{0} \\
-         \mathbf{0} &amp; \mathbf{A}_{ch} \end{array} \right]
+         \mathbf{0} &amp; \mathbf{I} \end{array} \right]
      \frac{d\mathbf{x}}{dt} =
           \left[ \begin{array}{c} \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A} \\
               \mathbf{F}_{ex}\mathbf{A} \end{array}\right]
           \mathbf{l}_{ex} +
           \left[ \begin{array}{cc} \mathbf{A} &amp; \mathbf{0} \\
-                   \mathbf{0} &amp; \mathbf{A}_{ch} \end{array} \right]
-               \left[ \begin{array}{c} \mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex} \\
+                   \mathbf{0} &amp; \mathbf{I} \end{array} \right]
+               \left[ \begin{array}{c} \mathbf{q}_{sz \rightarrow ex} +
+                   \mathbf{q}_{rz \rightarrow ex} - \mathbf{q}_{ex \rightarrow rz} \\
                        \mathbf{0} \end{array}\right]
 \]</span></p>
 <p>Assuming that there are minimal non-linearities the surface excess stores of
@@ -424,40 +445,46 @@ the hill slope HRUs are taken to be linear tanks with
 <span class="math display">\[
      \frac{d\mathbf{x}}{dt} =
      \left[ \begin{array}{cc} \mathbf{A} &amp; \mathbf{0} \\
-         \mathbf{0} &amp; \mathbf{A}_{ch} \end{array} \right]^{-1}
+         \mathbf{0} &amp; \mathbf{I} \end{array} \right]^{-1}
           \left[ \begin{array}{cc}
           \begin{array}{c} \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{T}^{-1}_{ex} \\
               \mathbf{F}_{ex}\mathbf{A}\mathbf{T}^{-1}_{ex} \end{array} &amp; \mathbf{0} \end{array}
               \right]
           \mathbf{x} +
-               \left[ \begin{array}{c} \mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex}\\
+               \left[ \begin{array}{c} \mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex}- \mathbf{q}_{ex \rightarrow rz}\\
                        \mathbf{0} \end{array}\right]
 \]</span></p>
-<p>The solution of this is carried out through two stages. The first
-stage redistributes the surface excess storage <span class="math inline">\(\left.\mathbf{s}_{ex}\right\rvert_{t}\)</span> between the
-hill slope and channel HRUs on the presumption that there is no inflows
-(<span class="math inline">\(\mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex} =\mathbf{0}\)</span>). The second stage, carried out in later steps
-adds the inflow term.</p>
+<p>The solution of this is carried out through two stages.
+The first stage redistributes the surface excess storage
+<span class="math inline">\(\left.\mathbf{s}_{ex}\right\rvert_{t}\)</span>
+between the hill slope and channel HRUs while ignoring the potential
+vertical flux within the HRUs (
+<span class="math inline">\(\mathbf{q}_{sz} + \mathbf{q}_{rz \rightarrow ex} - \mathbf{q}_{ex \rightarrow  rz}=\mathbf{0}\)</span>
+). The second stage, carried out in later steps corrects for the vertical fluxes.</p>
 <p>Specifically letting
 <span class="math display">\[ \tilde{\mathbf{x}} = \left[ \begin{array}{c} \tilde{\mathbf{s}}_{ex} \\
-                       \tilde{\mathbf{s}}_{ch} \end{array} \right] \]</span>
+                       \tilde{\mathbf{v}}_{ex \rigtharrow ch} \end{array} \right] \]</span>
 the ODE initial condition problem
-<span class="math display">\[\frac{d\mathbf{x}}{dt}=\left[ \begin{array}{cc} \mathbf{A} &amp; \mathbf{0} \\
-         \mathbf{0} &amp; \mathbf{A}_{ch} \end{array} \right]^{-1}
+<span class="math display">\[
+\frac{d\mathbf{x}}{dt}=\left[ \begin{array}{cc} \mathbf{A} &amp; \mathbf{0} \\
+         \mathbf{0} &amp; \mathbf{I} \end{array} \right]^{-1}
           \left[ \begin{array}{cc}
           \begin{array}{c} \left(\mathbf{W}_{ex}-\mathbf{I}\right)\mathbf{A}\mathbf{T}^{-1}_{ex} \\
               \mathbf{F}_{ex}\mathbf{A}\mathbf{T}^{-1}_{ex} \end{array} &amp; \mathbf{0} \end{array}
               \right]
           \mathbf{x} \quad \mathbf{x}_{0} = \left[\begin{array}{c}
                                                     \left.\mathbf{s}_{ex}\right\rvert_t
-\\ \tilde{\mathbf{s}}_{cg}^{\left[-\right]}\end{array}\right]\]</span>
-is solve using the eigenvalue method to give
+                                                    \\ \mathbf{0}\end{array}\right]
+\]</span></p>
+<p>is solve using the eigenvalue method to give
 <span class="math display">\[
 \left[\begin{array}{c} \tilde{s}_{ex} \\
-\tilde{\mathbf{s}}_{ch}^{\left[+\right]} \end{array}\right]
+    \left.\tilde{\mathbf{v}}_{ex \rigtharrow ch}\right\rvert_{t+\Delta t} -
+    \left.\tilde{\mathbf{v}}_{ex \rigtharrow ch}\right\rvert_{t}
+  \end{array}\right]
 \]</span>
-an intermediate solution to the surface excess and channel storage through the
-redistribution of the initial surface excess water.</p>
+This represents an intermediate solution to the surface excess storage and
+approximation to the flux from the surface excess store to the channel HRUs.</p>
 <div id="comments" class="section level3">
 <h3 class="hasAnchor">
 <a href="#comments" class="anchor"></a>Comments</h3>
@@ -465,26 +492,48 @@ redistribution of the initial surface excess water.</p>
 <li>The flow to the channel and neighbouring hillslope HRUs is possibly underestimated since the possible flows from the
 saturated zone (<span class="math inline">\(\mathbf{q}_{sz}\)</span>) and root zone (<span class="math inline">\(\mathbf{q}_{rz \rightarrow ex}\)</span>)
 may be positive.</li>
-<li>The only interaction between the other stores and the surface excess
-are flows to the surface excess. This step could be evaluated later with
-the estimates of these fluxes.</li>
 </ol>
 </div>
 </div>
-<div id="step-3-root-zone" class="section level2">
+<div id="step-2-root-zone" class="section level2">
 <h2 class="hasAnchor">
-<a href="#step-3-root-zone" class="anchor"></a>Step 3: Root Zone</h2>
+<a href="#step-2-root-zone" class="anchor"></a>Step 2: Root Zone</h2>
 <p>For a single HRU
-<span class="math display">\[\frac{ds_{rz}}{dt}=p-\frac{s_{rx}}{s_{rzmax}}e_{p}-q_{rz\rightarrow ex} - q_{rz\rightarrow uz}\]</span></p>
-<p>The root zone is solved as a two step process. Firstly the ODE
-<span class="math display">\[\frac{d\tilde{s}_{rz}}{dt}=p-\frac{e_{p}}{s_{rzmax}}\tilde{s}_{rz} \quad  \left. \tilde{s}_{rz}\right\rvert_{t} = \left. s_{rz}\right\rvert_{t}\]</span>
-to give <span class="math display">\[\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} = 
-    \left. s_{rz}\right\rvert_{t} \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta t\right) + p\frac{ s_{srmax}}{e_p}\left(1 - \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta t\right)\right)\]</span>
+<span class="math display">\[
+\frac{ds_{rz}}{dt}=p + q_{ex \rightarrow rz} -\frac{s_{rx}}{s_{rzmax}}e_{p}-q_{rz\rightarrow ex} - q_{rz\rightarrow uz}
+\]</span>
+Assuming all the water in the surface excess store is avaialbe to the root
+zone so long as <span class="math inline">\(q_{ex \rightarrow rz} \leq q_{exmax}\)</span> the integral of the
+flow from the surface excess store can be approximated by
+<span class="math display">\[
+\int\limits_{\Delta t} \tilde{q}_{ex \rightarrow rz} dt =
+\min\left(q_{exmax}\Delta t,\tilde{s}\right)
+\]</span>
+Using this the root zone is solved as a two step process. Firstly the ODE
+<span class="math display">\[
+\frac{d\tilde{s}_{rz}}{dt}=p + \frac{1}{\Delta t}\int\limits_{\Delta t}
+\tilde{q}_{ex \rightarrow rz} dt -\frac{e_{p}}{s_{rzmax}}\tilde{s}_{rz} \quad
+\left. \tilde{s}_{rz}\right\rvert_{t} = \left. s_{rz}\right\rvert_{t}
+\]</span>
+is solved to give
+<span class="math display">\[
+\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} = 
+\left. s_{rz}\right\rvert_{t} \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta
+t\right) + \left(p + \frac{1}{\Delta t}\int\limits_{\Delta t}\right)\frac{
+  s_{srmax}}{e_p}\left(1 - \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta
+t\right)\right)
+\]</span>
 which can be though off as the unconstrained root zone storage. Then
 from this
-<span class="math display">\[\left. s_{rz}\right\rvert_{t + \Delta t} = \min\left(\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t}, s_{rzmax}\right)\]</span>
+<span class="math display">\[
+\left. s_{rz}\right\rvert_{t + \Delta t} =
+\min\left(\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t}, s_{rzmax}\right)
+\]</span>
 and the total water passed from the root zone is
-<span class="math inline">\(\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} - \left. s_{rz}\right\rvert_{t + \Delta t}\)</span>.</p>
+<span class="math display">\[
+\left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} -
+\left. s_{rz}\right\rvert_{t + \Delta t}
+\]</span></p>
 <p>The water passed from the root zone can be passed either to the surface excess
 storage or the unsaturated zone. If <span class="math inline">\(\left. s_{sd}\right\rvert_{t} = 0\)</span> the
 flux from the root zone is passed to the
@@ -770,13 +819,19 @@ and
 \]</span>
 where the maximum ensures a non-negative flux in the case that the upper limit
 on <span class="math inline">\(\int_{\Delta t} \mathbf{q}_{sz} dt\)</span> is not met.</p>
+</div>
+</div>
+<div id="tidying-up" class="section level2">
+<h2 class="hasAnchor">
+<a href="#tidying-up" class="anchor"></a>tidying up</h2>
+<p>The easiest of these terms to integrate is the precipitation input which gives</p>
+<p><span class="math display">\[ \tilde{\mathbf{s}}_{ch} = \mathbf{I}p\Delta t \]</span></p>
 <div id="comments-2" class="section level4">
 <h4 class="hasAnchor">
 <a href="#comments-2" class="anchor"></a>Comments</h4>
 <ol style="list-style-type: decimal">
 <li>alsdkjf</li>
 </ol>
-</div>
 </div>
 </div>
 <div id="step-6-estimating-channel-flow" class="section level2">
@@ -850,13 +905,14 @@ at time 0 as
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
 <li><a href="#notation-and-nomenclature">Notation and nomenclature</a></li>
+      <li><a href="#total-flux-to-channel-hrus">Total Flux to channel HRUs</a></li>
       <li>
-<a href="#numerical-solution">Numerical Solution</a><ul class="nav nav-pills nav-stacked">
-<li><a href="#step-1-initializing-the-channel-storage">Step 1: Initializing the channel storage</a></li>
-      <li><a href="#step-2-surface-excess-redistribution">Step 2: Surface excess redistribution</a></li>
-      <li><a href="#step-3-root-zone">Step 3: Root Zone</a></li>
+<a href="#numerical-solution-of-the-hill-slope-hrus">Numerical Solution of the Hill slope HRUs</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#step-1-surface-excess-redistribution">Step 1: Surface excess redistribution</a></li>
+      <li><a href="#step-2-root-zone">Step 2: Root Zone</a></li>
       <li><a href="#step-4-unsaturated-zone">Step 4: Unsaturated Zone</a></li>
       <li><a href="#step-5-saturated-zone">Step 5: Saturated Zone</a></li>
+      <li><a href="#tidying-up">tidying up</a></li>
       <li><a href="#step-6-estimating-channel-flow">Step 6: Estimating Channel Flow</a></li>
       </ul>
 </li>
