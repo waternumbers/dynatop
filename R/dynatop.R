@@ -40,10 +40,10 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
     ex_eigen <- eigen_routing_setup(K_ex)
     ex_in <- ex_out <- rep(0,nrow(K_ex)) # preassign vector for initial condition storages
     ex_idx <- 1:length(hillslope$id) # index of hillslope elements in the solution
-
+    
     ## Common parts for the saturated routing
     K_sz <- diag(1/hillslope$area) %*% (model$Wsat-diag(nrow(model$Wsat))) %*%
-               diag(hillslope$area)
+        diag(hillslope$area)
     FA_sz <- model$Fsat%*%diag(hillslope$area)
     #WA_sz <- model$Wsat%*%diag(hillslope$area)
 
@@ -122,13 +122,15 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
             ## Solve the ODE for discharge (ignores limit in flow due to saturation
             
             ## removeed deSolve:: to test for error
+            browser()
             res <- deSolve::ode(y=hillslope$lsz,
-                       times=seq(0, ts$sub_step, length.out=2),
-                       func=fun_dlex_dt,
-                       parms=list(Wdash=K_sz,
-                                  m=hillslope$m,
-                                  lsz_max=hillslope$lsz_max,
-                                  quz=hillslope$quz))
+                                method="adams",
+                                times=seq(0, ts$sub_step, length.out=2),
+                                func=fun_dlex_dt,
+                                parms=list(Wdash=K_sz,
+                                           m=hillslope$m,
+                                           lsz_max=hillslope$lsz_max,
+                                           quz=hillslope$quz))
 
             res <- res[-1,-1]; names(res) <- NULL # trim to get only final values and not time
             hillslope$lsz <- res # not due to solution above the equality lsz<=lszmax should hold

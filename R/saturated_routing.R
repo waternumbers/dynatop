@@ -26,3 +26,17 @@ fun_dlex_dt <- function(t, y, parms)
     res = res * (1-imax)
   return(list(res))
 }
+
+
+ds_dt <- function(B,quz,lsz,qsz){
+    -quz - B%*%lsz + qsz
+}
+
+dl_dt <- function(B,quz,lsz,qsz,m,lszmax){
+    ds_dt(B,quz,lsz,qsz)*(lsz/m)
+    
+}
+
+
+
+                  
