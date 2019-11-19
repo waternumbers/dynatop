@@ -21,7 +21,7 @@ The basis of the simulations used in the test catchment contained within the
 package which is loaded with
 ```{r, setup}
 rm(list=ls())
-library(dynatop)
+library(dynatopDev)
 data("test_catchment")
 ```
 

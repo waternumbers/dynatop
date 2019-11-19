@@ -22,14 +22,10 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
     }else{ # initialise the model
         ## check model is valid - fails if not
         check_model(model,check_channel=FALSE,verbose=FALSE)
-
-        ## initialise the properties and states of the hillslope hru - include check on initial recharge
-        hillslope <- initialise_hillslope(model,initial_recharge)
-
-        ## initialise the properties and states of the channel hru
-        channel <- initialise_channel(model)
+        tmp <- initialise_dynatop(model,initial_recharge)
+        hillslope <- tmp$hillslope
+        channel <- tmp$channel
     }
-    
 
     ## create the common parts of the surface excess solution
     K_ex <- diag(1/c(hillslope$area,channel$area)) %*%
@@ -37,19 +33,40 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
               matrix(0,length(hillslope$id)+length(channel$id),length(channel$id) ) # no flow from channel
               ) %*% diag(c(hillslope$area,channel$area)) %*%
         diag(c(1/hillslope$tex,rep(0,length(channel$id))))
-    ex_eigen <- eigen_routing_setup(K_ex)
-    ex_in <- ex_out <- rep(0,nrow(K_ex)) # preassign vector for initial condition storages
-    ex_idx <- 1:length(hillslope$id) # index of hillslope elements in the solution
-    
-    ## Common parts for the saturated routing
-    K_sz <- diag(1/hillslope$area) %*% (model$Wsat-diag(nrow(model$Wsat))) %*%
-        diag(hillslope$area)
-    FA_sz <- model$Fsat%*%diag(hillslope$area)
-    #WA_sz <- model$Wsat%*%diag(hillslope$area)
+    ex <- list(eigen = eigen_routing_setup(K_ex),
+               input = rep(0,nrow(K_ex)),# preassign vector for initial condition storages
+               output = rep(0,nrow(K_ex)),# preassign vector for final condition storages
+               idx = 1:length(hillslope$id)# index of hillslope elements in the solution
+               )
+    rm(K_ex)
 
+    ## initialise the vertical flux stores
+    integral_q <- list(ex_rz = rep(0,length(hillslope$id)),
+                       rz_ex = rep(0,length(hillslope$id)),
+                       rz_uz = rep(0,length(hillslope$id)),
+                       uz_sz = rep(0,length(hillslope$id)),
+                       sz_ex = rep(0,length(hillslope$id)),
+                       )
+                       
+    ## Common parts for the saturated routing
+
+
+    ## simple function for solving ODE
+    fode <- function(a,b,x0,t){
+        b <- pmax(b,1e-10)
+        unname( x0*exp(-b*t) + (a/b)*(1-exp(-b*t)) )
+    }
+    fodeint <- function(a,b,x0,t){
+        b <- pmax(b,1e-10)
+        a <- pmax(a,1e-10)
+        unname( (x0/a)*(1-exp(-b*t)) + (a/b)*t + (a/b^2)*(1-exp(-b*t)) )
+    }
+    
+    
+        
     ## initialise the output
-    qchannel_output <- reclass( matrix(NA,nrow(obs_data),length(channel$id)), match.to=obs_data )
-    names(qchannel_output) <- channel$id
+    channel_inflow <- reclass( matrix(NA,nrow(obs_data),length(channel$id)), match.to=obs_data )
+    names(channel_inflow) <- channel$id
 
     ## remove time properties from input - stops variable type errors later
     obs_data <- as.matrix(obs_data)
@@ -59,133 +76,134 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL, use_s
 
     for(it in 1:nrow(obs_data)){
 
-        ## Step 1: Initialise channel stores with precipitation
-        ## channel$store[] <- 0
-        channel$store <- obs_data[it,channel$precip_input]*ts$step
-
-        ## Step 2: Distribute any surface storage downslope for next time step
-        
-  	if(any(hillslope$ex > 0)){
-            
-            ## solve eigen routing
-            ## initial volume
-            ex_in[] <- 0 # set all values to zero
-            ex_in[ex_idx] <- hillslope$ex
-            ## iv <- sum(diag(c(hillslope$area,channel$area)) %*% ex_in)
-            ex_out <- eigen_routing_step(ex_in,ex_eigen,ts$step)
-            ex_out <- pmax(0,ex_out) ## shouldn't be any negative values but...
-            hillslope$ex <- ex_out[ex_idx]
-            ## shouldn't be any negative values but sometimes there are...
-            channel$store <- channel$store + ex_out[-ex_idx]
-        }
-        
         ## set the inputs to the hillslope
         precip <- obs_data[it,hillslope$precip_input]
         pet <- obs_data[it,hillslope$pet_input]
 
-        ## inner loop to update the flows and storages
+        ## initialise the inflow to be added to as the solution progresses
+        channel$inflow <- ( channel$area*obs_data[it,channel$precip_input]*ts$step ) / (3600*ts$step) # rainfall input in cumecs
+
+        ## loop sub steps
         for(inner in 1:ts$n_sub_step){
-            ## Step 3: solve the root zone for hillslope elements
-            b <- pmax( pet/hillslope$srz_max , 1e-10 ) # stops round errors in explicit solution
-            a <- precip
 
-            tilde_srz = hillslope$srz*exp(-b*ts$sub_step) +
-                (a/b)*(1-exp(-b*ts$sub_step)) # analytical solution to root zone storage
-            hillslope$srz <- unname( pmin(tilde_srz,hillslope$srz_max) ) # drop names
-            integral_qrz <- tilde_srz - hillslope$srz
+            ## clear all vertical fluxes
+            for(ii in names(integral_q)){
+                integral_q[[ii]][] <- 0
+            }
+            
+            ## Step 1: Distribute any surface storage downslope
+            if(any(hillslope$ex > 0)){
+                ## set input
+                ex$input[] <- 0
+                ex$input[ex$idx] <- hillslope$ex
+                ## solve eigen routing
+                ex$output <- eigen_routing_step(ex$input,ex$eigen,ts$sub_step)
+                ex$output <- pmax(0,ex$output) ## shouldn't be any negative values but...
+                ## evaluate integral of low to rootzone
+                integral_q$ex_rz <- pmin( hillslope$qex_max*ts$sub_step,ex$output )
+                ## assign storage to hillslope
+                tilde_ex <- ex$output - integral_q$ex_rz # this is tilde s_ex
+                ## add inflow to channel
+                channel$inflow <- channel$inflow +
+                    ( (channel$area*ex$output[-ex$idx]) / (3600*ts$sub_step) )
+            }
 
+            ## Step 2: solve the root zone for hillslope elements
+
+            ## solve ODE
+            tilde_rz <- fode( precip + (integral_q$ex_rz/ts$sub_step),
+                              pet/hillslope$srz_max,
+                              hillslope$rz,ts$sub_step )
+            ## new storage value
+            hillslope$rz <- pmin(tilde_rz,hillslope$srz_max)
             ## split root zone flow
-            saturated_index <- hillslope$ssz <= 0 # which areas are saturated
-            
-            hillslope$ex[saturated_index] <- hillslope$ex[saturated_index] +
-                integral_qrz[saturated_index] # in saturated zone goes to surface storage
-            hillslope$suz[!saturated_index] <- hillslope$suz[!saturated_index] +
-                integral_qrz[!saturated_index] # if not satureated goes to unsaturated zone
+            tmp <- tilde_rz - hillslope$rz
+            saturated_index <- which(hillslope$sz <= 0) # which areas are saturated
+            integral_q$rz_ex[saturated_index] <- tmp[saturated_index]
+            integral_q$rz_uz[-saturated_index] <- tmp[-saturated_index]
 
-            ## Step 4: Unsaturated zone
-            ## recharge rate through unsaturated drainage into saturated zone
-            ## if(use_cpp){
-            ##     hillslope$quz <- funcpp_uz(hillslope$suz, hillslope$ssz, hillslope$td, ts$sub_step)
-            ## }else{
-            hillslope$quz <- pmin( hillslope$suz / (hillslope$td * hillslope$ssz) , hillslope$suz/ts$sub_step )
-            hillslope$quz[ hillslope$ssz==0 ] <- 0
-            ## }
-            
+            ## Step 3: Unsaturated zone
 
-            ## reduce storage by drainage out of zone over time step - limited in above call
-            hillslope$suz <- hillslope$suz - hillslope$quz*ts$sub_step
+            ## solve ODE
+            tilde_uz <- fode( integral_q$rz_uz/ts$sub_step,
+                              1 / (hillslope$td * hillslope$sz),
+                              hillslope$suz,ts$sub_step )
+            integral_q$uz_sz <- hillslope$uz + integral_q$rz_uz - tilde_uz
 
-            ## Step 5: Solve saturated zone
-            ## solve the saturated zone to distribute baseflows downslope through areas
-            ## using precalculated inter-group splits
+            ## Step 4: Solve saturated zone
+        
+            ## initialise the value of Q
+            Q <- integral_q$uz_sz
 
-            ## Solve the ODE for discharge (ignores limit in flow due to saturation
-            
-            ## removeed deSolve:: to test for error
-            browser()
-            res <- deSolve::ode(y=hillslope$lsz,
-                                method="adams",
-                                times=seq(0, ts$sub_step, length.out=2),
-                                func=fun_dlex_dt,
-                                parms=list(Wdash=K_sz,
-                                           m=hillslope$m,
-                                           lsz_max=hillslope$lsz_max,
-                                           quz=hillslope$quz))
+            ## initial estimate of tau, beta and upper limit on alpha
+            tau <- hillslope$lsz/hillslope$m
+            beta <- tau*(1-diag(model$Wsz))
+            ebt <- list(exp(-beta*ts$sub_step), 1-exp(-beta*ts$sub_step))
+            amax <- pmax( (hillslope$sz*beta)/ebt[[2]] + (hillslope$lsz*beta/tau),
+                         beta*(hillslope$lsz_max - hillslope$lsz*ebt[[1]]) / (tau*ebt[[2]])
+                         )
 
-            res <- res[-1,-1]; names(res) <- NULL # trim to get only final values and not time
-            hillslope$lsz <- res # not due to solution above the equality lsz<=lszmax should hold
-      
-            ## work out is there is flow to excess due to limit on lsz
-            qsz <- pmax(0, hillslope$quz + K_sz %*% hillslope$lsz) * (hillslope$lsz >= hillslope$lsz_max)
-            
+            ## loop HRUs to solve
+            tilde_sz <- tilde_lsz <- rep(0,length(hillslope$id))
+            Q <- integral_q$uz_sz
+            for(ii in 1:length(hillslope$id)){
+                ## find alpha
+                alpha <- min( amax[ii], Q[ii]/ts$sub_step )
+                ## evaluate integral of lateral flux
+                tmp <- (hillslope$lsz[ii]/beta[ii])*ebt[[2]][ii] +
+                    ( alpha*tau[ii]*ts$sub_step / beta[ii] ) -
+                    ( alpha*tau[ii]*ebt[[2]][ii]/(beta[ii]^2) )
+                ## add to downslope HRUs
+                Q <- Q + model$Wsz[ii,]*tmp
+                ## solve for final values
+                tilde_lsz[ii] <- hillslope$lsz[ii]*ebt[[1]][ii] + (alpha*tau[ii]/beta[ii])*ebt[[2]][ii]
+                tilde_sz[ii] <- hillslope$sz[ii] + ((hillslope$lsz[ii]/tau[ii]) - (alpha/beta[ii]))*ebt[[2]][ii]
+            }
 
-            ## compute the gradient of the storage change
-            grad_ssz <- -hillslope$quz - K_sz %*% hillslope$lsz + qsz
+            ## revise tau, beta and upper limit on alpha
+            tau <- (tau + tilde_lsz/hillslope$m)/2
+            beta <- tau*(1-diag(model$Wsz))
+            ebt <- list(exp(-beta*ts$sub_step), 1-exp(-beta*ts$sub_step))
+            amax <- pmax( (hillslope$sz*beta)/ebt[[2]] + (hillslope$lsz*beta/tau),
+                         beta*(hillslope$lsz_max - hillslope$lsz*ebt[[1]]) / (tau*ebt[[2]])
+                         )
 
-            ## solve for new storage
-            tilde_ssz <- hillslope$ssz + grad_ssz*ts$sub_step
-            hillslope$ssz <- pmax(0,tilde_ssz)
+            ## solve again
+            ## loop HRUs to solve
+            Q <- integral_q$uz_sz
+            for(ii in 1:length(hillslope$id)){
+                ## find alpha
+                alpha <- min( amax[ii], Q[ii]/ts$sub_step )
+                ## evaluate integral of lateral flux
+                tmp <- (hillslope$lsz[ii]/beta[ii])*ebt[[2]][ii] +
+                    ( alpha*tau[ii]*ts$sub_step / beta[ii] ) -
+                    ( alpha*tau[ii]*ebt[[2]][ii]/(beta[ii]^2) )
+                ## add to downslope HRUs
+                Q <- Q + model$Wsz[ii,]*tmp
+                ## add to channel HRUs
+                channel$inflow <- channel$inflow + model$F[ii,]*hillslope$area*tmp/(3600*ts$time_step)
+                ## solve for final values
+                tilde_sz[ii] <- hillslope$sz[ii] + ((hillslope$lsz[ii]/tau[ii]) - (alpha/beta[ii]))*ebt[[2]][ii]
+                hillslope$lsz[ii] <- hillslope$lsz[ii]*ebt[[1]][ii] + (alpha*tau[ii]/beta[ii])*ebt[[2]][ii]
+            }
 
-            ## add extra to surface excess - include component from saturating storage
-            hillslope$ex <- hillslope$ex + pmax(0,hillslope$ssz - tilde_ssz,na.rm=TRUE) + qsz*ts$sub_step # pmax handles case when ssz == Inf
+            ## step 6: Correct for returned vertical fluxes
+            hillslope$ex <- hillslope$ex + integral_q$rz_ex
+            saturated_index <- which(hillslope$ssz <= 0) # which areas are saturated
+            hillslope$ex[saturated_index] <- hillslope$ex[saturated_index] + hillsope$uz[saturated_index]
+            hillsope$uz[saturated_index] <- 0
 
-            ## add flow to channel
-            channel$store <- channel$store + (FA_sz %*% hillslope$lsz)*ts$sub_step/channel$area
-
-            ## ## get inflows to each hillslope HRU
-            ## qin <- vect_matrix_mult_cpp(res*all_area,Wsat) / all_area # distribute downstream and convert back to specific input
-
-            ## ## add specific input to chanel and trim off
-            ## channel$store <- channel$store + qin[channel$index]*ts$sub_step
-            ## qin <- qin[hillslope$index] # trim to just hillslope inflows
-
-            ## ## excess over capacity generates return flow
-            ## ## rate of generation of return flow is excess over maximum of net filling of area
-            ## ret_fl <- pmax(qin - hillslope$qsz - hillslope$qsz_max, 0)
-
-            ## ## remove it from the net input as has appeared on the surface!
-            ## qin <- qin - ret_fl
-
-            ## ## excess surface storage is generated in this time step.
-            ## hillslope$ex <- hillslope$ex + ret_fl*ts$sub_step
-
-            ## ## update storage deficit
-            ## hillslope$sd <- hillslope$sd + (hillslope$qsz - qin - hillslope$quz)*ts$sub_step
-
-            ## ## handle excess storage
-            ## hillslope$ex <- hillslope$ex - pmin(hillslope$sd , 0)
-            ## hillslope$sd <- pmax(hillslope$sd , 0)
-        } ## end of subseting loop
-
-        ## copy channel data to output
-        ## channel$store is the amount of water accumulated over the timestep
-        qchannel_output[it,] <- (channel$store*channel$area)/(ts$step*60*60)
-
+            ## step 7: Done through the steps above
+        } # end of inner time step loop
+        
+        ## put channel inflow in output matric
+        channel_inflow[it,] <- channel$inflow
+        
     } ## end of timestep loop
 
     model$states <- list(hillslope=hillslope,
                          channel=channel)
     
     return( list(model=model,
-                 channel_input = qchannel_output ) )
+                 channel_input = channel_inflow ) )
 }
