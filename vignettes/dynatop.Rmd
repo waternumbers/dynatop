@@ -19,7 +19,7 @@ input and returned.
 
 The data used in this example comes from Brompton and is contained within the package and can be loaded with
 ```{r, setup}
-library(dynatop)
+library(dynatopDev)
 data("brompton")
 ```
 which returns the following variables
