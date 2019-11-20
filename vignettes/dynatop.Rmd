@@ -41,7 +41,9 @@ can be used for constructing models.
 ## Checking the model
 The structure of the model can be tested:
 ```{r, test_model, error=TRUE, purl=FALSE}
-check_model(brompton$model)
+model <- brompton$model
+model$Wsat[upper.tri(model$Wsat)] <- 0
+check_model(model)
 ```
 In this case we can see multiple warning messages. The warnings relate to
 the redistribution of the flows from the hill slope HRUs. In all cases the sum of the fractions
@@ -49,7 +51,6 @@ describing the destination of the flows is greater then 1, meaning that flow
 is artificially generated during the redistribution. This can be checked
 manually by
 ```{r check_redistribution}
-model <- brompton$model
 current_total_frac_sat <- colSums( rbind(model$Wsat,model$Fsat) )
 current_total_frac_ex <- colSums( rbind(model$Wex,model$Fex) )
 ```

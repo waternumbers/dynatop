@@ -10,7 +10,7 @@
 #' @name initialise_dynatop
 #' @export
 initialise_dynatop <- function(model,initial_recharge){
-
+    
     ## check initial discharge
     if( !is.numeric(initial_recharge) | length(initial_recharge) > 1 | any( initial_recharge < 0 ) ){
         stop("Initial discharge should be a single positive numeric value")
@@ -38,25 +38,46 @@ initialise_dynatop <- function(model,initial_recharge){
         
         ## initialise based on steady state of saturated zone given constant recharge from unsturated zone
         q_0 <- initial_recharge
-        
+
+        ## maximum lateral flow from saturated zone
+        hs$lsz_max <- exp(hs$ln_t0)*hs$s_bar
+            
         ## a least squares solution with total outflow equals total inflow
         ## to saturated zone
-        ## Assume all outflow to river?
-        X <- rbind( diag(nrow(model$Wsat)) - model$Wsat , colSums(model$Fsat) ) %*% diag(hs$area)
-        y <- c( hs$area*q_0, sum(hs$area)*q_0 )
-        
         tryCatch({
-            hs$lsz <- as.numeric( solve( t(X)%*%X, t(X)%*%y ) )
+            hs$lsz <- as.numeric( solve(diag(nrow(model$Wsat)) - model$Wsat,
+                                        rep(q_0,length(hs$id))) )
         },error = function(e){
             warning("Solution for saturated zone initialisation produced negative or zero flows. Using constant recharge across catchment")
             hs$lsz <- rep(q_0,length(hs$id))
         })
-        ## catch to keep flows within bounds
+
+        ## threshold at max
         hs$lsz <- pmin( hs$lsz , hs$lsz_max )
         
-        ## compute the saturated zone storage deficit based on the flow
-        hs$sz <- -hs$m * log(hs$lsz/exp(hs$ln_t0-hs$atb_bar))
-        hs$sz <- pmax(  hs$sz, 0 )
+        ## compute the deficit
+        gamma <- sum(hs$area*(hs$atb_bar - hs$ln_t0))  / sum(hs$area)
+        hs$sz <- hs$m*(gamma + log(hs$lsz))
+        hs$sz <- pmax(0,hs$sz)
+       
+            
+        ## Assume all outflow to river?
+        ## X <- rbind( diag(nrow(model$Wsat)) - model$Wsat , colSums(model$Fsat) ) %*% diag(hs$area)
+        ## y <- c( hs$area*q_0, sum(hs$area)*q_0 )
+
+        
+        ## tryCatch({
+        ##     hs$lsz <- as.numeric( solve( t(X)%*%X, t(X)%*%y ) )
+        ## },error = function(e){
+        ##     warning("Solution for saturated zone initialisation produced negative or zero flows. Using constant recharge across catchment")
+        ##     hs$lsz <- rep(q_0,length(hs$id))
+        ## })
+        ## ## catch to keep flows within bounds
+        ## hs$lsz <- pmin( hs$lsz , hs$lsz_max )
+        
+        ## ## compute the saturated zone storage deficit based on the flow
+        ## hs$sz <- -hs$m * log(hs$lsz/exp(hs$ln_t0-hs$atb_bar))
+        ## hs$sz <- pmax(  hs$sz, 0 )
                 
         ## unsaturated storage by inverse of eqn for q_uz in Beven & Wood 1983
         hs$uz <- pmax(0, rep(q_0,length(hs$id)) * hs$td * hs$sz, na.rm=TRUE)
@@ -76,7 +97,7 @@ initialise_dynatop <- function(model,initial_recharge){
         for(ii in hru_var){
             ch[[ii]] <- unname( model$channel[,ii] )
         }
-        ch$inflow <- rep(0,length(ch$id))
+        ch$v <- ch$ves <- ch$vsz <- ch$vp <- rep(0,length(ch$id))
         return(ch)
     }
     
