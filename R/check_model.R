@@ -10,7 +10,7 @@
 #'
 #' @details The checks performed and basic 'sanity' checks. they do not check for the logic of the parameter values nor the consistncy of states and parameters.
 #' @export
-check_model <- function(model, check_channel=TRUE, verbose=FALSE){
+check_model <- function(model, verbose=FALSE){
 
     ## First perform checks that rely only on individual components of the model
     
@@ -20,11 +20,11 @@ check_model <- function(model, check_channel=TRUE, verbose=FALSE){
     }else{
         ## make data frames of columns expected in each table, the type of value expected and if they are a parameter
         hru_properties <- list(
-            hillslope = data.frame(name = c("id","area","atb_bar","s_bar",
+            hillslope = data.frame(name = c("id","area","s_bar",
                                             "precip_input","pet_input",
                                             "srz_max","srz_0","ln_t0","m","td","tex"),
-                                   type=c(rep("numeric",4),rep("character",8)),
-                                   is_param = c(rep(FALSE,6),rep(TRUE,6)),
+                                   type=c(rep("numeric",3),rep("character",8)),
+                                   is_param = c(rep(FALSE,5),rep(TRUE,6)),
                                    stringsAsFactors=FALSE),
             channel = data.frame(name = c("id","area","precip_input","pet_input"),
                                  type=c(rep("numeric",2),rep("character",2)),
@@ -33,7 +33,7 @@ check_model <- function(model, check_channel=TRUE, verbose=FALSE){
         )
 
         ## add additional properties for channel routing
-        if( check_channel ){
+        if( TRUE ){
             hru_properties$channel <- rbind(
                 hru_properties$channel,
                 data.frame(name = c("next_id","length","v_ch"),
@@ -72,13 +72,15 @@ check_model <- function(model, check_channel=TRUE, verbose=FALSE){
     }
             
     ## checks on only redistribution matrices
-    for(ii in c("Wsat","Fsat","Wex","Fex")){
-        if(!is.matrix(model[[ii]]) | !is.numeric(model[[ii]])){
-            stop( ii," should be a numeric matrix" )
+    for(ii in c("Wsz","Fsz","Dex")){
+        browser()
+        if(!is(model[[ii]],"Matrix")){
+            stop( ii," should be a numeric Matrix" )
         }
-        if( is.null(colnames(model[[ii]])) | is.null(rownames(model[[ii]])) ){
-            stop(ii," should be have column and row names")
-        }
+        ## TO DO Add back in
+        ## if( is.null(colnames(model[[ii]])) | is.null(rownames(model[[ii]])) ){
+        ##     stop(ii," should be have column and row names")
+        ## }
         if( any( model[[ii]] < 0)){
             stop(ii," should have values greater or equal to 0")
         }
@@ -164,7 +166,7 @@ check_model <- function(model, check_channel=TRUE, verbose=FALSE){
 
     ## check Wex and Wsat
     hillslope_hru <- as.character( model$hillslope[,'id'] )
-    for(ii in c("Wsat","Wex")){
+    for(ii in c("Wsz","Dex")){
         if( any( colnames(model[[ii]]) != rownames(model[[ii]]) ) ){
             stop(ii," should have identically ordered column and row names")
         }
@@ -186,7 +188,7 @@ check_model <- function(model, check_channel=TRUE, verbose=FALSE){
     }
     
     ## check redistribution sums for saturated zone
-    tmp <- colSums( rbind(model$Wsat,model$Fsat) )
+    tmp <- colSums( rbind(model$Wsz,model$Fsz) )
     if( any(tmp>1) ){
         stop("Saturated flow redistribution fractions sum to greater then 1 for HRUs: ",
              paste(colnames(model$Wsat)[tmp>1],collapse=', '))
