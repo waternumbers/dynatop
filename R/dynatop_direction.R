@@ -8,7 +8,7 @@
 #' @details use_states, currently does not impose any checks
 #' 
 #' @export
-dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL,use_states=FALSE){
+dynatop_old <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL,use_states=FALSE){
 
     ## check input and get model timestep
     ts <- check_obs(obs_data,
