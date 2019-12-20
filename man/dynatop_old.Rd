@@ -4,8 +4,13 @@
 \alias{dynatop_old}
 \title{Run dynamic topmodel}
 \usage{
-dynatop_old(model, obs_data, initial_recharge = NA,
-  sim_time_step = NULL, use_states = FALSE)
+dynatop_old(
+  model,
+  obs_data,
+  initial_recharge = NA,
+  sim_time_step = NULL,
+  use_states = FALSE
+)
 }
 \arguments{
 \item{model}{TODO}

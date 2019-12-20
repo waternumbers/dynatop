@@ -4,8 +4,13 @@
 \alias{time_delay_routing}
 \title{Function to apply variable time delay routing}
 \usage{
-time_delay_routing(model, channel_inflows, point_inflows = NULL,
-  diffuse_inflows = NULL, initial_conditions = list())
+time_delay_routing(
+  model,
+  channel_inflows,
+  point_inflows = NULL,
+  diffuse_inflows = NULL,
+  initial_conditions = list()
+)
 }
 \arguments{
 \item{model}{a dynamic TOPMODEL list object}
