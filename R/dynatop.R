@@ -29,7 +29,7 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL,use_st
     browser()
     
     ## create the common parts of the surface excess solution
-    K_ex <- diag(1/c(hillslope$area,channel$area)) %*%
+    K_ex <- Diagonal(1/c(hillslope$area,channel$area)) %*%
         cbind( rbind( (model$Wex-diag(nrow(model$Wex))), model$Fex),
               matrix(0,length(hillslope$id)+length(channel$id),length(channel$id) ) # no flow from channel
               ) %*% diag(c(hillslope$area,channel$area)) %*%
@@ -43,28 +43,24 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL,use_st
     
     ## initialise the vertical flux stores
     q_vol <- list(ex_rz = rep(0,length(hillslope$id)),
-                       rz_ex = rep(0,length(hillslope$id)),
-                       rz_uz = rep(0,length(hillslope$id)),
-                       uz_sz = rep(0,length(hillslope$id)),
-                       sz_ex = rep(0,length(hillslope$id))
-                       )
+                  rz_ex = rep(0,length(hillslope$id)),
+                  rz_uz = rep(0,length(hillslope$id)),
+                  uz_sz = rep(0,length(hillslope$id)),
+                  sz_ex = rep(0,length(hillslope$id)),
+                  sz = rep(0,length(hillslope$id)) # l_ex
+                  )
     
     ## Common parts for the saturated routing
-    
+    Dsz <- Diagonal(1/hillslope$area) %*% (Diagonal(ncol(model$Wsz)) - model$Wsz) %*% Diagonal(hillslope$area)
+
+    Esz <- model$Fsz %*% Diagonal(hillslope$area) 
     
     ## simple function for solving ODE
     fode <- function(a,b,x0,t){
         b <- pmax(b,1e-10)
         unname( x0*exp(-b*t) + (a/b)*(1-exp(-b*t)) )
     }
-    fodeint <- function(a,b,x0,t){
-        b <- pmax(b,1e-10)
-        a <- pmax(a,1e-10)
-        unname( (x0/a)*(1-exp(-b*t)) + (a/b)*t + (a/b^2)*(1-exp(-b*t)) )
-    }
-    
-    
-    
+
     ## initialise the output
     channel_inflow <- reclass( matrix(NA,nrow(obs_data),length(channel$id)), match.to=obs_data )
     names(channel_inflow) <- channel$id
@@ -105,7 +101,10 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL,use_st
                 ## evaluate integral of flow to rootzone
                 integral_q$ex_rz <- pmin( hillslope$qex_max*ts$sub_step,ex$s_dt[ex$idx] )
                 ## inflow to channel
-                channel$vex <- channel$vex + channel$area*ex$output[-ex$idx]
+                channel$vex <- channel$vex + channel$area*ex$s_dt[-ex$idx]
+
+                ## set hillslope$ex - corrected in step 5
+                hillslope$ex <- ex$s_dt[ex$idx]
             }
             
             ## Step 2: solve the root zone for hillslope elements
@@ -131,71 +130,102 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL,use_st
             integral_q$uz_sz <- hillslope$uz + integral_q$rz_uz - tilde_uz
             
             ## Step 4: Solve saturated zone
-            browser()
-            
-            ## initial estimate of tau, beta and upper limit on alpha
-            tau <- hillslope$lsz/hillslope$m
-            beta <- tau*(1-diag(model$Wsz))
-            ebt <- list(exp(-beta*ts$sub_step), 1-exp(-beta*ts$sub_step))
-            amax <- pmax( (hillslope$sz*beta)/ebt[[2]] + (hillslope$lsz*beta/tau),
-                         beta*(hillslope$lsz_max - hillslope$lsz*ebt[[1]]) / (tau*ebt[[2]])
-                         )
-            
-            ## loop HRUs to solve
-            alpha <- rep(0,length(hillslope$id))
-            Q <- integral_q$uz_sz
-            for(ii in 1:length(hillslope$id)){
-                ## find alpha
-                alpha[ii] <- min( amax[ii], Q[ii]/ts$sub_step )
-                ## evaluate integral of lateral flux
-                tmp <- (hillslope$lsz[ii]/beta[ii])*ebt[[2]][ii] +
-                    ( alpha*tau[ii]*ts$sub_step / beta[ii] ) -
-                    ( alpha*tau[ii]*ebt[[2]][ii]/(beta[ii]^2) )
-                ## add to downslope HRUs
-                Q <- Q + (model$Wsz[ii,]/hillslope$area)*hillslope$area[ii]*tmp
-            }
-            
-            ## solve for intermediate values
-            tilde_lsz <- hillslope$lsz*ebt[[1]] + (alpha*tau/beta)*ebt[[2]]
-            tilde_sz <- hillslope$sz + ((hillslope$lsz/tau) - (alpha/beta))*ebt[[2]]
-            
-            ## revise tau, beta and upper limit on alpha
-            tau <- (tau + tilde_lsz/hillslope$m)/2
-            beta <- tau*(1-diag(model$Wsz))
-            ebt <- list(exp(-beta*ts$sub_step), 1-exp(-beta*ts$sub_step))
-            amax <- pmax( (hillslope$sz*beta)/ebt[[2]] + (hillslope$lsz*beta/tau),
-                         beta*(hillslope$lsz_max - hillslope$lsz*ebt[[1]]) / (tau*ebt[[2]])
-                         )
-            
-            ## solve again
-            ## loop HRUs to solve
-            alpha <- rep(0,length(hillslope$id))
-            Q <- integral_q$uz_sz
-            for(ii in 1:length(hillslope$id)){
-                ## find alpha
-                alpha <- min( amax[ii], Q[ii]/ts$sub_step )
-                ## evaluate integral of lateral flux
-                tmp <- (hillslope$lsz[ii]/beta[ii])*ebt[[2]][ii] +
-                    ( alpha*tau[ii]*ts$sub_step / beta[ii] ) -
-                    ( alpha*tau[ii]*ebt[[2]][ii]/(beta[ii]^2) )
-                ## add to downslope HRUs
-                Q <- Q + (model$Wsz[ii,]/hillslope$area)*hillslope$area[ii]*tmp
-                ## add to channel HRUs
-                channel$vsz <- channel$vsz + model$F[ii,]*hillslope$area*tmp
-            }
-            
-            ## solve for final values
-            hillslope$sz <- hillslope$sz + ((hillslope$lsz/tau) - (alpha/beta))*ebt[[2]]
-            hillslope$lsz <- hillslope$lsz*ebt[[1]] + (alpha*tau/beta)*ebt[[2]]
-            integral_q$sz_rz <- Q - alpha*ts$sub_step
-            
-            ## step 6: Correct for returned vertical fluxes
-            hillslope$ex <- ex$s_dt[ex$idx] - integral_q$ex_rz + integral_q$rz_ex + integral_q$sz_ex 
-            saturated_index <- which(hillslope$ssz <= 0) # which areas are saturated
-            hillslope$ex[saturated_index] <- hillslope$ex[saturated_index] + hillslope$uz[saturated_index]
+            sz0 <- hillslope$sz
+            lsz0 <- asdf #initial velocity
+
+            ## inital gradient
+            gsz0 <- as.numeric(Dsz%*%lsz0) - (int_q$uz_sz/ts$sub_step)
+            gsz0[saturated_index] <- pmax(gsz0[saturated_index],0)
+
+            ## intermediate estimate and gradient
+            szp <- pmax(sz0 + ts$sub_step*gsz0,0)
+            lszp <- asdf
+            gszp <- as.numeric(Dsz%*%lszp) - (int_q$uz_sz/ts$sub_step)
+            tmp <- which(szp <= 0)
+            gszp[tmp] <- pmax(gszp[tmp],0)
+
+            ## final estimate
+            hillslope$sz <- pmax(sz0 + ts$sub_step*(gsz0+gszp)/2,0)
+            lsz <- asdf
+            int_q$sz <- ts$sub_step*(lsz0+lsz)/2
+            int_q$sz_ex <- pmax(hillslope$sz - sz0 - Dsz%*%int_q$sz + int_q$uz_sz,0)
+            ## step 5 - correct the stores
+            saturated_index <- which(hillslope$sz <= 0)
+            hillslope$sz <- hillslope$sz - int_q$ex_rz + int_q$sz_ex
+            hillslope$sz[saturated_index] <- hillslope$sz[saturated_index] +
+                hillslope$uz[saturated_index]
             hillslope$uz[saturated_index] <- 0
+
+            ## step 6 - channel inflow
+            channel$vsz <- channel$vsz + Esz %*% int_q$sz
+        }
+        
+                         
+        ##     browser()
             
-        } # end of inner time step loop
+        ##     ## initial estimate of tau, beta and upper limit on alpha
+        ##     tau <- hillslope$lsz/hillslope$m
+        ##     beta <- tau*(1-diag(model$Wsz))
+        ##     ebt <- list(exp(-beta*ts$sub_step), 1-exp(-beta*ts$sub_step))
+        ##     amax <- pmax( (hillslope$sz*beta)/ebt[[2]] + (hillslope$lsz*beta/tau),
+        ##                  beta*(hillslope$lsz_max - hillslope$lsz*ebt[[1]]) / (tau*ebt[[2]])
+        ##                  )
+            
+        ##     ## loop HRUs to solve
+        ##     alpha <- rep(0,length(hillslope$id))
+        ##     Q <- integral_q$uz_sz
+        ##     for(ii in 1:length(hillslope$id)){
+        ##         ## find alpha
+        ##         alpha[ii] <- min( amax[ii], Q[ii]/ts$sub_step )
+        ##         ## evaluate integral of lateral flux
+        ##         tmp <- (hillslope$lsz[ii]/beta[ii])*ebt[[2]][ii] +
+        ##             ( alpha*tau[ii]*ts$sub_step / beta[ii] ) -
+        ##             ( alpha*tau[ii]*ebt[[2]][ii]/(beta[ii]^2) )
+        ##         ## add to downslope HRUs
+        ##         Q <- Q + (model$Wsz[ii,]/hillslope$area)*hillslope$area[ii]*tmp
+        ##     }
+            
+        ##     ## solve for intermediate values
+        ##     tilde_lsz <- hillslope$lsz*ebt[[1]] + (alpha*tau/beta)*ebt[[2]]
+        ##     tilde_sz <- hillslope$sz + ((hillslope$lsz/tau) - (alpha/beta))*ebt[[2]]
+            
+        ##     ## revise tau, beta and upper limit on alpha
+        ##     tau <- (tau + tilde_lsz/hillslope$m)/2
+        ##     beta <- tau*(1-diag(model$Wsz))
+        ##     ebt <- list(exp(-beta*ts$sub_step), 1-exp(-beta*ts$sub_step))
+        ##     amax <- pmax( (hillslope$sz*beta)/ebt[[2]] + (hillslope$lsz*beta/tau),
+        ##                  beta*(hillslope$lsz_max - hillslope$lsz*ebt[[1]]) / (tau*ebt[[2]])
+        ##                  )
+            
+        ##     ## solve again
+        ##     ## loop HRUs to solve
+        ##     alpha <- rep(0,length(hillslope$id))
+        ##     Q <- integral_q$uz_sz
+        ##     for(ii in 1:length(hillslope$id)){
+        ##         ## find alpha
+        ##         alpha <- min( amax[ii], Q[ii]/ts$sub_step )
+        ##         ## evaluate integral of lateral flux
+        ##         tmp <- (hillslope$lsz[ii]/beta[ii])*ebt[[2]][ii] +
+        ##             ( alpha*tau[ii]*ts$sub_step / beta[ii] ) -
+        ##             ( alpha*tau[ii]*ebt[[2]][ii]/(beta[ii]^2) )
+        ##         ## add to downslope HRUs
+        ##         Q <- Q + (model$Wsz[ii,]/hillslope$area)*hillslope$area[ii]*tmp
+        ##         ## add to channel HRUs
+        ##         channel$vsz <- channel$vsz + model$F[ii,]*hillslope$area*tmp
+        ##     }
+            
+        ##     ## solve for final values
+        ##     hillslope$sz <- hillslope$sz + ((hillslope$lsz/tau) - (alpha/beta))*ebt[[2]]
+        ##     hillslope$lsz <- hillslope$lsz*ebt[[1]] + (alpha*tau/beta)*ebt[[2]]
+        ##     integral_q$sz_rz <- Q - alpha*ts$sub_step
+            
+        ##     ## step 6: Correct for returned vertical fluxes
+        ##     hillslope$ex <- ex$s_dt[ex$idx] - integral_q$ex_rz + integral_q$rz_ex + integral_q$sz_ex 
+        ##     saturated_index <- which(hillslope$ssz <= 0) # which areas are saturated
+        ##     hillslope$ex[saturated_index] <- hillslope$ex[saturated_index] + hillslope$uz[saturated_index]
+        ##     hillslope$uz[saturated_index] <- 0
+            
+        ## } # end of inner time step loop
         
         ## step 7: Done through the steps above
         ## put channel inflow in output matric
