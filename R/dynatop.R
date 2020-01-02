@@ -47,7 +47,7 @@ dynatop <- function(model,obs_data,initial_recharge=NA,sim_time_step=NULL,use_st
                   rz_uz = rep(0,length(hillslope$id)),
                   uz_sz = rep(0,length(hillslope$id)),
                   sz_ex = rep(0,length(hillslope$id)),
-                  sz = rep(0,length(hillslope$id)) # l_ex
+                  sz = rep(0,length(hillslope$id)) # integral of l_ex
                   )
     
     ## Common parts for the saturated routing
