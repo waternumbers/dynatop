@@ -3,7 +3,6 @@
 #' @description This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model.
 #'
 #' @param model a dynamic TOPMODEL list object
-#' @param check_channel flag indicating is additional checks for channel routing are to be carried out
 #' @param verbose if set prints out further information
 #' 
 #' @return NULL if tests passed, otherwise fails
@@ -12,78 +11,90 @@
 #' @export
 check_model <- function(model, verbose=FALSE){
 
-    ## First perform checks that rely only on individual components of the model
+    ## check all components of the model exist
+    components <- c("hillslope","channel","param","Dex","Dsz","gauge","point_inflow")
+    idx <- components %in% names(model)
+    if( !all(idx) ){
+        stop(paste("Missing componets:",paste(components[!idx],collapse=",")))
+    }
+
+    ## check components that should be data.frames
     
-    ## checks only on the HRU tables
-    if(!is.data.frame(model$hillslope) | !is.data.frame(model$channel)){ # check HRU is a data frame
-        stop("HRU tables should be a data frames")
-    }else{
-        ## make data frames of columns expected in each table, the type of value expected and if they are a parameter
-        hru_properties <- list(
-            hillslope = data.frame(name = c("id","area","s_bar",
-                                            "precip_input","pet_input",
-                                            "srz_max","srz_0","ln_t0","m","td","tex"),
-                                   type=c(rep("numeric",3),rep("character",8)),
-                                   is_param = c(rep(FALSE,5),rep(TRUE,6)),
-                                   stringsAsFactors=FALSE),
-            channel = data.frame(name = c("id","area","precip_input","pet_input"),
-                                 type=c(rep("numeric",2),rep("character",2)),
-                                 is_param = rep(FALSE,4),
-                                 stringsAsFactors=FALSE)
-        )
-
-        ## add additional properties for channel routing
-        if( TRUE ){
-            hru_properties$channel <- rbind(
-                hru_properties$channel,
-                data.frame(name = c("next_id","length","v_ch"),
-                           type=rep("numeric",3),
-                           is_param = c(rep(FALSE,2),TRUE),
-                           stringsAsFactors=FALSE)
-            )
-            hru_properties$point_inflow <- data.frame(
-                name = c("name","channel_id","fraction"),
-                type=c("character",rep("numeric",2)),
-                is_param = rep(FALSE,3),
-                stringsAsFactors=FALSE)
-            hru_properties$gauge <- data.frame(
-                name = c("name","channel_id","fraction"),
-                type=c("character",rep("numeric",2)),
-                is_param = rep(FALSE,3),
-                stringsAsFactors=FALSE)
-            
+    ## create a list of data.frames describing the data frames in the model
+    df_prop <- list(
+        hillslope = data.frame(name = c("id","area","s_bar",
+                                        "precip_input","pet_input",
+                                        "qex_max","srz_max","srz_0","ln_t0","m","td","tex"),
+                               type=c(rep("numeric",3),rep("character",9)),
+                               role = c(rep("property",3),rep("data_series",2),rep("parameter",6)),
+                               stringsAsFactors=FALSE),
+        channel = data.frame(name = c("id","area","length","next_id","precip_input","pet_input","v_ch"),
+                             type=c(rep("numeric",4),rep("character",3)),
+                             role = c(rep("property",4),rep("data_series",2),"parameter"),
+                             stringsAsFactors=FALSE),
+        point_inflow = data.frame(
+            name = c("name","id","fraction"),
+            type=c("character",rep("numeric",2)),
+            role = c("data_series",rep("property",2)),
+            stringsAsFactors=FALSE),
+        gauge <- data.frame(
+            name = c("name","id","fraction"),
+            type=c("character",rep("numeric",2)),
+            role = c("output_label",rep("property",2)),
+            stringsAsFactors=FALSE)
+    )
+    
+    ## check the HRU table properties
+    for(ii in names(df_prop)){
+        if(!is.data.frame(model[[ii]])){
+            stop(paste("Table",ii,"should be a data.frame"))
         }
-
-        ## check just the HRU tables
-        for(ii in names(hru_properties)){
-            idx <- hru_properties[[ii]]$name %in% names(model[[ii]])
-            if( !all( idx ) ){# check it has required columns
-                stop( paste(c("HRU table",ii,"missing columns:",
-                              hru_properties[[ii]]$names[!idx]),collapse=" ") )
-            }else{ ## check data types
-                tmp <- sapply(model[[ii]],class) # types of the columns
-                idx <- tmp[ hru_properties[[ii]]$names ] != hru_properties[[ii]]$type
-                if( any( idx ) ){
-                    stop( paste(c("Incorrect types in HRU table",ii,"columns:",
-                                  hru_properties[[ii]]$names[idx]),collapse=" ") )
-                }
+        
+        idx <- df_prop[[ii]]$name %in% names(model[[ii]])
+        if( !all( idx ) ){# check it has required columns
+            stop( paste(c("Table",ii,"is missing columns:",
+                          hru_properties[[ii]]$names[!idx]),collapse=",") )
+        }else{ ## check data types
+            tmp <- sapply(model[[ii]],class) # types of the columns
+            idx <- tmp[ df_prop[[ii]]$names ] != df_prop[[ii]]$type
+            if( any( idx ) ){
+                stop( paste(c("Incorrect types in table",ii,"columns:",
+                              df_prop[[ii]]$names[idx]),collapse=",") )
             }
         }
     }
-            
+
+    ## ids should be numeric, sequential and start from 1
+    ids <- c(model[['hillslope']]$id,model[['channel']]$id)
+    rng_ids <- range(ids)
+    if( length(idx) != length(unique(idx)) ){ stop("id should be unique") }
+    if( !all(is.finite(ids)) ){ stop("ids should be finite") }
+    if( !all(range(ids)==c(1,length(ids))) ){ stop("id's should be numbered consecuativly from 1") }
+
+    ## all points should be on a channel with fractions between 0 & 1
+    for(jj in c("gauge","point_inflow")){
+        for(ii in 1:nrow(model[[jj]])){
+            if( !all( c(model[[jj]][ii,'id'] %in% model[['channel']]$id,
+                        model[[jj]][ii,'fraction'] >=0,
+                        model[[jj]][ii,'fraction'] =<1) ) ){
+                stop(paste(jj,model[[jj]][ii,'name'],"is incorrectly specified"))
+
+            }
+        }
+    }
+    
     ## checks on only redistribution matrices
-    for(ii in c("Wsz","Fsz","Dex")){
-        browser()
-        if(!is(model[[ii]],"Matrix")){
+    for(ii in c("Dsz","Dex")){
+        if(!(attr(class(model[[ii]]),"package")=="Matrix")){#is(model[[ii]],"Matrix")){
             stop( ii," should be a numeric Matrix" )
         }
-        ## TO DO Add back in
-        ## if( is.null(colnames(model[[ii]])) | is.null(rownames(model[[ii]])) ){
-        ##     stop(ii," should be have column and row names")
-        ## }
+        if( !all(dim(model[[ii]])==length(idx)) ){
+            stop(paste(ii,"has incorrect dimensions"))
+        }
         if( any( model[[ii]] < 0)){
             stop(ii," should have values greater or equal to 0")
         }
+        
     }
 
     ## checks only on param
