@@ -75,7 +75,7 @@ dynatop <- function(model,obs_data,
         
         sz$band[[ii]]$idx <- idx
         sz$band[[ii]]$jdx <- jdx
-        sz$band[[ii]]$X <- X[jdx,]
+        sz$band[[ii]]$X <- X[jdx,,drop=FALSE]
     }
     
     ## simple function for solving ODE
