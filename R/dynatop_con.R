@@ -8,7 +8,7 @@
 #' @details use_states, currently does not impose any checks
 #' 
 #' @export
-dynatop <- function(model,obs_data,
+dynatop_con <- function(model,obs_data,
                     initial_recharge=NULL,
                     sim_time_step=NULL,
                     use_states=FALSE,
@@ -147,7 +147,8 @@ dynatop <- function(model,obs_data,
 
             ## compute initial cbar
             Qin <- as.numeric( sz$invAWA %*% pmin(hillslope$lsz,hillslope$lsz_max) )
-            Qbar <- pmin(0.5*(hillslope$lsz+Qin),hillslope$lsz_max)
+            Qinn <- pmax(Qin,hillslope$lsz_max)
+            Qbar <- pmin(0.5*(hillslope$lsz+Qinn),hillslope$lsz_max)
             c_bar <- (Qbar*hillslope$delta_x)/hillslope$m
 
             ## estimate \check{lsz}
@@ -156,7 +157,7 @@ dynatop <- function(model,obs_data,
             diag(sz$Diag_lambda) <- lambda
             ##Diag_lambda <- Diagonal(length(lambda),lambda)
             k <- lambda_prime*hillslope$lsz +
-                (1-lambda_prime)*Qin +
+                (1-lambda_prime)*Qinn +
                 c_bar*q_vol$uz_sz/hillslope$delta_x
             
             ##X <- Diagonal(length(lambda),lambda) + Diagonal(length(lambda),1-lambda)%*%sz$invAWA
@@ -169,25 +170,20 @@ dynatop <- function(model,obs_data,
             #browser()
             lsz <- as.numeric( solve(sz$X,k) )
 
-            ## recompute cbar and values for initial condition
-            Qbar <- pmin( (hillslope$lsz + Qin + lsz +
-                           as.numeric(sz$invAWA %*% pmin(lsz,hillslope$lsz_max)))/4 ,
-                         hillslope$lsz_max)
-            c_bar <- (Qbar*hillslope$delta_x)/hillslope$m
-            lambda <- sz_opt$omega + sz_opt$theta*c_bar*ts$sub_step/hillslope$delta_x
-            lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*c_bar*ts$sub_step/hillslope$delta_x
-            k <- lambda_prime*hillslope$lsz +
-                (1-lambda_prime)*Qin +
-                c_bar*q_vol$uz_sz/hillslope$delta_x
+            ## ## recompute cbar and values for initial condition
+            ## Qbar <- pmin( (hillslope$lsz + Qin + lsz +
+            ##                as.numeric(sz$invAWA %*% pmin(lsz,hillslope$lsz_max)))/4 ,
+            ##              hillslope$lsz_max)
+            ## c_bar <- (Qbar*hillslope$delta_x)/hillslope$m
+            ## lambda <- sz_opt$omega + sz_opt$theta*c_bar*ts$sub_step/hillslope$delta_x
+            ## lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*c_bar*ts$sub_step/hillslope$delta_x
+            ## k <- lambda_prime*hillslope$lsz +
+            ##     (1-lambda_prime)*Qin +
+            ##     c_bar*q_vol$uz_sz/hillslope$delta_x
+            ## X <- Diagonal(length(lambda),lambda) + Diagonal(length(lambda),1-lambda)%*%sz$invAWA
+            ## lsz <- as.numeric( solve(X,k) )
 
-            diag(sz$Diag_lambda) <- lambda
-            diag(sz$Diag_mlambda) <- 1-lambda
-            sz$X <- sz$Diag_mlambda%*%sz$invAWA
-            diag(sz$X) <- diag(sz$X) + lambda
-
-            lsz <- as.numeric( solve(sz$X,k) )
-
-##            lsz <- pmax(lsz,0)
+            #lsz <- pmax(lsz,0)
             
             ## start iterating
             #print(range(hillslope$sz))
@@ -201,7 +197,8 @@ dynatop <- function(model,obs_data,
             flg <- TRUE
             cnt <- 0
             while(flg){
-                lsz_new <-  (k - as.numeric(sz$X %*% pmin(lsz,hillslope$lsz_max)))/lambda
+                Qinn <- pmax(as.numeric(sz$X %*% pmin(lsz,hillslope$lsz_max)),hillslope$lsz_max)
+                lsz_new <-  (k - Qinn)/lambda
                 
                 ##lsz_new <-  (k - as.numeric(X %*% pmin(lsz,hillslope$lsz_max)))/lambda
                 #print(range(lsz_new))
@@ -217,7 +214,8 @@ dynatop <- function(model,obs_data,
                 lsz <- lsz_new
                 #lsz <- pmax(lsz_new,0)
             }
-            #print(paste(cnt,tol))
+            ##print(paste(cnt,tol))
+            hillslope$lsz <- pmin(lsz,hillslope$lsz_max) 
             hillslope$lsz <- lsz
             #browser()
             ## work out integral fluz

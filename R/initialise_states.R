@@ -19,8 +19,8 @@ initialise_dynatop <- function(model,initial_recharge){
     ## function for initialising the hillslope
     fhillslope <- function(model,initial_recharge){
         
-        hru_var <- c("id","area","atb_bar","s_bar","precip_input","pet_input")
-        param_var <- c("srz_max","srz_0","ln_t0","m","td","tex")
+        hru_var <- c("id","area","s_bar","precip_input","pet_input","delta_x")
+        param_var <- c("qex_max","srz_max","srz_0","ln_t0","m","td","tex")
         
         hs <- list()
         for(ii in hru_var){
@@ -40,12 +40,14 @@ initialise_dynatop <- function(model,initial_recharge){
         q_0 <- initial_recharge
 
         ## maximum lateral flow from saturated zone
-        hs$lsz_max <- exp(hs$ln_t0)*hs$s_bar
+        hs$lsz_max <- exp(hs$ln_t0)*hs$s_bar # for unit width
+        hs$lsz_max <- hs$lsz_max / hs$delta_x # for specified width
             
         ## a least squares solution with total outflow equals total inflow
         ## to saturated zone
         tryCatch({
-            hs$lsz <- as.numeric( solve(diag(nrow(model$Wsat)) - model$Wsat,
+            Wsz <- model$Dsz[hs$id,hs$id]
+            hs$lsz <- as.numeric( solve( Diagonal(nrow(Wsz)) - Wsz,
                                         rep(q_0,length(hs$id))) )
         },error = function(e){
             warning("Solution for saturated zone initialisation produced negative or zero flows. Using constant recharge across catchment")
@@ -84,12 +86,13 @@ initialise_dynatop <- function(model,initial_recharge){
         
         ## take only what we need
         out <- hs[c("ex","rz","uz","sz","lsz",
-                    "id","area","precip_input","pet_input",
-                    "tex","srz_max","td",
+                    "id","area","precip_input","pet_input","delta_x",
+                    "tex","srz_max","td","qex_max",
                     "lsz_max","m")]
         return(out)
     }
-    
+
+    ## function for initialising the channel
     fchannel <- function(model){
         hru_var <- c("id","area","precip_input","pet_input")
         
@@ -97,7 +100,7 @@ initialise_dynatop <- function(model,initial_recharge){
         for(ii in hru_var){
             ch[[ii]] <- unname( model$channel[,ii] )
         }
-        ch$v <- ch$ves <- ch$vsz <- ch$vp <- rep(0,length(ch$id))
+        ch$v <- ch$vex <- ch$vsz <- ch$vp <- rep(0,length(ch$id))
         return(ch)
     }
     
