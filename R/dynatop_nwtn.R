@@ -8,7 +8,7 @@
 #' @details use_states, currently does not impose any checks
 #' 
 #' @export
-dynatop <- function(model,obs_data,
+dynatop_nwtn <- function(model,obs_data,
                     initial_recharge=NULL,
                     sim_time_step=NULL,
                     use_states=FALSE,
@@ -150,72 +150,52 @@ dynatop <- function(model,obs_data,
             Qbar <- pmin(0.5*(hillslope$lsz+Qin),hillslope$lsz_max)
             c_bar <- (Qbar*hillslope$delta_x)/hillslope$m
 
-            ## estimate \check{lsz}
+            ## compute lambda
             lambda <- sz_opt$omega + sz_opt$theta*c_bar*ts$sub_step/hillslope$delta_x
             lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*c_bar*ts$sub_step/hillslope$delta_x
-            diag(sz$Diag_lambda) <- lambda
-            ##Diag_lambda <- Diagonal(length(lambda),lambda)
+            ## compute constant
             k <- lambda_prime*hillslope$lsz +
                 (1-lambda_prime)*Qin +
                 c_bar*q_vol$uz_sz/hillslope$delta_x
             
-            ##X <- Diagonal(length(lambda),lambda) + Diagonal(length(lambda),1-lambda)%*%sz$invAWA
-            ##X <- Diag_lambda + sz$invAWA - Diag_lambda%*%sz$invAWA
-            diag(sz$Diag_mlambda) <- 1-lambda
-            ##sz$X <- sz$Diag_lambda + sz$Diag_mlambda%*%sz$invAWA
-            sz$X <- sz$Diag_mlambda%*%sz$invAWA
-            diag(sz$X) <- diag(sz$X) + lambda
-            
-            #browser()
-            lsz <- as.numeric( solve(sz$X,k) )
-
-            ## recompute cbar and values for initial condition
-            Qbar <- pmin( (hillslope$lsz + Qin + lsz +
-                           as.numeric(sz$invAWA %*% pmin(lsz,hillslope$lsz_max)))/4 ,
-                         hillslope$lsz_max)
-            c_bar <- (Qbar*hillslope$delta_x)/hillslope$m
-            lambda <- sz_opt$omega + sz_opt$theta*c_bar*ts$sub_step/hillslope$delta_x
-            lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*c_bar*ts$sub_step/hillslope$delta_x
-            k <- lambda_prime*hillslope$lsz +
-                (1-lambda_prime)*Qin +
-                c_bar*q_vol$uz_sz/hillslope$delta_x
-
+            ## put lambda in matrices
             diag(sz$Diag_lambda) <- lambda
             diag(sz$Diag_mlambda) <- 1-lambda
+            
             sz$X <- sz$Diag_mlambda%*%sz$invAWA
             diag(sz$X) <- diag(sz$X) + lambda
 
+            ## initial guess
             lsz <- as.numeric( solve(sz$X,k) )
 
-##            lsz <- pmax(lsz,0)
-            
-            ## start iterating
-            #print(range(hillslope$sz))
-            #print(range(q_vol$uz_sz))
-            #print(range(hillslope$lsz))
-            #print(range(Qbar))
-            #print(range(c_bar))
-            #X <- Diagonal(length(lambda),1-lambda) %*% sz$invAWA
-            #X <- sz$invAWA - Diag_lambda %*% sz$invAWA
-            sz$X <- sz$Diag_mlambda %*% sz$invAWA
+            ## restructure for easy iteration - note change of Diag_lambda
+            diag(sz$Diag_lambda) <- 1/lambda
+            k <- k/lambda
+            sz$X <- sz$Diag_lambda %*% sz$Diag_mlambda %*% sz$invAWA
+            dldl <- Diagonal(length(lsz))
+            dedl <- Diagonal(length(lsz))
             flg <- TRUE
             cnt <- 0
             while(flg){
-                lsz_new <-  (k - as.numeric(sz$X %*% pmin(lsz,hillslope$lsz_max)))/lambda
+                e <- lsz + as.numeric(sz$X %*% pmin(lsz,hillslope$lsz_max)) - k
+                tol <- max(abs(e))
                 
-                ##lsz_new <-  (k - as.numeric(X %*% pmin(lsz,hillslope$lsz_max)))/lambda
-                #print(range(lsz_new))
-                cnt <- cnt + 1
-                tol <- max(abs(lsz_new-lsz))
-                if(tol < sz_opt$tol){
+                if( tol < sz_opt$tol ){
                     flg <- FALSE
+                }else{
+                    #browser()
+                    ## new estimate
+                    diag(dldl) <- lsz < hillslope$lsz_max
+                    dedl <- sz$X %*% dldl
+                    diag(dedl) <- diag(dedl)+1
+                    lsz <- lsz - as.numeric( solve(dedl,e) )
+                    cnt <- cnt+1
                 }
                 if(cnt > sz_opt$max_iter){
+                    browser()
                     warning(paste("Maximum number of iterations exceeded in saturated zone solution on step",it,". Current tol:",tol))
                     flg <- FALSE
                 }
-                lsz <- lsz_new
-                #lsz <- pmax(lsz_new,0)
             }
             #print(paste(cnt,tol))
             hillslope$lsz <- lsz
