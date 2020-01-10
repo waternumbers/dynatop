@@ -18,8 +18,11 @@ initialise_dynatop <- function(model,initial_recharge){
     
     ## function for initialising the hillslope
     fhillslope <- function(model,initial_recharge){
+
+        ## sort by order
+        model$hillslope <- model$hillslope[order(model$hillslope$band),]
         
-        hru_var <- c("id","area","s_bar","precip_input","pet_input","delta_x")
+        hru_var <- c("id","area","s_bar","precip_input","pet_input","delta_x","band")
         param_var <- c("qex_max","srz_max","srz_0","ln_t0","m","td","tex")
         
         hs <- list()
@@ -86,7 +89,7 @@ initialise_dynatop <- function(model,initial_recharge){
         
         ## take only what we need
         out <- hs[c("ex","rz","uz","sz","lsz",
-                    "id","area","precip_input","pet_input","delta_x",
+                    "id","area","precip_input","pet_input","delta_x","band",
                     "tex","srz_max","td","qex_max",
                     "lsz_max","m")]
         return(out)
