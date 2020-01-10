@@ -34,18 +34,20 @@ dynatop <- function(model,obs_data,
     }
     
     ## create the common parts of the surface excess solution
-    tmp_area <- rep(NA,ncol(mdl$Dex))
-    tmp_area[hillslope$id] <- hillslope$area
-    tmp_area[channel$id] <- channel$area
-    tmp_inv_tex <- rep(0,ncol(mdl$Dex))
-    tmp_inv_tex[hillslope$id] <- 1/hillslope$tex
-    K_ex <- Diagonal(length(tmp_area),1/tmp_area) %*% mdl$Dex %*%
-        Diagonal(length(tmp_area),tmp_area*tmp_inv_tex)
-    ex <- list(expAdt = expm_setup(K_ex,ts$sub_step),
-               s_0 = rep(0,nrow(K_ex)),# preassign vector for initial condition storages
-               s_dt = rep(0,nrow(K_ex)) # pre assign vector for result
-               )
-    rm(K_ex,tmp_inv_tex,tmp_area)
+    # TO DO - fix this!
+    ## tmp_area <- rep(NA,ncol(mdl$Dex))
+    ## tmp_area[hillslope$id] <- hillslope$area
+    ## tmp_area[channel$id] <- channel$area
+    ## tmp_inv_tex <- rep(0,ncol(mdl$Dex))
+    ## tmp_inv_tex[hillslope$id] <- 1/hillslope$tex
+    ## K_ex <- Diagonal(length(tmp_area),1/tmp_area) %*% mdl$Dex %*%
+    ##     Diagonal(length(tmp_area),tmp_area*tmp_inv_tex)
+    ## ## TO DO fix matrix exp
+    ## ex <- list(expAdt = K_ex, #expm_setup(K_ex,ts$sub_step),
+    ##            s_0 = rep(0,nrow(K_ex)),# preassign vector for initial condition storages
+    ##            s_dt = rep(0,nrow(K_ex)) # pre assign vector for result
+    ##            )
+    ## rm(K_ex,tmp_inv_tex,tmp_area)
     
     ## initialise the vertical flux stores
     q_vol <- list(ex_rz = rep(0,length(hillslope$id)),
@@ -53,19 +55,28 @@ dynatop <- function(model,obs_data,
                   rz_uz = rep(0,length(hillslope$id)),
                   uz_sz = rep(0,length(hillslope$id)),
                   sz_ex = rep(0,length(hillslope$id)),
-                  sz = rep(0,length(hillslope$id)) # integral of l_ex
+                  sz_in = rep(0,length(hillslope$id)), # integral of l_ex inflow
+                  sz = rep(0,length(hillslope$id)) # integral of l_ex outflow
                   )
     
     ## Common parts for the saturated routing
-    sz <- list(Wsz = mdl$Dsz[hillslope$id,hillslope$id],
-               Fsz = mdl$Dsz[channel$id,hillslope$id],
-               Diag_lambda = Diagonal(length(hillslope$id)),
-               Diag_mlambda = Diagonal(length(hillslope$id)),
-               X = Diagonal(length(hillslope$id))
-               )
-    sz$invAWA = Diagonal(length(hillslope$area),1/hillslope$area) %*% sz$Wsz %*% Diagonal(length(hillslope$area),hillslope$area)
-    sz$FszA = sz$Fsz %*% Diagonal(length(hillslope$area),hillslope$area)
-    
+    Wsz <- mdl$Dsz[hillslope$id,hillslope$id]
+    Fsz <- mdl$Dsz[channel$id,hillslope$id]
+    A <- Diagonal(length(hillslope$area),hillslope$area)
+    invA <- Diagonal(length(hillslope$area),1/hillslope$area)
+    invAWA = invA %*% Wsz %*% A
+    sz <- list(band=list(),
+               FszA = Fsz %*% A)
+    for(ii in sort(unique(hillslope$band))){
+        sz$band[[ii]] <- list()
+        idx <- which(hillslope$band==ii)
+        X <- invAWA[,idx,drop=FALSE]
+        jdx <- which(rowSums(X)>0)
+        
+        sz$band[[ii]]$idx <- idx
+        sz$band[[ii]]$jdx <- jdx
+        sz$band[[ii]]$X <- X[jdx,]
+    }
     
     ## simple function for solving ODE
     fode <- function(a,b,x0,t){
@@ -105,7 +116,8 @@ dynatop <- function(model,obs_data,
 
             
             ## Step 1: Distribute any surface storage downslope
-            if(any(hillslope$ex > 0)){
+            ## TO DO reinstate
+            if(any(hillslope$ex > Inf)){
                 ## set input
                 ex$s_0[] <- 0
                 ex$s_0[hillslope$id] <- hillslope$ex
@@ -145,85 +157,79 @@ dynatop <- function(model,obs_data,
             
             ## Step 4: Solve saturated zone
 
-            ## compute initial cbar
-            Qin <- as.numeric( sz$invAWA %*% pmin(hillslope$lsz,hillslope$lsz_max) )
-            Qbar <- pmin(0.5*(hillslope$lsz+Qin),hillslope$lsz_max)
+            ## compute initial cbar based on previous flows
+            Qbar <- pmin(0.5*(hillslope$lsz + hillslope$lsz_in),hillslope$lsz_max)
             c_bar <- (Qbar*hillslope$delta_x)/hillslope$m
 
-            ## estimate \check{lsz}
+            ## compute parameters
             lambda <- sz_opt$omega + sz_opt$theta*c_bar*ts$sub_step/hillslope$delta_x
             lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*c_bar*ts$sub_step/hillslope$delta_x
-            diag(sz$Diag_lambda) <- lambda
-            ##Diag_lambda <- Diagonal(length(lambda),lambda)
+            ## compute constant
             k <- lambda_prime*hillslope$lsz +
-                (1-lambda_prime)*Qin +
+                (1-lambda_prime)*sz$qin +
                 c_bar*q_vol$uz_sz/hillslope$delta_x
             
-            ##X <- Diagonal(length(lambda),lambda) + Diagonal(length(lambda),1-lambda)%*%sz$invAWA
-            ##X <- Diag_lambda + sz$invAWA - Diag_lambda%*%sz$invAWA
-            diag(sz$Diag_mlambda) <- 1-lambda
-            ##sz$X <- sz$Diag_lambda + sz$Diag_mlambda%*%sz$invAWA
-            sz$X <- sz$Diag_mlambda%*%sz$invAWA
-            diag(sz$X) <- diag(sz$X) + lambda
-            
-            #browser()
-            lsz <- as.numeric( solve(sz$X,k) )
-
-            ## recompute cbar and values for initial condition
-            Qbar <- pmin( (hillslope$lsz + Qin + lsz +
-                           as.numeric(sz$invAWA %*% pmin(lsz,hillslope$lsz_max)))/4 ,
-                         hillslope$lsz_max)
-            c_bar <- (Qbar*hillslope$delta_x)/hillslope$m
-            lambda <- sz_opt$omega + sz_opt$theta*c_bar*ts$sub_step/hillslope$delta_x
-            lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*c_bar*ts$sub_step/hillslope$delta_x
-            k <- lambda_prime*hillslope$lsz +
-                (1-lambda_prime)*Qin +
-                c_bar*q_vol$uz_sz/hillslope$delta_x
-
-            diag(sz$Diag_lambda) <- lambda
-            diag(sz$Diag_mlambda) <- 1-lambda
-            sz$X <- sz$Diag_mlambda%*%sz$invAWA
-            diag(sz$X) <- diag(sz$X) + lambda
-
-            lsz <- as.numeric( solve(sz$X,k) )
-
-##            lsz <- pmax(lsz,0)
-            
-            ## start iterating
-            #print(range(hillslope$sz))
-            #print(range(q_vol$uz_sz))
-            #print(range(hillslope$lsz))
-            #print(range(Qbar))
-            #print(range(c_bar))
-            #X <- Diagonal(length(lambda),1-lambda) %*% sz$invAWA
-            #X <- sz$invAWA - Diag_lambda %*% sz$invAWA
-            sz$X <- sz$Diag_mlambda %*% sz$invAWA
-            flg <- TRUE
-            cnt <- 0
-            while(flg){
-                lsz_new <-  (k - as.numeric(sz$X %*% pmin(lsz,hillslope$lsz_max)))/lambda
-                
-                ##lsz_new <-  (k - as.numeric(X %*% pmin(lsz,hillslope$lsz_max)))/lambda
-                #print(range(lsz_new))
-                cnt <- cnt + 1
-                tol <- max(abs(lsz_new-lsz))
-                if(tol < sz_opt$tol){
-                    flg <- FALSE
-                }
-                if(cnt > sz_opt$max_iter){
-                    warning(paste("Maximum number of iterations exceeded in saturated zone solution on step",it,". Current tol:",tol))
-                    flg <- FALSE
-                }
-                lsz <- lsz_new
-                #lsz <- pmax(lsz_new,0)
+            ## pass to compute estimate
+            k <- k/lambda
+            lambda_prime <- lambda_prime/lambda
+            browser()
+            sz$lsz <- hillslope$lsz # old value for computing integral
+            sz$lsz_in <- hillslope$lsz_in
+            hillslope$lsz_in[] <- 0
+            hillslope$lsz[] <- 0
+            for(ii in sort(unique(hillslope$band))){
+                tmp <- sz$band[[ii]]
+                lsz <- k[tmp$idx] - lambda_prime[tmp$idx]*hillslope$lsz_in[tmp$idx]
+                lsz <- pmax(lsz,hillslope$lsz_max[tmp$idx])
+                hillslope$lsz[tmp$idx] <- lsz
+                hillslope$lsz_in[tmp$jdx] <- hillslope$lsz_in[tmp$jdx] + tmp$X%*%lsz
             }
-            #print(paste(cnt,tol))
-            hillslope$lsz <- lsz
-            #browser()
+            
+                
+            ##     hillslope$lsz_in <- hillslope$lsz_in
+            ## for(bnd in sort(unique(hillslope$band))){
+            ##     idx <- which(hillslope$band==bnd)
+            ##     ldz <- hillslope$lsz[idx]
+            ##     k <- k[idx]
+            ##     lsz_in <- hillslope$lsz_in[idx]
+            ##     lp <- lambda_prime[idx]
+            ##     X <- sz$invAWA[,idx,drop=FALSE]
+            ##     lsz_max <- hillslope$lsz_max[idx]
+            
+            ##     lsz <- k - lp*lsz_in
+            ##     lsz <- pmax(lsz,lsz_max)
+
+            ##     y <- X%*%lsz
+            ##     hillslope$lsz_in <- hillslope$lsz_in + y #X%*%lsz
+            ##     ##hillslope$lsz[idx] <- k[idx] - lambda_prime[idx]*hillslope$lsz_in[idx]
+            ##     ##hillslope$lsz[idx] <- pmax(hillslope$lsz[idx],hillslope$lsz_max[idx])
+            ##     ##X <- sz$invAWA[,idx,drop=FALSE]
+            ##     ##hillslope$lsz_in <- hillslope$lsz_in + X%*%hillslope$lsz[idx]
+            ## }
+
+            
+            ## bnd <- 1
+            ## for(ii in 1:length(hillslope$id)){
+            ##     ## if we have moved down a band recompute the fluxes
+            ##     #browser()
+            ##     if(hillslope$band[ii]!=bnd){
+            ##         hillslope$lsz_in <- sz$invAWA%*%hillslope$lsz
+            ##         bnd <- hillslope$band[ii]
+            ##         #print(bnd)
+            ##     }
+                
+            ##     ## compute new flow
+            ##     hillslope$lsz[ii] <- k[ii] - lambda_prime[ii]*hillslope$lsz_in[ii]
+            ##     hillslope$lsz[ii] <- max(hillslope$lsz[ii],hillslope$lsz_max[ii])
+             
+                
+            ## }
+
             ## work out integral fluz
-            q_vol$sz <- ts$sub_step*(pmin(lsz,hillslope$lsz_max) +
-                         pmin(hillslope$lsz,hillslope$lsz_max))/2
-            tilde_sz <- hillslope$sz + q_vol$sz - as.numeric(sz$invAWA%*%q_vol$sz) - q_vol$uz_sz
+            #browser()
+            q_vol$sz_in <- ts$sub_step*( hillslope$lsz_in + sz$lsz_in )/2
+            q_vol$sz <- ts$sub_step*( hillslope$lsz + sz$lsz )/2
+            tilde_sz <- hillslope$sz + q_vol$sz - q_vol$sz_in - q_vol$uz_sz
             hillslope$sz <- pmax(0,tilde_sz)
             q_vol$sz_ez <- hillslope$sz - tilde_sz
             

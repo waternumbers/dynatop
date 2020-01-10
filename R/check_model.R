@@ -123,7 +123,7 @@ check_model <- function(model, verbose=FALSE){
         if( any( model[[ii]] > 1)){
             stop(ii," should have values less or equal to 1")
         }
-        if( any( apply(mdl[[ii]],2,sum) > 1)){
+        if( any( colSums(mdl[[ii]]) > 1)){
             stop(ii," should have column sums that are less or equal to 1")
         }
     }
