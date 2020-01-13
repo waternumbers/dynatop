@@ -16,89 +16,69 @@ initialise_dynatop <- function(model,initial_recharge){
         stop("Initial discharge should be a single positive numeric value")
     }
 
-    ## function for initialising the hillslope
-    fhillslope <- function(model,initial_recharge){
+    
+    ## extract redistribution tables
+    redist <- list()
+    redist$lex <- as.matrix(summary(model$Dex))
+    redist$lsz <- as.matrix(summary(model$Dsz))
 
-        ## sort by order
-        model$hillslope <- model$hillslope[order(model$hillslope$band),]
+    ## sort by order - this is the basic sequencing at the moment
+    model$hillslope <- model$hillslope[order(model$hillslope$band),]
+    
+    ## list for output
+    hru <- list()
 
-        hru_var <- c("id","area","s_bar","precip_input","pet_input","delta_x","band")
-
-        lst <- list()
-        for(jj in nrow(model$hillslope)){
-            h <- list(type="hillslope")
-            for(ii in hru_var){
-                h$properties[[ii]] <- unname( model$hillslope[jj,ii] )
-            }
-            for(ii in param_var){
-                h$parameters[[ii]] <- unname( model$param[ model$hillslope[jj,ii] ] )
-            }
-
-            ## initialise surface storage to 0
-            h$states$ex <- 0
-
-            ## initialise root zone based on fraction constrained within 0,1
-            h$states$rz <- max( min( h$parameters$srz_0, 1) ,0 ) *
-                h$parameters$srz_max
-
-            ## initialise based on steady state of saturated zone given constant recharge from unsturated zone
-
-            ## maximum lateral flow from saturated zone
-            h$states$lsz_max <- exp(h$parameters$ln_t0)*h$properties$s_bar # for unit width
-            h$states$lsz_max <- h$states$lsz_max / h$properties$delta_x # for specified width
-
-            ## initialise
-            h$states$lsz <- h$states$lsz_in <- initial_recharge
-            h$states$lsz <- min(h$states$lsz,h$states$lsz_max)
-
-            ## compute the deficit
-            gamma <- sum(h$properties$area*(h$properties$atb_bar - h$parameters$ln_t0))  / sum(h$properties$area)
-            h$states$sz <- h$parameters$m*(gamma + log(h$states$lsz))
-            h$states$sz <- max(0,h$sz)
-
-            ## unsaturated storage by inverse of eqn for q_uz in Beven & Wood 1983
-            h$states$uz <- pmax(0, intial_recharge * h$parameters$td * h$parameters$sz, na.rm=TRUE)
-
-            ## take only what we need
-            lst[[jj]] <- h
+    ## do hillslopes first
+    cnt <- 1
+    ## convert parameters to values
+    h0 <- create_hillslope()
+    hillslope <- model$hillslope
+    for(ii in names(h0$param)){
+        hillslope[,ii] <- unname( model$param[hillslope[,ii]] )
+    }
+    hillslope <- split(hillslope, seq(nrow(hillslope)),drop=TRUE)
+    for(hs in hillslope){
+        h <- h0 #create_hillslope()
+        h$id <- hs$id
+        prop <- intersect(names(h$prop),names(hs))
+        h$prop <- as.list(hs[prop])
+        param <- intersect(names(h$param),names(hs))
+        h$param <- as.list(hs[param])
+        hru[[cnt]] <- initialise_hillslope(h,initial_recharge)
+        cnt <- cnt+1
+    }
+    
+    ## do channels second
+    h <- create_channel()
+    channel <- model$channel
+    for(ii in names(h$param)){
+        channel[,ii] <- unname( model$param[channel[,ii]] )
+    }
+    channel <- split(channel, seq(nrow(channel)),drop=TRUE)
+    for(hs in channel){
+        h <- create_channel()
+        h$id <- hs$id
+        prop <- intersect(names(h$prop),names(hs))
+        h$prop <- as.list(hs[prop])
+        param <- intersect(names(h$param),names(hs))
+        h$param <- as.list(hs[param])
+        hru[[cnt]] <- initialise_channel(h)
+        cnt <- cnt+1
+    }
+    
+    ## work out the reweighting
+    area <- sapply(hru,FUN=function(x){x$prop$area})
+    for(jj in names(redist)){
+        idx <- split(redist$lex[,1],redist$lex[,2])
+        w <- split(redist$lex[,3],redist$lex[,2])
+        kdx <- sapply(split(redist$lex[,2],redist$lex[,2]),unique)
+        for(ii in 1:length(kdx)){
+            k <- kdx[ii]
+            hru[[k]]$output[[jj]]$id <- idx[[ii]]
+            hru[[k]]$output[[jj]]$w <- w[[ii]]*area[k]/area[idx[[ii]]]
         }
-        return(lst)
     }
-
-    ## function for initialising the channel
-    fchannel <- function(model){
-        lst <- list()
-        for(jj in 1:nrow(model$channel)){
-            h <- list()
-            hru_var <- c("id","area","precip_input","pet_input")
-
-            for(ii in hru_var){
-                h$properties$[[ii]] <- unname( model$channel[jj,ii] )
-            }
-            lst[[jj]] <- h
-        }
-        return(lst)
-    }
-
-    hru <- c(fhillslope(model,initial_recharge),
-             fchannel(model))
-
-    ## add redistribution
-    tbl_ex <- as.matrix(summary(model$Dex))
-    tbl_sz <- as.matrix(summary(model$Dsz))
-
-    area <- sapply(hru,FUN=function(x){x$properties$area})
-    for(ii in 1:length(hru)){
-        ## do ex redistribution
-        idx <- tbl_ex[,2] == hru[[ii]]$id
-        hru[[ii]]$properties$rex$idx <- tbl_ex[idx,1]
-        hru[[ii]]$properties$rex$w <- tbl_ex[idx,3]*area[ii]/area[idx]
-        ## do ex redistribution
-        idx <- tbl_sz[,2] == hru[[ii]]$id
-        hru[[ii]]$properties$rsz$idx <- tbl_sz[idx,1]
-        hru[[ii]]$properties$rsz$w <- tbl_sz[idx,3]*area[ii]/area[idx]
-    }
-
+    
     return(hru)
 }
 

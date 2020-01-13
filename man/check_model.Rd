@@ -10,15 +10,13 @@ check_model(model, verbose = FALSE)
 \item{model}{a dynamic TOPMODEL list object}
 
 \item{verbose}{if set prints out further information}
-
-\item{check_channel}{flag indicating is additional checks for channel routing are to be carried out}
 }
 \value{
-NULL if tests passed, otherwise fails
+a list of expected input series
 }
 \description{
 This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model.
 }
 \details{
-The checks performed and basic 'sanity' checks. they do not check for the logic of the parameter values nor the consistncy of states and parameters.
+The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters.
 }

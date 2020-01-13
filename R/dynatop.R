@@ -17,7 +17,7 @@ dynatop <- function(model,obs_data,
                                 max_iter=100,
                                 tol=1e-6)){
 
-    #browser()
+   
     ## check the model
     input_series <- check_model(model)
     ## check input and get model timestep
@@ -29,35 +29,42 @@ dynatop <- function(model,obs_data,
     }else{ # initialise the model
         hru <- initialise_dynatop(model,initial_recharge)
     }
-
-
-    ## initialise the vertical flux stores
-    lateral_flux <- list(
+      
+    ## initialise the redistributed fluxes
+    redist_flux <- list(
+        precip = rep(0,length(hru)),
+        pet = rep(0,length(hru)),
         lex = rep(0,length(hru)),
-        lsz = rep(0,length(hru))
+        lsz = rep(0,length(hru)),
+        qch = rep(0,length(hru))
     )
 
-    ## simple function for solving ODE
-    fode <- function(a,b,x0,t){
-        b <- pmax(b,1e-10)
-        unname( x0*exp(-b*t) + (a/b)*(1-exp(-b*t)) )
-    }
-
+    
+    ## compute the summaries that are used in the simulation
+    comp_summ <- list(
+        precip_names  = sapply(hru,function(x){x$prop$precip_series}),
+        pet_names = sapply(hru,function(x){x$prop$pet_series}),
+        clear_redist = setdiff(names(redist_flux),c("precip","pet")),
+        channel_idx = sapply(hru,function(x){ifelse(x$type=="channel",x$id,NA)})
+    )
+    comp_summ$channel_idx[is.finite(comp_summ$channel_idx)]
+                          
     ## initialise the output
-    channel_inflow <- reclass( matrix(NA,nrow(obs_data),length(model$channel$id)), match.to=obs_data )
-    names(channel_inflow) <- model$channel$id
-
+    channel_inflow <- reclass( matrix(NA,nrow(obs_data),length(comp_summ$channel_idx)), match.to=obs_data )
+    names(channel_inflow) <- comp_summ$channel_idx
+    
     ## remove time properties from input - stops variable type errors later
     obs_data <- as.matrix(obs_data)
 
 
     ## message("Running Dynamic TOPMODEL using ", length(hillslope$id), " hillslope units and ", length(channel$id), " channel units")
 
+    
     for(it in 1:nrow(obs_data)){
-
-        ## set the inputs to the hillslope
-        precip <- obs_data[it,]
-        pet <- obs_data[it,]
+        
+        ## set the precip and pet inputs
+        redist_flux$precip <- obs_data[it,comp_summ$precip_names]
+        redist_flux$pet <- obs_data[it,comp_summ$pet_names]
 
         ## set the channel inflow to zero to be added to
         channel_inflow[it,] <- 0
@@ -66,48 +73,35 @@ dynatop <- function(model,obs_data,
         for(inner in 1:ts$n_sub_step){
 
             ## clear all lateral fluxes
-            for(ii in names(lateral_flux)){
-                lateral_flux[[ii]][] <- 0
+            for(ii in comp_summ$clear_redist){
+                redist_flux[[ii]][] <- 0
             }
 
             for(ii in 1:length(hru)){
 
                 h <- hru[[ii]]
-
+                
                 ## set inputs
-                for(jj in names(h$input)){
-                    if(jj == precip){
-                        h$input$precip$val <- precip[h$input$precip$id]
-                        next
-                    }
-                    if(jj == pet){
-                        h$input$pet$val <- pet[h$input$precip$id]
-                        next
-                    }
-                    h$input[[jj]]$val <- lateral_flux[[jj]][h$input[[jj]]$id]
+                for(jj in names(hru[[ii]]$input)){
+                    hru[[ii]]$input[[jj]] <- redist_flux[[jj]][h$id]
                 }
 
-
-                if(h$type == "hillslope"){
-                    ##evolve states
-                    h <- evolve_hillslope(h,ts$time_step,sz_opt)
-                    ## copy fluxes back
-                    for(jj in names(h$ouput)){
-                        lateral_flux[[jj]][h$out[[jj]]$id] <-
-                            lateral_flux[[jj]][h$out[[jj]]$id] + h$output[[jj]]$val
+                ## evolve hru
+                hru[[ii]] <- switch(h$type,
+                             "hillslope" = evolve_hillslope(hru[[ii]],ts$sub_step,sz_opt),
+                             "channel" = evolve_channel(hru[[ii]],ts$sub_step))
+                
+                ## copy fluxes back
+                for(jj in names(h$ouput)){
+                    redist_flux[[jj]][hru[[ii]]$out[[jj]]$id] <-
+                        redist_flux[[jj]][hru[[ii]]$out[[jj]]$id] + hru[[ii]]$output[[jj]]$val
                 }
-
-                if(h$type==h$channel){
-                    tmp <- lateral_flux$lex[ii] +
-                        lateral_flux$lex[ii] +
-                        precip[h$input$precip$id]*ts$time_step
-                    channel_inflow[it,ii] <- channel_inflow[it,ii]/(3600*ts$time_step)
-                }
-
-                ## put hru back into list
-                hru[[ii]] <- h
+                
             } ## end of hru loop
+            ## copy to model output
+            channel_inflow[it,] <- channel_inflow[it,] + redist_flux$qch[comp_summ$channel_idx]
         } ## end of inner loop
+        channel_inflow[it,] <- channel_inflow[it,]/(3600*ts$step)
     } ## end of timestep loop
 
     model$states <- hru
