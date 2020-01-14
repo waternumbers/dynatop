@@ -37,12 +37,6 @@ dynatop <- function(model,obs_data,
         lsz = rep(0,length(hru))
     )
 
-    ## simple function for solving ODE
-    fode <- function(a,b,x0,t){
-        b <- pmax(b,1e-10)
-        unname( x0*exp(-b*t) + (a/b)*(1-exp(-b*t)) )
-    }
-
     ## initialise the output
     channel_inflow <- reclass( matrix(NA,nrow(obs_data),length(model$channel$id)), match.to=obs_data )
     names(channel_inflow) <- model$channel$id
@@ -95,8 +89,8 @@ dynatop <- function(model,obs_data,
                     for(jj in names(h$ouput)){
                         lateral_flux[[jj]][h$out[[jj]]$id] <-
                             lateral_flux[[jj]][h$out[[jj]]$id] + h$output[[jj]]$val
+                    }
                 }
-
                 if(h$type==h$channel){
                     tmp <- lateral_flux$lex[ii] +
                         lateral_flux$lex[ii] +
