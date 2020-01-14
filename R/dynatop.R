@@ -17,7 +17,7 @@ dynatop <- function(model,obs_data,
                                 max_iter=100,
                                 tol=1e-6)){
 
-    #browser()
+
     ## check the model
     input_series <- check_model(model)
     ## check input and get model timestep
@@ -30,78 +30,79 @@ dynatop <- function(model,obs_data,
         hru <- initialise_dynatop(model,initial_recharge)
     }
 
-
-    ## initialise the vertical flux stores
-    lateral_flux <- list(
-        lex = rep(0,length(hru)),
-        lsz = rep(0,length(hru))
-    )
-
     ## initialise the output
-    channel_inflow <- reclass( matrix(NA,nrow(obs_data),length(model$channel$id)), match.to=obs_data )
-    names(channel_inflow) <- model$channel$id
+    #channel_inflow <- reclass( matrix(NA,nrow(obs_data),length(comp_summ$channel_idx)), match.to=obs_data )
+    #names(channel_inflow) <- comp_summ$channel_idx
 
     ## remove time properties from input - stops variable type errors later
     obs_data <- as.matrix(obs_data)
 
 
+    ## sort hru index by band so compute in the correct order
+    bnd <- vapply(hru,function(x){x$prop$band},numeric(1))
+    seq_idx <- order(bnd)
+
     ## message("Running Dynamic TOPMODEL using ", length(hillslope$id), " hillslope units and ", length(channel$id), " channel units")
 
+    #browser()
     for(it in 1:nrow(obs_data)){
+        print(it)
 
-        ## set the inputs to the hillslope
-        precip <- obs_data[it,]
-        pet <- obs_data[it,]
+        ## set the external inputs
+        hru <- lapply(hru,function(x,y){
+                x$input <- lapply(x$input,function(x){x[] <- 0})
+                x$input$precip <- y[x$param$precip_series]
+                x$input$pet <- y[x$param$pet_series]
+                return(x)},
+                y=obs_data[it,])
+
+        ## set the precip and pet inputs
+        #redist_flux$precip <- obs_data[it,comp_summ$precip_names]
+        #redist_flux$pet <- obs_data[it,comp_summ$pet_names]
 
         ## set the channel inflow to zero to be added to
-        channel_inflow[it,] <- 0
+        #channel_inflow[it,] <- 0
 
         ## loop sub steps
         for(inner in 1:ts$n_sub_step){
 
-            ## clear all lateral fluxes
-            for(ii in names(lateral_flux)){
-                lateral_flux[[ii]][] <- 0
-            }
+            ## set the fluxes
+            hru <- lapply(hru,function(x,y){
+                x$input <- lapply(x$input,function(x){x[] <- 0})
+                x$input$precip <- y[x$param$precip_series]
+                x$input$pet <- y[x$param$pet_series]
+                return(x)},
+                y=obs_data[it,])
 
-            for(ii in 1:length(hru)){
+            #browser()
+            ## evolve the hrus
+            for(ii in seq_idx){
+                #print(ii)
+                ## evolve hru
 
-                h <- hru[[ii]]
 
-                ## set inputs
-                for(jj in names(h$input)){
-                    if(jj == precip){
-                        h$input$precip$val <- precip[h$input$precip$id]
-                        next
+                hru[[ii]] <- switch(hru[[ii]]$type,
+                             "hillslope" = evolve_hillslope(hru[[ii]],ts$sub_step,sz_opt),
+                             "channel" = evolve_channel(hru[[ii]],ts$sub_step))
+
+                ## copy fluxes back
+                #if(ii == 26607){
+                #    browser()
+                #}
+
+                #browser()
+                for(jj in names(hru[[ii]]$output)){
+                    if( length(hru[[ii]]$out[[jj]]$id) > 0){
+                        for(kk in 1:length(hru[[ii]]$out[[jj]]$id)){
+                            k <- hru[[ii]]$out[[jj]]$id[kk]
+                            hru[[k]]$input[[jj]] <- hru[[k]]$input[[jj]] + hru[[ii]]$output[[jj]]$val[kk]
+                        }
                     }
-                    if(jj == pet){
-                        h$input$pet$val <- pet[h$input$precip$id]
-                        next
-                    }
-                    h$input[[jj]]$val <- lateral_flux[[jj]][h$input[[jj]]$id]
-                }
-
-
-                if(h$type == "hillslope"){
-                    ##evolve states
-                    h <- evolve_hillslope(h,ts$time_step,sz_opt)
-                    ## copy fluxes back
-                    for(jj in names(h$ouput)){
-                        lateral_flux[[jj]][h$out[[jj]]$id] <-
-                            lateral_flux[[jj]][h$out[[jj]]$id] + h$output[[jj]]$val
-                    }
-                }
-                if(h$type==h$channel){
-                    tmp <- lateral_flux$lex[ii] +
-                        lateral_flux$lex[ii] +
-                        precip[h$input$precip$id]*ts$time_step
-                    channel_inflow[it,ii] <- channel_inflow[it,ii]/(3600*ts$time_step)
-                }
-
-                ## put hru back into list
-                hru[[ii]] <- h
             } ## end of hru loop
+            ## copy to model output
+            #channel_inflow[it,] <- channel_inflow[it,] + redist_flux$qch[comp_summ$channel_idx]
         } ## end of inner loop
+        #channel_inflow[it,] <- channel_inflow[it,]/(3600*ts$step)
     } ## end of timestep loop
 
     model$states <- hru

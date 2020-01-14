@@ -23,12 +23,12 @@ check_model <- function(model, verbose=FALSE){
     ## create a list of data.frames describing the data frames in the model
     df_prop <- list(
         hillslope = data.frame(name = c("id","area","s_bar","delta_x",
-                                        "precip_input","pet_input",
+                                        "precip_series","pet_series",
                                         "qex_max","srz_max","srz_0","ln_t0","m","td","tex"),
                                type=c(rep("numeric",4),rep("character",9)),
                                role = c(rep("property",4),rep("data_series",2),rep("parameter",7)),
                                stringsAsFactors=FALSE),
-        channel = data.frame(name = c("id","area","length","next_id","precip_input","pet_input","v_ch"),
+        channel = data.frame(name = c("id","area","length","next_id","precip_series","pet_series","v_ch"),
                              type=c(rep("numeric",4),rep("character",3)),
                              role = c(rep("property",4),rep("data_series",2),"parameter"),
                              stringsAsFactors=FALSE),

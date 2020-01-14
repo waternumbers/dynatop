@@ -7,9 +7,10 @@
 dynatop(
   model,
   obs_data,
-  initial_recharge = NA,
+  initial_recharge = NULL,
   sim_time_step = NULL,
-  use_states = FALSE
+  use_states = FALSE,
+  sz_opt = list(omega = 0.7, theta = 0.7, max_iter = 100, tol = 1e-06)
 )
 }
 \arguments{
