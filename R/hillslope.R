@@ -128,8 +128,8 @@ evolve_hillslope <- function(h,delta_t,sz_opt){
 
 
     ## Step 4: Solve saturated zone
-    qbar <- (h$state$lsz+h$state$lsz_in+h$in$lex+
-             max(h$state$lsz,h$in$lex))/4
+    qbar <- (h$state$lsz+h$state$lsz_in+h$input$lex+
+             max(h$state$lsz,h$input$lex))/4
     cbar <- (qbar*h$prop$delta_x)/h$param$m
 
     lambda <- sz_opt$omega + sz_opt$theta*c_bar*delta_t/hs$prop$delta_x
@@ -144,7 +144,7 @@ evolve_hillslope <- function(h,delta_t,sz_opt){
 
     ## do storage calc
     tilde_sz <- h$sz + delta_t*( (h$state$lsz+lsz)/2 -
-                                 (h$in$lsz+h$state$lsz_in)/2 ) -
+                                 (h$input$lsz+h$state$lsz_in)/2 ) -
         h$flux$uz_sz
 
     h$state$sz <- max(0,tilde_sz)
@@ -152,7 +152,7 @@ evolve_hillslope <- function(h,delta_t,sz_opt){
 
     ## replace states
     h$state$lsz <- lsz
-    h$state$lsz_in <- h$in$lsz
+    h$state$lsz_in <- h$input$lsz
 
     ## redistribute
     h$output$lsz$val <-  h$output$lsz$w *h$state$lsz
