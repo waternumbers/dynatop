@@ -16,67 +16,16 @@ initialise_dynatop <- function(model,initial_recharge){
         stop("Initial discharge should be a single positive numeric value")
     }
 
-    
-    ## extract redistribution tables
-    redist <- list()
-    redist$lex <- as.matrix(summary(model$Dex))
-    redist$lsz <- as.matrix(summary(model$Dsz))
+    hru <- create_hru(model)
 
-    ## sort by order - this is the basic sequencing at the moment
-    model$hillslope <- model$hillslope[order(model$hillslope$band),]
     
-    ## list for output
-    hru <- list()
-
-    ## do hillslopes first
-    cnt <- 1
-    ## convert parameters to values
-    h0 <- create_hillslope()
-    hillslope <- model$hillslope
-    for(ii in names(h0$param)){
-        hillslope[,ii] <- unname( model$param[hillslope[,ii]] )
-    }
-    hillslope <- split(hillslope, seq(nrow(hillslope)),drop=TRUE)
-    for(hs in hillslope){
-        h <- h0 #create_hillslope()
-        h$id <- hs$id
-        prop <- intersect(names(h$prop),names(hs))
-        h$prop <- as.list(hs[prop])
-        param <- intersect(names(h$param),names(hs))
-        h$param <- as.list(hs[param])
-        hru[[cnt]] <- initialise_hillslope(h,initial_recharge)
-        cnt <- cnt+1
-    }
-    
-    ## do channels second
-    h <- create_channel()
-    channel <- model$channel
-    for(ii in names(h$param)){
-        channel[,ii] <- unname( model$param[channel[,ii]] )
-    }
-    channel <- split(channel, seq(nrow(channel)),drop=TRUE)
-    for(hs in channel){
-        h <- create_channel()
-        h$id <- hs$id
-        prop <- intersect(names(h$prop),names(hs))
-        h$prop <- as.list(hs[prop])
-        param <- intersect(names(h$param),names(hs))
-        h$param <- as.list(hs[param])
-        hru[[cnt]] <- initialise_channel(h)
-        cnt <- cnt+1
-    }
-    
-    ## work out the reweighting
-    area <- sapply(hru,FUN=function(x){x$prop$area})
-    for(jj in names(redist)){
-        idx <- split(redist$lex[,1],redist$lex[,2])
-        w <- split(redist$lex[,3],redist$lex[,2])
-        kdx <- sapply(split(redist$lex[,2],redist$lex[,2]),unique)
-        for(ii in 1:length(kdx)){
-            k <- kdx[ii]
-            hru[[k]]$output[[jj]]$id <- idx[[ii]]
-            hru[[k]]$output[[jj]]$w <- w[[ii]]*area[k]/area[idx[[ii]]]
-        }
+    for(ii in 1:length(hru)){
+#        print(ii)
+        
+        hru[[ii]] <- switch(hru[[ii]]$type,
+                            hillslope = initialise_hillslope(hru[[ii]],initial_recharge),
+                            channel = initialise_channel(hru[[ii]])
+                            )
     }
     
     return(hru)
