@@ -57,7 +57,14 @@ hru <- list(external("ex"),
             branch("b1","l1",0.5),
             mux("m1",c("b1","l2")))
 names(hru) <- vapply(hru,function(x){x$id},character(1))
+
+## source Rcpp code
+sourceCpp("dynatop_lb.cpp")
+
+
 hru <- rep(hru,10000)
+
+
 system.time({
     for(ii in names(hru)){
         #print(ii)
@@ -71,7 +78,7 @@ system.time({
             for(jj in 1:20){
                 hru[[ii]]$output <- hru[[ii]]$output + 2
             }
-            
+
         }
         if(hru[[ii]]$type=="branch"){
             #hru[[ii]] <- evolve_branch(hru[[ii]],hru[[hru[[ii]]$uptree]]$output)
@@ -87,4 +94,4 @@ system.time({
         }
     }
 })
-    
+
