@@ -43,7 +43,8 @@ hillslope <- function(id,us,prop,param){
                  "uz"=0,
                  "sz"=0,
                  "lsz_in"=0,
-                 "lsz"=0),
+                 "lsz"=0,
+                 "lsz_max"=0),
          prop=prop,
          param=param)
 }
@@ -56,17 +57,19 @@ channel <- function(id,us,prop){
          prop=prop)
 }
 
+test_prop <- c("mapid"=1,"area"=1,"atb_bar"=0.25,"s_bar"=0.003,"delta_x"=1)
+test_param <- c("qex_max"=34,"srz_max"=1,"srz_0"=0.5,"ln_t0"=25,"m"=19,"td"=100,"tex"=92)
 
 hru <- list(external("ex"),
-            hillslope("h1","ex",NA,NA),
-            hillslope("h2","ex",NA,NA),
+            hillslope("h1","ex",test_prop,test_param),
+            hillslope("h2","ex",test_prop,test_param),
             mux("m1",c("ex","h1","h2")),
             channel("c1","m1",c("area"=1)))
 
 names(hru) <- vapply(hru,function(x){x$id},character(1))
 
 sourceCpp("landb.cpp")
-rcpp_dynatop(hru,c("a"=4,"b"=34),list(time_step=1))
+rcpp_dynatop(hru,c("a"=4,"b"=34),list(time_step=1,omega=07,theta=0.7))
 
 hru2 <- rep(hru,25000)
 system.time({rcpp_dynatop(hru2,c("a"=4,"b"=34))})

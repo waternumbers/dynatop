@@ -81,22 +81,33 @@ void f_hillslope(List h, NumericVector input, List opt){
   double ts = opt["time_step"];
   double omega = opt["omega"];
   double theta = opt["theta"];
+  //Rcout << ts << "\n";
+  //Rcout << omega << "\n";
+  //Rcout << theta << "\n";
   
-
   // solve surface excess
   double ex = fode(input["lex"]/(prop["area"]*ts),
 		   1/param["tex"],
 		   state["ex"],ts);
+  //Rcout << "ex is: " << ex << "\n";
+  
   double lex = ex + (input["lex"]/prop["area"]) - state["ex"];
+  //Rcout << "lex is: " << lex << "\n";
   state["ex"] = ex;
+  //Rcout << "state is: " << as<double>(state["ex"]) << "\n";
   output["lex"] = lex*prop["area"];
-
+  //Rcout << "output is: " << as<double>(output["lex"]) << "\n";
+  //Rcout << "end ex" << "\n";
+  
   // solve the root zone
-  double q_ex_rz = min(state["ex"]/ts, param["qex_max"]);
+  double q_ex_rz = state["ex"]/ts;
+  if( q_ex_rz > param["qex_max"]){q_ex_rz=param["qex_max"];};
   double tilde_rz = fode(input["precip"] + q_ex_rz,
 			 input["pet"]/param["srz_max"],
 			 state["rz"],ts);
-  state["rz"] = min(tilde_rz,param["srz_max"]);
+  state["rz"] = tilde_rz;
+  double ffs = param["srz_max"];
+  if( state["rz"] > ffs ){state["rz"] = param["srz_max"];};
   double q_rz_ex = 0 ;
   double q_rz_uz = tilde_rz - state["rz"];
   if( state["sz"] <= 0 ){
@@ -104,33 +115,46 @@ void f_hillslope(List h, NumericVector input, List opt){
     q_rz_uz = 0;
   }
 
+  //Rcout << "end rz" << "\n";
+  
   // unsaturated zone
   double tilde_uz = fode( q_rz_uz/ts,
 			  1/(state["sz"]*param["td"]),
 			  state["uz"],ts);
   double q_uz_sz = state["uz"] + q_rz_uz - tilde_uz;
   state["uz"] = tilde_uz;
-
+  //Rcout << "end uz" << "\n";
+  
   // saturated zone
+  double qtmp = state["lsz"];
+  if( input["lsz"] > qtmp ){ qtmp = input["lsz"]; };
   double qbar = ( state["lsz"] + state["lsz_in"] + input["lsz"]
-		  + max(state["lsz"], input["lsz"]) )/4;
+		  + qtmp )/4;
   double cbar = (qbar * prop["delta_x"])/param["m"];
   double lambda = omega + theta*cbar*ts/prop["delta_x"];
   double lambda_prime = omega + (1-theta)*cbar*ts/prop["delta_x"];
-  double k = lambda_prime*state["lsz"] +
-    (1-lambda_prime)*min(state["lsz_in"],state["lsz_max"]) +
-    cbar*q_uz_sz/prop["delta_x"];
-  double lsz = (k - lambda_prime*min(input["lsz"],state["lsz_max"]))/lambda;
-  lsz = min(lsz,state["lsz_max"]);
+  double lsz_in_lim_prev = state["lsz_in"];
+  if( lsz_in_lim_prev > state["lsz_max"] ){lsz_in_lim_prev = state["lsz_max"];};
+  double lsz_in_lim = input["lsz"];
+  if( lsz_in_lim > state["lsz_max"] ){lsz_in_lim = state["lsz_max"];};
 
+  
+  double k = lambda_prime*state["lsz"] +
+    (1-lambda_prime)*lsz_in_lim_prev +
+    cbar*q_uz_sz/prop["delta_x"];
+  double lsz = (k - lambda_prime*lsz_in_lim)/lambda;
+  if( lsz > state["lsz_max"] ){lsz = state["lsz_max"];}
+  
   // mass ballance on saturated zone
   double tilde_sz = state["sz"] + ts*(state["lsz"]+lsz)/2 - ts*(input["lsz"]+state["lsz_in"])/2;
-  state["sz"] = max(tilde_sz,0);
+  state["sz"] = tilde_sz;
+  if( state["sz"] <= 0 ){state["sz"] = 0;};
   double q_sz_ex = state["sz"] - tilde_sz;
   state["lsz"] = lsz;
   state["lsz_in"] = input["lsz"];
   output["lsz"] = state["lsz"]*prop["area"];
-
+  //Rcout << "end sz" << "\n";
+  
   // correct stores
   state["ex"] = state["ex"] + q_rz_ex + q_sz_ex;
   if( state["sz"] <= 0 ){
@@ -157,6 +181,7 @@ void rcpp_dynatop(List hru, NumericVector obs, List opt){
   for( int i=0; i<n; ++i){
     List h = hru[i];
     std::string type = h["type"];
+    //Rcout << type << "\n";
 
     if( type == "ex" ){
       f_ex(h,obs);
