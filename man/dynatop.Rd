@@ -5,22 +5,21 @@
 \title{Run dynamic topmodel}
 \usage{
 dynatop(
-  model,
+  hru,
   obs_data,
   initial_recharge = NULL,
   sim_time_step = NULL,
-  use_states = FALSE,
-  sz_opt = list(omega = 0.7, theta = 0.7, max_iter = 100, tol = 1e-06)
+  sz_opt = list(omega = 0.7, theta = 0.7)
 )
 }
 \arguments{
-\item{model}{TODO}
-
 \item{obs_data}{TODO}
 
 \item{initial_recharge}{Initial recharge to the saturated zone in steady state in m/hr}
 
 \item{sim_time_step}{simulation timestep in hours, default value of NULL results in data time step}
+
+\item{model}{TODO}
 
 \item{use_states}{should the states in the model be used (default FALSE)}
 }
