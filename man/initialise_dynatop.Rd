@@ -3,12 +3,12 @@
 \name{initialise_dynatop}
 \alias{initialise_dynatop}
 \alias{initialise}
-\alias{create_hru}
+\alias{model_to_hru}
 \title{Initialises the hru states for a dynatop simulation}
 \usage{
 initialise(hru, initial_recharge)
 
-create_hru(model)
+model_to_hru(model)
 }
 \arguments{
 \item{hru}{a list of one or more dynamic TOPMODEL HRUs}
@@ -25,5 +25,5 @@ A list of lists, one list for each HRU type which contains vectors of states and
 \description{
 Initialise the states of the different hru types. these can be time varying such as store of fluxes or fixed properties such as parmeter values and areas
 
-Initialise the states of the different hru types. these can be time varying such as store of fluxes or fixed properties such as parmeter values and areas
+This creates and populates the hru table, properties and parameters of the hru
 }

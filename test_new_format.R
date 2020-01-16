@@ -4,7 +4,7 @@ library(Matrix)
 #devtools::load_all("./dynatop")
 
 #mdl <- readRDS("./dynatop/data/Swindale_model.rds")
-mdl <- readRDS("Swindale_ordered.rds")
+mdl <- readRDS("./dynatop/data/Swindale_ordered.rds")
 load("./dynatop/data/test_catchment.rda")
 
 
@@ -37,9 +37,13 @@ while(sum(tmp>1)>0){
 mdl$Dex <- mdl$Dsz
 
 mdl$param <- c(mdl$param,'qex_max_default'=Inf)
-
+mdl$hillslope[,'atb_bar'] <- mdl$hillslope[,'area']/mdl$hillslope[,'s_bar']
 devtools::load_all("./dynatop")
 check_model(mdl)
+
+hru <- model_to_hru(mdl)
+
+devtools::load_all("./dynatop"); hru <- model_to_hru(mdl)
 ##mdl$states <- initialise_dynatop(mdl,0.01)
 profvis::profvis({mdl$states <- initialise_dynatop(mdl,0.01)})
 

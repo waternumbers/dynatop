@@ -27,4 +27,7 @@ Functions for creating, checking, initialising and evolving a hillslope HRU.
 \examples{
 tmp <- template_hru()
 check_hru(tmp)
+## add a mock input to combine
+tmp[['mux']]$new_input <- tmp[['ex']]$output
+check_hru(tmp)
 }
