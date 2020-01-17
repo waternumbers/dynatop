@@ -41,6 +41,19 @@ mdl$hillslope[,'atb_bar'] <- mdl$hillslope[,'area']/mdl$hillslope[,'s_bar']
 devtools::load_all("./dynatop")
 check_model(mdl)
 
+tmp <- dynatop(mdl,test_catchment$obs[1:2,],0.1)
+
+profvis::profvis({tmp2 <- dynatop(tmp$model,test_catchment$obs[1:100,],use_states=TRUE)})
+
+system.time({ tmp2 <- dynatop(tmp$model,test_catchment$obs,use_states=TRUE)})
+
+dynatop_cp <- compiler::cmpfun(dynatop)
+
+profvis::profvis({tmp2 <- dynatop_cp(tmp$model,test_catchment$obs[1:20,],use_states=TRUE)})
+
+
+
+
 hru <- model_to_hru(mdl)
 
 devtools::load_all("./dynatop"); hru <- model_to_hru(mdl)
@@ -68,7 +81,7 @@ tmp <- dynatop(mdl,test_catchment$obs[1:2,],0.1,use_states=TRUE)
 ## h0 <- create_hillslope()
 ## prop_names <- intersect(names(h0$prop),names(hillslope))
 ## prop <- rep(list(NULL),nrow(hillslope))
-## for(ii in prop_names){   
+## for(ii in prop_names){
 ##     tmp <- lapply(hillslope[[ii]],
 ##                   function(x,nm){setNames(list(x),nm)},
 ##                   nm=ii)
