@@ -43,13 +43,13 @@ check_model(mdl)
 
 tmp <- dynatop(mdl,test_catchment$obs[1:2,],0.1)
 
-profvis::profvis({tmp2 <- dynatop(tmp$model,test_catchment$obs[1:100,],use_states=TRUE)})
+profvis::profvis({tmp2 <- dynatop(tmp$model,test_catchment$obs[2270:2272,],use_states=TRUE)})
 
 system.time({ tmp2 <- dynatop(tmp$model,test_catchment$obs,use_states=TRUE)})
 
 dynatop_cp <- compiler::cmpfun(dynatop)
 
-profvis::profvis({tmp2 <- dynatop_cp(tmp$model,test_catchment$obs[1:20,],use_states=TRUE)})
+profvis::profvis({tmp2 <- dynatop_cp(tmp$model,test_catchment$obs[1:10,],use_states=TRUE)})
 
 
 

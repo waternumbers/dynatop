@@ -60,6 +60,7 @@ initialise_hillslope <- function(model,initial_recharge){
 
     ## threshold at max
     hs$lsz <- pmin( hs$lsz , hs$lsz_max )
+    hs$lsz_in <- hs$lsz
 
     ## compute the deficit
     gamma <- sum(hs$area*(hs$atb_bar - hs$ln_t0))  / sum(hs$area)
@@ -89,8 +90,8 @@ initialise_hillslope <- function(model,initial_recharge){
     hs$uz <- pmax(0, rep(q_0,length(hs$id)) * hs$td * hs$sz, na.rm=TRUE)
 
     ## take only what we need
-    out <- hs[c("ex","rz","uz","sz","lsz",
-                "id","area","band","precip_input","pet_input",
+    out <- hs[c("ex","rz","uz","sz","lsz","lsz_in",
+                "id","area","band","precip_series","pet_series",
                 "qex_max","tex","srz_max","td",
                 "lsz_max","m")]
     return(out)

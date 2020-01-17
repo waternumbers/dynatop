@@ -55,6 +55,8 @@ dynatop <- function(model,obs_data,
         tmp <- list()
         tmp$Wsz <- as.matrix(summary(model$Dsz[hillslope$id,hillslope$id]))
         tmp$Wsplit <- by(tmp$Wsz[,2:3],tmp$Wsz[,1],unique,simplify=FALSE)
+        ## tmp$Wsplit <- lapply(tmp$Wsplit,function(x){list(j=as.vector(x[,1]),
+        ##                                                  x=as.vector(x[,2]))})
         tmp$Fsz <- as.matrix(summary(model$Dsz[channel$id,hillslope$id]))
         tmp$Fsplit <- by(tmp$Fsz[,2:3],tmp$Fsz[,1],unique,simplify=FALSE)
         sz <- list(hs_parent=rep(list(NULL),length(hillslope$id)),
@@ -95,10 +97,11 @@ dynatop <- function(model,obs_data,
     ## message("Running Dynamic TOPMODEL using ", length(hillslope$id), " hillslope units and ", length(channel$id), " channel units")
 
     for(it in 1:nrow(obs_data)){
+        #browser()
         print(it)
         ## set the inputs to the hillslope
-        precip <- obs_data[it,hillslope$precip_input]
-        pet <- obs_data[it,hillslope$pet_input]
+        precip <- obs_data[it,hillslope$precip_series]
+        pet <- obs_data[it,hillslope$pet_series]
 
 
         ## loop sub steps
@@ -152,29 +155,60 @@ dynatop <- function(model,obs_data,
             ## Step 4: Solve saturated zone
             sz$lsz[] <- 0
             sz$lsz_in[] <- 0
+            ## K <- ex$invAWA_I + Diagonal(ncol(ex$invAWA))
+            ## K <- K[hillslope$id,hillslope$id]
+            ## for(ord in sort(unique(hillslope$band))){
+            ##     #print(ord)
+            ##     #browser()
+            ##     idx <- hillslope$band==ord
+
+            ##     KK <- K[idx,]
+
+            ##     sz$lsz_in[idx] <- KK %*% sz$lsz # latest inflow
+            ##     lsz_in_sat <- pmax(sz$lsz_in[idx],hillslope$lsz_max[idx]) # constrained to saturated zone max flow
+            ##     lsz_in_sat_prev <- pmax(hillslope$lsz_in[idx],hillslope$lsz_max[idx]) # constrained to saturated zone max flow
+
+            ##     qbar <- (hillslope$lsz[idx]+lsz_in_sat_prev+lsz_in_sat + pmax(lsz_in_sat,hillslope$lsz[idx]))/4
+
+            ##     # TO DO check the use or not of area in the following
+            ##     cbar <- (qbar*hillslope$delta_x[idx])/hillslope$m[idx]
+            ##     lambda <- sz_opt$omega + sz_opt$theta*cbar*ts$sub_step/hillslope$delta_x[idx]
+            ##     lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*cbar*ts$sub_step/hillslope$delta_x[idx]
+
+            ##     k <- lambda_prime*hillslope$lsz[idx] +
+            ##         (1-lambda_prime)*lsz_in_sat_prev +
+            ##         cbar*q_vol$uz_sz[idx]/hillslope$delta_x[idx]
+            ##     sz$lsz[idx] <- min( (k - (1-lambda)*lsz_in_sat)/lambda , hillslope$lsz_max[idx] )
+            ## }
+
+            lsz_in_sat_prev <- pmin(hillslope$lsz_in,hillslope$lsz_max) # previsou inflow limite to saturation
             for(ii in sz$order){
                 ## inflow from upstream
 
-                idx <- sz$hs_parent[[ii]]$j #[,1]
-                w <- sz$hs_parent[[ii]]$x #[,2]
-                sz$lsz_in <- sum(w * sz$lsz[idx]) # latest inflow
-                ##sz$lsz_in <- sum(sz$hs_parent[[ii]]$x * sz$lsz[sz$hs_parent[[ii]]$j]) # latest inflow
+                #idx <- sz$hs_parent[[ii]]$j #[,1]
+                #w <- sz$hs_parent[[ii]]$x #[,2]
 
-                lsz_in_sat <- max(sz$lsz_in,hillslope$lsz_max[ii]) # constrained to saturated zone max flow
-                qbar <- (hillslope$lsz[ii]+hillslope$lsz_in_sat[ii]+lsz_in_sat + max(lsz_in_sat,hillslope$lsz[ii]))/4
+                #sz$lsz_in[ii] <- sum(w * sz$lsz[idx]) # latest inflow
+                sz$lsz_in[ii] <- sum(sz$hs_parent[[ii]]$x * sz$lsz[sz$hs_parent[[ii]]$j]) # latest inflow
+
+                lsz_in_sat <- max(sz$lsz_in[ii],hillslope$lsz_max[ii]) # constrained to saturated zone max flow
+
+                qbar <- (hillslope$lsz[ii]+lsz_in_sat_prev[ii]+lsz_in_sat + max(lsz_in_sat,hillslope$lsz[ii]))/4
 
                 # TO DO check the use or not of area in the following
                 cbar <- (qbar*hillslope$delta_x[ii])/hillslope$m[ii]
                 lambda <- sz_opt$omega + sz_opt$theta*cbar*ts$sub_step/hillslope$delta_x
                 lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*cbar*ts$sub_step/hillslope$delta_x
 
-                k <- lambda_prime*hillslope$lsz +
-                    (1-lambda_prime)*hillslope$lsz_in_sat +
-                    cbar*q_vol$uz_sz/hillslope$delta_x
+                # not ii enough
+
+                k <- lambda_prime*hillslope$lsz[ii] +
+                    (1-lambda_prime)*lsz_in_sat_prev[ii] +
+                    cbar*q_vol$uz_sz[ii]/hillslope$delta_x[ii]
                 sz$lsz[ii] <- min( (k - (1-lambda)*lsz_in_sat)/lambda , hillslope$lsz_max[ii] )
             }
 
-
+            #browser()
             ## work out integral fluz
             q_vol$sz <- ts$sub_step*(sz$lsz + hillslope$lsz)/2
             tilde_sz <- hillslope$sz + q_vol$sz - ts$sub_step*(sz$lsz_in + hillslope$lsz_in)/2 - q_vol$uz_sz
