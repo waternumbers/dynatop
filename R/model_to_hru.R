@@ -24,7 +24,7 @@ model_to_hru <- function(model){
         for(jj in 1:length(hru)){
             hru[[jj]]$id <- tbl$id[jj]
         }
-        
+
         ## add in parameter values to the table
         for(ii in names(h0$param)){
             #print(ii)
@@ -46,7 +46,7 @@ model_to_hru <- function(model){
 
         return(hru)
     }
-    
+
     ## convert hillslope and channel tables to lists
     hru <- c(tbl2lst(model$hillslope,"hillslope",model$param),
              tbl2lst(model$channel,"channel",model$param))
@@ -58,7 +58,7 @@ model_to_hru <- function(model){
     redist[redist>0] <- 1
     colnames(redist) <- rownames(redist) <- names(hru)
 
-    ## add additional hrus for each input
+    ## add additional hrus for each input combination
     inhru <- do.call(rbind,
                      list(
                          model$hillslope[,c("id",'precip_series','pet_series')],
@@ -66,9 +66,26 @@ model_to_hru <- function(model){
                      ))
     inhru <- inhru[order(inhru$id),]
     ex_comb <- unique(inhru) # unique combinations
-    
-    
-    
+
+    ex_redist <- matrix(0,nrow(inhru),nrow(ex_comb))
+    ex_redist[,1] <- 1:nrow(hru)
+    ex_redist[,3] <- 1
+    ex_list <- rep(list(template_hru("ex")),nrow(ex_comb))
+
+    for(ii in 1:nrow(ex_comb)){
+        idx <- inhru[inhru$precip_series == ex_comb$precip_series[ii] &
+                     inhru$pet_series == ex_comb$pet_series[ii],'id']
+        ex_redist[idx,2] <- ii
+
+        ex_list[[ii]]$series[c('precip','pet')] <- unname( ex_comb[ii,] )
+    }
+
+    hru <- c(hru,ex_list)
+    redist <- rbind(cbind(redist,sparseMatrix(ex_redist)),Matrix(0,nrow(ex_comb),length(hru),sparse=TRUE))
+
+    ## add mux elements
+
+
 
     ## work out levels
     lvl <- setNames(rep(NA,length(hru)),nms)
@@ -83,14 +100,14 @@ model_to_hru <- function(model){
         to_add <- nms[nparents==0]
         clvl <- clvl+1
     }
-    
+
     browser()
     ## extract redistribution tables
     redist <- list()
     redist$lex <- as.matrix(summary(model$Dex))
     redist$lsz <- as.matrix(summary(model$Dsz))
     #redist$comb <- do.call(+,redist)
-    
+
     ## work out parents (uptree) nodes
     nms <- names(hru)
     tmp <- by(redist$comb[,2],redist$comb[,1],unique,simplify=FALSE)
@@ -101,25 +118,25 @@ model_to_hru <- function(model){
     browser()
     ## convert parent to names and have number
     prnt <- lapply(prnt,function(x,y){list(p=y[x],n=length(x))},y=nms)
-    
+
     ## initialise vector of order
     lvl <- setNames(rep(NA,length(hru)),nms)
 
     ## work out the first level of hrus
     flg <- TRUE
     clvl <- 1
-        
-    
 
 
-    
+
+
+
     ## work out the reweighting - works since hru sorted by id
     browser()
 
-    
+
     area <- sapply(hru,FUN=function(x){x$prop['area']})
 
-    
+
     for(jj in names(redist)){
         idx <- split(redist$lex[,1],redist$lex[,2])
         w <- split(redist$lex[,3],redist$lex[,2])
