@@ -14,7 +14,7 @@ for(ii in c("hillslope","channel")){
     mdl[[ii]]$pet_series <- "pet"
 }
 
-mdl$channel[['band']] <- 1e4
+#mdl$channel[['band']] <- 1e4
 
 ## mdl$Dsz <- rbind(mdl$Fsz,mdl$Wsz)
 ## mdl$Dsz <- cbind( matrix(0,nrow(mdl$Dsz),nrow(mdl$Dsz)-ncol(mdl$Dsz)),mdl$Dsz )
