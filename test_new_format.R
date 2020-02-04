@@ -4,12 +4,11 @@ library(Matrix)
 #devtools::load_all("./dynatop")
 
 #mdl <- readRDS("./dynatop/data/Swindale_model.rds")
-mdl <- readRDS("./dynatop/data/Swindale_ordered.rds")
+mdl <- readRDS("./dynatop/data/model_debug.rds")
 load("./dynatop/data/test_catchment.rda")
 
 
 for(ii in c("hillslope","channel")){
-    names(mdl[[ii]]) <- gsub("_input","_series",names(mdl[[ii]]))
     mdl[[ii]]$precip_series <- "rain"
     mdl[[ii]]$pet_series <- "pet"
 }
@@ -36,14 +35,15 @@ while(sum(tmp>1)>0){
 }
 mdl$Dex <- mdl$Dsz
 
-mdl$param <- c(mdl$param,'qex_max_default'=Inf)
-mdl$hillslope[,'atb_bar'] <- mdl$hillslope[,'area']/mdl$hillslope[,'s_bar']
+#mdl$param <- c(mdl$param,'qex_max_default'=Inf)
+#mdl$hillslope[,'atb_bar'] <- mdl$hillslope[,'area']/mdl$hillslope[,'s_bar']
+
 devtools::load_all("./dynatop")
 check_model(mdl)
 
 tmp <- dynatop(mdl,test_catchment$obs[1:2,],0.1)
 
-profvis::profvis({tmp2 <- dynatop(tmp$model,test_catchment$obs[2270:2272,],use_states=TRUE)})
+profvis::profvis({tmp2 <- dynatop(tmp$model,test_catchment$obs[2270:2500,],use_states=TRUE)})
 
 system.time({ tmp2 <- dynatop(tmp$model,test_catchment$obs,use_states=TRUE)})
 
