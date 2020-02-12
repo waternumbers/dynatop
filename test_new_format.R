@@ -33,15 +33,52 @@ while(sum(tmp>1)>0){
     mdl$Dsz <- mdl$Dsz %*% Diagonal(length(tmp),1/tmp)
     tmp <- colSums(mdl$Dsz)
 }
-mdl$Dex <- mdl$Dsz
+mdl$Fsf <- mdl$Fsz <- mdl$Dsz
+#mdl$Dsz <- mdl$Dex <- NULL
+
+mdl$hillslope[,'sf_band'] <- mdl$hillslope[,'sz_band'] <- mdl$hillslope[,'band']
+mdl$channel[,'sf_band'] <- mdl$channel[,'sz_band'] <- max(mdl$hillslope[,'band'])
+tmp <- names(mdl$hillslope)
+tmp <- gsub('qex_max','qsf_max',tmp)
+names(mdl$hillslope) <- tmp
 
 #mdl$param <- c(mdl$param,'qex_max_default'=Inf)
 #mdl$hillslope[,'atb_bar'] <- mdl$hillslope[,'area']/mdl$hillslope[,'s_bar']
 
+## each hsu as an object
+devtools::load_all("./dynatop")
+check_model(mdl)
+##profvis::profvis({fk <- initialise_hsu(mdl,0.01)})
+fk <- initialise_hsu(mdl,0.01)
+tmp <- mdl
+tmp$hsu <- fk$hsu
+tmp$sq <- fk$sq
+
+profvis::profvis({tmp2 <- dynatop_hsu(tmp,test_catchment$obs[1:20,],0.1,use_states=TRUE)})
+tmp2 <- dynatop_hsu(tmp,test_catchment$obs[1:2,],0.1,use_states=TRUE)
+
+## more vectorised..
 devtools::load_all("./dynatop")
 check_model(mdl)
 
-tmp <- dynatop(mdl,test_catchment$obs[1:2,],0.1)
+tmp <- names(mdl$hillslope)
+tmp <- gsub('precip_series','precip',tmp)
+tmp <- gsub('pet_series','pet',tmp)
+tmp <- gsub('tex','tsf',tmp)
+names(mdl$hillslope) <- tmp
+tmp <- names(mdl$channel)
+tmp <- gsub('precip_series','precip',tmp)
+tmp <- gsub('pet_series','pet',tmp)
+names(mdl$channel) <- tmp
+
+
+tmp <- initialise(mdl,0.01)
+
+
+
+
+
+tmp <- dynatop_hsu(mdl,test_catchment$obs[1:2,],0.1)
 
 profvis::profvis({tmp2 <- dynatop(tmp$model,test_catchment$obs[2270:2500,],use_states=TRUE)})
 
