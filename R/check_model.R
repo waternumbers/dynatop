@@ -12,7 +12,7 @@
 check_model <- function(model, verbose=FALSE){
 
     ## check all components of the model exist
-    components <- c("hillslope","channel","param","Dex","Dsz","gauge","point_inflow")
+    components <- c("hillslope","channel","param","Fsf","Fsz","gauge","point_inflow")
     idx <- components %in% names(model)
     if( !all(idx) ){
         stop(paste("Missing componets:",paste(components[!idx],collapse=",")))
@@ -24,7 +24,7 @@ check_model <- function(model, verbose=FALSE){
     df_prop <- list(
         hillslope = data.frame(name = c("id","area","s_bar","delta_x",
                                         "precip_series","pet_series",
-                                        "qex_max","srz_max","srz_0","ln_t0","m","td","tex"),
+                                        "qsf_max","srz_max","srz_0","ln_t0","m","td","tex"),
                                type=c(rep("numeric",4),rep("character",9)),
                                role = c(rep("property",4),rep("data_series",2),rep("parameter",7)),
                                stringsAsFactors=FALSE),
@@ -110,7 +110,7 @@ check_model <- function(model, verbose=FALSE){
 
     
     ## checks on redistribution matrices
-    for(ii in c("Dsz","Dex")){
+    for(ii in c("Fsz","Fsf")){
         if(!(attr(class(model[[ii]]),"package")=="Matrix")){#is(model[[ii]],"Matrix")){
             stop( ii," should be a numeric Matrix" )
         }
