@@ -9,12 +9,11 @@
 #' 
 #' @return A list of lists, one list for each HRU type which contains vectors of states and properties for use in computation
 #'
-#' @rdname hillslope
-#' @export
-#'
+#' @name initialise
+NULL
 
-#' @name hillslope
-#' returns a list of varaibles names by list elements expected in a hillslope HSU store
+#' @rdname initialise
+## returns a list of varaibles names by list elements expected in a hillslope HSU store
 required_vrbl <- function(type=c("hillslope","channel")){
     type <- match.arg(type)
     
@@ -40,8 +39,8 @@ required_vrbl <- function(type=c("hillslope","channel")){
     return(out)
 }
 
-#' @name hillslope
-#' create an empty store
+#' @rdname initialise
+## create an empty store
 empty_store <- function(model,type=c("hillslope","channel")){
     #browser()
     type <- match.arg(type)
@@ -85,7 +84,7 @@ empty_store <- function(model,type=c("hillslope","channel")){
 }
 
 
-#' @name hillslope
+#' @rdname initialise
 #' @export
 initialise <- function(model,initial_recharge){
 
