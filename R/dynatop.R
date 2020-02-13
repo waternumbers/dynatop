@@ -29,15 +29,23 @@ dynatop <- function(model,obs_data,
     }
 
     ## work out bands
-    bands <- list(sf = sort(unique(c(model$hillslope$attr$sf_band,
-                                     model$channel$attr$sf_band))),
-                  sz = sort(unique(c(model$hillslope$attr$sz_band,
-                                     model$channel$attr$sz_band)))
-                  )
-
+    bands <- list(sf=list(),sz=list())
+    tmp <- sort(unique(c(mdl$hillslope$attr$sf_band,
+                         mdl$channel$attr$sf_band)))
+    for(ii in 1:length(tmp)){
+        bands$sf[[ii]] <- list(hillslope = which(mdl$hillslope$attr$sf_band == tmp[ii]),
+                               channel = which(mdl$channel$attr$sf_band == tmp[ii]))
+    }
+    tmp <- sort(unique(c(mdl$hillslope$attr$sz_band,
+                         mdl$channel$attr$sz_band)))
+    for(ii in 1:length(tmp)){
+        bands$sz[[ii]] <- list(hillslope = which(mdl$hillslope$attr$sz_band == tmp[ii]),
+                               channel = which(mdl$channel$attr$sz_band == tmp[ii]))
+    }
+    
     ## storage for lateral fluxes stored as volumes
-    lvol <- list(sf = rep(0,max(c(model$hillslope$attr$id,model$channel$attr$id))),
-                 sz = rep(0,max(c(model$hillslope$attr$id,model$channel$attr$id)))) 
+    lvol <- list(sf = rep(0,max(c(mdl$hillslope$attr$id,mdl$channel$attr$id))),
+                 sz = rep(0,max(c(mdl$hillslope$attr$id,mdl$channel$attr$id)))) 
 
     ## TODO populate lval$sz with in initial output$lsz values
     
@@ -48,8 +56,8 @@ dynatop <- function(model,obs_data,
     }
 
     ## initialise the output
-    channel_inflow <- reclass( matrix(NA,nrow(obs_data),length(channel$id)), match.to=obs_data )
-    names(channel_inflow) <- channel$id
+    channel_inflow <- reclass( matrix(NA,nrow(obs_data),length(mdl$channel$attr$id)), match.to=obs_data )
+    names(channel_inflow) <- mdl$channel$attr$id
 
     ## remove time properties from input - stops variable type errors later
     obs_data <- as.matrix(obs_data)
@@ -71,13 +79,18 @@ dynatop <- function(model,obs_data,
         for(inner in 1:ts$n_sub_step){
 
             ## Step 1: Distribute any surface storage downslope
+            #print("Step 1")
+            lvol$sf[] <- 0
             for(bnd in bands$sf){
                 ## hillslope
-                idx <- which(mdl$hillslope$attr$sf_band == bnd)
+                idx <- bnd$hillslope #which(mdl$hillslope$attr$sf_band == bnd)
                 if(any(idx)){
                     ## update the input
                     for(ii in idx){
-                        mdl$hillslope$input$lsf[ii] <- sum(lvol$sf[mdl$sf[[ii]]$j]) #TODO wrong index?
+                        ##jj <- mdl$hillslope$attr$id[ii]
+                        ##mdl$hillslope$input$lsf[ii] <- sum( mdl$sf[[ jj]]$x * lvol$sf[ mdl$sf[[jj]]$j])
+                        mdl$hillslope$input$lsf[ii] <- sum( mdl$sf[[ mdl$hillslope$attr$id[ii]]]$x *
+                                                            lvol$sf[ mdl$sf[[mdl$hillslope$attr$id[ii]]]$j])
                     }
                     mdl$hillslope$input$lsf[idx] <- mdl$hillslope$input$lsf[idx]/mdl$hillslope$attr$area[idx]
                     ## compute the new state value
@@ -88,23 +101,26 @@ dynatop <- function(model,obs_data,
                     lvol$sf[ mdl$hillslope$attr$id[idx] ]  <- mdl$hillslope$output$lsf[idx]*mdl$hillslope$attr$area[idx]
                 }
                 ## channel
-                idx <- which(mdl$channel$attr$sf_band == bnd)
+                idx <- bnd$channel #which(mdl$channel$attr$sf_band == bnd)
                 if(any(idx)){
                     ## update the input
                     for(ii in idx){
-                        mdl$channel$input$lsf[ii] <- sum(lvol$sf[mdl$sf[[ii]]$j])
+                        ##jj <-  mdl$channel$attr$id[ii]
+                        ##mdl$channel$input$lsf[ii] <- sum(mdl$sf[[jj]]$x * lvol$sf[mdl$sf[[jj]]$j])
+                        mdl$channel$input$lsf[ii] <- sum( mdl$sf[[ mdl$channel$attr$id[ii]]]$x *
+                                                            lvol$sf[ mdl$sf[[mdl$channel$attr$id[ii]]]$j])
                     }
                     mdl$channel$input$lsf[idx] <- mdl$channel$input$lsf[idx]/mdl$channel$attr$area[idx]
                     ## compute the new state value
-                    mdl$channel$state$sch[idx] <- dl$channel$input$lsf[idx]
+                    mdl$channel$state$sch[idx] <- mdl$channel$input$lsf[idx]
                     lvol$sf[ mdl$hillslope$attr$id[idx] ]  <- 0
                 }
             }
 
             ## Step 2: solve the root zone for hillslope elements
-            
+            #print("Step 2")
             ## evaluate max integral of flow to rootzone
-            mdl$hillslope$flux$qsf_rz <- pmin( mdl$hillslope$param$qsf_max*ts$sub_step,mdl$hillslope$state$ssf )
+            mdl$hillslope$flux$qsf_rz <- pmin( mdl$hillslope$param$qsf_max*ts$sub_step,mdl$hillslope$state$sf )
 
             ## solve ODE
             tilde_rz <- fode( mdl$hillslope$input$precip + (mdl$hillslope$flux$qsf_rz/ts$sub_step),
@@ -119,7 +135,7 @@ dynatop <- function(model,obs_data,
             mdl$hillslope$flux$qrz_uz <- tmp * !saturated_index
 
             ## Step 3: Unsaturated zone
-
+            #print("Step 3")
             ## solve ODE
             tilde_uz <- fode( mdl$hillslope$flux$qrz_uz/ts$sub_step,
                              1 / (mdl$hillslope$param$td * mdl$hillslope$state$sz),
@@ -129,120 +145,90 @@ dynatop <- function(model,obs_data,
 
 
             ## Step 4: Solve saturated zone
+            #print("Step 4")
+            mdl$hillslope$flux$lsz_t <- mdl$hillslope$input$lsz
+            mdl$hillslope$flux$Q_minus_t <- pmin( mdl$hillslope$input$lsz,mdl$hillslope$state$lsz_max )
+            mdl$hillslope$flux$Q_plus_t <- mdl$hillslope$output$lsz
+            mdl$channel$flux$lsz_t <- mdl$channel$input$lsz
             for(bnd in bands$sz){
                 ## hillslope
-                idx <- which(mdl$hillslope$attr$sz_band == bnd)
+                #print("hillslope")
+                #browser()
+                idx <- bnd$hillslope#which(mdl$hillslope$attr$sz_band == bnd)
                 if(any(idx)){
+                    #print(idx)
                     ## update the input
-                    Q_minus_t <- pmin( mdl$hillslope$input$lsz[idx],mdl$hillslope$state$lsz_max[idx] )
                     for(ii in idx){
-                        mdl$hillslope$input$lsz[ii] <- sum(lvol$sz[mdl$sz[[ii]]$j]) #TODO wrong idenx?
+                        mdl$hillslope$input$lsz[ii] <- sum(mdl$sf[[mdl$hillslope$attr$id[ii]]]$x *
+                                                           lvol$sz[mdl$sz[[mdl$hillslope$attr$id[ii]]]$j])
                     }
                     mdl$hillslope$input$lsz[idx] <- mdl$hillslope$input$lsz[idx]/mdl$hillslope$attr$area[idx]
-                    ## compute the new state value
-                    Q_minus_tDt <- pmin( mdl$hillslope$input$lsz[idx],mdl$hillslope$state$lsz_max[idx] )
-                    Q_plus_t <- mdl$hillslope$output$lsz[idx]
 
-                    qbar <- (Q_minus_t + Q_minus_tDt + Q_plus_t)/3
+                    ## compute the new state value
+                    mdl$hillslope$flux$Q_minus_tDt[idx] <- pmin( mdl$hillslope$input$lsz[idx],mdl$hillslope$state$lsz_max[idx] )
+
+                    qbar <- (mdl$hillslope$flux$Q_minus_t[idx] + mdl$hillslope$flux$Q_minus_tDt[idx] + mdl$hillslope$flux$Q_plus_t[idx])/3
                     cbar <- (qbar*mdl$hillslope$attr$delta_x[idx])/mdl$hillslope$param$m[idx]
                     
-                    lambda <- sz_opt$omega + sz_opt$theta*cbar*ts$sub_step/mdl$hillslope$attr$delta_x
-                    lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*cbar*ts$sub_step/mdl$hillslope$attr$delta_x
+                    lambda <- sz_opt$omega + sz_opt$theta*cbar*ts$sub_step/mdl$hillslope$attr$delta_x[idx]
+                    lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*cbar*ts$sub_step/mdl$hillslope$attr$delta_x[idx]
 
-                    k <- lambda_prime*Q_plus_t +
-                        (1-lambda_prime)*Q_minus_t +
+                    k <- lambda_prime*mdl$hillslope$flux$Q_plus_t[idx] +
+                        (1-lambda_prime)*mdl$hillslope$flux$Q_minus_t[idx] +
                         cbar*mdl$hillslope$flux$quz_sz[idx]/mdl$hillslope$attr$delta_x[idx]
 
-                    ## GOT HERE
-                    
-                    sz$lsz[ii] <- min( (k - (1-lambda)*lsz_in_sat)/lambda , mdl$hillslope$lsz_max[ii] )
-                    
-                    tilde_sf <- fode( mdl$hillslope$input$lsf[idx]/ts$sub_step, 1/mdl$hillslope$param$tsf[idx],
-                                     mdl$hillslope$state$sf[idx],ts$sub_step)
-                    mdl$hillslope$output$lsf[idx] <- mdl$hillslope$state$sf[idx] + mdl$hillslope$input$lsf[idx] - tilde_sf
-                    mdl$hillslope$state$sf[idx] <- tilde_sf
-                    lvol$sf[ mdl$hillslope$attr$id[idx] ]  <- mdl$hillslope$output$lsf[idx]*mdl$hillslope$attr$area[idx]
+                    mdl$hillslope$output$lsz[idx] <- pmin( (k - (1-lambda)*mdl$hillslope$flux$Q_minus_tDt[idx])/lambda , mdl$hillslope$state$lsz_max[idx] )
+                    lvol$sz[ mdl$hillslope$attr$id[idx] ] <- mdl$hillslope$output$lsz[idx]*mdl$hillslope$attr$area[idx]
+
                 }
                 ## channel
-                idx <- which(mdl$channel$attr$sf_band == bnd)
+                #print("channel")
+                idx <- bnd$channel #which(mdl$channel$attr$sz_band == bnd)
                 if(any(idx)){
+                    #browser()
                     ## update the input
+                    
                     for(ii in idx){
-                        mdl$channel$input$lsf[ii] <- sum(lvol$sf[mdl$sf[[ii]]$j])
+                        ## jj <-  mdl$hillslope$attr$id[ii]
+                        
+                        mdl$channel$input$lsz[ii] <- sum(mdl$sz[[ mdl$hillslope$attr$id[ii] ]]$x *
+                                                         lvol$sz[mdl$sz[[ mdl$hillslope$attr$id[ii] ]]$j])
                     }
-                    mdl$channel$input$lsf[idx] <- mdl$channel$input$lsf[idx]/mdl$channel$attr$area[idx]
+                    mdl$channel$input$lsz[idx] <- mdl$channel$input$lsz[idx]/mdl$channel$attr$area[idx]
                     ## compute the new state value
-                    mdl$channel$state$sch[idx] <- dl$channel$input$lsf[idx]
+                    #browser()
+                    mdl$channel$state$sch[idx] <- mdl$channel$state$sch[idx] +
+                        ts$sub_step*(mdl$channel$flux$lsz_t[idx] + mdl$channel$input$lsz[idx])/2
                     lvol$sf[ mdl$hillslope$attr$id[idx] ]  <- 0
                 }
             }
 
-
+            tilde_sz <- mdl$hillslope$state$sz +
+                ts$sub_step*(mdl$hillslope$flux$Q_plus_t + mdl$hillslope$output$lsz)/2 -
+                ts$sub_step*(mdl$hillslope$flux$lsz_t + mdl$hillslope$input$lsz)/2 -
+                mdl$hillslope$flux$quz_sz
             
-            for(ii in sz$order){
-                ## inflow from upstream
+            mdl$hillslope$state$sz <- pmax(0,tilde_sz)
+            mdl$hillslope$flux$qsz_ex <- mdl$hillslope$state$sz - tilde_sz
 
-                #idx <- sz$hs_parent[[ii]]$j #[,1]
-                #w <- sz$hs_parent[[ii]]$x #[,2]
-
-                #sz$lsz_in[ii] <- sum(w * sz$lsz[idx]) # latest inflow
-                sz$lsz_in[ii] <- sum(sz$hs_parent[[ii]]$x * sz$lsz[sz$hs_parent[[ii]]$j]) # latest inflow
-
-                lsz_in_sat <- max(sz$lsz_in[ii],mdl$hs$lsz_max[ii]) # constrained to saturated zone max flow
-
-                qbar <- (mdl$hs$lsz[ii]+lsz_in_sat_prev[ii]+lsz_in_sat + max(lsz_in_sat,mdl$hs$lsz[ii]))/4
-
-                # TO DO check the use or not of area in the following
-                cbar <- (qbar*mdl$hs$delta_x[ii])/mdl$hs$m[ii]
-                lambda <- sz_opt$omega + sz_opt$theta*cbar*ts$sub_step/mdl$hs$delta_x
-                lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*cbar*ts$sub_step/mdl$hs$delta_x
-
-                # not ii enough
-
-                k <- lambda_prime*mdl$hs$lsz[ii] +
-                    (1-lambda_prime)*lsz_in_sat_prev[ii] +
-                    cbar*mdl$hs$quz_sz[ii]/mdl$hs$delta_x[ii]
-                sz$lsz[ii] <- min( (k - (1-lambda)*lsz_in_sat)/lambda , mdl$hs$lsz_max[ii] )
-            }
-
-            #browser()
-            ## work out integral fluz
-            mdl$hs$qsz <- ts$sub_step*(sz$lsz + mdl$hs$lsz)/2
-            tilde_sz <- mdl$hs$sz + mdl$hs$qsz - ts$sub_step*(sz$lsz_in + mdl$hs$lsz_in)/2 - mdl$hs$quz_sz
-            mdl$hs$sz <- pmax(0,tilde_sz)
-            mdl$hs$qsz_ex <- mdl$hs$sz - tilde_sz
-
-            ## update states
-            mdl$hs$lsz <- sz$lsz
-            mdl$hs$lsz_in <- sz$lsz_in
 
             ## step 5 - correct the stores
-            saturated_index <- mdl$hs$sz <= 0
-            mdl$hs$ex <- mdl$hs$ex + mdl$hs$qrz_ex +
-                (mdl$hs$qsz_ex + mdl$hs$uz)*saturated_index
-            mdl$hs$uz <- mdl$hs$uz * !saturated_index
-
-            ## step 6 - channel inflow - at the moment a volume / area
-            channel_inflow[it,] <- channel_inflow[it,] + ex$dex[channel$id] + obs_data[it,channel$precip_series]*ts$sub_step
-            for(ii in 1:length(channel$id)){
-                idx <- sz$ch_parent[[ii]][,1]
-                w <- sz$ch_parent[[ii]][,2]
-                channel_inflow[it,ii]  <-  channel_inflow[it,ii] +sum( w*mdl$hs$area[idx]*mdl$hs$qsz[idx]/channel$area[ii] )
-            }
-
-
+            #print("Step 5")
+            saturated_index <- mdl$hillslope$state$sz <= 0
+            mdl$hillslope$state$sf <- mdl$hillslope$state$sf +
+                mdl$hillslope$flux$qrz_ex +
+                (mdl$hillslope$flux$qsz_ex + mdl$hillslope$state$uz)*saturated_index
+            mdl$hillslope$state$uz <- mdl$hillslope$state$uz * !saturated_index
         }
-
-        ## step 7: Done through the steps above
-        ## put channel inflow in output matric
-        channel_inflow[it,] <- channel_inflow[it,]*channel$area / (3600*ts$step)
+        
+        ## step 6 - channel inflow - at the moment a volume / area
+        channel_inflow[it,] <- mdl$channel$attr$area *
+            ( mdl$channel$state$sch + mdl$channel$input$precip*ts$step ) /
+            (3600*ts$step)
 
     } ## end of timestep loop
 
-    model$states <- list(hillslope=mdl$hs,
-                         channel=channel,
-                         ex=ex,
-                         sz=sz)
+    model$hsu <- mdl
 
     return( list(model=model,
                  channel_input = channel_inflow ) )
