@@ -34,7 +34,7 @@ while(sum(tmp>1)>0){
     tmp <- colSums(mdl$Dsz)
 }
 mdl$Fsf <- mdl$Fsz <- mdl$Dsz
-#mdl$Dsz <- mdl$Dex <- NULL
+mdl$Dsz <- mdl$Dex <- NULL
 
 mdl$hillslope[,'sf_band'] <- mdl$hillslope[,'sz_band'] <- mdl$hillslope[,'band']
 mdl$channel[,'sf_band'] <- mdl$channel[,'sz_band'] <- max(mdl$hillslope[,'band'])
@@ -73,10 +73,11 @@ names(mdl$channel) <- tmp
 
 
 tmp <- initialise(mdl,0.01)
+mdl$hsu <- tmp
+tmp2 <- dynatop(mdl,test_catchment$obs[1:2,],0.1,use_states=TRUE)
+profvis::profvis({tmp2 <- dynatop(mdl,test_catchment$obs[1:20,],0.1,use_states=TRUE)})
 
-
-
-
+profvis::profvis({tmp2 <- dt2(mdl,test_catchment$obs[1:20,],0.1,use_states=TRUE)})
 
 tmp <- dynatop_hsu(mdl,test_catchment$obs[1:2,],0.1)
 

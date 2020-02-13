@@ -65,6 +65,12 @@ empty_store <- function(model,type=c("hillslope","channel")){
     for(ii in vrbl$series){
         out$series[[ii]] <- unname( tmp[,ii] )
     }
+    for(ii in vrbl$input){
+        out$input[[ii]] <-  rep(0,nrow(tmp))
+    }
+    for(ii in vrbl$output){
+        out$output[[ii]] <-  rep(0,nrow(tmp))
+    }
     for(ii in vrbl$param){
         out$param[[ii]] <- unname( model$param[ tmp[,ii] ] )
     }
@@ -96,10 +102,16 @@ initialise <- function(model,initial_recharge){
     ## collapsed matrices as lists
     ## ith element of list contains the parents (and fractions) for the
     ## hsu with id = i
+    #browser()
     tmp <- as.matrix(summary(model$Fsf))
-    mdl$sf <- by(tmp[,2:3],tmp[,1],unique,simplify=FALSE)
+    tmp <- lapply(by(tmp[,2:3],tmp[,1],unique,simplify=FALSE),as.list)
+    mdl$sf <- rep(list(NULL),max(as.numeric(names(tmp))))
+    mdl$sf[as.numeric(names(tmp))] <- tmp
+    
     tmp <- as.matrix(summary(model$Fsz))
-    mdl$sz <- by(tmp[,2:3],tmp[,1],unique,simplify=FALSE)##
+    tmp <- lapply(by(tmp[,2:3],tmp[,1],unique,simplify=FALSE),as.list)
+    mdl$sz <- rep(list(NULL),max(as.numeric(names(tmp))))
+    mdl$sz[as.numeric(names(tmp))] <- tmp
     
     ## add the channel hsu
     mdl$channel <- empty_store(model,"channel")
@@ -117,7 +129,8 @@ initialise <- function(model,initial_recharge){
     hs$output$lsz <- hs$input$lsz <- pmin(hs$state$lsz_max,initial_recharge)
 
     ## compute the deficit
-    gamma <- sum(hs$state$area*(hs$state$atb_bar - hs$param$ln_t0))  / sum(hs$state$area)
+    #browser()
+    gamma <- sum(hs$attr$area*(hs$attr$atb_bar - hs$param$ln_t0))  / sum(hs$attr$area)
     hs$state$sz <- pmax(0, hs$param$m*(gamma + log(hs$output$lsz)))
 
     ## unsaturated storage by inverse of eqn for q_uz in Beven & Wood 1983
