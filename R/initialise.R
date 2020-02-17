@@ -87,7 +87,7 @@ empty_store <- function(model,type=c("hillslope","channel")){
 #' @rdname initialise
 #' @export
 initialise <- function(model,initial_recharge){
-
+    #browser()
     ## check initial discharge
     if( !is.numeric(initial_recharge) | length(initial_recharge) > 1 | any( initial_recharge < 0 ) ){
         stop("Initial discharge should be a single positive numeric value")

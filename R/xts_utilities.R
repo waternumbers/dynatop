@@ -2,8 +2,9 @@
 #'
 #' @description Takes an xts time series object and resamples then to a new time step.
 #' @param obs A times series (xts) object with a POSIXct index.
-#' @param dt New time interval, hours.
-#' @param is.rate If TRUE then these are rates i.e m/hr. Otherwise they are absolute values across the interval and are scaled before return by a factor equal to the ratio of the old interval to the new interval.
+#' @param dt New time interval in seconds
+#' @param is.rate If TRUE then these are rates i.e m/hr. Otherwise they are absolute values accumulated within the preceeding time interval. Values are scaled before returning so resampling is conservative.
+#' 
 #' @return An xts object with the new timestep
 #' 
 #' @details Time series of observation data are often of different temporal resolutions, however the input to most hydrological models, as is the case with the Dynamic TOPMODEL, requires those data at the same interval. This provides a method to resample a collection of such data to a single interval.
@@ -26,14 +27,14 @@
 #' sum(obs$rain*15/60, na.rm=TRUE)
 #' sum(brompton$rain, na.rm=TRUE)
 #'
-resample_xts <- function(obs, dt, is.rate=TRUE){
+resample_xts <- function(obs, dt, is.rate=FALSE){
     
     ## if the set is NULL then return
     if(is.null(obs)){return(obs)}
     if(!zoo::is.zoo(obs)){stop("Time series required")}
     if(is.null(dt)){stop("Supply new time interval")}
     tms <- as.double(index(obs))
-    dt_series <- diff(tms)/3600
+    dt_series <- diff(tms)
     if(!all(dt_series[]==dt_series[1])){
         warning(paste("Irregularly spaced time series supplied to resample_xts -",
                       "proceding with modal timestep, results are questionable"))
@@ -45,7 +46,7 @@ resample_xts <- function(obs, dt, is.rate=TRUE){
 
     ## if factor greater then 1 take to smaller timestep
     if(dt_series >= dt){
-        ## disaggregation factor (nearest integ
+        ## disaggregation factor (nearest integer)
         tryCatch({ fact <- ceiling(dt_series/dt) },
                  error = {fact <- 1})
         ## disaggregating observations from larger to smaller time interval by given factor
