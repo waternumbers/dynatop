@@ -4,7 +4,7 @@
 #'
 #' @param obs xts object containing the forcing data
 #' @param req_series a character vector of series that should be in obs
-#' @param sub_step duration of sub step in model evaluation in hours, default value of NULL results in data time step
+#' @param sub_step duration of sub step in model evaluation in seconds, default value of NULL results in data time step
 #' @return Returns a list containing the time interval for the main and sub step as well and the number of substeps
 #'
 #' @details The checks performed and basic 'sanity' checks. they do not check for the logic of parameter values nor the consistncy of states and parameters. The number of sub steps is
@@ -36,7 +36,7 @@ check_obs <- function(obs,req_series,sub_step=NULL){
     
     ## work out time steps for use in simulation
     ts <- list()
-    ts$step <- tmp[1]/(60*60) # hours
+    ts$step <- tmp[1] # hours
     if(is.null(sub_step)){sub_step <- ts$step}
     ts$n_sub_step <- max(1,floor(ts$step/sub_step)) # dimensionless
     ts$sub_step <- ts$step / ts$n_sub_step

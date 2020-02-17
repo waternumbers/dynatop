@@ -4,12 +4,13 @@
 #'
 #' @param model a dynamic TOPMODEL list object
 #' @param verbose if set prints out further information
+#' @param delta error term in checking redistribution matrix sums
 #' 
-#' @return a list of expected input series
+#' @return a vector of the names of the expected input series
 #'
-#' @details The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters.
+#' @details The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be less then 1+delta.
 #' @export
-check_model <- function(model, verbose=FALSE){
+check_model <- function(model, verbose=FALSE, delta=1e-13){
 
     ## check all components of the model exist
     components <- c("hillslope","channel","param","Fsf","Fsz","gauge","point_inflow")
@@ -123,7 +124,7 @@ check_model <- function(model, verbose=FALSE){
         if( any( model[[ii]] > 1)){
             stop(ii," should have values less or equal to 1")
         }
-        if( any( colSums(mdl[[ii]]) > 1)){
+        if( any( colSums(model[[ii]]) > 1+delta)){
             stop(ii," should have column sums that are less or equal to 1")
         }
     }
