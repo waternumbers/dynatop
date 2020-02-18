@@ -4,19 +4,21 @@
 \alias{check_model}
 \title{Function to check the model to be used in a dynamic TOPMODEL run}
 \usage{
-check_model(model, verbose = FALSE)
+check_model(model, verbose = FALSE, delta = 1e-13)
 }
 \arguments{
 \item{model}{a dynamic TOPMODEL list object}
 
 \item{verbose}{if set prints out further information}
+
+\item{delta}{error term in checking redistribution matrix sums}
 }
 \value{
-a list of expected input series
+a vector of the names of the expected input series
 }
 \description{
 This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model.
 }
 \details{
-The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters.
+The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be less then 1+delta.
 }

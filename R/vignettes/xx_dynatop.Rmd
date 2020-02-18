@@ -166,9 +166,10 @@ The effects of the different implementations can be seem in the following
 graph. Note that the discrepancy between the simulations and observed data is
 due in part to the absence of any channel routing.
 ```{r, final_plot}
-out <- merge( merge( merge(obs,rowSums(sim_1$channel_input)),
-                    rowSums(sim_2$channel_input)),
-             rowSums(sim_3$channel_input))
+out <- merge( merge( merge(obs,sim_1$channel_input),
+                    sim_2$channel_input),
+             sim_3$channel_input)
 names(out) <- c(names(obs),'sim_1','sim_2','sim_3')
-plot(out[,c('Flow','sim_1','sim_2','sim_3')])
+out$qobs <- out$qobs*sum(model$hillslope$area)/3600
+plot(out[event_period,c('qobs','sim_1','sim_2','sim_3')])
 ```

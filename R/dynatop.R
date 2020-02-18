@@ -29,6 +29,7 @@ dynatop <- function(model,obs_data,
     }
 
     ## work out bands
+    #browser()
     bands <- list(sf=list(),sz=list())
     tmp <- sort(unique(c(mdl$hillslope$attr$sf_band,
                          mdl$channel$attr$sf_band)))
@@ -51,8 +52,12 @@ dynatop <- function(model,obs_data,
     
     ## simple function for solving ODE
     fode <- function(a,b,x0,t){
-        b <- pmax(b,1e-10)
-        unname( x0*exp(-b*t) + (a/b)*(1-exp(-b*t)) )
+        
+        #b <- pmax(b,1e-100)
+        ebt <- exp(-b*t)
+        x <- unname( x0*ebt + (a/b)*(1-ebt)) 
+        x[ebt==1] <- x0[ebt==1] + a*t
+        return(x)
     }
 
     ## initialise the output
@@ -67,9 +72,10 @@ dynatop <- function(model,obs_data,
 
     for(it in 1:nrow(obs_data)){
         #browser()
-        print(it)
+        #print(it)
         
         ## set the inputs to the hillslope and channel
+        #browser()
         for(ii in c("hillslope","channel")){
             mdl[[ii]]$input$precip <- obs_data[it,mdl[[ii]]$series$precip]/ts$step
             mdl[[ii]]$input$pet <- obs_data[it,mdl[[ii]]$series$pet]/ts$step
@@ -121,13 +127,17 @@ dynatop <- function(model,obs_data,
             #print("Step 2")
             ## evaluate max integral of flow to rootzone
             mdl$hillslope$flux$qsf_rz <- pmin( mdl$hillslope$param$qsf_max*ts$sub_step,mdl$hillslope$state$sf )
-
+            mdl$hillslope$state$sf <- mdl$hillslope$state$sf - mdl$hillslope$flux$qsf_rz
+            
             ## solve ODE
+            
+            
             tilde_rz <- fode( mdl$hillslope$input$precip + (mdl$hillslope$flux$qsf_rz/ts$sub_step),
                              mdl$hillslope$input$pet/mdl$hillslope$param$srz_max,
                              mdl$hillslope$state$rz,ts$sub_step )
             ## new storage value
             mdl$hillslope$state$rz <- pmin(tilde_rz,mdl$hillslope$param$srz_max)
+            
             ## split root zone flow
             tmp <- tilde_rz - mdl$hillslope$state$rz
             saturated_index <- mdl$hillslope$state$sz <= 0 # which areas are saturated
@@ -191,14 +201,15 @@ dynatop <- function(model,obs_data,
                     for(ii in idx){
                         ## jj <-  mdl$hillslope$attr$id[ii]
                         
-                        mdl$channel$input$lsz[ii] <- sum(mdl$sz[[ mdl$hillslope$attr$id[ii] ]]$x *
-                                                         lvol$sz[mdl$sz[[ mdl$hillslope$attr$id[ii] ]]$j])
+                        mdl$channel$input$lsz[ii] <- sum(mdl$sz[[ mdl$channel$attr$id[ii] ]]$x *
+                                                         lvol$sz[mdl$sz[[ mdl$channel$attr$id[ii] ]]$j])
                     }
                     mdl$channel$input$lsz[idx] <- mdl$channel$input$lsz[idx]/mdl$channel$attr$area[idx]
                     ## compute the new state value
                     #browser()
                     mdl$channel$state$sch[idx] <- mdl$channel$state$sch[idx] +
                         ts$sub_step*(mdl$channel$flux$lsz_t[idx] + mdl$channel$input$lsz[idx])/2
+                    
                     lvol$sf[ mdl$hillslope$attr$id[idx] ]  <- 0
                 }
             }
@@ -224,7 +235,7 @@ dynatop <- function(model,obs_data,
         ## step 6 - channel inflow - at the moment a volume / area
         channel_inflow[it,] <- mdl$channel$attr$area *
             ( mdl$channel$state$sch + mdl$channel$input$precip*ts$step ) /
-            (3600*ts$step)
+            (ts$step)
 
     } ## end of timestep loop
 

@@ -23,18 +23,18 @@ package which is loaded with
 ```{r, setup}
 rm(list=ls())
 library(dynatop)
-data("test_catchment")
+data("test_catchments")
 ```
 # An initial inflow series
 Generate an initial inflow series of computed by simulating the test catchment
 ```{r initialise_state_func}
-sim_inflows <- dynatop(test_catchment$model,test_catchment$obs,0.0015)$channel_input
+sim_inflows <- dynatop(test_catchments$simple_hillslope,test_catchments$obs,0.0015)$channel_input
 plot(sim_inflows,title="Basic inflows set")
 ```
 
 # Check the time delays
 ```{r time_delay}
-compute_time_delay(test_catchment$model)
+compute_time_delay(test_catchments$simple_hillslope)
 ```
 
 # Check the mass conservation
@@ -49,7 +49,7 @@ names(pf) <- c("point_1","point_2")
 
 ## High velocity - everything comes out at once...
 ## set the velocity very high so it all comes out in one time step
-mdl <- test_catchment$model
+mdl <- test_catchments$simple_hillslope
 mdl$param["v_ch_default"] <- 10000
 compute_time_delay(mdl) # all values less then 1
 ## run routing
@@ -137,7 +137,6 @@ out <- time_delay_routing(mdl,cf,
                           initial_conditions=ic)
 ## mass balance as percentage
 (sum(out[,'outlet']) - sum(pf))*100/sum(pf)
-
 ```
 
 # Checking a single channel
