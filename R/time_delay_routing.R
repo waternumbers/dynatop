@@ -19,7 +19,7 @@ time_delay_routing <- function(model,channel_inflows,
 
     
     ## check model including channel
-    check_model(model,check_channel=TRUE,verbose=FALSE)
+    check_model(model)
 
     ## start default initial conditions
     ic <- list()
