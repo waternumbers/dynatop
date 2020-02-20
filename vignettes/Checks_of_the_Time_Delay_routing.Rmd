@@ -116,7 +116,7 @@ names(pf) <- c("point_1","point_2")
 
 ## High velocity - everything comes out at once...
 ## set the velocity very high so it all comes out in one time step
-mdl <- test_catchments$model
+mdl <- test_catchments$simple_hillslope
 mdl$param["v_ch_default"] <- 10000
 compute_time_delay(mdl) # all values less then 1
 ## run routing
@@ -152,7 +152,7 @@ names(pf) <- c("point_1","point_2")
 
 ## High velocity - everything comes out at once...
 ## set the velocity very high so it all comes out in one time step
-mdl <- test_catchments$model
+mdl <- test_catchments$simple_hillslope
 mdl$param["v_ch_default"] <- 10000
 compute_time_delay(mdl) # all values less then 1
 ## run routing
