@@ -34,6 +34,16 @@ dynatop <- function(model,obs_data,
     tmp <- sort(unique(c(mdl$hillslope$attr$sf_band,
                          mdl$channel$attr$sf_band)))
     for(ii in 1:length(tmp)){
+        ## idx <- which(mdl$hillslope$attr$sf_band == tmp[ii])
+        ## jdx <- which(mdl$channel$attr$sf_band == tmp[ii])
+        ## Fidx <- model$Fsf[mdl$hillslope$attr$id[idx],,drop=FALSE]
+        ## Fjdx <- model$Fsf[mdl$channel$attr$id[jdx],,drop=FALSE]
+
+        ## bands$sf[[ii]] <- list(hillslope = idx,
+        ##                        Fhs = Fidx,
+        ##                        channel = jdx,
+        ##                        Fch = Fjdx)
+        
         bands$sf[[ii]] <- list(hillslope = which(mdl$hillslope$attr$sf_band == tmp[ii]),
                                channel = which(mdl$channel$attr$sf_band == tmp[ii]))
     }
@@ -92,12 +102,13 @@ dynatop <- function(model,obs_data,
                 idx <- bnd$hillslope #which(mdl$hillslope$attr$sf_band == bnd)
                 if(any(idx)){
                     ## update the input
+                    ## mdl$hillslope$input$lsf[idx] <- bnd$Fhs %*% lvol$sf
+                    
                     for(ii in idx){
-                        ##jj <- mdl$hillslope$attr$id[ii]
-                        ##mdl$hillslope$input$lsf[ii] <- sum( mdl$sf[[ jj]]$x * lvol$sf[ mdl$sf[[jj]]$j])
                         mdl$hillslope$input$lsf[ii] <- sum( mdl$sf[[ mdl$hillslope$attr$id[ii]]]$x *
                                                             lvol$sf[ mdl$sf[[mdl$hillslope$attr$id[ii]]]$j])
                     }
+                    
                     mdl$hillslope$input$lsf[idx] <- mdl$hillslope$input$lsf[idx]/mdl$hillslope$attr$area[idx]
                     ## compute the new state value
                     tilde_sf <- fode( mdl$hillslope$input$lsf[idx]/ts$sub_step, 1/mdl$hillslope$param$tsf[idx],
@@ -110,9 +121,8 @@ dynatop <- function(model,obs_data,
                 idx <- bnd$channel #which(mdl$channel$attr$sf_band == bnd)
                 if(any(idx)){
                     ## update the input
+                    ##mdl$channel$input$lsf[idx] <- bnd$Fch%*%lvol$sf
                     for(ii in idx){
-                        ##jj <-  mdl$channel$attr$id[ii]
-                        ##mdl$channel$input$lsf[ii] <- sum(mdl$sf[[jj]]$x * lvol$sf[mdl$sf[[jj]]$j])
                         mdl$channel$input$lsf[ii] <- sum( mdl$sf[[ mdl$channel$attr$id[ii]]]$x *
                                                             lvol$sf[ mdl$sf[[mdl$channel$attr$id[ii]]]$j])
                     }

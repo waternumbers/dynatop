@@ -101,7 +101,6 @@ initialise <- function(model,initial_recharge){
     ## collapsed matrices as lists
     ## ith element of list contains the parents (and fractions) for the
     ## hsu with id = i
-    #browser()
     tmp <- as.matrix(summary(model$Fsf))
     tmp <- lapply(by(tmp[,2:3],tmp[,1],unique,simplify=FALSE),as.list)
     mdl$sf <- rep(list(NULL),max(as.numeric(names(tmp))))
