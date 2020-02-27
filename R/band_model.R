@@ -47,13 +47,13 @@ band_model <- function(model, cuts){
         sf_band = as.numeric(by(hs$sf_band,hs$new_id,min)),
         precip="unknown",
         pet="unknown",
-        qsf_max="qsf_max_default",
-        srz_max="srz_max_default",
-        srz_0="srz_0_default",
+        q_sfmax="q_sfmax_default",
+        s_rzmax="s_rzmax_default",
+        s_rz0="s_rz0_default",
         ln_t0="ln_t0_default",
         m="m_default",
-        td="td_default",
-        tsf="tsf_default",
+        t_d="t_d_default",
+        t_sf="t_sf_default",
         stringsAsFactors=FALSE
     )
     hs2$s_bar <- hs2$s_bar/hs2$area

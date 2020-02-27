@@ -25,7 +25,7 @@ check_model <- function(model, verbose=FALSE, delta=1e-13){
     df_prop <- list(
         hillslope = data.frame(name = c("id","area","s_bar","delta_x",
                                         "precip","pet",
-                                        "qsf_max","srz_max","srz_0","ln_t0","m","td","tsf"),
+                                        "q_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","t_sf"),
                                type=c(rep("numeric",4),rep("character",9)),
                                role = c(rep("property",4),rep("data_series",2),rep("parameter",7)),
                                stringsAsFactors=FALSE),
