@@ -9,7 +9,7 @@ band_model(model, cuts)
 \arguments{
 \item{model}{a RasterBrick as created by create_model}
 
-\item{nband}{number of bands to merge}
+\item{cuts}{number of bands to merge}
 }
 \value{
 a simplified model
