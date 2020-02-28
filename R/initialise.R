@@ -26,9 +26,9 @@ required_vrbl <- function(type=c("hillslope","channel")){
                     )
     }
     if(type=="channel"){
-        out <- list(attr = c("id","area","sz_band","sf_band","precip","pet"),
+        out <- list(attr = c("id","area","sz_band","sf_band","precip","pet","length","next_id"),
                     input = c("p","e_p","l_sf"),
-                    param = character(0),
+                    param = c("v_ch"),
                     state = c("l_sz_in"),
                     flux = c("s_ch","l_sz_in_t"))
     }
