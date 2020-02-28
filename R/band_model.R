@@ -34,7 +34,6 @@ band_model <- function(model, cuts){
     }
     hs[,'new_id']  <-  hs[,'new_id'] + max(model$channel$id)
 
-
     ## create the new table
     hs2 <- data.frame(
         id = unique(hs[,'new_id']),
@@ -64,6 +63,8 @@ band_model <- function(model, cuts){
                       j=c(model$channel$id,hs$new_id),
                       x=1,
                       dims=c(max(hs$id),max(hs2$id)))
+
+    
     A <- Diagonal(max(hs$id),c(model$channel$area,hs$area))
     
     Dsz <- t(K)%*%model$Fsz%*%A%*%K ## fractions combined with area
@@ -74,28 +75,77 @@ band_model <- function(model, cuts){
     Asf <- t(K)%*%A%*%K # area in each
     Dsf <- Dsf %*% Diagonal(ncol(Asf),1/diag(Asf))
     
-    ## impose limit can;t drain to same band - but with same area draining out
+    ## impose limit can't drain to same or lower band - but with same area draining out
     tDsz <- colSums(Dsz) # current sum of fractions
     tDsf <- colSums(Dsz) # current sum of fractions
 
-    ## remove elements not needed
-    for(ii in hs2$sz_band){
-        idx <- hs2$id[hs2$sz_band==ii]
+    ## remove elements which can't be evlauated since drain to the same band of lower...
+    for(ii in unique(hs2$sz_band)){
+        idx <- hs2$id[hs2$sz_band<=ii]
         for(jj in idx){
             Dsz[idx,jj] <- 0
         }
     }
     for(ii in hs2$sf_band){
-        idx <- hs2$id[hs2$sf_band==ii]
+        idx <- hs2$id[hs2$sf_band<=ii]
         for(jj in idx){
             Dsf[idx,jj] <- 0
         }
     }
+
+    ## standardise
+    Dsz <- Dsz %*% Diagonal(ncol(Dsz),tDsz/colSums(Dsz))
+    Dsf <- Dsf %*% Diagonal(ncol(Dsf),tDsf/colSums(Dsf))
+    browser()
+
+    ## handle areas with no drainage - add to the HSU of the same class downslope
+    idx <- intersect( which(colSums(Dsf)==0), hs2$id ) # this in an id
+    for(ii in idx){
+        ## get class and band
+        cls <- hs2$class[ hs2$id == ii ]
+        bnd <- hs2$sf_band[ hs2$id == ii ]
+        
+        ## idintify replacement class
+        jdx <- hs2$id[ hs2$class ==cls ]
+        jdxb <- hs2$sf_band[ hs2$class ==cls ]
+        jdx <- jdx[ jdxb > bnd ]
+        jdxb <- jdxb[ jdxb > bnd ]
+        jdx <- jdx[which.min(jdxb)] # this is the replacement id
+
+        ## get location as logical
+        iii <- hs2$id == ii
+        jdx <- hs2$id == jdx
+        tmp <- hs2$area[jdx] + hs2$area[jdx]
+        hs2$atb_bar[jdx] <- ( hs2$atb_bar[jdx]*hs2$area[jdx] +
+                              hs2$atb_bar[ii]*hs2$area[iii] )/tmp
+        hs2$s_bar[jdx] <- ( hs2$s_bar[jdx]*hs2$area[jdx] +
+                            hs2$s_bar[ii]*hs2$area[iii] )/tmp
+        hs2$delta_x[jdx] <- hs2$delta_x[jdx] + hs2$delta_x[iii]
+        hs2$area[jdx] <- tmp
+        Dsz[jdx,] <- Dsz[jdx,] + Dsz[iii,]
+    }
+    ## drop columns and row
+    Dsz
+    
+
+
     
     ## standardise
     Dsz <- Dsz %*% Diagonal(ncol(Dsz),tDsz/colSums(Dsz))
-    Dsf <- Dsf %*% Diagonal(ncol(Dsf),tDsz/colSums(Dsf))
+    Dsf <- Dsf %*% Diagonal(ncol(Dsf),tDsf/colSums(Dsf))
 
+    ## handle areas with no drainage - add to the HSU of the same class downslope
+    idx <- intersect( which(colSums(Dsf)==0), hs2$id ) # this in an id
+    for(ii in idx){
+        ## get class and band
+        cls <- hs2$class[ hs2$id == ii ]
+        bnd <- hs2$sf_band[ hs2$id == ii ]
+        
+        ## idintify possible d/s point
+    }
+    
+    ##
+    
     ## put back into model
     model$hillslope <- hs2
     model$Fsf <- Dsf

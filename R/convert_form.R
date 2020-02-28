@@ -74,25 +74,26 @@ store_to_sim <- function(model, use_states=FALSE){
     model$sz <- rep(list(NULL),max(as.numeric(names(tmp))))
     model$sz[as.numeric(names(tmp))] <- tmp
 
-    to_keep <- c("hillslope","channel","sz","sf")
+    to_keep <- c("hillslope","channel","sz","sf","param","gauge","point_inflow")
 
     return(model[to_keep])
 }
 
-#' @rdname initialise
+#' @rdname convert_form
 ## convert the store back to a table
 sim_to_store <- function(model,with_matrix=TRUE){
     
     for(ii in c("hillslope","channel")){
-        model[[ii]] <- cbind( as.data.frame(model[[ii]]$attr),
-                             as.data.frame(model[[ii]]$state))
+        model[[ii]] <- cbind( as.data.frame(model[[ii]]$attr,stringsAsFactors=FALSE),
+                             as.data.frame(model[[ii]]$state,stringsAsFactors=FALSE))
     }
 
     ## recreate matrices
     tmp <- rep(list(NULL),length(model$sz))
     for(ii in 1:length(model$sz)){
         if(length(model$sz[[ii]]$x)>0){
-            tmp[[ii]] <- cbind( i=ii,as.data.frame(model$sz[[ii]]) )
+            tmp[[ii]] <- cbind( i=ii,
+                               as.data.frame(model$sz[[ii]],stringsAsFactors=FALSE) )
         }
     }
     tmp <- do.call(rbind,tmp)
@@ -102,13 +103,14 @@ sim_to_store <- function(model,with_matrix=TRUE){
     tmp <- rep(list(NULL),length(model$sf))
     for(ii in 1:length(model$sf)){
         if(length(model$sf[[ii]]$x)>0){
-            tmp[[ii]] <- cbind( i=ii,as.data.frame(model$sf[[ii]]) )
+            tmp[[ii]] <- cbind( i=ii,
+                               as.data.frame(model$sf[[ii]],stringsAsFactors=FALSE) )
         }
     }
     tmp <- do.call(rbind,tmp)
     model$Fsf <- Matrix::sparseMatrix(i=tmp$i,j=tmp$j,x=tmp$x)
 
-    to_keep <- c("hillslope","channel","Fsz","Fsf")
+    to_keep <- c("hillslope","channel","Fsz","Fsf","param","gauge","point_inflow")
 
     return(model[to_keep])
 }
