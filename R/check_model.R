@@ -121,7 +121,7 @@ check_model <- function(model, verbose=FALSE, delta=1e-13){
         if( any( model[[ii]] < 0)){
             stop(ii," should have values greater or equal to 0")
         }
-        if( any( model[[ii]] > 1)){
+        if( any( model[[ii]] > 1+delta)){
             stop(ii," should have values less or equal to 1")
         }
         if( any( colSums(model[[ii]]) > 1+delta)){

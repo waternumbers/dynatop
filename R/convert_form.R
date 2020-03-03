@@ -66,12 +66,12 @@ store_to_sim <- function(model, use_states=FALSE){
     ## hsu with id = i
     tmp <- as.matrix(summary(model$Fsf))
     tmp <- lapply(by(tmp[,2:3],tmp[,1],unique,simplify=FALSE),as.list)
-    model$sf <- rep(list(NULL),max(as.numeric(names(tmp))))
+    model$sf <- rep(list(NULL),ncol(model$Fsf))
     model$sf[as.numeric(names(tmp))] <- tmp
     
     tmp <- as.matrix(summary(model$Fsz))
     tmp <- lapply(by(tmp[,2:3],tmp[,1],unique,simplify=FALSE),as.list)
-    model$sz <- rep(list(NULL),max(as.numeric(names(tmp))))
+    model$sz <- rep(list(NULL),ncol(model$Fsz))
     model$sz[as.numeric(names(tmp))] <- tmp
 
     to_keep <- c("hillslope","channel","sz","sf","param","gauge","point_inflow")
