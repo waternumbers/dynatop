@@ -68,19 +68,19 @@ band_model <- function(model, cuts){
     A <- Diagonal(max(hs$id),c(model$channel$area,hs$area))
     
     Dsz <- t(K)%*%model$Fsz%*%A%*%K ## fractions combined with area
-    Asz <- t(K)%*%A%*%K # area in each
+    ## Asz <- t(K)%*%A%*%K # area in each
     
-    Dsz <- Dsz %*% Diagonal(ncol(Asz),1/diag(Asz)) # explicit inverse since diagonal
+    ## Dsz <- Dsz %*% Diagonal(ncol(Asz),1/diag(Asz)) # explicit inverse since diagonal
     
     Dsf <- t(K)%*%model$Fsf%*%A%*%K
-    Asf <- t(K)%*%A%*%K # area in each
-    Dsf <- Dsf %*% Diagonal(ncol(Asf),1/diag(Asf))
-    
+    ##Asf <- t(K)%*%A%*%K # area in each
+    ##Dsf <- Dsf %*% Diagonal(ncol(Asf),1/diag(Asf))
+    #browser()
     ## impose limit can't drain to same or lower band - but with same area draining out
-    tDsz <- colSums(Dsz) # current sum of fractions
-    tDsf <- colSums(Dsz) # current sum of fractions
+    ##tDsz <- colSums(Dsz) # current sum of fractions
+    ##tDsf <- colSums(Dsz) # current sum of fractions
 
-    ## remove elements which can't be evlauated since drain to the same band of lower...
+    ## set elements which can't be evlauated since drain to the same band of lower...
     for(ii in 1:nrow(hs2)){
         id <- hs2$id[ii]
         idx <- hs2$id[hs2$sz_band <= hs2$sz_band[ii]]
@@ -88,70 +88,65 @@ band_model <- function(model, cuts){
         Dsz[idx,id] <- 0
         Dsf[jdx,id] <- 0
     }
-    ## for(ii in unique(hs2$sz_band)){
-    ##     idx <- hs2$id[hs2$sz_band<=ii]
-    ##     Dsz[idx,ii] <- 0
-    ## }
-    ## for(ii in hs2$sf_band){
-    ##     idx <- hs2$id[hs2$sf_band<=ii]
-    ##     Dsf[idx,ii] <- 0
-    ## }
 
-    ## standardise
-    Dsz <- Dsz %*% Diagonal(ncol(Dsz),tDsz/colSums(Dsz))
-    Dsf <- Dsf %*% Diagonal(ncol(Dsf),tDsf/colSums(Dsf))
-    
-    #browser()
     ## handle areas with no drainage - add to the HSU of the same class downslope
+    ## note handling one area can induce another one...
     idx <- intersect( which(colSums(Dsz)==0), hs2$id ) # this in an id
-    idx <- idx[order( hs2$sz_band[ hs2$id %in% idx ] )]
-    print(idx)
-    for(ii in idx){
-        ## get class and band
-        cls <- hs2$class[ hs2$id == ii ]
-        sf_bnd <- hs2$sf_band[ hs2$id == ii ]
-        sz_bnd <- hs2$sz_band[ hs2$id == ii ]
+    while( length(idx) > 0 ){
+        print(idx)
+        for(ii in idx){
+            ## get class and band
+            cls <- hs2$class[ hs2$id == ii ]
+            sf_bnd <- hs2$sf_band[ hs2$id == ii ]
+            sz_bnd <- hs2$sz_band[ hs2$id == ii ]
+            
+            ## idintify replacement class
+            jdx <- hs2$id[ hs2$class ==cls ]
+            sf_jdx <- hs2$sf_band[ hs2$class ==cls ]
+            sz_jdx <- hs2$sz_band[ hs2$class ==cls ]
+            
+            lgc <- (sf_jdx > sf_bnd) & (sz_jdx > sz_bnd) & !(jdx%in%idx)
+            
+            if( !any(lgc) ){
+                warning("Unable to merge all new bands without outlet")
+                next
+            }
+            
+            jdx <- jdx[ lgc ]
+            sf_jdx <- sf_jdx[ lgc ]
+            sz_jdx <- sz_jdx[ lgc ]
+            
+            jdx <- jdx[which.min(sz_jdx)] # this is the replacement id
+            Dsz[,jdx] <- Dsz[,jdx] + Dsz[,ii]
+            Dsf[,jdx] <- Dsf[,jdx] + Dsf[,ii]
         
-        ## idintify replacement class
-        jdx <- hs2$id[ hs2$class ==cls ]
-        sf_jdx <- hs2$sf_band[ hs2$class ==cls ]
-        sz_jdx <- hs2$sz_band[ hs2$class ==cls ]
-
-        print(jdx)
-        lgc <- (sf_jdx > sf_bnd) & (sz_jdx > sz_bnd) & !(jdx%in%idx)
-        
-        if( !any(lgc) ){
-            warning("Unable to merge all new bands without outlet")
-            next
+            ## get location as logical
+            iii <- hs2$id == ii
+            jdx <- hs2$id == jdx
+            tmp <- hs2$area[jdx] + hs2$area[iii]
+            hs2$atb_bar[jdx] <- ( hs2$atb_bar[jdx]*hs2$area[jdx] +
+                                  hs2$atb_bar[iii]*hs2$area[iii] )/tmp
+            hs2$s_bar[jdx] <- ( hs2$s_bar[jdx]*hs2$area[jdx] +
+                                hs2$s_bar[iii]*hs2$area[iii] )/tmp
+            hs2$delta_x[jdx] <- hs2$delta_x[jdx] + hs2$delta_x[iii]
+            hs2$area[jdx] <- tmp
+            
         }
-        
-        jdx <- jdx[ lgc ]
-        sf_jdx <- sf_jdx[ lgc ]
-        sz_jdx <- sz_jdx[ lgc ]
-        print(jdx)
-        jdx <- jdx[which.min(sz_jdx)] # this is the replacement id
-        print(jdx)
-        Dsz[jdx,] <- Dsz[jdx,] + Dsz[ii,]
-        Dsf[jdx,] <- Dsf[jdx,] + Dsf[ii,]
-        
-        ## get location as logical
-        iii <- hs2$id == ii
-        jdx <- hs2$id == jdx
-        tmp <- hs2$area[jdx] + hs2$area[iii]
-        hs2$atb_bar[jdx] <- ( hs2$atb_bar[jdx]*hs2$area[jdx] +
-                              hs2$atb_bar[iii]*hs2$area[iii] )/tmp
-        hs2$s_bar[jdx] <- ( hs2$s_bar[jdx]*hs2$area[jdx] +
-                            hs2$s_bar[iii]*hs2$area[iii] )/tmp
-        hs2$delta_x[jdx] <- hs2$delta_x[jdx] + hs2$delta_x[iii]
-        hs2$area[jdx] <- tmp
- 
+        ## drop columns and rows
+        Dsz <- Dsz[-idx,]; Dsz <- Dsz[,-idx]
+        Dsf <- Dsf[-idx,]; Dsf <- Dsf[,-idx]
+        hs2 <- hs2[!(hs2$id %in% idx),]
+        hs2$id <- max(model$channel$id) + 1:nrow(hs2)
+
+        ## recompute idx
+        idx <- intersect( which(colSums(Dsz)==0), hs2$id ) # this in an id
     }
     
-    ## drop columns and rows
-    Dsz <- Dsz[-idx,]; Dsz <- Dsz[,-idx]
-    Dsf <- Dsf[-idx,]; Dsf <- Dsf[,-idx]
-    hs2 <- hs2[!(hs2$id %in% idx),]
-    hs2$id <- max(model$channel$id) + 1:nrow(hs2)
+
+    ## standardise
+    
+    Dsz <- Dsz %*% Diagonal(ncol(Dsz),1/colSums(Dsz))
+    Dsf <- Dsf %*% Diagonal(ncol(Dsf),1/colSums(Dsf))
     
     ## put back into model
     model$hillslope <- hs2
