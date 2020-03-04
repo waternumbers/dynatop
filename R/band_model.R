@@ -57,7 +57,7 @@ band_model <- function(model, cuts){
     )
     hs2$s_bar <- hs2$s_bar/hs2$area
     hs2$atb_bar <- hs2$atb_bar/hs2$area
-
+    
     ## adapt the redistribution matrices
     K <- sparseMatrix(i=c(model$channel$id,hs$id),
                       j=c(model$channel$id,hs$new_id),
@@ -69,6 +69,7 @@ band_model <- function(model, cuts){
     
     Dsz <- t(K)%*%model$Fsz%*%A%*%K ## fractions combined with area
     Asz <- t(K)%*%A%*%K # area in each
+    
     Dsz <- Dsz %*% Diagonal(ncol(Asz),1/diag(Asz)) # explicit inverse since diagonal
     
     Dsf <- t(K)%*%model$Fsf%*%A%*%K
@@ -100,9 +101,11 @@ band_model <- function(model, cuts){
     Dsz <- Dsz %*% Diagonal(ncol(Dsz),tDsz/colSums(Dsz))
     Dsf <- Dsf %*% Diagonal(ncol(Dsf),tDsf/colSums(Dsf))
     
-
+    #browser()
     ## handle areas with no drainage - add to the HSU of the same class downslope
-    idx <- intersect( which(colSums(Dsf)==0), hs2$id ) # this in an id
+    idx <- intersect( which(colSums(Dsz)==0), hs2$id ) # this in an id
+    idx <- idx[order( hs2$sz_band[ hs2$id %in% idx ] )]
+    print(idx)
     for(ii in idx){
         ## get class and band
         cls <- hs2$class[ hs2$id == ii ]
@@ -114,12 +117,20 @@ band_model <- function(model, cuts){
         sf_jdx <- hs2$sf_band[ hs2$class ==cls ]
         sz_jdx <- hs2$sz_band[ hs2$class ==cls ]
 
-        lgc <- (sf_jdx > sf_bnd)  & (sz_jdx > sz_bnd)
+        print(jdx)
+        lgc <- (sf_jdx > sf_bnd) & (sz_jdx > sz_bnd) & !(jdx%in%idx)
+        
+        if( !any(lgc) ){
+            warning("Unable to merge all new bands without outlet")
+            next
+        }
+        
         jdx <- jdx[ lgc ]
         sf_jdx <- sf_jdx[ lgc ]
         sz_jdx <- sz_jdx[ lgc ]
+        print(jdx)
         jdx <- jdx[which.min(sz_jdx)] # this is the replacement id
-        
+        print(jdx)
         Dsz[jdx,] <- Dsz[jdx,] + Dsz[ii,]
         Dsf[jdx,] <- Dsf[jdx,] + Dsf[ii,]
         
