@@ -4,7 +4,9 @@
 #' @param initial_recharge Initial recharge to the saturated zone in steady state in m/hr
 #' @param sim_time_step simulation timestep in hours, default value of NULL results in data time step
 #' @param use_states should the states in the model be used (default FALSE)
-#'
+#' @param sz_opt TODO
+#' @param mass_check return time series of mass balance errors
+#' 
 #' @details use_states, currently does not impose any checks
 #'
 #' @export
@@ -12,6 +14,7 @@ dynatop <- function(model,obs_data,
                     initial_recharge=NULL,
                     sim_time_step=NULL,
                     use_states=FALSE,
+                    mass_check=FALSE,
                     sz_opt=list(omega=0.7,
                                 theta=0.7)){
 
@@ -28,8 +31,7 @@ dynatop <- function(model,obs_data,
         model <- initialise(model,initial_recharge,return_sim=TRUE)
     }
     
-    ## work out band sequences
-    
+    ## work out band sequences   
     sqnc <- list(sf_band=list(),sz_band=list())
     for(ii in names(sqnc)){      
         tmp <- sort(unique(c(model$hillslope$attr[[ii]],
@@ -57,10 +59,16 @@ dynatop <- function(model,obs_data,
         return(x)
     }
 
-    ## initialise the output
+    ## initialise the channel inflow output
     channel_inflow <- reclass( matrix(NA,nrow(obs_data),length(model$channel$attr$id)), match.to=obs_data )
     names(channel_inflow) <- model$channel$attr$id
 
+    ## initialise the mass check output if required
+    if( mass_check ){
+        mass_errors <- reclass( matrix(NA,nrow(obs_data),4), match.to=obs_data )
+        names(mass_errors) <- c("s_sf","s_rz","s_uz","s_sz")
+    }
+    
     ## remove time properties from input - stops variable type errors later
     obs_data <- as.matrix(obs_data)
 
@@ -76,11 +84,13 @@ dynatop <- function(model,obs_data,
         }
         
         model$channel$flux$s_ch[] <- 0
-
-        
+       
         ## loop sub steps
         for(inner in 1:ts$n_sub_step){
-            model0 <- model    
+
+            ## stor previous version of model if need mass check
+            if( mass_check ){ model0 <- model }
+            
             ## Step 1: Distribute any surface storage downslope            
             lvol$sf[] <- 0 # remove fluxes from previous time step since not needed - should be over written but...
             
@@ -123,10 +133,12 @@ dynatop <- function(model,obs_data,
             }
 
             print(paste("s_sf",it,inner,
-                        sum(model$hillslope$state$s_sf*model$hillslope$attr$area) -
+                        sum(model$hillslope$state$s_sf*model$hillslope$attr$area) +
+                        sum(model$channel$flux$s_ch*model$channel$attr$area) -           
+                        sum(model0$hillslope$state$s_sf*model0$hillslope$attr$area)-
+                        sum(model0$channel$flux$s_ch*model0$channel$attr$area),
                         sum(model0$hillslope$state$s_sf*model0$hillslope$attr$area)+
-                        sum(model$channel$flux$s_ch*model$channel$attr$area),
-                        sum(model0$hillslope$state$s_sf*model0$hillslope$attr$area),
+                        sum(model0$channel$flux$s_ch*model0$channel$attr$area),
                         sum(model$hillslope$state$s_sf*model$hillslope$attr$area)+
                         sum(model$channel$flux$s_ch*model$channel$attr$area)
                         ))
