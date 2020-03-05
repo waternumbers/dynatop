@@ -65,8 +65,8 @@ dynatop <- function(model,obs_data,
 
     ## initialise the mass check output if required
     if( mass_check ){
-        mass_errors <- reclass( matrix(NA,nrow(obs_data),4), match.to=obs_data )
-        names(mass_errors) <- c("s_sf","s_rz","s_uz","s_sz")
+        mass_errors <- matrix(NA,nrow(obs_data)*ts$n_sub_step,6)
+        colnames(mass_errors) <- c("DateTime","step","s_sf","s_rz","s_uz","s_sz")
     }
     
     ## remove time properties from input - stops variable type errors later
@@ -90,7 +90,7 @@ dynatop <- function(model,obs_data,
 
             ## stor previous version of model if need mass check
             if( mass_check ){ model0 <- model }
-            
+                        
             ## Step 1: Distribute any surface storage downslope            
             lvol$sf[] <- 0 # remove fluxes from previous time step since not needed - should be over written but...
             
@@ -131,17 +131,18 @@ dynatop <- function(model,obs_data,
                     lvol$sf[ model$channel$attr$id[idx] ]  <- 0
                 }
             }
-
-            print(paste("s_sf",it,inner,
-                        sum(model$hillslope$state$s_sf*model$hillslope$attr$area) +
-                        sum(model$channel$flux$s_ch*model$channel$attr$area) -           
-                        sum(model0$hillslope$state$s_sf*model0$hillslope$attr$area)-
-                        sum(model0$channel$flux$s_ch*model0$channel$attr$area),
-                        sum(model0$hillslope$state$s_sf*model0$hillslope$attr$area)+
-                        sum(model0$channel$flux$s_ch*model0$channel$attr$area),
-                        sum(model$hillslope$state$s_sf*model$hillslope$attr$area)+
-                        sum(model$channel$flux$s_ch*model$channel$attr$area)
-                        ))
+            
+            if( mass_check ){ mc_s_ch_sf <- model$channel$flux$s_ch }
+            ## print(paste("s_sf",it,inner,
+            ##             sum(model$hillslope$state$s_sf*model$hillslope$attr$area) +
+            ##             sum(model$channel$flux$s_ch*model$channel$attr$area) -           
+            ##             sum(model0$hillslope$state$s_sf*model0$hillslope$attr$area)-
+            ##             sum(model0$channel$flux$s_ch*model0$channel$attr$area),
+            ##             sum(model0$hillslope$state$s_sf*model0$hillslope$attr$area)+
+            ##             sum(model0$channel$flux$s_ch*model0$channel$attr$area),
+            ##             sum(model$hillslope$state$s_sf*model$hillslope$attr$area)+
+            ##             sum(model$channel$flux$s_ch*model$channel$attr$area)
+            ##             ))
             
             ## Step 2: solve the root zone for hillslope elements
             #browser()
@@ -154,28 +155,30 @@ dynatop <- function(model,obs_data,
             tilde_rz <- fode( model$hillslope$input$p + (model$hillslope$flux$q_sf_rz/ts$sub_step),
                              model$hillslope$input$e_t/model$hillslope$param$s_rzmax,
                              model$hillslope$state$s_rz,ts$sub_step )
-            
+
+            ## work out actual evapotranspiration by mass balance
+            model$hillslope$flux$e_t <- model$hillslope$state$s_rz + model$hillslope$input$p*ts$sub_step - tilde_rz
             ## new storage value
             model$hillslope$state$s_rz <- pmin(tilde_rz,model$hillslope$param$s_rzmax)
             
             ## split root zone flow
             tmp <- tilde_rz - model$hillslope$state$s_rz
             saturated_index <- model$hillslope$state$s_sz <= 0 # which areas are saturated
-            model$hillslope$flux$q_rz_ex <- tmp * saturated_index
+            model$hillslope$flux$q_rz_sf <- tmp * saturated_index
             model$hillslope$flux$q_rz_uz <- tmp * !saturated_index
             
-            print(paste("s_rz",it,inner,
-                        sum((model0$hillslope$state$s_rz +
-                            model$hillslope$input$p*ts$sub_step +
-                            model$hillslope$flux$q_sf_rz -
-                            tmp - model$hillslope$state$s_rz)*
-                            model0$hillslope$attr$area),
-                        sum(model0$hillslope$state$s_rz*model0$hillslope$attr$area),
-                        sum((model$hillslope$state$s_rz -
-                             model$hillslope$input$p*ts$sub_step -
-                             model$hillslope$flux$q_sf_rz +
-                             tmp)*model$hillslope$attr$area)
-                        ))
+            ## print(paste("s_rz",it,inner,
+            ##             sum((model0$hillslope$state$s_rz +
+            ##                 model$hillslope$input$p*ts$sub_step +
+            ##                 model$hillslope$flux$q_sf_rz -
+            ##                 tmp - model$hillslope$state$s_rz)*
+            ##                 model0$hillslope$attr$area),
+            ##             sum(model0$hillslope$state$s_rz*model0$hillslope$attr$area),
+            ##             sum((model$hillslope$state$s_rz -
+            ##                  model$hillslope$input$p*ts$sub_step -
+            ##                  model$hillslope$flux$q_sf_rz +
+            ##                  tmp)*model$hillslope$attr$area)
+            ##             ))
             
             ## Step 3: Unsaturated zone
             ## solve ODE
@@ -187,16 +190,16 @@ dynatop <- function(model,obs_data,
             model$hillslope$flux$q_uz_sz <- model$hillslope$state$s_uz + model$hillslope$flux$q_rz_uz - tilde_uz
             model$hillslope$state$s_uz <- tilde_uz
             
-            print(paste("s_uz",it,inner,
-                        sum((model0$hillslope$state$s_uz +
-                             model$hillslope$flux$q_rz_uz -
-                             model$hillslope$flux$q_uz_sz -
-                             model$hillslope$state$s_uz)*model0$hillslope$attr$area),
-                        sum(model0$hillslope$state$s_uz*model0$hillslope$attr$area),
-                        sum((model$hillslope$state$s_uz -
-                             model$hillslope$flux$q_rz_uz +
-                             model$hillslope$flux$q_uz_sz)*model$hillslope$attr$area)
-                        ))
+            ## print(paste("s_uz",it,inner,
+            ##             sum((model0$hillslope$state$s_uz +
+            ##                  model$hillslope$flux$q_rz_uz -
+            ##                  model$hillslope$flux$q_uz_sz -
+            ##                  model$hillslope$state$s_uz)*model0$hillslope$attr$area),
+            ##             sum(model0$hillslope$state$s_uz*model0$hillslope$attr$area),
+            ##             sum((model$hillslope$state$s_uz -
+            ##                  model$hillslope$flux$q_rz_uz +
+            ##                  model$hillslope$flux$q_uz_sz)*model$hillslope$attr$area)
+            ##             ))
             
             ## Step 4: Solve saturated zone
             ## compute some required values for the hillslope
@@ -256,7 +259,7 @@ dynatop <- function(model,obs_data,
                 model$hillslope$flux$q_uz_sz
             
             model$hillslope$state$s_sz <- pmax(0,tilde_sz)
-            model$hillslope$flux$q_sz_ex <- model$hillslope$state$s_sz - tilde_sz
+            model$hillslope$flux$q_sz_sf <- model$hillslope$state$s_sz - tilde_sz
 
             ## update volume of inflow to channel
             model$channel$flux$s_ch <- model$channel$flux$s_ch +
@@ -271,23 +274,66 @@ dynatop <- function(model,obs_data,
             ## }
             
             saturated_index <- model$hillslope$state$s_sz <= 0
-            model$hillslope$state$s_sf <- model$hillslope$state$s_sf +
-                model$hillslope$flux$q_rz_ex +
-                (model$hillslope$flux$q_sz_ex + model$hillslope$state$s_uz)*saturated_index
+            model$hillslope$flux$q_uz_sf <- model$hillslope$state$s_uz*saturated_index
             model$hillslope$state$s_uz <- model$hillslope$state$s_uz * !saturated_index
-            
-            
-        }     
-        ##browser()
-        ## step 6 - channel inflow - at the moment a volume / area
-        channel_inflow[it,] <- model$channel$attr$area *
-            ( model$channel$flux$s_ch + model$channel$input$p*ts$step ) /
-            (ts$step)
+            model$hillslope$state$s_sf <- model$hillslope$state$s_sf +
+                model$hillslope$flux$q_rz_sf +
+                model$hillslope$flux$q_sz_sf + model$hillslope$flux$q_uz_sf
 
+            ## mass check for iteration
+            if( mass_check ){
+                mass_errors[ ((it-1)*ts$n_sub_step) + inner,] <-
+                    c(it,inner,
+                      sum(model0$hillslope$state$s_sf*model0$hillslope$attr$area)+
+                      sum(model0$channel$flux$s_ch*model0$channel$attr$area) +
+                      sum(model$hillslope$flux$q_rz_sf*model$hillslope$attr$area) +
+                      sum(model$hillslope$flux$q_sz_sf*model$hillslope$attr$area) -
+                      sum(model$hillslope$flux$q_sf_rz*model$hillslope$attr$area) -
+                      sum(model$hillslope$state$s_sf*model$hillslope$attr$area) -
+                      sum(mc_s_ch_sf*model$channel$attr$area),
+                      sum((model0$hillslope$state$s_rz +
+                           model$hillslope$input$p*ts$sub_step +
+                           model$hillslope$flux$q_sf_rz -
+                           model$hillslope$flux$q_rz_sf -
+                           model$hillslope$flux$q_rz_uz -
+                           model$hillslope$flux$e_t -
+                           model$hillslope$state$s_rz)*
+                          model0$hillslope$attr$area),
+                      sum((model0$hillslope$state$s_uz +
+                           model$hillslope$flux$q_rz_uz -
+                           model$hillslope$flux$q_uz_sz -
+                           model$hillslope$flux$q_uz_sf -
+                           model$hillslope$state$s_uz)*model0$hillslope$attr$area),
+                      -sum(model0$hillslope$state$s_sz*model0$hillslope$attr$area)+
+                      sum(mc_s_ch_sf*model$channel$attr$area) +
+                      sum(model$hillslope$flux$q_uz_sz*model$hillslope$attr$area) -
+                      sum(model$hillslope$flux$q_sz_sf*model$hillslope$attr$area) -
+                      -sum(model$hillslope$state$s_sz*model$hillslope$attr$area) -
+                      sum(model$channel$flux$s_ch*model$channel$attr$area)
+                      )
+                #print( mass_errors[ ((it-1)*ts$n_sub_step) + inner,] )
+            }     
+            ##browser()
+            ## step 6 - channel inflow - at the moment a volume / area
+            channel_inflow[it,] <- model$channel$attr$area *
+                ( model$channel$flux$s_ch + model$channel$input$p*ts$step ) /
+                (ts$step)
+            
+            
+        }
+        
     } ## end of timestep loop
-
-    model <- sim_to_store(model)
-
-    return( list(model=model,
-                 channel_input = channel_inflow ) )
+    
+    
+    out <- list(model = sim_to_store(model),
+                channel_input = channel_inflow)
+    
+    if(mass_check){
+        #browser()
+        mass_errors <- as.data.frame(mass_errors)
+        mass_errors[,'DateTime'] <- index(obs)[mass_errors[,'DateTime']]
+        out[['mass_errors']] <- mass_errors
+    }
+    
+    return( out )
 }
