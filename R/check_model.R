@@ -10,7 +10,7 @@
 #'
 #' @details The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be less then 1+delta.
 #' @export
-check_model <- function(model, verbose=FALSE, delta=1e-13){
+check_model <- function(model, verbose=FALSE, use_states=FALSE,delta=1e-13){
 
     ## check all components of the model exist
     components <- c("hillslope","channel","param","Fsf","Fsz","gauge","point_inflow")
@@ -23,26 +23,10 @@ check_model <- function(model, verbose=FALSE, delta=1e-13){
     
     ## create a list of data.frames describing the data frames in the model
     df_prop <- list(
-        hillslope = data.frame(name = c("id","area","s_bar","delta_x",
-                                        "precip","pet",
-                                        "q_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","t_sf"),
-                               type=c(rep("numeric",4),rep("character",9)),
-                               role = c(rep("property",4),rep("data_series",2),rep("parameter",7)),
-                               stringsAsFactors=FALSE),
-        channel = data.frame(name = c("id","area","length","next_id","precip","pet","v_ch"),
-                             type=c(rep("numeric",4),rep("character",3)),
-                             role = c(rep("property",4),rep("data_series",2),"parameter"),
-                             stringsAsFactors=FALSE),
-        point_inflow = data.frame(
-            name = c("name","id","fraction"),
-            type=c("character",rep("numeric",2)),
-            role = c("data_series",rep("property",2)),
-            stringsAsFactors=FALSE),
-        gauge = data.frame(
-            name = c("name","id","fraction"),
-            type=c("character",rep("numeric",2)),
-            role = c("output_label",rep("property",2)),
-            stringsAsFactors=FALSE)
+        hillslope = model_description("hillslope",include_states=use_states),
+        channel = model_description("channel",include_states=use_states),
+        point_inflow = model_description("point_inflow",include_states=use_states),
+        gauge = model_description("gauge",include_states=use_states)
     )
     
     ## check the HRU table properties
@@ -74,7 +58,7 @@ check_model <- function(model, verbose=FALSE, delta=1e-13){
         stop("All values in param should have a unique name")
     }
 
-    ## check paraemter names
+    ## check parameter names
     req_names <- NULL
     for(jj in names(df_prop)){
         tmp <- df_prop[[jj]]$name[df_prop[[jj]]$role=="parameter"]

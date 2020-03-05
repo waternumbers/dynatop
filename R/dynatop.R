@@ -20,17 +20,20 @@ dynatop <- function(model,obs_data,
                                 theta=0.7)){
 
     ## check the model
-    input_series <- check_model(model)
+    input_series <- check_model(model,use_states=use_states)
+    
     ## check input and get model timestep
     ts <- check_obs(obs_data,input_series,
                     sim_time_step)
     
     ## initialise the model
     if( use_states ){
-        model <- store_to_sim(model,use_states=TRUE)
-    }else{
-        model <- initialise(model,initial_recharge,return_sim=TRUE)
+        model <- initialise(model,initial_recharge)
     }
+
+    ## convert to lists for simulation
+    ## this creates hillslope, channel and sqnc
+    list2env(convert_form(model),as.environment(-1))
     
     ## work out band sequences   
     sqnc <- list(sf_band=list(),sz_band=list())
