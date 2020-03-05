@@ -19,6 +19,7 @@ dynatop <- function(model,obs_data,
                     sz_opt=list(omega=0.7,
                                 theta=0.7)){
 
+
     ## check the model
     input_series <- check_model(model,use_states=use_states)
 
@@ -27,7 +28,7 @@ dynatop <- function(model,obs_data,
                     sim_time_step)
 
     ## initialise the model
-    if( use_states ){
+    if( !use_states ){
         model <- initialise(model,initial_recharge)
     }
 
@@ -35,7 +36,7 @@ dynatop <- function(model,obs_data,
     ## this creates hillslope, channel, sqnc and lateral_flux
     list2env(convert_form(model),as.environment(-1))
 
-
+    #browser()
     ## simple function for solving ODE
     fode <- function(a,b,x0,t){
         #b <- pmax(b,1e-10)
@@ -67,9 +68,9 @@ dynatop <- function(model,obs_data,
         return_states <- rep(list(NULL),sum(idx))
         names(return_states) <- index(obs_data)[idx]
         return_states[['idx']] <- idx
-        return_state$flag <- TRUE
+        return_states$flag <- TRUE
     }else{
-        return_state <- list(flag=FALSE)
+        return_states <- list(flag=FALSE)
     }
 
 
@@ -80,6 +81,8 @@ dynatop <- function(model,obs_data,
     ## message("Running Dynamic TOPMODEL using ", length(hillslope$id), " hillslope units and ", length(channel$id), " channel units")
 
     for(it in 1:nrow(obs_data)){
+        ##print(it)
+
         ## set the inputs to the hillslope and channel
         ## set as rate m/s
         hillslope$p <- obs_data[it,hillslope$precip]/ts$step
@@ -254,7 +257,7 @@ dynatop <- function(model,obs_data,
                                                         lateral_flux$sz[ channel$Fsz[[ii]]$j ] )
                     }
                     channel$sum_l_sz_in[idx] <- channel$sum_l_sz_in[idx]/channel$area[idx]
-                    laterl_flux$sz[ channel$id[idx] ]  <- 0
+                    lateral_flux$sz[ channel$id[idx] ]  <- 0
                 }
             }
 
@@ -336,11 +339,15 @@ dynatop <- function(model,obs_data,
 
     } ## end of timestep loop
 
+
     ## copy states back into model
     tmp <- get_states(hillslope,"hillslope")
-    model$hillslope <- merge(model$hillslope,get_states(hillslope,"hillslope"),by="id",all=c(FALSE,TRUE))
+    nm <- c("id",setdiff( names(model$hillslope),names(tmp)))
+    model$hillslope <- merge(model$hillslope[,nm],tmp,by="id",all=TRUE)
     tmp <- get_states(channel,"channel")
-    model$channel <- merge(model$channel,get_states(channel,"channel"),by="id",all=c(FALSE,TRUE))
+    nm <- c("id",setdiff( names(model$channel),names(tmp)))
+    model$channel <- merge(model$channel[,nm],tmp,by="id",all=TRUE)
+
 
 
     out <- list(model = model,
@@ -352,7 +359,7 @@ dynatop <- function(model,obs_data,
         mass_errors[,'DateTime'] <- index(obs)[mass_errors[,'DateTime']]
         out[['mass_errors']] <- mass_errors
     }
-    if( length(return_states)>0 ){
+    if( return_states$flag ){
         return_states <- return_states[setdiff(names(return_states),c("idx","flag"))]
         out[['return_states']] <- return_states
     }

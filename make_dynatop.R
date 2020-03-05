@@ -126,7 +126,7 @@ v0 + (sum(obs$Rainfall)*sum(model$hillslope$area)) + (sum(obs$Rainfall)*sum(mode
 
 mdlb0 <- initialise(mdlb,0.000001)
 vb0 <- hillslope_volume(mdlb0)
-qhatb <- dynatop(mdlb,obs,0.000001)
+qhatb <- dynatop(mdlb0,obs,use_states=TRUE)
 vbend <- hillslope_volume(qhatb$model)
 
 vb0 + (sum(obs$Rainfall)*sum(mdlb$hillslope$area)) + (sum(obs$Rainfall)*sum(mdlb$channel$area)) - (sum(qhatb$channel_input)*15*60) - vbend

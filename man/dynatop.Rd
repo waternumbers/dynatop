@@ -10,6 +10,8 @@ dynatop(
   initial_recharge = NULL,
   sim_time_step = NULL,
   use_states = FALSE,
+  mass_check = FALSE,
+  return_states = NULL,
   sz_opt = list(omega = 0.7, theta = 0.7)
 )
 }
@@ -23,6 +25,10 @@ dynatop(
 \item{sim_time_step}{simulation timestep in hours, default value of NULL results in data time step}
 
 \item{use_states}{should the states in the model be used (default FALSE)}
+
+\item{mass_check}{return time series of mass balance errors}
+
+\item{sz_opt}{TODO}
 }
 \description{
 Run dynamic topmodel

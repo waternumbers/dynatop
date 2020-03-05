@@ -21,12 +21,12 @@ model_description <- function(type=c("hillslope","channel","point_inflow","gauge
                                    rep("data_series",2),
                                    rep("parameter",7),
                                    rep("state",7),
-                                   rep("tmp",16)),
+                                   rep("tmp",17)),
                           type = c(rep("numeric",7),
                                    rep("character",2),
                                    rep("character",7),
                                    rep("numeric",7),
-                                   rep("numeric",16)
+                                   rep("numeric",17)
                                    ),
                           stringsAsFactors=FALSE)
 

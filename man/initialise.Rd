@@ -2,15 +2,9 @@
 % Please edit documentation in R/initialise.R
 \name{initialise}
 \alias{initialise}
-\alias{required_vrbl}
-\alias{empty_store}
 \title{Contains functions for initialising and checking the hillslope HSU store}
 \usage{
-required_vrbl(type = c("hillslope", "channel"))
-
-empty_store(model, type = c("hillslope", "channel"))
-
-initialise(model, initial_recharge)
+initialise(model, initial_recharge, return_sim = FALSE)
 }
 \arguments{
 \item{model}{a dynamic TOPMODEL model list object}
