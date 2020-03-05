@@ -15,6 +15,7 @@ dynatop <- function(model,obs_data,
                     sim_time_step=NULL,
                     use_states=FALSE,
                     mass_check=FALSE,
+                    return_states=NULL,
                     sz_opt=list(omega=0.7,
                                 theta=0.7)){
 
@@ -68,7 +69,19 @@ dynatop <- function(model,obs_data,
         mass_errors <- matrix(NA,nrow(obs_data)*ts$n_sub_step,6)
         colnames(mass_errors) <- c("DateTime","step","s_sf","s_rz","s_uz","s_sz")
     }
+
+    ## check and initialise the state outputs
+    if( length(return_states)>0 ){
+        if( !("POSIXct" %in% class(return_states)) ){
+            stop("Times for returning states should be POSIXct object")
+        }
+        idx <- index(obs_data) %in% return_states
+        return_states <- rep(list(NULL),sum(idx))
+        names(return_states) <- index(obs_data)[idx]
+        return_states[['idx']] <- idx
+    }
     
+                              
     ## remove time properties from input - stops variable type errors later
     obs_data <- as.matrix(obs_data)
 
@@ -318,6 +331,11 @@ dynatop <- function(model,obs_data,
             channel_inflow[it,] <- model$channel$attr$area *
                 ( model$channel$flux$s_ch + model$channel$input$p*ts$step ) /
                 (ts$step)
+
+            ## handle returning states
+            if( length(return_states)>0 && return_states$idx[it] ){
+                return_states[[index(obs_data)[it]]] <- sim_to_store(model,with_matrix=FALSE)
+            }
             
             
         }
@@ -334,6 +352,9 @@ dynatop <- function(model,obs_data,
         mass_errors[,'DateTime'] <- index(obs)[mass_errors[,'DateTime']]
         out[['mass_errors']] <- mass_errors
     }
-    
+    if( length(return_states)>0 ){
+        return_states <- return_states[setdiff(names(return_states),"idx")]
+        out[['return_states']] <- return_states
+    }
     return( out )
 }
