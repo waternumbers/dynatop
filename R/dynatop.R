@@ -50,8 +50,8 @@ dynatop <- function(model,obs_data,
     }
 
     ## initialise the channel inflow output
-    channel_inflow <- reclass( matrix(NA,nrow(obs_data),length(model$channel$attr$id)), match.to=obs_data )
-    names(channel_inflow) <- model$channel$attr$id
+    channel_inflow <- reclass( matrix(NA,nrow(obs_data),length(model$channel$id)), match.to=obs_data )
+    names(channel_inflow) <- model$channel$id
 
     ## initialise the mass check output if required
     if( mass_check ){
@@ -321,9 +321,9 @@ dynatop <- function(model,obs_data,
                       -sum(hillslope$s_sz*hillslope$area) -
                       sum(channel$s_ch*channel$area)
                       )
-                #print( mass_errors[ ((it-1)*ts$n_sub_step) + inner,] )
+                print( mass_errors[ ((it-1)*ts$n_sub_step) + inner,] )
             }
-            ##browser()
+
             ## step 6 - channel inflow - at the moment a volume / area
             channel_inflow[it,] <- channel$area *
                 ( channel$s_ch + channel$p*ts$step ) /
