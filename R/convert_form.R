@@ -86,7 +86,7 @@ convert_dynatop <- function(model){
 get_states <- function(obj,type=c("hillslope","channel")){
     type <- match.arg(type)
 
-    stt <- model_description(type)
+    stt <- model_description(type,TRUE)
     stt <- c("id",stt$name[stt$role=="state"])
     out <- as.data.frame( obj[stt], stringsAsFactors=FALSE )
     return(out)

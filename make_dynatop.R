@@ -131,6 +131,8 @@ vbend <- hillslope_volume(qhatb$model)
 
 vb0 + (sum(obs$Rainfall)*sum(mdlb$hillslope$area)) + (sum(obs$Rainfall)*sum(mdlb$channel$area)) - (sum(qhatb$channel_input)*15*60) - vbend
 
-x11();plot(cbind(Swindale$obs[,'Flow'],rowSums(qhat$channel_input),rowSums(qhatb$channel_input)))
+x11();plot(cbind(Swindale$obs[,'Flow'],rowSums(qhatb$channel_input)))
+
+                 rowSums(qhat$channel_input),rowSums(qhatb$channel_input)))
 
 
