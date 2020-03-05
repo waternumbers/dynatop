@@ -6,7 +6,7 @@
 #' @param initial_recharge Initial recharge to the saturated zone in steady state in m/hr
 #'
 #' @details TODO
-#' 
+#'
 #' @return TODO
 #'
 #' @name convert_form
@@ -22,11 +22,13 @@ convert_form <- function(model,used_by="dynatop"){
            dynatop = convert_dynatop(model),
            stop("Conversion type error"))
 }
-    
+
 #' @rdname convert_form
 #' @export
 ## conversion for use in dynatop
 convert_dynatop <- function(model){
+
+    check_model(model)
 
     ## initialise output as a list
     out <- list()
@@ -41,7 +43,7 @@ convert_dynatop <- function(model){
     Fsf <- lapply(by(tmp[,2:3],tmp[,1],unique,simplify=FALSE),as.list)
     tmp <- as.matrix(summary(model$Fsz))
     Fsz <- lapply(by(tmp[,2:3],tmp[,1],unique,simplify=FALSE),as.list)
-    
+
     ## convert into lists
     for(tbl in names(desc)){
         out[[tbl]] <- list()
@@ -56,70 +58,58 @@ convert_dynatop <- function(model){
                                         )
         }
         ## copy the upstream locations to the lists
-        out[[tbl]]$Fsz <- Fsz[out[[tbl]]$id]
-        out[[tbl]]$Fsf <- Fsf[out[[tbl]]$id]
+        out[[tbl]]$Fsz <- Fsz[paste(out[[tbl]]$id)]
+        out[[tbl]]$Fsf <- Fsf[paste(out[[tbl]]$id)]
     }
 
-    ## make the sequence of 
-    ## make list for the matrices
-    ## collapsed matrices as lists
-    ## ith element of list contains the parents (and fractions) for the
-    ## hsu with id = i
-    tmp <- as.matrix(summary(model$Fsf))
-    tmp <- lapply(by(tmp,tmp[,1],unique,simplify=FALSE),as.list)
-    model$sf <- rep(list(NULL),ncol(model$Fsf))
-    model$sf[as.numeric(names(tmp))] <- tmp
-    
-    tmp <- as.matrix(summary(model$Fsz))
-    tmp <- lapply(by(tmp,tmp[,1],unique,simplify=FALSE),as.list)
-    model$sz <- rep(list(NULL),ncol(model$Fsz))
-    model$sz[as.numeric(names(tmp))] <- tmp
-
-    
-            for(ii in vrbl$attr){
-        out$attr[[ii]] <- unname( df[,ii] )
-    }
-    for(ii in vrbl$input){
-        out$input[[ii]] <-  rep(0,nrow(df))
-    }
-    for(ii in vrbl$param){
-        out$attr[[ii]] <- unname( df[,ii] )
-        out$param[[ii]] <- unname( model$param[ df[,ii] ] )
-    }
-    for(ii in vrbl$state){
-        if(use_states){
-            out$state[[ii]] <- unname( df[,ii] )
-        }else{
-            out$state[[ii]] <- rep(0,nrow(df)) ## initialise all stores and fluxes as 0
+    ## work out the sequences for computing the lateral flux bands these are the index in the vectors NOT the id
+    out$sqnc <- list(sf_band=list(),sz_band=list())
+    for(ii in names(out$sqnc)){
+        tmp <- sort(unique(c(model$hillslope[[ii]],
+                             model$channel[[ii]]))) # sorted list of unique bands
+        for(jj in 1:length(tmp)){
+            out$sqnc[[ii]][[jj]] <- list(
+                hillslope = which(model$hillslope[[ii]] == tmp[jj]),
+                channel = which(model$channel[[ii]] == tmp[jj]))
         }
     }
-    for(ii in vrbl$flux){
-        out$flux[[ii]] <- rep(0,nrow(df)) ## initialise all stores and fluxes as 0
-    }
-    
-        desc <- model_description(ii) ## model data frame description
-        req <- desc$name # TODO fix so only returns what is needed
-        desc <- desc[desc$name%in%req,] # trim description
-        
-    ## list the variables required for each element
-    req <- list(hillslope =c("id","area","
+
+    ## storage for lateral fluxes stored as volumes
+    out$lateral_flux <- list(sf = rep(0,max(c(model$hillslope$attr$id,model$channel$attr$id))),
+                             sz = rep(0,max(c(model$hillslope$attr$id,model$channel$attr$id))))
+
+    return(out)
+}
 
 #' @rdname convert_form
 ## convert a data frame to a storage list
+get_states <- function(obj,type=c("hillslope","channel")){
+    type <- match.args(type)
+
+    stt <- model_description(type)
+    stt <- c("id",stt$name[stt$role=="state"])
+    out <- as.data.frame( obj[stt], stringsAsFactors=FALSE )
+    return(out)
+}
+
+
+
+
+
 df_to_list <- function(model,type=c("hillslope","channel"),use_states=FALSE){
-    
+
     type <- match.arg(type)
-    
+
     ## get a list of all variables that should exist
     vrbl <- required_vrbl(type)
-        
+
     ## initialise depending upon type
     out <- list(attr=list(),
                 input=list(),
                 param=list(),
                 state=list(),
                 flux=list())
-    
+
     for(ii in vrbl$attr){
         out$attr[[ii]] <- unname( df[,ii] )
     }
@@ -140,7 +130,7 @@ df_to_list <- function(model,type=c("hillslope","channel"),use_states=FALSE){
     for(ii in vrbl$flux){
         out$flux[[ii]] <- rep(0,nrow(df)) ## initialise all stores and fluxes as 0
     }
-    
+
     return(out)
 }
 
@@ -160,7 +150,7 @@ store_to_sim <- function(model, use_states=FALSE){
     tmp <- lapply(by(tmp,tmp[,1],unique,simplify=FALSE),as.list)
     model$sf <- rep(list(NULL),ncol(model$Fsf))
     model$sf[as.numeric(names(tmp))] <- tmp
-    
+
     tmp <- as.matrix(summary(model$Fsz))
     tmp <- lapply(by(tmp,tmp[,1],unique,simplify=FALSE),as.list)
     model$sz <- rep(list(NULL),ncol(model$Fsz))
@@ -174,7 +164,7 @@ store_to_sim <- function(model, use_states=FALSE){
 #' @rdname convert_form
 ## convert the store back to a table
 sim_to_store <- function(model,with_matrix=TRUE){
-    
+
     for(ii in c("hillslope","channel")){
         model[[ii]] <- cbind( as.data.frame(model[[ii]]$attr,stringsAsFactors=FALSE),
                              as.data.frame(model[[ii]]$state,stringsAsFactors=FALSE))
