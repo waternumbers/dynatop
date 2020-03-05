@@ -16,9 +16,9 @@ NULL
 #' @export
 ## general function for calling
 convert_form <- function(model,used_by="dynatop"){
-    used_by <- match.arg(use_by)
+    used_by <- match.arg(used_by)
 
-    switch(use_by,
+    switch(used_by,
            dynatop = convert_dynatop(model),
            stop("Conversion type error"))
 }
@@ -49,7 +49,7 @@ convert_dynatop <- function(model){
         out[[tbl]] <- list()
         for(ii in 1:nrow(desc[[tbl]])){
             nm <- desc[[tbl]]$name[ii]
-            out[[nm]][[ nm ]] <- switch(desc[[tbl]]$role[ii],
+            out[[tbl]][[ nm ]] <- switch(desc[[tbl]]$role[ii],
                                         attribute = unname( model[[tbl]][[nm]] ),
                                         data_series = unname( model[[tbl]][[nm]] ),
                                         parameter = unname( model$param[ model[[tbl]][[nm]] ]),
@@ -75,8 +75,8 @@ convert_dynatop <- function(model){
     }
 
     ## storage for lateral fluxes stored as volumes
-    out$lateral_flux <- list(sf = rep(0,max(c(model$hillslope$attr$id,model$channel$attr$id))),
-                             sz = rep(0,max(c(model$hillslope$attr$id,model$channel$attr$id))))
+    out$lateral_flux <- list(sf = rep(0,max(c(model$hillslope$id,model$channel$id))),
+                             sz = rep(0,max(c(model$hillslope$id,model$channel$id))))
 
     return(out)
 }
@@ -84,7 +84,7 @@ convert_dynatop <- function(model){
 #' @rdname convert_form
 ## convert a data frame to a storage list
 get_states <- function(obj,type=c("hillslope","channel")){
-    type <- match.args(type)
+    type <- match.arg(type)
 
     stt <- model_description(type)
     stt <- c("id",stt$name[stt$role=="state"])

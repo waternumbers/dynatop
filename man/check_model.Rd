@@ -4,7 +4,7 @@
 \alias{check_model}
 \title{Function to check the model to be used in a dynamic TOPMODEL run}
 \usage{
-check_model(model, verbose = FALSE, delta = 1e-13)
+check_model(model, verbose = FALSE, use_states = FALSE, delta = 1e-13)
 }
 \arguments{
 \item{model}{a dynamic TOPMODEL list object}
