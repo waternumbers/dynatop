@@ -64,12 +64,11 @@ bands. We do this as for the original classification but ignoring the
 fluxes between HSUs on the same new band.
 
 ```{r}
-bmdl <- band_model(model,50)
+library(dynatop)
+data(Swindale)
+bmdl <- band_model(Swindale$model,5)
 check_model(bmdl)
-bmdl$Fsz[bmdl$Fsz>1] <- 1
-bmdl$Fsf[bmdl$Fsf>1] <- 1
-check_model(bmdl)
-bmdl$hillslope[,'pet'] <- "PET"
-bmdl$hillslope[,'precip'] <- "Rainfall"
-profvis::profvis({btmp <- dynatop(bmdl,obs,0.015)})
+bmdl$hillslope[,'pet'] <- bmdl$channel[,'pet'] <- "PET"
+bmdl$hillslope[,'precip'] <- bmdl$channel[,'precip'] <- "Rainfall"
+btmp <- dynatop(bmdl,Swindale$obs,0.000001)
 ```
