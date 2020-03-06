@@ -12,7 +12,7 @@ dynatop(
   use_states = FALSE,
   mass_check = FALSE,
   return_states = NULL,
-  sz_opt = list(omega = 0.7, theta = 0.7)
+  sz_opt = list(omega = 1, theta = 1)
 )
 }
 \arguments{

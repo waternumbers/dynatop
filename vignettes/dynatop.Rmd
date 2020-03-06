@@ -75,7 +75,7 @@ The relationship between the parameters and the HRUs are given in the columns of
 the HRU tables e.g.
 ```{r, hru_param}
 ## unsaturated zone time constant
-head( model$hillslope[,c('id','td')])
+head( model$hillslope[,c('id','t_d')])
 ```
 
 Altering parameter values requires changing there values in the parameter
@@ -86,9 +86,15 @@ parameters to the parameter vector.
 In this case we change the parameter vectors to me more representative of the
 catchment
 ```{r, change_param}
-model$param[c("srz_max_default","srz_0_default","ln_t0_default",
-              "m_default","td_default","tsf_default")] <-
-    c(0.1,0.98,1.15,0.0044,33,0.02)
+model$param <- c(q_sfmax_default=Inf,
+                 m_default=0.0063,
+                 ln_t0_default=7.46,
+                 s_rz0_default=0.98,
+                 s_rzmax_default=0.1,
+                 v_ch_default=0.8,
+                 t_d_default=8*60*60,
+                 t_sf_default=3.6e+05
+                 )
 ```
 
 # Preparing input data
@@ -130,7 +136,7 @@ later.
 The model can be run with the data using the ```dyantop``` command.
 ```{r, run_1}
 ## recharge rate for initialization
-initial_recharge <- as.numeric(obs[1,'Flow'])
+initial_recharge <- as.numeric(obs[1,'Flow'])/sum(model$hillslope$area)
 ## running the model
 sim_1 <- dynatop(model,obs,initial_recharge)
 ```

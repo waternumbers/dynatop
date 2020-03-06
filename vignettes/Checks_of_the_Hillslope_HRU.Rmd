@@ -38,11 +38,11 @@ assessing changes to storage.
 In R this is implimented by the following function whose result is in m$^3$.
 ```{r vol_calc}
 hillslope_volume <- function(mdl,ignore_sz=FALSE){
-  tmp <- mdl$hsu$hillslope
+  tmp <- mdl$hillslope
   if(!ignore_sz){
-    sum( tmp$attr$area * (tmp$state$sf + tmp$state$rz + tmp$state$uz - tmp$state$sz) )
+    sum( tmp$area * (tmp$s_sf + tmp$s_rz + tmp$s_uz - tmp$s_sz) )
   }else{
-    sum( tmp$attr$area * (tmp$state$sf + tmp$state$rz + tmp$state$uz) )
+    sum( tmp$area * (tmp$s_sf + tmp$s_rz + tmp$s_uz) )
   }
 }
 ```
@@ -69,7 +69,7 @@ obs$rain[] <- obs$pet[] <- 0
 We also initialise a test model and keep this for future reuse
 ```{r, base_model}
 base_model <- test_catchments$simple_hillslope
-base_model$hsu <- initialise(base_model,0.015)
+base_model <- initialise(base_model,0.015)
 ```
 
 ## Surface
@@ -82,18 +82,18 @@ store.
 
 ```{r}
 initial_mdl <- base_model
-for(ii in c("rz","uz")){
-  initial_mdl$hsu$hillslope$state[[ii]][] <- 0
+for(ii in c("s_rz","s_uz")){
+  initial_mdl$hillslope[,ii] <- 0
 }
-initial_mdl$hsu$hillslope$state[['sz']][] <- 1e10
-initial_mdl$hsu$hillslope$state[['sf']][] <- 0.1
+initial_mdl$hillslope[,'s_sz'] <- 1e10
+initial_mdl$hillslope[,'s_sf'] <- 0.1
 ```
 
-Set the `qsf_max` so that no water is absorbed back into the soil and
-`lsz_max` so that no water drains from the saturated store
+Set the `q_sfmax` so that no water is absorbed back into the soil and
+`l_szmax` so that no water drains from the saturated store
 ```{r}
-initial_mdl$hsu$hillslope$param[["qsf_max"]][] <- 0
-initial_mdl$hsu$hillslope$state[["lsz_max"]][] <- 0
+initial_mdl$param["qsf_max_default"] <- 0
+initial_mdl$hillslope[,"l_szmax"] <- 0
 ```
 
 Simulate the model and compute volume balance per unit area.
@@ -102,7 +102,7 @@ out <- dynatop(initial_mdl,obs,use_states=TRUE)
 initial_vol <- hillslope_volume(initial_mdl)
 final_vol <- hillslope_volume(out$model)
 channel_vol <- sum(out$channel_input) * unique(diff(.index(out$channel_input)))
-abs(initial_vol - (final_vol + channel_vol)) / sum(out$model$hsu$hillslope$attr$area)
+(initial_vol - (final_vol + channel_vol))
 ```
 
 ## Root zone
@@ -115,17 +115,17 @@ to saturation.
 
 ```{r}
 initial_mdl <- base_model
-for(ii in c("sf","uz","sz")){
-  initial_mdl$hsu$hillslope$state[[ii]][] <- 0
+for(ii in c("s_sf","s_uz","s_sz")){
+  initial_mdl$hillslope[,ii] <- 0
 }
 ```
 
-Set the `qsf_max` so that no water is absorbed back into the soil from the
+Set the `q_sfmax` so that no water is absorbed back into the soil from the
 surface store and
-`lsz_max` so that no water drains from the saturated store
+`l_szmax` so that no water drains from the saturated store
 ```{r}
-initial_mdl$hsu$hillslope$param[["qsf_max"]][] <- 0
-initial_mdl$hsu$hillslope$state[["lsz_max"]][] <- 0
+initial_mdl$param["qsf_max_default"] <- 0
+initial_mdl$hillslope[,"lsz_max"] <- 0
 ```
 
 Simulate the model and compute volume balance per unit area.
@@ -134,7 +134,7 @@ out <- dynatop(initial_mdl,obs,use_states=TRUE)
 initial_vol <- hillslope_volume(initial_mdl)
 final_vol <- hillslope_volume(out$model)
 channel_vol <- sum(out$channel_input) * unique(diff(.index(out$channel_input)))
-abs(initial_vol - (final_vol + channel_vol)) / sum(out$model$hsu$hillslope$attr$area)
+abs(initial_vol - (final_vol + channel_vol))
 ```
 
 ## Unsaturated zone
@@ -147,19 +147,19 @@ to a greater deficit then the unsaturated zone.
 
 ```{r}
 initial_mdl <- base_model
-for(ii in c("sf","rz")){
-  initial_mdl$hsu$hillslope$state[[ii]][] <- 0
+for(ii in c("s_sf","s_rz")){
+  initial_mdl$hillslope[,ii] <- 0
 }
-initial_mdl$hsu$hillslope$state[['uz']][] <- 0.1
-initial_mdl$hsu$hillslope$state[['sz']] <- initial_mdl$hsu$hillslope$state[['uz']]+1
+initial_mdl$hillslope[,'s_uz'] <- 0.1
+initial_mdl$hillslope[,'s_sz'] <- initial_mdl$hillslope[,'s_uz'] + 1
 ```
 
-Set the `qsf_max` so that no water is absorbed back into the soil from the
+Set the `q_sfmax` so that no water is absorbed back into the soil from the
 surface store and
-`lsz_max` so that no water drains from the saturated store
+`l_szmax` so that no water drains from the saturated store
 ```{r}
-initial_mdl$hsu$hillslope$param[["qsf_max"]][] <- 0
-initial_mdl$hsu$hillslope$state[["lsz_max"]][] <- 0
+initial_mdl$param["qsf_max_default"] <- 0
+initial_mdl$hillslope[,"lsz_max"] <- 0
 ```
 
 Simulate the model and compute volume balance per unit area.
@@ -168,7 +168,7 @@ out <- dynatop(initial_mdl,obs,use_states=TRUE)
 initial_vol <- hillslope_volume(initial_mdl)
 final_vol <- hillslope_volume(out$model)
 channel_vol <- sum(out$channel_input) * unique(diff(.index(out$channel_input)))
-abs(initial_vol - (final_vol + channel_vol)) / sum(out$model$hsu$hillslope$attr$area)
+abs(initial_vol - (final_vol + channel_vol))
 ```
 
 ## Saturated zone drain down
@@ -181,23 +181,23 @@ zone with is set to be full
 
 ```{r}
 initial_mdl <- base_model
-for(ii in c("sf","uz","rz","sz")){
-  initial_mdl$hsu$hillslope$state[[ii]][] <- 0
+for(ii in c("s_sf","s_uz","s_rz","s_sz")){
+  initial_mdl$hillslope[,ii] <- 0
 }
 ```
 
-Set the `qsf_max` so that no water is absorbed back into the soil from the
+Set the `q_sfmax` so that no water is absorbed back into the soil from the
 surface store if there is saturation excess
 ```{r}
-initial_mdl$hsu$hillslope$param[["qsf_max"]][] <- 0
+initial_mdl$param[["qsf_max_default"]][] <- 0
 ```
-imulate the model and compute volume balance per unit area.
+simulate the model and compute volume balance per unit area.
 ```{r}
 out <- dynatop(initial_mdl,obs,use_states=TRUE)
 initial_vol <- hillslope_volume(initial_mdl)
 final_vol <- hillslope_volume(out$model)
 channel_vol <- sum(out$channel_input) * unique(diff(.index(out$channel_input)))
-abs(initial_vol - (final_vol + channel_vol)) / sum(out$model$hsu$hillslope$attr$area)
+abs(initial_vol - (final_vol + channel_vol))
 ```
 
 # All model with no evapotranspiration losses
@@ -219,8 +219,8 @@ out <- dynatop(initial_mdl,obs,use_states=TRUE)
 initial_vol <- hillslope_volume(initial_mdl)
 final_vol <- hillslope_volume(out$model)
 channel_vol <- sum(out$channel_input) * unique(diff(.index(out$channel_input)))
-precip_vol <- sum(obs$rain)*sum(c(initial_mdl$hsu$hillslope$attr$area,
-                                  initial_mdl$hsu$channel$attr$area))
-abs(initial_vol + precip_vol- (final_vol + channel_vol)) / sum(out$model$hsu$hillslope$attr$area)
+precip_vol <- sum(obs$rain)*sum(c(initial_mdl$hillslope$area,
+                                  initial_mdl$channel$area))
+abs(initial_vol + precip_vol- (final_vol + channel_vol))
 
 ```
