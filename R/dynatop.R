@@ -16,8 +16,8 @@ dynatop <- function(model,obs_data,
                     use_states=FALSE,
                     mass_check=FALSE,
                     return_states=NULL,
-                    sz_opt=list(omega=0.7,
-                                theta=0.7)){
+                    sz_opt=list(omega=1,
+                                theta=1)){
 
 
     ## check the model
@@ -219,7 +219,14 @@ dynatop <- function(model,obs_data,
                         (1-lambda_prime) * hillslope$Q_minus_t[idx] +
                         cbar*hillslope$q_uz_sz[idx]/hillslope$delta_x[idx]
 
-                    hillslope$l_sz[idx] <- pmax(0,pmin( (k - (1-lambda)*hillslope$Q_minus_tDt[idx])/lambda , hillslope$l_szmax[idx] ))
+                    hillslope$l_sz[idx] <- pmin( (k - (1-lambda)*hillslope$Q_minus_tDt[idx])/lambda , hillslope$l_szmax[idx] )
+                    
+                    if( any(hillslope$l_sz[idx]<0) ){
+                        warning("Negative flow in kinematic solutions, consider revising weights")
+                        hillslope$l_sz[idx] <- pmax(illslope$l_sz[idx],0)
+                    }
+                    
+                        
                     lateral_flux$sz[ hillslope$id[idx] ] <- hillslope$l_sz[idx]*hillslope$area[idx]
 
                 }
@@ -236,7 +243,7 @@ dynatop <- function(model,obs_data,
                 }
             }
 
-
+            #browser()
             ## update volumes in hillslope
             tilde_sz <- hillslope$s_sz +
                 ts$sub_step*(hillslope$l_sz_t + hillslope$l_sz)/2 -
