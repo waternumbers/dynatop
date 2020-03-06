@@ -22,7 +22,7 @@ model_description <- function(type=c("hillslope","channel","point_inflow","gauge
                                    rep("parameter",7),
                                    rep("state",7),
                                    rep("tmp",17)),
-                          type = c(rep("numeric",7),
+                          type = c("integer",rep("numeric",6),
                                    rep("character",2),
                                    rep("character",7),
                                    rep("numeric",7),
@@ -42,7 +42,7 @@ model_description <- function(type=c("hillslope","channel","point_inflow","gauge
                                    rep("parameter",1),
                                    rep("state",1),
                                    rep("tmp",5)),
-                          type = c(rep("numeric",6),
+                          type = c("integer",rep("numeric",4),"integer",
                                    rep("character",2),
                                    rep("character",1),
                                    rep("numeric",1),
@@ -53,7 +53,7 @@ model_description <- function(type=c("hillslope","channel","point_inflow","gauge
     if(type=="point_inflow"){
         out <- data.frame(
             name = c("name","id","fraction"),
-            type=c("character",rep("numeric",2)),
+            type=c("character","integer","numeric"),
             role = c("data_series",rep("property",2)),
             stringsAsFactors=FALSE)
     }
@@ -61,7 +61,7 @@ model_description <- function(type=c("hillslope","channel","point_inflow","gauge
     if(type=="gauge"){
         out <- data.frame(
             name = c("name","id","fraction"),
-            type=c("character",rep("numeric",2)),
+            type=c("character","integer","numeric"),
             role = c("output_label",rep("property",2)),
             stringsAsFactors=FALSE)
     }

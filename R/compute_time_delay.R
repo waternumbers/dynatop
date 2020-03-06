@@ -65,8 +65,8 @@ compute_time_delay <- function(model){
     }
     point_to_gauge[point_to_gauge<0] <- NA
     
-    return(list(point_to_gauge=point_to_gauge/3600,
-                head_to_gauge=head_to_gauge/3600,
-                reach_time=reach_time/3600))
+    return(list(point_to_gauge=point_to_gauge,
+                head_to_gauge=head_to_gauge,
+                reach_time=reach_time))
 }
 

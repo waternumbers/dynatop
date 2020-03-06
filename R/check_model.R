@@ -31,6 +31,7 @@ check_model <- function(model, verbose=FALSE, use_states=FALSE,delta=1e-13){
     
     ## check the HRU table properties
     for(ii in names(df_prop)){
+        
         if(!is.data.frame(model[[ii]])){
             stop(paste("Table",ii,"should be a data.frame"))
         }
@@ -42,7 +43,7 @@ check_model <- function(model, verbose=FALSE, use_states=FALSE,delta=1e-13){
                         paste(df_prop[[ii]]$name[!idx],collapse=",")) )
         }else{ ## check data types
             tmp <- sapply(model[[ii]],class) # types of the columns
-            idx <- tmp[ df_prop[[ii]]$names ] != df_prop[[ii]]$type
+            idx <- tmp[ df_prop[[ii]]$name ] != df_prop[[ii]]$type
             if( any( idx ) ){
                 stop( paste("Incorrect types in table",ii,"columns:",
                             paste(df_prop[[ii]]$name[idx],collapse=",")) )
