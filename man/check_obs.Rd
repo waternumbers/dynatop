@@ -11,7 +11,7 @@ check_obs(obs, req_series, sub_step = NULL)
 
 \item{req_series}{a character vector of series that should be in obs}
 
-\item{sub_step}{duration of sub step in model evaluation in hours, default value of NULL results in data time step}
+\item{sub_step}{duration of sub step in model evaluation in seconds, default value of NULL results in data time step}
 }
 \value{
 Returns a list containing the time interval for the main and sub step as well and the number of substeps

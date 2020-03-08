@@ -11,7 +11,7 @@
 compute_time_delay <- function(model){
     
     ## check the model including the channel
-    check_model(model,check_channel=TRUE,verbose=FALSE)
+    check_model(model)
 
     
     ## compute the time to travel down each reach
@@ -41,8 +41,9 @@ compute_time_delay <- function(model){
     head_to_gauge <- matrix(NA,nrow(model$gauge),nrow(model$channel),
                             dimnames=list(model$gauge$name,
                                           model$channel$id))
+    
     for(ii in 1:nrow(model$gauge)){
-        gr <- paste(model$gauge$channel_id[ii])
+        gr <- paste(model$gauge$id[ii])
         head_to_gauge[ii,] <- head_to_head[colnames(head_to_gauge),gr] +
             (model$gauge$fraction[ii]*reach_time[gr])
     }
@@ -53,9 +54,9 @@ compute_time_delay <- function(model){
                                            model$point_inflow$name))
     if( nrow(model$point_inflow)>0 ){
         for(ii in 1:nrow(model$gauge)){
-            gr <- paste(model$gauge$channel_id[ii])
+            gr <- paste(model$gauge$id[ii])
             for(jj in 1:nrow(model$point_inflow)){      
-                ir <- paste(model$point_inflow$channel_id[jj])
+                ir <- paste(model$point_inflow$id[jj])
                 point_to_gauge[ii,jj] <- head_to_head[ir,gr] +
                     (model$gauge$fraction[ii]*reach_time[gr]) -
                     (model$point_inflow$fraction[jj]*reach_time[ir])
@@ -64,8 +65,8 @@ compute_time_delay <- function(model){
     }
     point_to_gauge[point_to_gauge<0] <- NA
     
-    return(list(point_to_gauge=point_to_gauge/3600,
-                head_to_gauge=head_to_gauge/3600,
-                reach_time=reach_time/3600))
+    return(list(point_to_gauge=point_to_gauge,
+                head_to_gauge=head_to_gauge,
+                reach_time=reach_time))
 }
 

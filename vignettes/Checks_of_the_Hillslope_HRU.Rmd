@@ -20,9 +20,9 @@ be developing more complex systems and want to perform their own test.
 The basis of the simulations used in the test catchment contained within the
 package which is loaded with
 ```{r, setup}
-rm(list=ls())
+#rm(list=ls())
 library(dynatop)
-data("test_catchment")
+data("test_catchments")
 ```
 
 # Computing the volume of water in the hillslope
@@ -37,136 +37,190 @@ assessing changes to storage.
 
 In R this is implimented by the following function whose result is in m$^3$.
 ```{r vol_calc}
-hillslope_volume <- function(mdl,ignore_ssz=FALSE){
-  tmp <- mdl$states$hillslope
-  if(!ignore_ssz){
-    sum( tmp$area * (tmp$ex + tmp$srz + tmp$suz - tmp$ssz) )
+hillslope_volume <- function(mdl,ignore_sz=FALSE){
+  tmp <- mdl$hillslope
+  if(!ignore_sz){
+    sum( tmp$area * (tmp$s_sf + tmp$s_rz + tmp$s_uz - tmp$s_sz) )
   }else{
-    sum( tmp$area * (tmp$ex + tmp$srz + tmp$suz) )
+    sum( tmp$area * (tmp$s_sf + tmp$s_rz + tmp$s_uz) )
   }
 }
-
 ```
 
 # Initialising the model
 In calling `dynatop` the states can either be provided as part 
-of the model structure of can be initialised internally. Since the package
-does not export a function for initialising the states within the model
-structure the follwoing function is used:
-```{r initialise_state_func}
-init_model <- function(mdl, recharge){
-  mdl$states <- list()
-  mdl$states$hillslope <- initialise_hillslope(mdl,recharge)
-  mdl$states$channel <- initialise_channel(mdl)
-  return(mdl)
-}  
-```
+of the model structure of can be initialised internally. In this vignette we
+make use of this to initialise the model and then set certain states
+manually. This is not recommended in practice.
 However for
 testing it is useful to be able to manipulate the states manually. 
 
-# Saturated zone drain down
+# Individual levels of the hillslope with no forceing
+
+These tests check individual levels of the hillslope representation when there
+is no forcing from external variables.
+
+A set of forecing data with zeros values can be created by
+```{r zero_obs}
+obs <- test_catchments$obs
+obs$rain[] <- obs$pet[] <- 0
+```
+
+We also initialise a test model and keep this for future reuse
+```{r, base_model}
+base_model <- test_catchments$simple_hillslope
+base_model <- initialise(base_model,0.015)
+```
+
+## Surface
+
+With out any forcing the surface zone should redistribute water in a
+conservative way.
+
+Take the initialised model and set all stores to be empty except the surface
+store.
+
+```{r}
+initial_mdl <- base_model
+for(ii in c("s_rz","s_uz")){
+  initial_mdl$hillslope[,ii] <- 0
+}
+initial_mdl$hillslope[,'s_sz'] <- 1e10
+initial_mdl$hillslope[,'s_sf'] <- 0.1
+```
+
+Set the `q_sfmax` so that no water is absorbed back into the soil and
+`l_szmax` so that no water drains from the saturated store
+```{r}
+initial_mdl$param["qsf_max_default"] <- 0
+initial_mdl$hillslope[,"l_szmax"] <- 0
+```
+
+Simulate the model and compute volume balance per unit area.
+```{r}
+out <- dynatop(initial_mdl,obs,use_states=TRUE)
+initial_vol <- hillslope_volume(initial_mdl)
+final_vol <- hillslope_volume(out$model)
+channel_vol <- sum(out$channel_input) * unique(diff(.index(out$channel_input)))
+(initial_vol - (final_vol + channel_vol))
+```
+
+## Root zone
+
+With out any forcing the root zone should just hold its current water.
+
+Take the initialised model and set all stores to be empty except the root
+zone, which has the initialisation volume and the saturated zone with is set
+to saturation.
+
+```{r}
+initial_mdl <- base_model
+for(ii in c("s_sf","s_uz","s_sz")){
+  initial_mdl$hillslope[,ii] <- 0
+}
+```
+
+Set the `q_sfmax` so that no water is absorbed back into the soil from the
+surface store and
+`l_szmax` so that no water drains from the saturated store
+```{r}
+initial_mdl$param["qsf_max_default"] <- 0
+initial_mdl$hillslope[,"lsz_max"] <- 0
+```
+
+Simulate the model and compute volume balance per unit area.
+```{r}
+out <- dynatop(initial_mdl,obs,use_states=TRUE)
+initial_vol <- hillslope_volume(initial_mdl)
+final_vol <- hillslope_volume(out$model)
+channel_vol <- sum(out$channel_input) * unique(diff(.index(out$channel_input)))
+abs(initial_vol - (final_vol + channel_vol))
+```
+
+## Unsaturated zone
+
+With no forcing the unsaturated zone should drain to the saturated zone.
+
+Take the initialised model and set all stores to be empty except the unsaturated
+zone, which has the initialisation volume and the saturated zone with is set
+to a greater deficit then the unsaturated zone.
+
+```{r}
+initial_mdl <- base_model
+for(ii in c("s_sf","s_rz")){
+  initial_mdl$hillslope[,ii] <- 0
+}
+initial_mdl$hillslope[,'s_uz'] <- 0.1
+initial_mdl$hillslope[,'s_sz'] <- initial_mdl$hillslope[,'s_uz'] + 1
+```
+
+Set the `q_sfmax` so that no water is absorbed back into the soil from the
+surface store and
+`l_szmax` so that no water drains from the saturated store
+```{r}
+initial_mdl$param["qsf_max_default"] <- 0
+initial_mdl$hillslope[,"lsz_max"] <- 0
+```
+
+Simulate the model and compute volume balance per unit area.
+```{r}
+out <- dynatop(initial_mdl,obs,use_states=TRUE)
+initial_vol <- hillslope_volume(initial_mdl)
+final_vol <- hillslope_volume(out$model)
+channel_vol <- sum(out$channel_input) * unique(diff(.index(out$channel_input)))
+abs(initial_vol - (final_vol + channel_vol))
+```
+
+## Saturated zone drain down
 
 This check tests the performance of the saturated zone solution when there is
-no flow from the unsaturated zone.
-```{r ssz_drain_down}
-## create a zero input and output forcing series
-obs <- test_catchment$obs
-obs$rain[] <- obs$pet[] <- 0
+no flow from the unsaturated zone. The flow should drain to the channel.
 
-## initialise the model and set all stores except saturated zone to 0
-initial_mdl <- init_model(test_catchment$model,0.015)
-for(ii in c("ex","srz","suz")){
-  initial_mdl$states$hillslope[[ii]][] <- 0
+Take the initialised model and set all stores to be empty except the saturated
+zone with is set to be full
+
+```{r}
+initial_mdl <- base_model
+for(ii in c("s_sf","s_uz","s_rz","s_sz")){
+  initial_mdl$hillslope[,ii] <- 0
 }
+```
 
-## simulate the model and seperate the output
+Set the `q_sfmax` so that no water is absorbed back into the soil from the
+surface store if there is saturation excess
+```{r}
+initial_mdl$param[["qsf_max_default"]][] <- 0
+```
+simulate the model and compute volume balance per unit area.
+```{r}
 out <- dynatop(initial_mdl,obs,use_states=TRUE)
-
-## volume balance
 initial_vol <- hillslope_volume(initial_mdl)
 final_vol <- hillslope_volume(out$model)
 channel_vol <- sum(out$channel_input) * unique(diff(.index(out$channel_input)))
-
-## error as an average depth
-abs(initial_vol - (final_vol + channel_vol)) / sum(out$model$states$hillslope$area)
-
-```
-
-# Saturated and unsaturated zone drain down
-We repeat the saturated zone drain down test with initial unsaturated zone
-storage but no forcing inputs.
-
-```{r ssz_driven}
-## create a zero input and output forcing series
-obs <- test_catchment$obs
-obs$rain[] <- obs$pet[] <- 0
-
-## initialise the model and set all stores except saturated zone to 0
-initial_mdl <- init_model(test_catchment$model,0.015)
-for(ii in c("ex","srz")){
-  initial_mdl$states$hillslope[[ii]][] <- 0
-}
-
-## simulate the model and seperate the output
-out <- dynatop(initial_mdl,obs,use_states=TRUE)
-
-## volume balance
-initial_vol <- hillslope_volume(initial_mdl)
-final_vol <- hillslope_volume(out$model)
-channel_vol <- sum(out$channel_input) * unique(diff(.index(out$channel_input)))
-
-## error as an average depth
-abs(initial_vol - (final_vol + channel_vol)) / sum(out$model$states$hillslope$area)
-```
-
-# Surface excess movement
-This tests the solution to the redistribution of surface storage with no
-additional inflows
-```{r ex_undriven}
-## create a zero input and output forcing series
-obs <- test_catchment$obs
-obs$rain[] <- obs$pet[] <- 0
-
-## initialise the model as 'dry' except for surface excess
-initial_mdl <- init_model(test_catchment$model,0)
-initial_mdl$states$hillslope$srz[] <- 0
-initial_mdl$states$hillslope$ex[] <- 0.1
-
-## simulate the model and seperate the output
-out <- dynatop(initial_mdl,obs,use_states=TRUE)
-
-## volume balance
-
-initial_vol <- hillslope_volume(initial_mdl,TRUE)
-final_vol <- hillslope_volume(out$model,TRUE)
-channel_vol <- sum(out$channel_input) * unique(diff(.index(out$channel_input)))
-
-# error as percent
-abs(initial_vol - (final_vol + channel_vol)) / sum(initial_vol)*100
+abs(initial_vol - (final_vol + channel_vol))
 ```
 
 # All model with no evapotranspiration losses
 This tests the solution assuming there is no loss to
-evapotranspiration. testing beyond this requires the recording ot the losses
-to evapotranspiration.
+evapotranspiration. Testing beyond this requires the recording ot the losses
+to evapotranspiration which is not yet implimented.
+
+Create a new observation series
+
 ```{r all_no_pet}
-## create a zero input and output forcing series
-obs <- test_catchment$obs
+obs <- test_catchments$obs
 obs$pet[] <- 0
+```
 
-## initialise the model as 'dry' except for surface excess
-initial_mdl <- init_model(test_catchment$model,0.015)
-
-## simulate the model and seperate the output
+Simualate the model and compute the mass balance
+```{r}
+initial_mdl <- base_model
 out <- dynatop(initial_mdl,obs,use_states=TRUE)
-
-## volume balance
 initial_vol <- hillslope_volume(initial_mdl)
 final_vol <- hillslope_volume(out$model)
 channel_vol <- sum(out$channel_input) * unique(diff(.index(out$channel_input)))
-rain_vol <- sum(obs$rain) * (unique(diff(.index(out$channel_input)))/3600) *
-  (sum(out$model$states$hillslope$area) + sum(out$model$states$channel$area))
-# error as average over catchment
-((initial_vol + rain_vol)- (final_vol + channel_vol)) / sum(out$model$states$hillslope$area)
+precip_vol <- sum(obs$rain)*sum(c(initial_mdl$hillslope$area,
+                                  initial_mdl$channel$area))
+abs(initial_vol + precip_vol- (final_vol + channel_vol))
 
 ```

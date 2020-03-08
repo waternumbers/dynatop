@@ -3,218 +3,178 @@
 #' @description This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model.
 #'
 #' @param model a dynamic TOPMODEL list object
-#' @param check_channel flag indicating is additional checks for channel routing are to be carried out
+#' @param use_states logical if states are to be checked
 #' @param verbose if set prints out further information
-#' 
-#' @return NULL if tests passed, otherwise fails
+#' @param delta error term in checking redistribution matrix sums
 #'
-#' @details The checks performed and basic 'sanity' checks. they do not check for the logic of the parameter values nor the consistncy of states and parameters.
+#' @return a vector of the names of the expected input series
+#'
+#' @details The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be less then 1+delta.
 #' @export
-check_model <- function(model, check_channel=TRUE, verbose=FALSE){
+check_model <- function(model, verbose=FALSE, use_states=FALSE,delta=1e-13){
 
-    ## First perform checks that rely only on individual components of the model
-    
-    ## checks only on the HRU tables
-    if(!is.data.frame(model$hillslope) | !is.data.frame(model$channel)){ # check HRU is a data frame
-        stop("HRU tables should be a data frames")
-    }else{
-        ## make data frames of columns expected in each table, the type of value expected and if they are a parameter
-        hru_properties <- list(
-            hillslope = data.frame(name = c("id","area","atb_bar","s_bar",
-                                            "precip_input","pet_input",
-                                            "srz_max","srz_0","ln_t0","m","td","tex"),
-                                   type=c(rep("numeric",4),rep("character",8)),
-                                   is_param = c(rep(FALSE,6),rep(TRUE,6)),
-                                   stringsAsFactors=FALSE),
-            channel = data.frame(name = c("id","area","precip_input","pet_input"),
-                                 type=c(rep("numeric",2),rep("character",2)),
-                                 is_param = rep(FALSE,4),
-                                 stringsAsFactors=FALSE)
-        )
+    ## check all components of the model exist
+    components <- c("hillslope","channel","param","Fsf","Fsz","gauge","point_inflow")
+    idx <- components %in% names(model)
+    if( !all(idx) ){
+        stop(paste("Missing componets:",paste(components[!idx],collapse=",")))
+    }
 
-        ## add additional properties for channel routing
-        if( check_channel ){
-            hru_properties$channel <- rbind(
-                hru_properties$channel,
-                data.frame(name = c("next_id","length","v_ch"),
-                           type=rep("numeric",3),
-                           is_param = c(rep(FALSE,2),TRUE),
-                           stringsAsFactors=FALSE)
-            )
-            hru_properties$point_inflow <- data.frame(
-                name = c("name","channel_id","fraction"),
-                type=c("character",rep("numeric",2)),
-                is_param = rep(FALSE,3),
-                stringsAsFactors=FALSE)
-            hru_properties$gauge <- data.frame(
-                name = c("name","channel_id","fraction"),
-                type=c("character",rep("numeric",2)),
-                is_param = rep(FALSE,3),
-                stringsAsFactors=FALSE)
-            
+    ## check components that should be data.frames
+
+    ## create a list of data.frames describing the data frames in the model
+    df_prop <- list(
+        hillslope = model_description("hillslope",include_states=use_states),
+        channel = model_description("channel",include_states=use_states),
+        point_inflow = model_description("point_inflow",include_states=use_states),
+        gauge = model_description("gauge",include_states=use_states)
+    )
+
+    ## check the HRU table properties
+    for(ii in names(df_prop)){
+
+        if(!is.data.frame(model[[ii]])){
+            stop(paste("Table",ii,"should be a data.frame"))
         }
 
-        ## check just the HRU tables
-        for(ii in names(hru_properties)){
-            idx <- hru_properties[[ii]]$name %in% names(model[[ii]])
-            if( !all( idx ) ){# check it has required columns
-                stop( paste(c("HRU table",ii,"missing columns:",
-                              hru_properties[[ii]]$names[!idx]),collapse=" ") )
-            }else{ ## check data types
-                tmp <- sapply(model[[ii]],class) # types of the columns
-                idx <- tmp[ hru_properties[[ii]]$names ] != hru_properties[[ii]]$type
-                if( any( idx ) ){
-                    stop( paste(c("Incorrect types in HRU table",ii,"columns:",
-                                  hru_properties[[ii]]$names[idx]),collapse=" ") )
-                }
+        idx <- df_prop[[ii]]$name %in% names(model[[ii]])
+
+        if( !all( idx ) ){# check it has required columns
+            stop( paste("Table",ii,"is missing columns:",
+                        paste(df_prop[[ii]]$name[!idx],collapse=",")) )
+        }else{ ## check data types
+            tmp <- sapply(model[[ii]],class) # types of the columns
+            idx <- tmp[ df_prop[[ii]]$name ] != df_prop[[ii]]$type
+            if( any( idx ) ){
+                stop( paste("Incorrect types in table",ii,"columns:",
+                            paste(df_prop[[ii]]$name[idx],collapse=",")) )
             }
         }
     }
-            
-    ## checks on only redistribution matrices
-    for(ii in c("Wsat","Fsat","Wex","Fex")){
-        if(!is.matrix(model[[ii]]) | !is.numeric(model[[ii]])){
-            stop( ii," should be a numeric matrix" )
+
+    ## parameter vector should be named numeric vector and contain all required names
+    if( !all(is.vector(model$param), is.numeric(model$param)) ){
+        stop("param should be a numeric vector")
+    }
+    if( length(unique(names(model$param))) != length(model$param) ){
+        stop("All values in param should have a unique name")
+    }
+
+    ## check parameter names
+    req_names <- NULL
+    for(jj in names(df_prop)){
+        tmp <- df_prop[[jj]]$name[df_prop[[jj]]$role=="parameter"]
+        tmp <- unique(unlist(model[[jj]][,tmp]))
+        req_names <- unique(c(req_names,tmp))
+    }
+
+    idx  <- req_names %in% names(model$param)
+    if(!all(idx)){ stop(paste("The following parameters are not specified:",paste(req_names[!idx],collapse=","))) }
+    idx  <- names(model$param) %in% req_names
+    if(!all(idx)){ stop(paste("The following parameters are not used:",paste(names(model$param)[!idx],collapse=","))) }
+
+    ## ids should be numeric, sequential and start from 1
+    ids <- c(model[['hillslope']]$id,model[['channel']]$id)
+    rng_ids <- range(ids)
+    if( length(ids) != length(unique(ids)) ){ stop("id should be unique") }
+    if( !all(is.finite(ids)) ){ stop("id values should be finite") }
+    if( !all(range(ids)==c(1,length(ids))) ){ stop("id's should be numbered consecuativly from 1") }
+
+    ## all points_inflows and gauges should be on a channel with fractions between 0 & 1
+    for(jj in c("gauge","point_inflow")){
+        if(nrow(model[[jj]]) == 0){next}
+
+        for(ii in 1:nrow(model[[jj]])){
+            if( !all( c(model[[jj]][ii,'id'] %in% model[['channel']]$id,
+                        model[[jj]][ii,'fraction'] >=0,
+                        model[[jj]][ii,'fraction'] <=1) ) ){
+                stop(paste(jj,model[[jj]][ii,'name'],"is incorrectly specified"))
+
+            }
         }
-        if( is.null(colnames(model[[ii]])) | is.null(rownames(model[[ii]])) ){
-            stop(ii," should be have column and row names")
+    }
+
+
+
+    ## checks on redistribution matrices
+    for(ii in c("Fsz","Fsf")){
+        if(!(attr(class(model[[ii]]),"package")=="Matrix")){#is(model[[ii]],"Matrix")){
+            stop( ii," should be a numeric Matrix" )
+        }
+        if( !all(dim(model[[ii]])==length(ids)) ){
+            stop(paste(ii,"has incorrect dimensions"))
         }
         if( any( model[[ii]] < 0)){
             stop(ii," should have values greater or equal to 0")
         }
-    }
-
-    ## checks only on param
-    if(!is.vector(model$param) | !is.numeric(model$param)){
-        stop("param should be a numeric vector")
-    }
-
-    ## checks on channel
-    if( check_channel ){
-        ## check all next_id are valid
-        idx <- !is.na(model$channel$next_id)
-        if( !all( model$channel$next_id[idx] %in%  model$channel$id ) ){
-            stop("Channels routing to channels not in network, set next_id to NA to represent an outflow")
+        if( any( model[[ii]] > 1+delta)){
+            stop(ii," should have values less or equal to 1")
         }
-        ## check for loops - all reaches at top of system must drain to outfall
-        for(ii in setdiff(model$channel$id,model$channel$next_id)){
-            id <- ii
-            cnt <- 0
-            while(cnt <= nrow(model$channel)){
-                ## work out next id
-                id <- model$channel$next_id[model$channel$id==id]
-                cnt <- cnt + 1
-                ## break if get to outlet
-                if(is.na(id)){break}
-                ## check loop
-                if( id==ii ){
-                    stop(paste("Loop of river flow incorporating channel id",ii))
-                }
-            }
-        }
- 
-        
-        ## verbose printing of head and tail channels
-        if(verbose){
-            ## print out head channels
-            message(paste("The head channels are:",
-                          paste(setdiff(model$channel$id,model$channel$next_id),
-                                collapse=", "),
-                          sep="\n"))
-            ## print out tail channels
-            message(paste("The channels with outfalls:",
-                          paste(model$channel$id[is.na(model$channel$next_id)],
-                                collapse=", "),
-                          sep="\n"))
-        }
-    }
-    
-    ## END of checks on individual objects 
-
-    
-    ## check unique ids
-    for(ii in c("hillslope","channel")){
-        if( length(unique(model[[ii]]$id)) < nrow(model[[ii]]) ){
-            stop(paste(ii,"HRU ids should be unique"))
+        if( any( colSums(model[[ii]]) > 1+delta)){
+            stop(ii," should have column sums that are less or equal to 1")
         }
     }
 
-    ## check parameters
-    pnames <- NULL
-    for(ii in c("hillslope","channel")){
-        tmp <- hru_properties[[ii]][ hru_properties[[ii]]$is_param , 'name']
-        pnames <- c(pnames,
-                    unlist( model[[ii]][,tmp] ))
+    ## all output series must have unique names
+    req_names <- NULL
+    for(jj in names(df_prop)){
+        tmp <- df_prop[[jj]]$name[df_prop[[jj]]$role=="output_label"]
+        tmp <- unique(unlist(model[[jj]][,tmp]))
+        req_names <- unique(c(req_names,tmp))
     }
-    pnames <- unique(pnames)
-    ## check the parameters that are set
-    cnames <- names(model$param)
-    if(!check_channel & ("v_ch" %in% names(model$channel))){
-        ## remove the names of the velocity parameters if they exists
-        cnames <- setdiff(cnames,model$channel$v_ch)
-    }
-    
-    if( !all( pnames %in% cnames ) ){
-        stop("Not all parameters are specified")
-    }
-    
-    if( !all( cnames %in% pnames ) ){
-        stop("Some parameters are not used")
+    if( length(req_names) != length(unique(req_names)) ){
+        stop("All output series should have a unique name")
     }
 
-    ## check Wex and Wsat
-    hillslope_hru <- as.character( model$hillslope[,'id'] )
-    for(ii in c("Wsat","Wex")){
-        if( any( colnames(model[[ii]]) != rownames(model[[ii]]) ) ){
-            stop(ii," should have identically ordered column and row names")
+    ## check all next_id are valid
+    idx <- !is.na(model$channel$next_id)
+    if( !all( model$channel$next_id[idx] %in%  model$channel$id ) ){
+        stop("Channels routing to channels not in network, set next_id to NA to represent an outflow")
+    }
+    ## check for loops - all reaches at top of system must drain to outfall with all reaches being passed through
+    to_outlet <- NULL
+    for(ii in setdiff(model$channel$id,model$channel$next_id)){
+        id <- ii
+        tmp_rec <- ii
+
+        cnt <- 0
+        while(cnt <= nrow(model$channel)){
+            ## work out next id
+            id <- model$channel$next_id[model$channel$id==id]
+            tmp_rec <- c(tmp_rec,id)
+            cnt <- cnt + 1
+            ## break if get to outlet
+            if(is.na(id)){break}
+            if(id %in% to_outlet){break}
         }
-        if( any( colnames(model[[ii]]) != hillslope_hru ) |
-            any( rownames(model[[ii]]) != hillslope_hru ) ){
-            stop(ii," column and row names should match the order of the hillslopes in the HRU table")
-        }
+        to_outlet <- unique(c(to_outlet,tmp_rec))
+    }
+    idx <- model$channel$id %in% to_outlet
+    if( !all(idx) ){
+        stop(paste("Loop in channel network. Check reaches:",paste(model$channel$id[!idx],collapse=TRUE)))
     }
 
-    ## check Fex and Fsat
-    channel_hru <- as.character( model$channel[,'id'] )
-    for(ii in c("Fsat","Fex")){
-        if( any(colnames(model[[ii]]) != hillslope_hru) ){
-            stop(ii," column names should match order of hillslopes in the HRU table")
-        }
-        if( any( rownames(model[[ii]]) != channel_hru ) ){
-            stop(ii," row names should match the order of the channels in the HRU table")
-        }
-    }
-    
-    ## check redistribution sums for saturated zone
-    tmp <- colSums( rbind(model$Wsat,model$Fsat) )
-    if( any(tmp>1) ){
-        stop("Saturated flow redistribution fractions sum to greater then 1 for HRUs: ",
-             paste(colnames(model$Wsat)[tmp>1],collapse=', '))
+    ## verbose printing of head and tail channels
+    if(verbose){
+        ## print out head channels
+        message(paste("The head channels are:",
+                      paste(setdiff(model$channel$id,model$channel$next_id),
+                            collapse=", "),
+                      sep="\n"))
+        ## print out tail channels
+        message(paste("The channels with outfalls:",
+                      paste(model$channel$id[is.na(model$channel$next_id)],
+                            collapse=", "),
+                      sep="\n"))
     }
 
-    ## check redistribution sums for surface excess
-    tmp <- colSums( rbind(model$Wex,model$Fex) )
-    if( any(tmp>1) ){
-        stop("Surface excess redistribution fractions sum to greater then 1 for HRUs: ",
-             paste(colnames(model$Wex)[tmp>1],collapse=', '))
+    ## work out required input series
+    req_names <- NULL
+    for(jj in names(df_prop)){
+        tmp <- df_prop[[jj]]$name[df_prop[[jj]]$role=="data_series"]
+        tmp <- unique(unlist(model[[jj]][,tmp]))
+        req_names <- unique(c(req_names,tmp))
     }
-
-    ## check point tables
-    if( check_channel ){
-        for(ii in c("gauge","point_inflow")){
-            if( !all( model[[ii]]$channel_id %in%  model$channel$id ) ){
-                stop(paste("Not all",ii,"are on model channels"))
-            }
-            if( !all( (model[[ii]]$fraction <= 1) &
-                      (model[[ii]]$fraction >= 0 ))){
-                stop(paste("Not all",ii,"reach fractions are in [0,1]"))
-            }
-            if( !( length(unique(model[[ii]]$name)) == nrow(model[[ii]])) ){
-                stop(paste(ii,"should have unique names"))
-            }
-        }
-    }
-    
-    return(NULL)
+    return(req_names)
 }
 

@@ -19,7 +19,7 @@ time_delay_routing <- function(model,channel_inflows,
 
     
     ## check model including channel
-    check_model(model,check_channel=TRUE,verbose=FALSE)
+    check_model(model)
 
     ## start default initial conditions
     ic <- list()
@@ -84,7 +84,7 @@ time_delay_routing <- function(model,channel_inflows,
 
     ## Compute the time delays
     time_of_travel <- compute_time_delay(model)
-
+    #browser()
     ## function to make polynonial
     fpoly <- function(h,f){
         if(f>h){stop("Interval for polynomial compution if wrong")}            
