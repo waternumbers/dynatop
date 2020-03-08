@@ -148,5 +148,15 @@ x11();plot(cbind(Swindale$obs[,'Flow'],rowSums(qhatb$channel_input),chhat))
 plot(chhat)
 
 
+######################
 
-
+rm(list=ls())
+pacPath <- "./dynatop"
+devtools::load_all(pacPath)
+fn <- list.files(file.path(pacPath,"vignettes"),pattern="*.Rmd$",full.names=TRUE)
+rc <- rep(NA,length(fn))
+for(ii in 1:length(fn)){
+    print(fn[ii])
+    rc[ii] <- system.time({ rmarkdown::render(fn[ii],quiet=TRUE) })['elapsed']
+    print(rc)
+}
