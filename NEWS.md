@@ -1,3 +1,32 @@
+# dynatop 0.0.4
+
+## TO DO
+- Change getting starting vignette to Swindale
+    - Add data from NFS example
+- Change perfromance vignette to make use of banding
+- Write banding vignette
+- Check other vignettes
+
+## Breaking changes
+- New solutions to the surface and saturated zone means models for previous
+  versions of dynatop will not work. See the model description and the
+  `dynatopGIS` package (>0.0.4) for a method of generating models int he
+  revised format
+
+## Other changes
+- The surface store, previously labeled $s_{ex}$ has been relabelled $s_{sf}$
+  since this is felt to be more logical.
+- The `Matrix` package is allowing the use of sparse matrices.
+- Computation bands have been introduced for the surface and saturated
+  zones. These allow the revised solutions below. See the associated vignette
+  on banding HSUs
+- A revised approximation to the surface water movement has been implimented
+  allowing for larger numbers of HSUs without the performance overhead of
+  computing large matrix exponentials.
+- A four point kinematic wave solution to the saturated zone is utilised. This
+  is both more performant and has better representation of hillslope length
+  then the numerical ODE solution used in v0.0.3.
+
 # dynatop 0.0.3
 
 ## New features

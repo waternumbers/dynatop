@@ -4,21 +4,23 @@
 \alias{check_model}
 \title{Function to check the model to be used in a dynamic TOPMODEL run}
 \usage{
-check_model(model, check_channel = TRUE, verbose = FALSE)
+check_model(model, verbose = FALSE, use_states = FALSE, delta = 1e-13)
 }
 \arguments{
 \item{model}{a dynamic TOPMODEL list object}
 
-\item{check_channel}{flag indicating is additional checks for channel routing are to be carried out}
-
 \item{verbose}{if set prints out further information}
+
+\item{use_states}{logical if states are to be checked}
+
+\item{delta}{error term in checking redistribution matrix sums}
 }
 \value{
-NULL if tests passed, otherwise fails
+a vector of the names of the expected input series
 }
 \description{
 This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model.
 }
 \details{
-The checks performed and basic 'sanity' checks. they do not check for the logic of the parameter values nor the consistncy of states and parameters.
+The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be less then 1+delta.
 }

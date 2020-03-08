@@ -4,14 +4,14 @@
 \alias{resample_xts}
 \title{Functions to resample an xts time series}
 \usage{
-resample_xts(obs, dt, is.rate = TRUE)
+resample_xts(obs, dt, is.rate = FALSE)
 }
 \arguments{
 \item{obs}{A times series (xts) object with a POSIXct index.}
 
-\item{dt}{New time interval, hours.}
+\item{dt}{New time interval in seconds}
 
-\item{is.rate}{If TRUE then these are rates i.e m/hr. Otherwise they are absolute values across the interval and are scaled before return by a factor equal to the ratio of the old interval to the new interval.}
+\item{is.rate}{If TRUE then these are rates i.e m/hr. Otherwise they are absolute values accumulated within the preceeding time interval. Values are scaled before returning so resampling is conservative.}
 }
 \value{
 An xts object with the new timestep
@@ -31,12 +31,12 @@ Because of the methods used the results:
 \examples{
 # Resample Brompton rainfall to 15 minute intervals
 require(dynatop)
-data("brompton")
+data("Swindale")
 
-obs <- resample_xts(brompton$rain, dt=15/60)
+obs <- resample_xts(Swindale$obs, dt=60*60) # hourly data
 
-# check totals for Sept - Oct 2012
-sum(obs$rain*15/60, na.rm=TRUE)
-sum(brompton$rain, na.rm=TRUE)
+# check totals
+sum(obs$Rainfall*15/60, na.rm=TRUE)
+sum(Swindale$obs$Rainfall, na.rm=TRUE)
 
 }

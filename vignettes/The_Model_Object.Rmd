@@ -34,12 +34,12 @@ The model strucutre will be documented with reference to the model in the test
 catchment data supplied with the package. This can be loaded with
 ```{r, setup}
 library(dynatop)
-data("brompton")
-model <- brompton$model
+data("Swindale")
+model <- Swindale$model
 ```
 The top level of the model contains the following elements:
 ```{r model_parts}
-names(brompton$model)
+names(model)
 ```
 These are oulined in Table \@ref(tab:model-table) and described in more detail in the sections
 below.

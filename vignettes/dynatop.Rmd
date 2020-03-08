@@ -17,21 +17,22 @@ The purpose of this vignette is to provide an outline of the steps needed to
 perform a Dynamic TOPMODEL simulation and introduce the formats of the data
 input and returned. 
 
-The data used in this example comes from Brompton and is contained within the package and can be loaded with
+The data used in this example comes from Swindale and is contained within the package and can be loaded with
 ```{r, setup}
 library(dynatop)
-data("brompton")
+data("Swindale")
 ```
-which returns the following variables
+which returns a variable `Swindale` with the following components:
 ```{r data_loaded}
-names(brompton)
+names(Swindale)
 ```
 In the following
 # The model structure
 A dynamic TOPMODEL is described in a list object. The list has the following
 elements
 ```{r model_parts}
-names(brompton$model)
+model <- Swindale$model
+names(model)
 ```
 which are described in [associated
 vignette](https://waternumbers.github.io/dynatop/articles/The_Model_Object.html). The
@@ -41,34 +42,26 @@ can be used for constructing models.
 ## Checking the model
 The structure of the model can be tested:
 ```{r, test_model, error=TRUE, purl=FALSE}
-check_model(brompton$model)
+check_model(model,delta=0)
 ```
-In this case we can see multiple warning messages. The warnings relate to
+In this case we can see that the model fails due to 
 the redistribution of the flows from the hill slope HRUs. In all cases the sum of the fractions
 describing the destination of the flows is greater then 1, meaning that flow
 is artificially generated during the redistribution. This can be checked
 manually by
 ```{r check_redistribution}
-model <- brompton$model
-current_total_frac_sat <- colSums( rbind(model$Wsat,model$Fsat) )
-current_total_frac_ex <- colSums( rbind(model$Wex,model$Fex) )
+max( colSums(model$Fsz) - 1 )
+max( colSums(model$Fsf) - 1 )
 ```
-We can readily fix this:
+As can be seen these are very small rounding errors from the model generation.
+These can be very hard to completely fix. Using the default value of `delta` 
+(1e-13) means the model passes the checks.
 ```{r fix_redistribution}
-for(ii in names(current_total_frac_sat[current_total_frac_sat>1])){
-    model$Wsat[,ii] <- model$Wsat[,ii]/current_total_frac_sat[ii]
-    model$Fsat[,ii] <- model$Fsat[,ii]/current_total_frac_sat[ii]
-}
-for(ii in names(current_total_frac_sat[current_total_frac_ex>1])){
-    model$Wex[,ii] <- model$Wex[,ii]/current_total_frac_ex[ii]
-    model$Fex[,ii] <- model$Fex[,ii]/current_total_frac_ex[ii]
-}
-
-```
-and repeating the check does not produce an error:
 ```{r, test_model_pass}
 check_model(model)
 ```
+The value returned is a vector of the names of the expected time series input,
+currently the a default value.
 
 ## Altering parameters
 
@@ -82,7 +75,7 @@ The relationship between the parameters and the HRUs are given in the columns of
 the HRU tables e.g.
 ```{r, hru_param}
 ## unsaturated zone time constant
-print( model$hillslope[,c('id','td')])
+head( model$hillslope[,c('id','t_d')])
 ```
 
 Altering parameter values requires changing there values in the parameter
@@ -93,9 +86,23 @@ parameters to the parameter vector.
 In this case we change the parameter vectors to me more representative of the
 catchment
 ```{r, change_param}
-model$param[c("srz_max_default","srz_0_default","ln_t0_default",
-              "m_default","td_default","tex_default")] <-
-    c(0.1,0.98,1.15,0.0044,33,0.02)
+model$param <- c(q_sfmax_default=Inf,
+                 m_default=0.0063,
+                 ln_t0_default=7.46,
+                 s_rz0_default=0.98,
+                 s_rzmax_default=0.1,
+                 v_ch_default=0.8,
+                 t_d_default=8*60*60,
+                 t_sf_default=3.6e+05
+                 )
+```
+
+# Banding the model
+
+For the purposes of this vignette the model will be banded with using the ```band_model``` command. It is recommended that you experiment with the effects of this command and run the complete model.
+
+```{r, banding}
+model <- band_model(model,5)
 ```
 
 # Preparing input data
@@ -105,55 +112,44 @@ constant time step whose column names are found in the 'precip_input' and 'pet_i
 columns of the HRU table in the model. Helpful functions for creating and
 manipulating ```xts``` objects can be found [here]{http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html}
 
-The precipitation and potential evapotranspiration (PET) inputs for Brompton are
-contained the ```brompton$rain``` and ```brompton$pet``` variables. However while the PET input
-comes on a 15 minute time step
-```{r, pet}
-head(brompton$pet)
+The discharge, precipitation and potential evapotranspiration (PET) inputs for
+Swindale and contained with `obs` on a 15 minute time step.
+```{r, obs}
+obs <- Swindale$obs
+head(obs)
 ```
-the precipitation is on a courser hourly time step
-```{r, rain}
-head(brompton$rain)
+Note the discharge is in $m^{3}/s$ while the precipitation and PET are in m
+accumulated over the timestep.
+
+To use the data with the model we need to set the names of the time series
+within the model. 
+```{r, set_obs_names}
+model$hillslope[,'precip'] <- model$channel[,'precip'] <- "Rainfall"
+model$hillslope[,'pet'] <- model$channel[,'pet'] <- "PET"
 ```
-The ```resample_xts``` function can be used to alter the rainfall to the
-correct time step
-```{r, rain_resample, warning=TRUE}
-rain <- resample_xts(brompton$rain, dt = 15/60)
-```
-These series can then be merged, to give
-single ```xts``` object
-```{r, merge_obs}
-obs <- merge(rain,brompton$pet,all=c(TRUE,FALSE))
-obs <- merge(obs,brompton$qobs,all=c(TRUE,FALSE))
-```
-Let's now check this observed data
+
+The observed data can now be checked to ensure it is complete and contains the
+correct series for the model
 ```{r, check obs, error=TRUE}
-check_obs(obs, unique( unlist(model$hillslope[,c("precip_input","pet_input")]),
-                      unlist(model$channel[,c("precip_input","pet_input")])))
+req_series <- check_model(model)
+check_obs(obs, req_series)
 ```
-The check fails with a warning since there are non-finite values in the
-data. This requires more detailed investigation but as a simple fix
-```{r, check obs_2, error=TRUE}
-## replace all non finite values with 0
-obs[!is.finite(obs)] <- 0
-check_obs(obs, unique( unlist(model$hillslope[,c("precip_input","pet_input")]),
-                      unlist(model$channel[,c("precip_input","pet_input")])))
-```
+
 From the return of ```check_obs``` we can see the time step of the data and default
 number of sub time steps used in the model evaluation which is discussed
 later.
 
 # Running dynamic TOPMODEL
 
-The model can be run with the data using the ```dyantop``` command. For a
-event in November 2012 the model can be run with the command
+The model can be run with the data using the ```dyantop``` command.
+
+```
+model <- band_model(
 ```{r, run_1}
-## select the event period
-event_period <- "2012-11-23 12:00::2012-12-01"
 ## recharge rate for initialization
-initial_recharge <- as.numeric(obs["2012-11-23 12:00",'qobs'])
+initial_recharge <- as.numeric(obs[1,'Flow'])/sum(model$hillslope$area)
 ## running the model
-sim_1 <- dynatop(model,obs[event_period,],initial_recharge)
+sim_1 <- dynatop(model,obs,initial_recharge)
 ```
 The returned object from ```dynatop``` is a list with two elements
 ```{r, sim_out}
@@ -172,7 +168,7 @@ data can improve the stability and quality of the simulations. The <>
 parameter of the  ```dynatop``` function can be used to implement this. For
 example
 ```{r, sub_step}
-sim_2 <- dynatop(model,obs[event_period,],initial_recharge,sim_time_step=5/60)
+sim_2 <- dynatop(model,obs,initial_recharge,sim_time_step=5*60)
 ```
 performs the same simulation with a 5 minute time step.
 
@@ -180,17 +176,16 @@ The output states of a simulation can be used to initialize the a subsequent
 simulation. We note in doing this that no checks are made of the simulation
 times periods or of the time steps used. For example
 ```{r, sim_initialization}
-sim_3 <- dynatop(sim_1$model,obs[event_period,],sim_time_step=5/60,use_states=TRUE)
+sim_3 <- dynatop(sim_1$model,obs,sim_time_step=5*60,use_states=TRUE)
 ```
 
 The effects of the different implementations can be seem in the following
 graph. Note that the discrepancy between the simulations and observed data is
 due in part to the absence of any channel routing.
 ```{r, final_plot}
-out <- merge( merge( merge(obs,sim_1$channel_input),
-                    sim_2$channel_input),
-             sim_3$channel_input)
+out <- merge( merge( merge(obs,rowSums(sim_1$channel_input)),
+                    rowSums(sim_2$channel_input)),
+             rowSums(sim_3$channel_input))
 names(out) <- c(names(obs),'sim_1','sim_2','sim_3')
-out$qobs <- out$qobs*sum(model$hillslope$area)/3600
-plot(out[event_period,c('qobs','sim_1','sim_2','sim_3')])
+plot(out[,c('Flow','sim_1','sim_2','sim_3')])
 ```
