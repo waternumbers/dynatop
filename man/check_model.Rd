@@ -11,6 +11,8 @@ check_model(model, verbose = FALSE, use_states = FALSE, delta = 1e-13)
 
 \item{verbose}{if set prints out further information}
 
+\item{use_states}{logical if states are to be checked}
+
 \item{delta}{error term in checking redistribution matrix sums}
 }
 \value{

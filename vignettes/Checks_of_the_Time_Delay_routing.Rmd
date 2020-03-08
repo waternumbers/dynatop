@@ -21,7 +21,7 @@ be developing more complex systems and want to perform their own test.
 The basis of the simulations used in the test catchment contained within the
 package which is loaded with
 ```{r, setup}
-rm(list=ls())
+##rm(list=ls())
 library(dynatop)
 data("test_catchments")
 ```

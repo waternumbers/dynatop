@@ -1,10 +1,10 @@
-#' Contains functions for initialising and checking the hillslope HSU store
+#' Function for defining the elements of a model object
 #'
-#' @description TODO
+#' @description The function returns a description, in terms of variable names, names and role, for the selected table within a Dynamic TOPMODEL object.
 #'
-#' @param type the description of which model table to return
-#'
-#' @details TODO
+#' @param type the names of the data frame within the Dynamic TOPMODEL object
+#' @param include_states shoould states be returned
+#' @param include_tmp should tempory variables used in simulation be returned
 #'
 #' @return A data frame descriping the properties of one of the tables found within the model
 #'

@@ -1,13 +1,14 @@
 #' Run dynamic topmodel
-#' @param model TODO
-#' @param obs_data TODO
-#' @param initial_recharge Initial recharge to the saturated zone in steady state in m/hr
+#' @param model A Dynamic TOPMODEL object (see vignette)
+#' @param obs_data an xts object containing equally spaced time series of observed data.
+#' @param initial_recharge Initial recharge to the saturated zone in steady state in m/s
 #' @param sim_time_step simulation timestep in hours, default value of NULL results in data time step
 #' @param use_states should the states in the model be used (default FALSE)
-#' @param sz_opt TODO
+#' @param return_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be returned
+#' @param sz_opt a named list e.g. list(omega=1,theta=1) of parameters controlling the kinematic wave solution for the saturated zone.
 #' @param mass_check return time series of mass balance errors
 #'
-#' @details use_states, currently does not impose any checks
+#' @details use_states, currently does not impose any checks on the state values. return_states fives the states at the end of the timestep. The default values of sz_opt (omega=1,theta=1) ensure there are no negative fluxes. Other values may produce negative values in whiich case theese are set to 0 and a warning issued.
 #'
 #' @export
 dynatop <- function(model,obs_data,
@@ -80,9 +81,7 @@ dynatop <- function(model,obs_data,
 
     ## message("Running Dynamic TOPMODEL using ", length(hillslope$id), " hillslope units and ", length(channel$id), " channel units")
 
-    ## compute tha maximum velocity to keep the 4 py solution positive
-    hillslope$c_max <- (hillslope$delta_x/ts$sub_step)*( (1-sz_opt$omega)/sz_opt$theta )
-    
+
     for(it in 1:nrow(obs_data)){
         ##print(it)
 
@@ -181,10 +180,10 @@ dynatop <- function(model,obs_data,
 
             ## Step 4: Solve saturated zone
             ## if mass check compute theinitial mass
-            
+
             if( mass_check ){ mass_s_sz <- sum(channel$s_ch*channel$area) -
                                   sum(hillslope$s_sz*hillslope$area) }
-            
+
             ## move current states to values for start of the time step
             hillslope$sum_l_sz_in_t <- hillslope$sum_l_sz_in # total inflow at start of time step
             hillslope$l_sz_t <- hillslope$l_sz # total outflow at start of time step
@@ -211,7 +210,7 @@ dynatop <- function(model,obs_data,
                     qbar <- (hillslope$Q_minus_t[idx] + hillslope$Q_minus_tDt[idx] + hillslope$Q_plus_t[idx])/3
                     cbar <- (qbar*hillslope$delta_x[idx])/hillslope$m[idx]
 
-                    
+
                     lambda <- sz_opt$omega + sz_opt$theta*cbar*ts$sub_step/hillslope$delta_x[idx]
                     lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*cbar*ts$sub_step/hillslope$delta_x[idx]
 
@@ -220,13 +219,13 @@ dynatop <- function(model,obs_data,
                         cbar*hillslope$q_uz_sz[idx]/hillslope$delta_x[idx]
 
                     hillslope$l_sz[idx] <- pmin( (k - (1-lambda)*hillslope$Q_minus_tDt[idx])/lambda , hillslope$l_szmax[idx] )
-                    
+
                     if( any(hillslope$l_sz[idx]<0) ){
                         warning("Negative flow in kinematic solutions, consider revising weights")
-                        hillslope$l_sz[idx] <- pmax(illslope$l_sz[idx],0)
+                        hillslope$l_sz[idx] <- pmax(hillslope$l_sz[idx],0)
                     }
-                    
-                        
+
+
                     lateral_flux$sz[ hillslope$id[idx] ] <- hillslope$l_sz[idx]*hillslope$area[idx]
 
                 }
@@ -313,7 +312,7 @@ dynatop <- function(model,obs_data,
 
             ## handle returning states
             if( return_states$flag ){
-                return_states[[index(obs_data)[it]]] <- get_states(hillslope,"hillslope")
+                return_states[[index(obs_data)[it]]] <- get_states(hillslope,"dynatop","hillslope")
             }
 
 
@@ -323,10 +322,10 @@ dynatop <- function(model,obs_data,
 
 
     ## copy states back into model
-    tmp <- get_states(hillslope,"hillslope")
+    tmp <- get_states(hillslope,"dynatop","hillslope")
     nm <- c("id",setdiff( names(model$hillslope),names(tmp)))
     model$hillslope <- merge(model$hillslope[,nm],tmp,by="id",all=TRUE)
-    tmp <- get_states(channel,"channel")
+    tmp <- get_states(channel,"dynatop","channel")
     nm <- c("id",setdiff( names(model$channel),names(tmp)))
     model$channel <- merge(model$channel[,nm],tmp,by="id",all=TRUE)
 
@@ -338,7 +337,7 @@ dynatop <- function(model,obs_data,
     if(mass_check){
         #browser()
         mass_errors <- as.data.frame(mass_errors)
-        mass_errors[,'DateTime'] <- index(obs)[mass_errors[,'DateTime']]
+        mass_errors[,'DateTime'] <- index(obs_data)[mass_errors[,'DateTime']]
         out[['mass_errors']] <- mass_errors
     }
     if( return_states$flag ){

@@ -16,11 +16,11 @@ dynatop(
 )
 }
 \arguments{
-\item{model}{TODO}
+\item{model}{A Dynamic TOPMODEL object (see vignette)}
 
-\item{obs_data}{TODO}
+\item{obs_data}{an xts object containing equally spaced time series of observed data.}
 
-\item{initial_recharge}{Initial recharge to the saturated zone in steady state in m/hr}
+\item{initial_recharge}{Initial recharge to the saturated zone in steady state in m/s}
 
 \item{sim_time_step}{simulation timestep in hours, default value of NULL results in data time step}
 
@@ -28,11 +28,13 @@ dynatop(
 
 \item{mass_check}{return time series of mass balance errors}
 
-\item{sz_opt}{TODO}
+\item{return_states}{a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be returned}
+
+\item{sz_opt}{a named list e.g. list(omega=1,theta=1) of parameters controlling the kinematic wave solution for the saturated zone.}
 }
 \description{
 Run dynamic topmodel
 }
 \details{
-use_states, currently does not impose any checks
+use_states, currently does not impose any checks on the state values. return_states fives the states at the end of the timestep. The default values of sz_opt (omega=1,theta=1) ensure there are no negative fluxes. Other values may produce negative values in whiich case theese are set to 0 and a warning issued.
 }
