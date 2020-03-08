@@ -3,9 +3,10 @@
 #' @description This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model.
 #'
 #' @param model a dynamic TOPMODEL list object
+#' @param use_states logical if states are to be checked
 #' @param verbose if set prints out further information
 #' @param delta error term in checking redistribution matrix sums
-#' 
+#'
 #' @return a vector of the names of the expected input series
 #'
 #' @details The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be less then 1+delta.
@@ -20,7 +21,7 @@ check_model <- function(model, verbose=FALSE, use_states=FALSE,delta=1e-13){
     }
 
     ## check components that should be data.frames
-    
+
     ## create a list of data.frames describing the data frames in the model
     df_prop <- list(
         hillslope = model_description("hillslope",include_states=use_states),
@@ -28,16 +29,16 @@ check_model <- function(model, verbose=FALSE, use_states=FALSE,delta=1e-13){
         point_inflow = model_description("point_inflow",include_states=use_states),
         gauge = model_description("gauge",include_states=use_states)
     )
-    
+
     ## check the HRU table properties
     for(ii in names(df_prop)){
-        
+
         if(!is.data.frame(model[[ii]])){
             stop(paste("Table",ii,"should be a data.frame"))
         }
-        
+
         idx <- df_prop[[ii]]$name %in% names(model[[ii]])
-        
+
         if( !all( idx ) ){# check it has required columns
             stop( paste("Table",ii,"is missing columns:",
                         paste(df_prop[[ii]]$name[!idx],collapse=",")) )
@@ -66,7 +67,7 @@ check_model <- function(model, verbose=FALSE, use_states=FALSE,delta=1e-13){
         tmp <- unique(unlist(model[[jj]][,tmp]))
         req_names <- unique(c(req_names,tmp))
     }
-    
+
     idx  <- req_names %in% names(model$param)
     if(!all(idx)){ stop(paste("The following parameters are not specified:",paste(req_names[!idx],collapse=","))) }
     idx  <- names(model$param) %in% req_names
@@ -82,7 +83,7 @@ check_model <- function(model, verbose=FALSE, use_states=FALSE,delta=1e-13){
     ## all points_inflows and gauges should be on a channel with fractions between 0 & 1
     for(jj in c("gauge","point_inflow")){
         if(nrow(model[[jj]]) == 0){next}
-        
+
         for(ii in 1:nrow(model[[jj]])){
             if( !all( c(model[[jj]][ii,'id'] %in% model[['channel']]$id,
                         model[[jj]][ii,'fraction'] >=0,
@@ -94,7 +95,7 @@ check_model <- function(model, verbose=FALSE, use_states=FALSE,delta=1e-13){
     }
 
 
-    
+
     ## checks on redistribution matrices
     for(ii in c("Fsz","Fsf")){
         if(!(attr(class(model[[ii]]),"package")=="Matrix")){#is(model[[ii]],"Matrix")){
@@ -132,10 +133,10 @@ check_model <- function(model, verbose=FALSE, use_states=FALSE,delta=1e-13){
     }
     ## check for loops - all reaches at top of system must drain to outfall with all reaches being passed through
     to_outlet <- NULL
-    for(ii in setdiff(model$channel$id,model$channel$next_id)){    
+    for(ii in setdiff(model$channel$id,model$channel$next_id)){
         id <- ii
         tmp_rec <- ii
-                
+
         cnt <- 0
         while(cnt <= nrow(model$channel)){
             ## work out next id
@@ -152,7 +153,7 @@ check_model <- function(model, verbose=FALSE, use_states=FALSE,delta=1e-13){
     if( !all(idx) ){
         stop(paste("Loop in channel network. Check reaches:",paste(model$channel$id[!idx],collapse=TRUE)))
     }
-        
+
     ## verbose printing of head and tail channels
     if(verbose){
         ## print out head channels

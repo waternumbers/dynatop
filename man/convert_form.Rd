@@ -4,31 +4,30 @@
 \alias{convert_form}
 \alias{convert_dynatop}
 \alias{get_states}
-\alias{store_to_sim}
-\alias{sim_to_store}
-\title{Contains functions for converting between the storage form and list form used in simulation}
+\title{Functions for converting between the model forms used in simulation}
 \usage{
 convert_form(model, used_by = "dynatop")
 
 convert_dynatop(model)
 
-get_states(obj, type = c("hillslope", "channel"))
-
-store_to_sim(model, use_states = FALSE)
-
-sim_to_store(model, with_matrix = TRUE)
+get_states(obj, used_by = "dynatop", type = c("hillslope", "channel"))
 }
 \arguments{
 \item{model}{a dynamic TOPMODEL model list object}
 
-\item{initial_recharge}{Initial recharge to the saturated zone in steady state in m/hr}
+\item{used_by}{which function the transformed model is to be used by}
+
+\item{obj}{a transformed object}
+
+\item{type}{of HSU for which states are to be returned (either hillslope or channel)}
 }
 \value{
-TODO
+Either the data object used in the simulation or a data.frame of states along with the HSU ID.
 }
 \description{
-TODO
+Function that convert a dynatop model into forms that are
+more useful for simulation and then extract properties from them.
 }
 \details{
-TODO
+These functions are designed to be used internally by other functions within the package. In general \code{convert_form} with an appropriate \code{used_by} should be used although functions are available directly. \code{get_states} extract the states from a converted object.
 }

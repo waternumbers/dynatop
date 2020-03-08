@@ -2,7 +2,7 @@
 % Please edit documentation in R/model_description.R
 \name{model_description}
 \alias{model_description}
-\title{Contains functions for initialising and checking the hillslope HSU store}
+\title{Function for defining the elements of a model object}
 \usage{
 model_description(
   type = c("hillslope", "channel", "point_inflow", "gauge"),
@@ -11,14 +11,15 @@ model_description(
 )
 }
 \arguments{
-\item{type}{the description of which model table to return}
+\item{type}{the names of the data frame within the Dynamic TOPMODEL object}
+
+\item{use_states}{shoould states be returned}
+
+\item{use_tmp}{should tempory variables used in simulation be returned}
 }
 \value{
 A data frame descriping the properties of one of the tables found within the model
 }
 \description{
-TODO
-}
-\details{
-TODO
+The function returns a description, in terms of variable names, names and role, for the selected table within a Dynamic TOPMODEL object.
 }

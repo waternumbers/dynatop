@@ -31,12 +31,12 @@ Because of the methods used the results:
 \examples{
 # Resample Brompton rainfall to 15 minute intervals
 require(dynatop)
-data("brompton")
+data("Swindale")
 
-obs <- resample_xts(brompton$rain, dt=15/60)
+obs <- resample_xts(Swindale$obs, dt=60*60) # hourly data
 
-# check totals for Sept - Oct 2012
-sum(obs$rain*15/60, na.rm=TRUE)
-sum(brompton$rain, na.rm=TRUE)
+# check totals
+sum(obs$Rainfall*15/60, na.rm=TRUE)
+sum(Swindale$obs$Rainfall, na.rm=TRUE)
 
 }

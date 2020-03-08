@@ -2,21 +2,21 @@
 % Please edit documentation in R/initialise.R
 \name{initialise}
 \alias{initialise}
-\title{Contains functions for initialising and checking the hillslope HSU store}
+\title{Initialisation of the hillslope HSU store}
 \usage{
-initialise(model, initial_recharge, return_sim = FALSE)
+initialise(model, initial_recharge)
 }
 \arguments{
 \item{model}{a dynamic TOPMODEL model list object}
 
-\item{initial_recharge}{Initial recharge to the saturated zone in steady state in m/hr}
+\item{initial_recharge}{Initial recharge to the saturated zone in steady state in m/s}
 }
 \value{
-A list of lists, one list for each HRU type which contains vectors of states and properties for use in computation
+\code{model} with additional variable representing the initial state values added to the model object.
 }
 \description{
-TODO
+Initialises a Dynamic TOPMODEL int eh simpliest way possible.
 }
 \details{
-TODO
+Initialises a Dynamic TOPMODEL int eh simpliest way possible.
 }

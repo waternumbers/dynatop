@@ -4,9 +4,9 @@
 #' @param obs A times series (xts) object with a POSIXct index.
 #' @param dt New time interval in seconds
 #' @param is.rate If TRUE then these are rates i.e m/hr. Otherwise they are absolute values accumulated within the preceeding time interval. Values are scaled before returning so resampling is conservative.
-#' 
+#'
 #' @return An xts object with the new timestep
-#' 
+#'
 #' @details Time series of observation data are often of different temporal resolutions, however the input to most hydrological models, as is the case with the Dynamic TOPMODEL, requires those data at the same interval. This provides a method to resample a collection of such data to a single interval.
 #'
 #' Because of the methods used the results:
@@ -14,21 +14,21 @@
 #' - do not guarentee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.
 #'
 #' @details
-#' 
+#'
 #' @export
 #' @examples
 #' # Resample Brompton rainfall to 15 minute intervals
 #' require(dynatop)
-#' data("brompton")
+#' data("Swindale")
 #'
-#' obs <- resample_xts(brompton$rain, dt=15/60)
+#' obs <- resample_xts(Swindale$obs, dt=60*60) # hourly data
 #'
-#' # check totals for Sept - Oct 2012
-#' sum(obs$rain*15/60, na.rm=TRUE)
-#' sum(brompton$rain, na.rm=TRUE)
+#' # check totals
+#' sum(obs$Rainfall*15/60, na.rm=TRUE)
+#' sum(Swindale$obs$Rainfall, na.rm=TRUE)
 #'
 resample_xts <- function(obs, dt, is.rate=FALSE){
-    
+
     ## if the set is NULL then return
     if(is.null(obs)){return(obs)}
     if(!zoo::is.zoo(obs)){stop("Time series required")}
@@ -42,7 +42,7 @@ resample_xts <- function(obs, dt, is.rate=FALSE){
     }else{
         dt_series <- dt_series[1]
     }
-    
+
 
     ## if factor greater then 1 take to smaller timestep
     if(dt_series >= dt){
@@ -56,7 +56,7 @@ resample_xts <- function(obs, dt, is.rate=FALSE){
         ## period e.g m/hr
         vals <- apply(as.matrix(obs), MARGIN=2, FUN=rep, each=fact)   # won't wotk if fact is not an integer
         vals <- matrix(vals, ncol=ncol(vals))
-        tms <- seq(index(obs)[1], along.with=vals, by=dt*3600)
+        tms <- seq(index(obs)[1], along.with=vals, by=dt)
         ## if the value is a rate then it should be applied to all of the values in
         ## the interval "as is". Otherwise each values needs to be divided across the
         ## smaller time steps so that the total across the original time intervals is the same
@@ -67,14 +67,14 @@ resample_xts <- function(obs, dt, is.rate=FALSE){
         ## then we need to aggregate (e.g. quarterly to hourly)
         tryCatch({ fact <- floor(dt/dt_series) },
                  error = {fact <- 1})
-        tms <- seq(start(obs), end(obs), by=dt*3600)
+        tms <- seq(start(obs), end(obs), by=dt)
         idx <- rep(tms, each=fact)
         idx <- idx[1:nrow(obs)]
         if(is.rate){fun=mean}else{fun=sum}
         obs_agg <- aggregate(zoo::zoo(obs), by = idx, FUN=fun)
         names(obs_agg) <- names(obs)
     }
-    
+
     return(obs_agg)
 }
 
