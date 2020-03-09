@@ -75,9 +75,6 @@
       <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Dynamic TOPMODEL Implimentation</a>
     </li>
     <li>
-      <a href="../articles/The_solution_of_Dynamic_TOPMODEL_ordered.html">The Dynamic TOPMODEL Implimentation</a>
-    </li>
-    <li>
       <a href="../articles/Time_Delay_Channel_Routing.html">Time Delay Channel Routing</a>
     </li>
   </ul>
@@ -127,24 +124,24 @@ object oriented style adopted in the a package.</p>
 Started”</a> vignette.</p>
 <p>The model strucutre will be documented with reference to the model in the test
 catchment data supplied with the package. This can be loaded with</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(dynatop)</span>
-<span id="cb1-2"><a href="#cb1-2"></a><span class="co">#&gt; Loading required package: xts</span></span>
-<span id="cb1-3"><a href="#cb1-3"></a><span class="co">#&gt; Loading required package: zoo</span></span>
-<span id="cb1-4"><a href="#cb1-4"></a><span class="co">#&gt; </span></span>
-<span id="cb1-5"><a href="#cb1-5"></a><span class="co">#&gt; Attaching package: 'zoo'</span></span>
-<span id="cb1-6"><a href="#cb1-6"></a><span class="co">#&gt; The following objects are masked from 'package:base':</span></span>
-<span id="cb1-7"><a href="#cb1-7"></a><span class="co">#&gt; </span></span>
-<span id="cb1-8"><a href="#cb1-8"></a><span class="co">#&gt;     as.Date, as.Date.numeric</span></span>
-<span id="cb1-9"><a href="#cb1-9"></a><span class="co">#&gt; Registered S3 method overwritten by 'xts':</span></span>
-<span id="cb1-10"><a href="#cb1-10"></a><span class="co">#&gt;   method     from</span></span>
-<span id="cb1-11"><a href="#cb1-11"></a><span class="co">#&gt;   as.zoo.xts zoo</span></span>
-<span id="cb1-12"><a href="#cb1-12"></a><span class="co">#&gt; Loading required package: Matrix</span></span>
-<span id="cb1-13"><a href="#cb1-13"></a><span class="kw"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(<span class="st">"Swindale"</span>)</span>
-<span id="cb1-14"><a href="#cb1-14"></a>model &lt;-<span class="st"> </span>Swindale<span class="op">$</span>model</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(dynatop)</a>
+<a class="sourceLine" id="cb1-2" title="2"><span class="co">#&gt; Loading required package: xts</span></a>
+<a class="sourceLine" id="cb1-3" title="3"><span class="co">#&gt; Loading required package: zoo</span></a>
+<a class="sourceLine" id="cb1-4" title="4"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb1-5" title="5"><span class="co">#&gt; Attaching package: 'zoo'</span></a>
+<a class="sourceLine" id="cb1-6" title="6"><span class="co">#&gt; The following objects are masked from 'package:base':</span></a>
+<a class="sourceLine" id="cb1-7" title="7"><span class="co">#&gt; </span></a>
+<a class="sourceLine" id="cb1-8" title="8"><span class="co">#&gt;     as.Date, as.Date.numeric</span></a>
+<a class="sourceLine" id="cb1-9" title="9"><span class="co">#&gt; Registered S3 method overwritten by 'xts':</span></a>
+<a class="sourceLine" id="cb1-10" title="10"><span class="co">#&gt;   method     from</span></a>
+<a class="sourceLine" id="cb1-11" title="11"><span class="co">#&gt;   as.zoo.xts zoo</span></a>
+<a class="sourceLine" id="cb1-12" title="12"><span class="co">#&gt; Loading required package: Matrix</span></a>
+<a class="sourceLine" id="cb1-13" title="13"><span class="kw"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(<span class="st">"Swindale"</span>)</a>
+<a class="sourceLine" id="cb1-14" title="14">model &lt;-<span class="st"> </span>Swindale<span class="op">$</span>model</a></code></pre></div>
 <p>The top level of the model contains the following elements:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(model)</span>
-<span id="cb2-2"><a href="#cb2-2"></a><span class="co">#&gt; [1] "hillslope"    "channel"      "param"        "Fsz"          "Fsf"         </span></span>
-<span id="cb2-3"><a href="#cb2-3"></a><span class="co">#&gt; [6] "gauge"        "point_inflow"</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/names.html">names</a></span>(model)</a>
+<a class="sourceLine" id="cb2-2" title="2"><span class="co">#&gt; [1] "hillslope"    "channel"      "param"        "Fsz"          "Fsf"         </span></a>
+<a class="sourceLine" id="cb2-3" title="3"><span class="co">#&gt; [6] "gauge"        "point_inflow"</span></a></code></pre></div>
 <p>These are oulined in Table <a href="#tab:model-table">1</a> and described in more detail in the sections
 below.</p>
 <table class="table">
@@ -203,28 +200,28 @@ below.</p>
 <a href="#hillslope-hru-table" class="anchor"></a>Hillslope HRU table</h2>
 <p>Each row of the hillslope HRU table describes a single hillslope HRU, the
 input series in expects and parameters. In this example it looks like:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(model<span class="op">$</span>hillslope)</span>
-<span id="cb3-2"><a href="#cb3-2"></a><span class="co">#&gt;   id       area    atb_bar     s_bar delta_x class sz_band sf_band  precip</span></span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="co">#&gt; 1 20   56.79949  0.1518315 0.9588722       4    20       1       1 unknown</span></span>
-<span id="cb3-4"><a href="#cb3-4"></a><span class="co">#&gt; 2 21  533.07446  1.4347204 0.2355992       4    21       1       1 unknown</span></span>
-<span id="cb3-5"><a href="#cb3-5"></a><span class="co">#&gt; 3 22   16.00000 -0.1412616 1.5990150       4    20       2       2 unknown</span></span>
-<span id="cb3-6"><a href="#cb3-6"></a><span class="co">#&gt; 4 23 3169.46382  2.4856351 0.1027385       4    22       1       1 unknown</span></span>
-<span id="cb3-7"><a href="#cb3-7"></a><span class="co">#&gt; 5 24  176.16044  1.5823726 0.3055067       4    21       2       2 unknown</span></span>
-<span id="cb3-8"><a href="#cb3-8"></a><span class="co">#&gt; 6 25   32.00000  0.4395916 1.1364723       4    20       3       3 unknown</span></span>
-<span id="cb3-9"><a href="#cb3-9"></a><span class="co">#&gt;       pet         q_sfmax         s_rzmax         s_rz0         ln_t0         m</span></span>
-<span id="cb3-10"><a href="#cb3-10"></a><span class="co">#&gt; 1 unknown q_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span></span>
-<span id="cb3-11"><a href="#cb3-11"></a><span class="co">#&gt; 2 unknown q_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span></span>
-<span id="cb3-12"><a href="#cb3-12"></a><span class="co">#&gt; 3 unknown q_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span></span>
-<span id="cb3-13"><a href="#cb3-13"></a><span class="co">#&gt; 4 unknown q_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span></span>
-<span id="cb3-14"><a href="#cb3-14"></a><span class="co">#&gt; 5 unknown q_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span></span>
-<span id="cb3-15"><a href="#cb3-15"></a><span class="co">#&gt; 6 unknown q_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span></span>
-<span id="cb3-16"><a href="#cb3-16"></a><span class="co">#&gt;           t_d         t_sf</span></span>
-<span id="cb3-17"><a href="#cb3-17"></a><span class="co">#&gt; 1 t_d_default t_sf_default</span></span>
-<span id="cb3-18"><a href="#cb3-18"></a><span class="co">#&gt; 2 t_d_default t_sf_default</span></span>
-<span id="cb3-19"><a href="#cb3-19"></a><span class="co">#&gt; 3 t_d_default t_sf_default</span></span>
-<span id="cb3-20"><a href="#cb3-20"></a><span class="co">#&gt; 4 t_d_default t_sf_default</span></span>
-<span id="cb3-21"><a href="#cb3-21"></a><span class="co">#&gt; 5 t_d_default t_sf_default</span></span>
-<span id="cb3-22"><a href="#cb3-22"></a><span class="co">#&gt; 6 t_d_default t_sf_default</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(model<span class="op">$</span>hillslope)</a>
+<a class="sourceLine" id="cb3-2" title="2"><span class="co">#&gt;   id       area    atb_bar     s_bar delta_x class sz_band sf_band  precip</span></a>
+<a class="sourceLine" id="cb3-3" title="3"><span class="co">#&gt; 1 20   56.79949  0.1518315 0.9588722       4    20       1       1 unknown</span></a>
+<a class="sourceLine" id="cb3-4" title="4"><span class="co">#&gt; 2 21  533.07446  1.4347204 0.2355992       4    21       1       1 unknown</span></a>
+<a class="sourceLine" id="cb3-5" title="5"><span class="co">#&gt; 3 22   16.00000 -0.1412616 1.5990150       4    20       2       2 unknown</span></a>
+<a class="sourceLine" id="cb3-6" title="6"><span class="co">#&gt; 4 23 3169.46382  2.4856351 0.1027385       4    22       1       1 unknown</span></a>
+<a class="sourceLine" id="cb3-7" title="7"><span class="co">#&gt; 5 24  176.16044  1.5823726 0.3055067       4    21       2       2 unknown</span></a>
+<a class="sourceLine" id="cb3-8" title="8"><span class="co">#&gt; 6 25   32.00000  0.4395916 1.1364723       4    20       3       3 unknown</span></a>
+<a class="sourceLine" id="cb3-9" title="9"><span class="co">#&gt;       pet         q_sfmax         s_rzmax         s_rz0         ln_t0         m</span></a>
+<a class="sourceLine" id="cb3-10" title="10"><span class="co">#&gt; 1 unknown q_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span></a>
+<a class="sourceLine" id="cb3-11" title="11"><span class="co">#&gt; 2 unknown q_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span></a>
+<a class="sourceLine" id="cb3-12" title="12"><span class="co">#&gt; 3 unknown q_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span></a>
+<a class="sourceLine" id="cb3-13" title="13"><span class="co">#&gt; 4 unknown q_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span></a>
+<a class="sourceLine" id="cb3-14" title="14"><span class="co">#&gt; 5 unknown q_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span></a>
+<a class="sourceLine" id="cb3-15" title="15"><span class="co">#&gt; 6 unknown q_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span></a>
+<a class="sourceLine" id="cb3-16" title="16"><span class="co">#&gt;           t_d         t_sf</span></a>
+<a class="sourceLine" id="cb3-17" title="17"><span class="co">#&gt; 1 t_d_default t_sf_default</span></a>
+<a class="sourceLine" id="cb3-18" title="18"><span class="co">#&gt; 2 t_d_default t_sf_default</span></a>
+<a class="sourceLine" id="cb3-19" title="19"><span class="co">#&gt; 3 t_d_default t_sf_default</span></a>
+<a class="sourceLine" id="cb3-20" title="20"><span class="co">#&gt; 4 t_d_default t_sf_default</span></a>
+<a class="sourceLine" id="cb3-21" title="21"><span class="co">#&gt; 5 t_d_default t_sf_default</span></a>
+<a class="sourceLine" id="cb3-22" title="22"><span class="co">#&gt; 6 t_d_default t_sf_default</span></a></code></pre></div>
 <p>The individual columns are documented in Table <a href="#tab:hillslope-table">2</a>. With the exception of the
 id, area, atb_bar and s_bar columns the table does not contain numeric values
 but the names of either time series to find in the forecing data or parameters
@@ -252,7 +249,7 @@ in <code>model$param</code>.</p>
 <tr class="odd">
 <td align="left">atb_bar</td>
 <td align="left">numeric</td>
-<td align="left">Average of area divided by tan of gradient topographic index</td>
+<td align="left">Average of upslope area divided by tan of gradient topographic index</td>
 </tr>
 <tr class="even">
 <td align="left">s_bar</td>
@@ -262,47 +259,47 @@ in <code>model$param</code>.</p>
 <tr class="odd">
 <td align="left">delta_x</td>
 <td align="left">numeric</td>
-<td align="left"></td>
+<td align="left">Length of HSU</td>
 </tr>
 <tr class="even">
 <td align="left">class</td>
 <td align="left">numeric</td>
-<td align="left"></td>
+<td align="left">Class of HSU</td>
 </tr>
 <tr class="odd">
 <td align="left">sz_band</td>
 <td align="left">numeric</td>
-<td align="left"></td>
+<td align="left">Computational band of the saturated zone</td>
 </tr>
 <tr class="even">
 <td align="left">sf_band</td>
 <td align="left">numeric</td>
-<td align="left"></td>
+<td align="left">Computational band of the surface zone</td>
 </tr>
 <tr class="odd">
 <td align="left">precip</td>
 <td align="left">character</td>
-<td align="left"></td>
+<td align="left">Name of the input series to use for precipitation</td>
 </tr>
 <tr class="even">
 <td align="left">pet</td>
 <td align="left">character</td>
-<td align="left"></td>
+<td align="left">Name of the input series to use for potential evapotranspiration</td>
 </tr>
 <tr class="odd">
 <td align="left">q_sfmax</td>
 <td align="left">character</td>
-<td align="left"></td>
+<td align="left">Maximum flow rate from surface to root zone</td>
 </tr>
 <tr class="even">
 <td align="left">s_rzmax</td>
 <td align="left">character</td>
-<td align="left"></td>
+<td align="left">Name of the maximum root zone depth parameter</td>
 </tr>
 <tr class="odd">
 <td align="left">s_rz0</td>
 <td align="left">character</td>
-<td align="left"></td>
+<td align="left">Name of the intial root zone depth parameter</td>
 </tr>
 <tr class="even">
 <td align="left">ln_t0</td>
@@ -317,41 +314,11 @@ in <code>model$param</code>.</p>
 <tr class="even">
 <td align="left">t_d</td>
 <td align="left">character</td>
-<td align="left"></td>
+<td align="left">Name of the unsaturated zone time constant per m of saturated storage deficit parameter.</td>
 </tr>
 <tr class="odd">
 <td align="left">t_sf</td>
 <td align="left">character</td>
-<td align="left"></td>
-</tr>
-<tr class="even">
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">Name of the input series to use for precipitation</td>
-</tr>
-<tr class="odd">
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">Name of the input series to use for potential evapotranspiration</td>
-</tr>
-<tr class="even">
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">Name of the maximum root zone depth parameter</td>
-</tr>
-<tr class="odd">
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">Name of the intial root zone depth parameter</td>
-</tr>
-<tr class="even">
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">Name of the unsaturated zone time constant per m of saturated storage deficit parameter.</td>
-</tr>
-<tr class="odd">
-<td align="left">NA</td>
-<td align="left">NA</td>
 <td align="left">Name of the Surface excess storage time constant parameter</td>
 </tr>
 </tbody>
@@ -362,14 +329,14 @@ in <code>model$param</code>.</p>
 <a href="#channel-hru-table" class="anchor"></a>Channel HRU table</h2>
 <p>Each row of the channel HRU table describes a single hillslope HRU, the
 input series in expects and parameters. In this example it looks like:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(model<span class="op">$</span>channel)</span>
-<span id="cb4-2"><a href="#cb4-2"></a><span class="co">#&gt;   id      area length sz_band sf_band next_id  precip     pet         v_ch</span></span>
-<span id="cb4-3"><a href="#cb4-3"></a><span class="co">#&gt; 1  1 1734.0875    431    2754    2754      18 unknown unknown v_ch_default</span></span>
-<span id="cb4-4"><a href="#cb4-4"></a><span class="co">#&gt; 2  2 2052.9979    513    2754    2754      15 unknown unknown v_ch_default</span></span>
-<span id="cb4-5"><a href="#cb4-5"></a><span class="co">#&gt; 3  3 2957.4277    740    2754    2754      19 unknown unknown v_ch_default</span></span>
-<span id="cb4-6"><a href="#cb4-6"></a><span class="co">#&gt; 4  4 2298.0998    573    2754    2754       5 unknown unknown v_ch_default</span></span>
-<span id="cb4-7"><a href="#cb4-7"></a><span class="co">#&gt; 5  5  116.1749     29    2754    2754      17 unknown unknown v_ch_default</span></span>
-<span id="cb4-8"><a href="#cb4-8"></a><span class="co">#&gt; 6  6 1652.2072    413    2754    2754      16 unknown unknown v_ch_default</span></span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw"><a href="https://rdrr.io/r/utils/head.html">head</a></span>(model<span class="op">$</span>channel)</a>
+<a class="sourceLine" id="cb4-2" title="2"><span class="co">#&gt;   id      area length sz_band sf_band next_id  precip     pet         v_ch</span></a>
+<a class="sourceLine" id="cb4-3" title="3"><span class="co">#&gt; 1  1 1734.0875    431    2754    2754      18 unknown unknown v_ch_default</span></a>
+<a class="sourceLine" id="cb4-4" title="4"><span class="co">#&gt; 2  2 2052.9979    513    2754    2754      15 unknown unknown v_ch_default</span></a>
+<a class="sourceLine" id="cb4-5" title="5"><span class="co">#&gt; 3  3 2957.4277    740    2754    2754      19 unknown unknown v_ch_default</span></a>
+<a class="sourceLine" id="cb4-6" title="6"><span class="co">#&gt; 4  4 2298.0998    573    2754    2754       5 unknown unknown v_ch_default</span></a>
+<a class="sourceLine" id="cb4-7" title="7"><span class="co">#&gt; 5  5  116.1749     29    2754    2754      17 unknown unknown v_ch_default</span></a>
+<a class="sourceLine" id="cb4-8" title="8"><span class="co">#&gt; 6  6 1652.2072    413    2754    2754      16 unknown unknown v_ch_default</span></a></code></pre></div>
 <p>The individual columns are documented in Table <a href="#tab:channel-table">3</a>. With the exception of the
 id, area, next_id and length the table does not contain numeric values
 but the names of either time series to find in the forecing data or parameters
@@ -402,12 +369,12 @@ in <code>model$param</code>.</p>
 <tr class="even">
 <td align="left">sz_band</td>
 <td align="left">numeric</td>
-<td align="left"></td>
+<td align="left">Computational band of the saturated zone</td>
 </tr>
 <tr class="odd">
 <td align="left">sf_band</td>
 <td align="left">numeric</td>
-<td align="left"></td>
+<td align="left">Computational band of the surface zone</td>
 </tr>
 <tr class="even">
 <td align="left">next_id</td>
@@ -417,27 +384,17 @@ in <code>model$param</code>.</p>
 <tr class="odd">
 <td align="left">precip</td>
 <td align="left">character</td>
-<td align="left"></td>
+<td align="left">Name of the input series to use for precipitation</td>
 </tr>
 <tr class="even">
 <td align="left">pet</td>
 <td align="left">character</td>
-<td align="left"></td>
+<td align="left">Name of the input series to use for potential evapotranspiration</td>
 </tr>
 <tr class="odd">
 <td align="left">v_ch</td>
 <td align="left">character</td>
 <td align="left">Name of the channel velocity parameter</td>
-</tr>
-<tr class="even">
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">Name of the input series to use for precipitation</td>
-</tr>
-<tr class="odd">
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">Name of the input series to use for potential evapotranspiration</td>
 </tr>
 </tbody>
 </table>
@@ -448,49 +405,39 @@ in <code>model$param</code>.</p>
 <p>The paraemter vector is a named numneric vector of parameter values. The names
 should correspond to those specified in the hillslope and channel tables. In
 this case:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>model<span class="op">$</span>param</span>
-<span id="cb5-2"><a href="#cb5-2"></a><span class="co">#&gt; q_sfmax_default s_rzmax_default   s_rz0_default   ln_t0_default       m_default </span></span>
-<span id="cb5-3"><a href="#cb5-3"></a><span class="co">#&gt;             Inf           0.050           0.990          19.000           0.004 </span></span>
-<span id="cb5-4"><a href="#cb5-4"></a><span class="co">#&gt;     t_d_default    t_sf_default    v_ch_default </span></span>
-<span id="cb5-5"><a href="#cb5-5"></a><span class="co">#&gt;          20.000         100.000         100.000</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1">model<span class="op">$</span>param</a>
+<a class="sourceLine" id="cb5-2" title="2"><span class="co">#&gt; q_sfmax_default s_rzmax_default   s_rz0_default   ln_t0_default       m_default </span></a>
+<a class="sourceLine" id="cb5-3" title="3"><span class="co">#&gt;             Inf           0.050           0.990          19.000           0.004 </span></a>
+<a class="sourceLine" id="cb5-4" title="4"><span class="co">#&gt;     t_d_default    t_sf_default    v_ch_default </span></a>
+<a class="sourceLine" id="cb5-5" title="5"><span class="co">#&gt;          20.000         100.000         100.000</span></a></code></pre></div>
 </div>
-<div id="redistribution-matrices-wsat-wex-fsat-fex" class="section level2">
+<div id="redistribution-matrices-fsf-fsz" class="section level2">
 <h2 class="hasAnchor">
-<a href="#redistribution-matrices-wsat-wex-fsat-fex" class="anchor"></a>Redistribution matrices (Wsat, Wex, Fsat, Fex)</h2>
+<a href="#redistribution-matrices-fsf-fsz" class="anchor"></a>Redistribution matrices (Fsf, Fsz)</h2>
 <p>The redistributiuon matrices specify how the lateral fluxes move between the
-different HRUs. The matrices are specfied in the same fashion with columns
+different HSUs. The matrices are specfied in the same fashion with columns
 being the ‘source’ HRU and rows the ‘destination’ HRU. The columns and rows
-are named in keeping with the values of the id columns in the hillslope and
-channel tables.</p>
+are not named but are referenced via the id of the HSU as found in the id
+columns in the hillslope and channel tables.</p>
 <p>In the case of Wex and Wsat which characterise the movements between the
 hillslope HRUs it can be seen that the names are the same in both cases:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(model<span class="op">$</span>Wex)</span>
-<span id="cb6-2"><a href="#cb6-2"></a><span class="co">#&gt; NULL</span></span>
-<span id="cb6-3"><a href="#cb6-3"></a><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(model<span class="op">$</span>Wex)</span>
-<span id="cb6-4"><a href="#cb6-4"></a><span class="co">#&gt; NULL</span></span></code></pre></div>
-<p>In Fex and Fsat the row names relate to the channel id values while the column
-names relate to the hillslope id values</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">colnames</a></span>(model<span class="op">$</span>Fex)</span>
-<span id="cb7-2"><a href="#cb7-2"></a><span class="co">#&gt; NULL</span></span>
-<span id="cb7-3"><a href="#cb7-3"></a><span class="kw"><a href="https://rdrr.io/r/base/colnames.html">rownames</a></span>(model<span class="op">$</span>Fex)</span>
-<span id="cb7-4"><a href="#cb7-4"></a><span class="co">#&gt; NULL</span></span></code></pre></div>
 </div>
 <div id="point-inflows" class="section level2">
 <h2 class="hasAnchor">
 <a href="#point-inflows" class="anchor"></a>Point Inflows</h2>
 <p>The point_inflow data frame allows the specification of locations on the river
 network at which inflows can occur. The strucutre of the data frame exactly
-matchs that of the gauge specifications (see Table @ref{tab:gauge-table}). In the current catchment there are no
+matchs that of the gauge specifications (see Table <a href="#tab:gauge-table">4</a>). In the current catchment there are no
 inflows so the table is left blank:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>model<span class="op">$</span>point_inflow</span>
-<span id="cb8-2"><a href="#cb8-2"></a><span class="co">#&gt; [1] name     id       fraction</span></span>
-<span id="cb8-3"><a href="#cb8-3"></a><span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">model<span class="op">$</span>point_inflow</a>
+<a class="sourceLine" id="cb6-2" title="2"><span class="co">#&gt; [1] name     id       fraction</span></a>
+<a class="sourceLine" id="cb6-3" title="3"><span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></a></code></pre></div>
 </div>
 <div id="gauge-locations" class="section level2">
 <h2 class="hasAnchor">
 <a href="#gauge-locations" class="anchor"></a>Gauge locations</h2>
-<p>Gauge locations can be specified on the channel HRUs as outlined in
-@ref{tab:gauge-table}.</p>
+<p>Gauge locations can be specified on the channel HRUs as outlined in Table
+<a href="#tab:gauge-table">4</a>.</p>
 <table class="table">
 <caption>
 <span id="tab:gauge-table">Table 4: </span>Description of gauge and point inflow data frame columns</caption>
@@ -508,24 +455,19 @@ inflows so the table is left blank:</p>
 <tr class="even">
 <td align="left">id</td>
 <td align="left">integer</td>
-<td align="left"></td>
+<td align="left">The id of the channel HRU on which the gauge is sited</td>
 </tr>
 <tr class="odd">
 <td align="left">fraction</td>
 <td align="left">numeric</td>
 <td align="left">Fraction of the length of the channel HRU (from the head) of the location of the gauge. A value of 1 corresponds to the foot on the channel HRU and 0 the head.</td>
 </tr>
-<tr class="even">
-<td align="left">NA</td>
-<td align="left">NA</td>
-<td align="left">The id of the channel HRU on which the gauge is sited</td>
-</tr>
 </tbody>
 </table>
 <p>The current example has two gauges:</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>model<span class="op">$</span>gauge</span>
-<span id="cb9-2"><a href="#cb9-2"></a><span class="co">#&gt;         name id fraction</span></span>
-<span id="cb9-3"><a href="#cb9-3"></a><span class="co">#&gt; 1 channel_18 18        1</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1">model<span class="op">$</span>gauge</a>
+<a class="sourceLine" id="cb7-2" title="2"><span class="co">#&gt;         name id fraction</span></a>
+<a class="sourceLine" id="cb7-3" title="3"><span class="co">#&gt; 1 channel_18 18        1</span></a></code></pre></div>
 </div>
   </div>
 
@@ -538,7 +480,7 @@ inflows so the table is left blank:</p>
 <li><a href="#hillslope-hru-table">Hillslope HRU table</a></li>
       <li><a href="#channel-hru-table">Channel HRU table</a></li>
       <li><a href="#parameter-vector">Parameter vector</a></li>
-      <li><a href="#redistribution-matrices-wsat-wex-fsat-fex">Redistribution matrices (Wsat, Wex, Fsat, Fex)</a></li>
+      <li><a href="#redistribution-matrices-fsf-fsz">Redistribution matrices (Fsf, Fsz)</a></li>
       <li><a href="#point-inflows">Point Inflows</a></li>
       <li><a href="#gauge-locations">Gauge locations</a></li>
       </ul>
