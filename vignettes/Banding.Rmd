@@ -7,64 +7,47 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 --- 
 
-# Banding logic
+# Banding
 
 This document tries to explain the logic in the process of combining
-computational bands. Suppose these is a model with 6 classes of HSU
-(a-f), whose original computational bands are numbered 1 to n, with 1
-being the head of the catchment. These bands are to be combined into new
-bands identified by Roman numerals.
+computational bands. The computational bands provide the order needed to solve
+the saturated zone kinematic wave routing. That is by proceeding through the
+bands in sequence (low to high) ensures the correct inflows are available for
+the soltuion of downslope HSUs. 
 
-## Head of the catchment
+Simplification by merging the computational bands is not possible without
+altering the connectivity of the hillslope representation. However the banding
+may increase the lengh of the HSU representations which, ofr a given
+computational timestep may result in an improved capturing og kinematic
+effects. 
+The level of banding, resulting simplification and impact on the solutions is
+best determined by experimentation.
 
-At the head of the catchment the first band (band 1) does not receive
-any inflow to the saturated zone. Band 2 can receive inflows from Band
-1, Band 3 can receive inflows from Bands 1 & 2, Band 4 can receive
-inflows from Bands 1, 2 and 3 and so on.
+# Banding Implimentation
 
-The following diagram outlines the current situation where the shaded
-boxes represent the combinations of bands and classes which occur.
+The method of combining the computational bands is as follows
 
-  ---------- ------ --- --- --- --- --- ---
-  New band   band   a   b   c   d   e   f
-  I          1      X   X   X           
-             2      X   X           X   X
-             3      X   X   X   X   X   
-             4      X       X   X   X   X
-             5      X           X       
-  ---------- ------ --- --- --- --- --- ---
+1. Split the surface and saturated zone bands into groups using the `cut`
+function on both the surface and saturated zone band values
+1. Merge the properties of the HSUs by unique combination of `class`, surface
+and saturated zone band groups, using for topographic index and gradient area based
+weighting. The for botht he durface ans saturated zones the new band is taken
+to minimium of the respective ofiginal bands within the group.
+1. Using a perterbation matrix $\mathbf{K}$ compute intitial estimates of the
+surface and saturated zone redistribution matrices $\hat{\mathbf{F}_{*}} =
+\mathbf{K}^{'}\mathbf{F}_{*}\mathbf{K}$, for both surface and saturated zones.
+1. Set all values in the $\hat{\mathbf{F}}_{*}$ matrices that imply flow to an
+earlier or equivilent band to zero.
+1. Merge all HSUs with no flow redistriubtion; that is they do not contribute to a
+downslope HSU; with the next downslope HSU of the same class. In this case
+downslope is determined by the saturated zone band. If there is no potential
+HSU with which to merge issue a warning.
+1. Repeat Steps 4 and 5 until a valid redistribution matrix is acheived.
 
-This is simplified this into new bands based on assigning one new HSU
-per class. This area of the new HSU is the sum of the areas of the old
-HSUs in the same class. Similarly the length of the new HSU is the sum
-of the lengths of the old HSUs of the same class.
-
-The redistribution of flows from the HSU is by necessity a
-simplification of the original structure. One approach would be to
-assign flows based on the flow division of the most downslope (highest
-band) of the original HSUs. This however may result in 'orphan' HSUs
-which receive no subsurface inflow unless present in earlier bands.
-
-The approach proposed is to evaluate the new HSUs in order of the first
-occurrence of the class in the original bands which gives:
-
-  ---------- ------ --- --- --- --- --- ---
-  New band   band   a   b   c   d   e   f
-  I                 X   X   X           
-  Ii                                X   X
-  iii                           X       
-                                        
-                                        
-  ---------- ------ --- --- --- --- --- ---
-
-This is itself not adequate to ensure that no HSUs are 'orphaned'. To
-achieve this we also need to re-evaluate the distribution of fluxes from
-each HSU to represent fluxes between classes for all of the original
-bands. We do this as for the original classification but ignoring the
-fluxes between HSUs on the same new band.
+# A simple simulation experiment
 
 ```{r}
-library(dynatop)
+require(dynatop)
 data(Swindale)
 bmdl <- band_model(Swindale$model,5)
 check_model(bmdl)
