@@ -36,7 +36,7 @@ dynatop <- function(model,obs_data,
     ## convert to lists for simulation
     ## this creates hillslope, channel, sqnc and lateral_flux
     list2env(convert_form(model),as.environment(-1))
-
+    
     #browser()
     ## simple function for solving ODE
     fode <- function(a,b,x0,t){
@@ -181,8 +181,12 @@ dynatop <- function(model,obs_data,
             ## Step 4: Solve saturated zone
             ## if mass check compute theinitial mass
 
-            if( mass_check ){ mass_s_sz <- sum(channel$s_ch*channel$area) -
-                                  sum(hillslope$s_sz*hillslope$area) }
+            if( mass_check ){
+                mass_s_sz <- sum(channel$s_ch*channel$area) -
+                    sum(hillslope$s_sz*hillslope$area)
+                pjs <- hillslope$s_sz
+                pjsc <- channel$s_ch
+            }
 
             ## move current states to values for start of the time step
             hillslope$sum_l_sz_in_t <- hillslope$sum_l_sz_in # total inflow at start of time step
@@ -193,7 +197,7 @@ dynatop <- function(model,obs_data,
             hillslope$Q_plus_t <- pmin( hillslope$l_sz_t, hillslope$l_szmax ) # outflow at start of timestep
 
             ## compute velocity estimate and kinematic parameters
-            cbar <- (hillslope$l_szmax[idx]/hillslope$m)*
+            cbar <- (hillslope$l_szmax/hillslope$m)*
                 exp(- hillslope$s_sz / hillslope$m)
             lambda <- sz_opt$omega + sz_opt$theta*cbar*ts$sub_step/hillslope$delta_x
             lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*cbar*ts$sub_step/hillslope$delta_x
@@ -254,7 +258,6 @@ dynatop <- function(model,obs_data,
                 }
             }
 
-            #browser()
             ## update volumes in hillslope
             tilde_sz <- hillslope$s_sz +
                 ts$sub_step*(hillslope$l_sz_t + hillslope$l_sz)/2 -
@@ -271,11 +274,6 @@ dynatop <- function(model,obs_data,
 
 
             ## step 5 - correct the stores for saturation flows
-            ##browser()
-            ## if( any(hillslope$s_sz <= 1e-5) ){
-            ##     browser()
-            ## }
-
             saturated_index <- hillslope$s_sz <= 0
             hillslope$q_uz_sf <- hillslope$s_uz*saturated_index
             hillslope$s_uz <- hillslope$s_uz * !saturated_index
@@ -285,7 +283,7 @@ dynatop <- function(model,obs_data,
 
             ## mass check for iteration
             if( mass_check ){
-                #browser()
+                
                 mass_errors[ ((it-1)*ts$n_sub_step) + inner,] <-
                     c(it,inner,
                       sum(hs0$s_sf*hs0$area)+
@@ -311,7 +309,7 @@ dynatop <- function(model,obs_data,
                       mass_s_sz +
                       sum(hillslope$q_uz_sz*hillslope$area) -
                       sum(hillslope$q_sz_sf*hillslope$area) -
-                      -sum(hillslope$s_sz*hillslope$area) -
+                      - sum(hillslope$s_sz*hillslope$area) -
                       sum(channel$s_ch*channel$area)
                       )
                 ##print( mass_errors[ ((it-1)*ts$n_sub_step) + inner,] )

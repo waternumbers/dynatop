@@ -11,7 +11,7 @@
 #'
 #' @export
 initialise <- function(model,initial_recharge){
-
+    
     ## check initial discharge
     if( !is.numeric(initial_recharge) | length(initial_recharge) > 1 | any( initial_recharge < 0 ) ){
         stop("Initial discharge should be a single positive numeric value")
@@ -20,7 +20,7 @@ initialise <- function(model,initial_recharge){
     ## ###########################################
     ## Initialise the states
     #browser()
-    ## maximum lateral flow from saturated zone
+    ## maximum lateral flow from saturated zone per unit area
     model$hillslope$l_szmax <- exp( model$param[model$hillslope$ln_t0] )*model$hillslope$s_bar
 
     ## initialise the root zone
@@ -33,6 +33,13 @@ initialise <- function(model,initial_recharge){
     model$hillslope$s_sz <- pmax(0, model$param[ model$hillslope$m ]*( log(model$hillslope$l_szmax) - log(model$hillslope$l_sz)))
 
     model$channel$sum_l_sz_in <- initial_recharge
+
+    ## take an initial step to ensure mass balance in simulations
+    input <- check_model(model,use_states=TRUE)
+    tmp <- setNames(as.xts(matrix(0,2,length(input)),order.by=Sys.time()+c(0,15*60)),input)
+    
+    model <- dynatop(model,tmp,use_states=TRUE)$model
+    
     ## initialise the unsaturated zone based on recharge
     ##model$hillslope$state$s_uz <- pmax(0, initial_recharge * model$hillslope$param$t_d * model$hillslope$state$s_sz)
 

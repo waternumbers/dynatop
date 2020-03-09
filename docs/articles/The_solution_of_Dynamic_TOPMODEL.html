@@ -75,9 +75,6 @@
       <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Dynamic TOPMODEL Implimentation</a>
     </li>
     <li>
-      <a href="../articles/The_solution_of_Dynamic_TOPMODEL_ordered.html">The Dynamic TOPMODEL Implimentation</a>
-    </li>
-    <li>
       <a href="../articles/Time_Delay_Channel_Routing.html">Time Delay Channel Routing</a>
     </li>
   </ul>
@@ -137,7 +134,7 @@ simplified manner allowing the extraction of the inflow from the hillslope.</p>
 <p>The notation used can be broken down as follows. Table <a href="#tab:exchange-notation">1</a> outlines the notation used for describing a fluxes exchanged between HSUs. These variables are common across all HSUs.
 Table <a href="#tab:hs-notation">2</a> outlines the notation used for describing a hill
 slope HSU and Table <a href="#tab:ch-notation">3</a> for the channel HSU.
-All other notation is given in Table @ref{tab:other-notation}.</p>
+All other notation is given in Table <a href="#tab:other-notation">4</a>.</p>
 <p>The following conventions are used:</p>
 <ul>
 <li><p>All fluxes (<span class="math inline">\(q_{* \rightarrow *}\)</span> and <span class="math inline">\(l_{*}\)</span>) are considered to be greater or
@@ -458,7 +455,7 @@ on solving the ODE(s) governing the evolution of each of the stores in the
 HSUs sequentially while approximating the flux between them.</p>
 <p>The following sections present the solutions to the governing equations
 in the order they are currently solved in the code for given time
-step <span class="math inline">\(\Delta t\)</span> (hr) starting at time <span class="math inline">\(t\)</span> over which the input fluxes (<span class="math inline">\(p\)</span> and <span class="math inline">\(e_p\)</span>) are
+step <span class="math inline">\(\Delta t\)</span> (seconds) starting at time <span class="math inline">\(t\)</span> over which the input fluxes (<span class="math inline">\(p\)</span> and <span class="math inline">\(e_p\)</span>) are
 taken to be constant.</p>
 <div id="step-1-surface-excess-redistribution" class="section level2">
 <h2 class="hasAnchor">
@@ -624,8 +621,8 @@ where <span class="math inline">\(A\)</span>, <span class="math inline">\(Q\)</s
 recharge for the infinitesimal slab.</p>
 <p>Consider the HSU to be a rectangle of area <span class="math inline">\(a\)</span> with inflow and outflow
 occuring at parallel edges seperated by a distance <span class="math inline">\(\Delta x\)</span> giving an
-effective width if $w=. Taking a height
-<span class="math inline">\(h\)</span> gives <span class="math inline">\(A = \frac{h}{\Delta x}\)</span>. Further noting that <span class="math inline">\(h=h_0-z\)</span> for some
+effective width if <span class="math inline">\(w=\frac{a}{\Delta x}\)</span>. Taking a height
+<span class="math inline">\(h\)</span> gives <span class="math inline">\(A = hw\)</span>. Further noting that <span class="math inline">\(h=h_0-z\)</span> for some
 datum <span class="math inline">\(h_0\)</span> and storage deficit <span class="math inline">\(z\)</span> (expressed as a length) gives
 <span class="math display">\[
 \frac{dA}{dt} = w\frac{dh}{dt}=-w\frac{dz}{dt}
@@ -639,13 +636,13 @@ terms of lateral flow as follows:
 <span class="math display">\[
 \frac{dz}{dt} =  \frac{dz}{dQ}\frac{dQ}{dt} =
 =  \frac{1}{w}\left(\frac{d}{dz}g\left(z\right)\right)^{-1}\frac{dQ}{dt} =
--\frac{1}{w c\left(Qw^{-1}\right)}\frac{dQ}{dt}
+-\frac{1}{w c\left(z\right)}\frac{dQ}{dt}
 \]</span>
-where <span class="math inline">\(c\left(Qw^{-1}\right)=-\frac{d}{dz}g\left(z\right)\)</span> is the kinematic velocity
+where <span class="math inline">\(c\left(z\right)=-\frac{d}{dz}g\left(z\right)\)</span> is the kinematic velocity
 expressed as a function of lateral flow per unit width.</p>
 <p>Subsitution gives
 <span class="math display">\[
-\frac{1}{c\left(Qw^{-1}\right)}\frac{dQ}{dt} + \frac{dQ}{dx} -r = 0
+\frac{1}{c\left(z\right)}\frac{dQ}{dt} + \frac{dQ}{dx} -r = 0
 \]</span>
 to which a numerical solution is sort.
 Let <span class="math inline">\(Q^{+}\)</span> and <span class="math inline">\(Q^{-}\)</span> be the lateral flows at the foot and head of the slope
@@ -655,16 +652,16 @@ respectivly.</p>
 \begin{split}
 &amp; \left(1-\omega\right)\frac{\left.Q^{-}\right\rvert_{t+1}-\left.Q^{-}\right\rvert_{t}}{\Delta t} +
 \omega\frac{\left.Q^{+}\right\rvert_{t+1}-\left.Q^{+}\right\rvert_{t}}{\Delta t} +
-\left(1-\theta\right)c\left(\left.Q\right\rvert_{t}w^{-1}\right)
+\left(1-\theta\right)c\left(\left.z\right\rvert_{t}\right)
 \left(\frac{\left.Q^{+}\right\rvert_{t}-\left.Q^{-}\right\rvert_{t}}{\Delta x} -r\right)
 + \\
-&amp; \theta c\left(\left.Q\right\rvert_{t+1}w^{-1}\right)\left(\frac{\left.Q^{+}\right\rvert_{t+1}-\left.Q^{-}\right\rvert_{t+1}}{\Delta x} -r\right)
+&amp; \theta c\left(\left.z\right\rvert_{t+1}\right)\left(\frac{\left.Q^{+}\right\rvert_{t+1}-\left.Q^{-}\right\rvert_{t+1}}{\Delta x} -r\right)
 = 0
 \end{split}
 \]</span></p>
 <p>It certain conditions it has been shown that this scheme
 is unlikely to be numerical stable for all <span class="math inline">\(\Delta t\)</span> while the alternate
-scheme replacing <span class="math inline">\(c\left(Q\Delta x\right)\)</span> with a ‘typical’ value <span class="math inline">\(\bar{c}\)</span>
+scheme replacing <span class="math inline">\(c\left(z\right)\)</span> with a ‘typical’ value <span class="math inline">\(\bar{c}\)</span>
 <span class="math display">\[
 \begin{split}
 &amp; \left(1-\omega\right)\frac{\left.Q^{-}\right\rvert_{t+\Delta t}-\left.Q^{-}\right\rvert_{t}}{\Delta t} +
@@ -718,36 +715,6 @@ q^{\left[i\right]}_{uz\rightarrow sz} dt \right\rvert_{t+\Delta t}
 \]</span>
 Assuming <span class="math inline">\(\bar{c}^{\left[i\right]}\)</span> is not dependent upon
 <span class="math inline">\(\left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}\)</span> then this leads a simple solution for <span class="math inline">\(\left.l^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}\)</span></p>
-<div id="estimating-barc" class="section level3">
-<h3 class="hasAnchor">
-<a href="#estimating-barc" class="anchor"></a>Estimating <span class="math inline">\(\bar{c}\)</span>
-</h3>
-<p>The above solution relies on the estimate of an “average”
-value <span class="math inline">\(\bar{c}\)</span>. A relatively simple approach to
-constructing <span class="math inline">\(\bar{c}\)</span> is to take
-<span class="math display">\[
-\bar{c} = c\left(\bar{l}_{sz} w^{-1}\right)
-\]</span>
-where
-<span class="math display">\[
-\bar{l}_{sz} = \frac{1}{4}\left(
-\left. l_{sz}\right\rvert_{t} +
-\left. l_{sz}\right\rvert_{t+\Delta t} +
-\left. Q^{-}\right\rvert_{t+\Delta t}+
-\left. Q^{-}\right\rvert_{t}
-\right)
-\]</span></p>
-<p>Since the of <span class="math inline">\(\left. l_{sz}\right\rvert_{t+\Delta t}\)</span> is not known the approximation
-<span class="math display">\[
-\check{l}_{sz} = \frac{1}{4}\left(
-\left. l_{sz}\right\rvert_{t} +
-\max\left(\left. l_{sz}\right\rvert_{t},\left. Q^{-}\right\rvert_{t+\Delta t}\right) +
-\left. Q^{-}\right\rvert_{t+\Delta t}+
-\left. Q^{-}\right\rvert_{t}
-\right)
-\]</span>
-is used in the evaluation of <span class="math inline">\(\bar{c}\)</span>.</p>
-</div>
 <div id="determining-the-storage-deficit" class="section level3">
 <h3 class="hasAnchor">
 <a href="#determining-the-storage-deficit" class="anchor"></a>Determining the storage deficit</h3>
@@ -775,6 +742,19 @@ from which can be computed
 \left.\int_{\Delta t} q^{\left[i\right]}_{sz\rightarrow ex} dt \right\rvert_{t+\Delta t} =
 \left.s^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t} - \tilde{s}_{sz}
 \]</span></p>
+</div>
+<div id="estimating-barc" class="section level3">
+<h3 class="hasAnchor">
+<a href="#estimating-barc" class="anchor"></a>Estimating <span class="math inline">\(\bar{c}\)</span>
+</h3>
+<p>The above solution relies on the estimate of an “average”
+value <span class="math inline">\(\bar{c}\)</span>. A relatively simple approach to
+constructing <span class="math inline">\(\bar{c}\)</span> is to take
+<span class="math display">\[
+\bar{c} = c\left(\bar{z}\right)
+\]</span>
+where <span class="math inline">\(\bar{z}\)</span> is a estimate of average (in space and time) of the storage
+deficit. This is approximated by <span class="math inline">\(\left.s_{sz}\right\rvert_{t}\)</span>.</p>
 </div>
 </div>
 <div id="step-5-correcting-vertical-stores" class="section level2">
