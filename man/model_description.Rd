@@ -13,9 +13,9 @@ model_description(
 \arguments{
 \item{type}{the names of the data frame within the Dynamic TOPMODEL object}
 
-\item{use_states}{shoould states be returned}
+\item{include_states}{shoould states be returned}
 
-\item{use_tmp}{should tempory variables used in simulation be returned}
+\item{include_tmp}{should tempory variables used in simulation be returned}
 }
 \value{
 A data frame descriping the properties of one of the tables found within the model

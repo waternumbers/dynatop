@@ -75,9 +75,6 @@
       <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Dynamic TOPMODEL Implimentation</a>
     </li>
     <li>
-      <a href="../articles/The_solution_of_Dynamic_TOPMODEL_ordered.html">The Dynamic TOPMODEL Implimentation</a>
-    </li>
-    <li>
       <a href="../articles/Time_Delay_Channel_Routing.html">Time Delay Channel Routing</a>
     </li>
   </ul>
@@ -116,86 +113,30 @@
 
     
     
-<div id="banding-logic" class="section level1">
+<div id="banding" class="section level1">
 <h1 class="hasAnchor">
-<a href="#banding-logic" class="anchor"></a>Banding logic</h1>
-<p>This document tries to explain the logic in the process of combining computational bands. Suppose these is a model with 6 classes of HSU (a-f), whose original computational bands are numbered 1 to n, with 1 being the head of the catchment. These bands are to be combined into new bands identified by Roman numerals.</p>
-<div id="head-of-the-catchment" class="section level2">
-<h2 class="hasAnchor">
-<a href="#head-of-the-catchment" class="anchor"></a>Head of the catchment</h2>
-<p>At the head of the catchment the first band (band 1) does not receive any inflow to the saturated zone. Band 2 can receive inflows from Band 1, Band 3 can receive inflows from Bands 1 &amp; 2, Band 4 can receive inflows from Bands 1, 2 and 3 and so on.</p>
-<p>The following diagram outlines the current situation where the shaded boxes represent the combinations of bands and classes which occur.</p>
-<table class="table"><tbody>
-<tr class="odd">
-<td align="left">New band</td>
-<td align="left">band</td>
-<td align="left">a</td>
-<td align="left">b</td>
-<td align="left">c</td>
-<td align="left">d</td>
-<td align="left">e</td>
-<td align="left">f</td>
-</tr>
-<tr class="even">
-<td align="left">I</td>
-<td align="left">1</td>
-<td align="left">X</td>
-<td align="left">X</td>
-<td align="left">X</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-<tr class="odd">
-<td align="left"></td>
-<td align="left">2</td>
-<td align="left">X</td>
-<td align="left">X</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">X</td>
-<td align="left">X</td>
-</tr>
-<tr class="even">
-<td align="left"></td>
-<td align="left">3</td>
-<td align="left">X</td>
-<td align="left">X</td>
-<td align="left">X</td>
-<td align="left">X</td>
-<td align="left">X</td>
-<td align="left"></td>
-</tr>
-<tr class="odd">
-<td align="left"></td>
-<td align="left">4</td>
-<td align="left">X</td>
-<td align="left"></td>
-<td align="left">X</td>
-<td align="left">X</td>
-<td align="left">X</td>
-<td align="left">X</td>
-</tr>
-<tr class="even">
-<td align="left"></td>
-<td align="left">5</td>
-<td align="left">X</td>
-<td align="left"></td>
-<td align="left"></td>
-<td align="left">X</td>
-<td align="left"></td>
-<td align="left"></td>
-</tr>
-</tbody></table>
-<p>This is simplified this into new bands based on assigning one new HSU per class. This area of the new HSU is the sum of the areas of the old HSUs in the same class. Similarly the length of the new HSU is the sum of the lengths of the old HSUs of the same class.</p>
-<p>The redistribution of flows from the HSU is by necessity a simplification of the original structure. One approach would be to assign flows based on the flow division of the most downslope (highest band) of the original HSUs. This however may result in ‘orphan’ HSUs which receive no subsurface inflow unless present in earlier bands.</p>
-<p>The approach proposed is to evaluate the new HSUs in order of the first occurrence of the class in the original bands which gives:</p>
-<hr>
-<p>New band band a b c d e f I X X X<br>
-Ii X X iii X</p>
-<hr>
-<p>This is itself not adequate to ensure that no HSUs are ‘orphaned’. To achieve this we also need to re-evaluate the distribution of fluxes from each HSU to represent fluxes between classes for all of the original bands. We do this as for the original classification but ignoring the fluxes between HSUs on the same new band.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(dynatop)</span></code></pre></div>
+<a href="#banding" class="anchor"></a>Banding</h1>
+<p>This document tries to explain the logic in the process of combining computational bands. The computational bands provide the order needed to solve the saturated zone kinematic wave routing. That is by proceeding through the bands in sequence (low to high) ensures the correct inflows are available for the soltuion of downslope HSUs.</p>
+<p>Simplification by merging the computational bands is not possible without altering the connectivity of the hillslope representation. However the banding may increase the lengh of the HSU representations which, ofr a given computational timestep may result in an improved capturing og kinematic effects. The level of banding, resulting simplification and impact on the solutions is best determined by experimentation.</p>
+</div>
+<div id="banding-implimentation" class="section level1">
+<h1 class="hasAnchor">
+<a href="#banding-implimentation" class="anchor"></a>Banding Implimentation</h1>
+<p>The method of combining the computational bands is as follows</p>
+<ol style="list-style-type: decimal">
+<li>Split the surface and saturated zone bands into groups using the <code>cut</code> function on both the surface and saturated zone band values</li>
+<li>Merge the properties of the HSUs by unique combination of <code>class</code>, surface and saturated zone band groups, using for topographic index and gradient area based weighting. The for botht he durface ans saturated zones the new band is taken to minimium of the respective ofiginal bands within the group.</li>
+<li>Using a perterbation matrix <span class="math inline">\(\mathbf{K}\)</span> compute intitial estimates of the surface and saturated zone redistribution matrices <span class="math inline">\(\hat{\mathbf{F}_{*}} = \mathbf{K}^{'}\mathbf{F}_{*}\mathbf{K}\)</span>, for both surface and saturated zones.</li>
+<li>Set all values in the <span class="math inline">\(\hat{\mathbf{F}}_{*}\)</span> matrices that imply flow to an earlier or equivilent band to zero.</li>
+<li>Merge all HSUs with no flow redistriubtion; that is they do not contribute to a downslope HSU; with the next downslope HSU of the same class. In this case downslope is determined by the saturated zone band. If there is no potential HSU with which to merge issue a warning.</li>
+<li>Repeat Steps 4 and 5 until a valid redistribution matrix is acheived.</li>
+</ol>
+</div>
+<div id="a-simple-simulation-experiment" class="section level1">
+<h1 class="hasAnchor">
+<a href="#a-simple-simulation-experiment" class="anchor"></a>A simple simulation experiment</h1>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw"><a href="https://rdrr.io/r/base/library.html">require</a></span>(dynatop)</a></code></pre></div>
+<pre><code>## Loading required package: dynatop</code></pre>
 <pre><code>## Loading required package: xts</code></pre>
 <pre><code>## Loading required package: zoo</code></pre>
 <pre><code>## 
@@ -207,9 +148,8 @@ Ii X X iii X</p>
 ##   method     from
 ##   as.zoo.xts zoo</code></pre>
 <pre><code>## Loading required package: Matrix</code></pre>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="kw"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(Swindale)</span>
-<span id="cb8-2"><a href="#cb8-2"></a>bmdl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/band_model.html">band_model</a></span>(Swindale<span class="op">$</span>model,<span class="dv">5</span>)</span></code></pre></div>
-<pre><code>## [1]  37  71  92 109 111</code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1"><span class="kw"><a href="https://rdrr.io/r/utils/data.html">data</a></span>(Swindale)</a>
+<a class="sourceLine" id="cb9-2" title="2">bmdl &lt;-<span class="st"> </span><span class="kw"><a href="../reference/band_model.html">band_model</a></span>(Swindale<span class="op">$</span>model,<span class="dv">5</span>)</a></code></pre></div>
 <pre><code>## Warning in band_model(Swindale$model, 5): Unable to merge all new bands without
 ## outlet
 
@@ -220,9 +160,12 @@ Ii X X iii X</p>
 ## outlet
 
 ## Warning in band_model(Swindale$model, 5): Unable to merge all new bands without
-## outlet</code></pre>
-<pre><code>## [1]  36  68  69  89 105</code></pre>
-<pre><code>## Warning in band_model(Swindale$model, 5): Unable to merge all new bands without
+## outlet
+
+## Warning in band_model(Swindale$model, 5): Unable to merge all new bands without
+## outlet
+
+## Warning in band_model(Swindale$model, 5): Unable to merge all new bands without
 ## outlet
 
 ## Warning in band_model(Swindale$model, 5): Unable to merge all new bands without
@@ -230,15 +173,11 @@ Ii X X iii X</p>
 
 ## Warning in band_model(Swindale$model, 5): Unable to merge all new bands without
 ## outlet</code></pre>
-<pre><code>## [1] 85</code></pre>
-<pre><code>## Warning in band_model(Swindale$model, 5): Unable to merge all new bands without
-## outlet</code></pre>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a><span class="kw"><a href="../reference/check_model.html">check_model</a></span>(bmdl)</span></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1"><span class="kw"><a href="../reference/check_model.html">check_model</a></span>(bmdl)</a></code></pre></div>
 <pre><code>## [1] "unknown"</code></pre>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a>bmdl<span class="op">$</span>hillslope[,<span class="st">'pet'</span>] &lt;-<span class="st"> </span>bmdl<span class="op">$</span>channel[,<span class="st">'pet'</span>] &lt;-<span class="st"> "PET"</span></span>
-<span id="cb17-2"><a href="#cb17-2"></a>bmdl<span class="op">$</span>hillslope[,<span class="st">'precip'</span>] &lt;-<span class="st"> </span>bmdl<span class="op">$</span>channel[,<span class="st">'precip'</span>] &lt;-<span class="st"> "Rainfall"</span></span>
-<span id="cb17-3"><a href="#cb17-3"></a>btmp &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(bmdl,Swindale<span class="op">$</span>obs,<span class="fl">0.000001</span>)</span></code></pre></div>
-</div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" title="1">bmdl<span class="op">$</span>hillslope[,<span class="st">'pet'</span>] &lt;-<span class="st"> </span>bmdl<span class="op">$</span>channel[,<span class="st">'pet'</span>] &lt;-<span class="st"> "PET"</span></a>
+<a class="sourceLine" id="cb13-2" title="2">bmdl<span class="op">$</span>hillslope[,<span class="st">'precip'</span>] &lt;-<span class="st"> </span>bmdl<span class="op">$</span>channel[,<span class="st">'precip'</span>] &lt;-<span class="st"> "Rainfall"</span></a>
+<a class="sourceLine" id="cb13-3" title="3">btmp &lt;-<span class="st"> </span><span class="kw"><a href="../reference/dynatop.html">dynatop</a></span>(bmdl,Swindale<span class="op">$</span>obs,<span class="fl">0.000001</span>)</a></code></pre></div>
 </div>
   </div>
 
@@ -248,11 +187,9 @@ Ii X X iii X</p>
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
-<li>
-<a href="#banding-logic">Banding logic</a><ul class="nav nav-pills nav-stacked">
-<li><a href="#head-of-the-catchment">Head of the catchment</a></li>
-      </ul>
-</li>
+<li><a href="#banding">Banding</a></li>
+      <li><a href="#banding-implimentation">Banding Implimentation</a></li>
+      <li><a href="#a-simple-simulation-experiment">A simple simulation experiment</a></li>
       </ul>
 </div>
       </div>

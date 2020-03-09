@@ -8,7 +8,7 @@ output:
 pkgdown:
   as_is: true
 vignette: >
-  %\VignetteIndexEntry{Towards a better Numerical Solution of Dynamic TOPMODEL}
+  %\VignetteIndexEntry{TheNumerical Solution of Dynamic TOPMODEL}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

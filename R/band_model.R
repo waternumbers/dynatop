@@ -93,7 +93,7 @@ band_model <- function(model, cuts){
     ## note handling one area can induce another one...
     idx <- intersect( which(colSums(Dsz)==0), hs2$id ) # this in an id
     while( length(idx) > 0 ){
-        print(idx)
+        #print(idx)
         for(ii in idx){
             ## get class and band
             cls <- hs2$class[ hs2$id == ii ]
