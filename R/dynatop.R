@@ -192,6 +192,12 @@ dynatop <- function(model,obs_data,
             hillslope$Q_minus_t <- pmin( hillslope$sum_l_sz_in_t, hillslope$l_szmax ) # inflow to saturated zone at start of timestep
             hillslope$Q_plus_t <- pmin( hillslope$l_sz_t, hillslope$l_szmax ) # outflow at start of timestep
 
+            ## compute velocity estimate and kinematic parameters
+            cbar <- (hillslope$l_szmax[idx]/hillslope$m)*
+                exp(- hillslope$s_sz / hillslope$m)
+            lambda <- sz_opt$omega + sz_opt$theta*cbar*ts$sub_step/hillslope$delta_x
+            lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*cbar*ts$sub_step/hillslope$delta_x
+            
             ## update flows by looping through bands
             for(bnd in sqnc$sz_band){
                 ## hillslope
@@ -207,19 +213,25 @@ dynatop <- function(model,obs_data,
                     ## compute the new state value
                     hillslope$Q_minus_tDt[idx] <- pmin( hillslope$sum_l_sz_in[idx],hillslope$l_szmax[idx] ) # current inflow to saturated zone
 
-                    qbar <- (hillslope$Q_minus_t[idx] + hillslope$Q_minus_tDt[idx] + hillslope$Q_plus_t[idx])/3
-                    cbar <- (qbar*hillslope$delta_x[idx])/hillslope$m[idx]
+                    ##qbar <- (hillslope$Q_minus_t[idx] + hillslope$Q_minus_tDt[idx] + hillslope$Q_plus_t[idx])/3
+                    ##cbar <- (qbar*hillslope$delta_x[idx])/hillslope$m[idx]
 
 
-                    lambda <- sz_opt$omega + sz_opt$theta*cbar*ts$sub_step/hillslope$delta_x[idx]
-                    lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*cbar*ts$sub_step/hillslope$delta_x[idx]
+                    ##lambda <- sz_opt$omega + sz_opt$theta*cbar[idx]*ts$sub_step/hillslope$delta_x[idx]
+                    ##lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*cbar[idx]*ts$sub_step/hillslope$delta_x[idx]
 
-                    k <- lambda_prime * hillslope$Q_plus_t[idx] +
-                        (1-lambda_prime) * hillslope$Q_minus_t[idx] +
-                        cbar*hillslope$q_uz_sz[idx]/hillslope$delta_x[idx]
+                    ## k <- lambda_prime * hillslope$Q_plus_t[idx] +
+                    ##     (1-lambda_prime) * hillslope$Q_minus_t[idx] +
+                    ##     cbar*hillslope$q_uz_sz[idx]/hillslope$delta_x[idx]
 
-                    hillslope$l_sz[idx] <- pmin( (k - (1-lambda)*hillslope$Q_minus_tDt[idx])/lambda , hillslope$l_szmax[idx] )
+                    ## hillslope$l_sz[idx] <- pmin( (k - (1-lambda)*hillslope$Q_minus_tDt[idx])/lambda , hillslope$l_szmax[idx] )
 
+                    k <- lambda_prime[idx] * hillslope$Q_plus_t[idx] +
+                        (1-lambda_prime[idx]) * hillslope$Q_minus_t[idx] +
+                        cbar[idx]*hillslope$q_uz_sz[idx]/hillslope$delta_x[idx]
+
+                    hillslope$l_sz[idx] <- pmin( (k - (1-lambda[idx])*hillslope$Q_minus_tDt[idx])/lambda[idx] , hillslope$l_szmax[idx] )
+                    
                     if( any(hillslope$l_sz[idx]<0) ){
                         warning("Negative flow in kinematic solutions, consider revising weights")
                         hillslope$l_sz[idx] <- pmax(hillslope$l_sz[idx],0)

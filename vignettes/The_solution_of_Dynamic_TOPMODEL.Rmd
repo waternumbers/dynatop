@@ -45,7 +45,7 @@ simplified manner allowing the extraction of the inflow from the hillslope.
 The notation used can be broken down as follows. Table \@ref(tab:exchange-notation) outlines the notation used for describing a fluxes exchanged between HSUs. These variables are common across all HSUs.
 Table \@ref(tab:hs-notation) outlines the notation used for describing a hill
 slope HSU and Table \@ref(tab:ch-notation) for the channel HSU. 
-All other notation is given in Table \@ref{tab:other-notation}.
+All other notation is given in Table \@ref(tab:other-notation).
 
 The following conventions are used:
 
@@ -165,7 +165,7 @@ HSUs sequentially while approximating the flux between them.
 
 The following sections present the solutions to the governing equations
 in the order they are currently solved in the code for given time
-step $\Delta t$ (hr) starting at time $t$ over which the input fluxes ($p$ and $e_p$) are
+step $\Delta t$ (seconds) starting at time $t$ over which the input fluxes ($p$ and $e_p$) are
 taken to be constant.
 
 ## Step 1: Surface excess redistribution
@@ -339,8 +339,8 @@ recharge for the infinitesimal slab.
 
 Consider the HSU to be a rectangle of area $a$ with inflow and outflow
 occuring at parallel edges seperated by a distance $\Delta x$ giving an
-effective width if $w=\frac{a}{\Delta x}. Taking a height
-$h$ gives $A = \frac{h}{\Delta x}$. Further noting that $h=h_0-z$ for some
+effective width if $w=\frac{a}{\Delta x}$. Taking a height
+$h$ gives $A = hw$. Further noting that $h=h_0-z$ for some
 datum $h_0$ and storage deficit $z$ (expressed as a length) gives
 \[
 \frac{dA}{dt} = w\frac{dh}{dt}=-w\frac{dz}{dt}
@@ -355,14 +355,14 @@ terms of lateral flow as follows:
 \[
 \frac{dz}{dt} =  \frac{dz}{dQ}\frac{dQ}{dt} =
 =  \frac{1}{w}\left(\frac{d}{dz}g\left(z\right)\right)^{-1}\frac{dQ}{dt} =
--\frac{1}{w c\left(Qw^{-1}\right)}\frac{dQ}{dt}
+-\frac{1}{w c\left(z\right)}\frac{dQ}{dt}
 \]
-where $c\left(Qw^{-1}\right)=-\frac{d}{dz}g\left(z\right)$ is the kinematic velocity
+where $c\left(z\right)=-\frac{d}{dz}g\left(z\right)$ is the kinematic velocity
 expressed as a function of lateral flow per unit width.
 
 Subsitution gives
 \[
-\frac{1}{c\left(Qw^{-1}\right)}\frac{dQ}{dt} + \frac{dQ}{dx} -r = 0
+\frac{1}{c\left(z\right)}\frac{dQ}{dt} + \frac{dQ}{dx} -r = 0
 \]
 to which a numerical solution is sort.
 Let $Q^{+}$ and $Q^{-}$ be the lateral flows at the foot and head of the slope
@@ -373,10 +373,10 @@ One possible four-point or box scheme for a constant recharge is given by
 \begin{split}
 & \left(1-\omega\right)\frac{\left.Q^{-}\right\rvert_{t+1}-\left.Q^{-}\right\rvert_{t}}{\Delta t} +
 \omega\frac{\left.Q^{+}\right\rvert_{t+1}-\left.Q^{+}\right\rvert_{t}}{\Delta t} +
-\left(1-\theta\right)c\left(\left.Q\right\rvert_{t}w^{-1}\right)
+\left(1-\theta\right)c\left(\left.z\right\rvert_{t}\right)
 \left(\frac{\left.Q^{+}\right\rvert_{t}-\left.Q^{-}\right\rvert_{t}}{\Delta x} -r\right)
 + \\
-& \theta c\left(\left.Q\right\rvert_{t+1}w^{-1}\right)\left(\frac{\left.Q^{+}\right\rvert_{t+1}-\left.Q^{-}\right\rvert_{t+1}}{\Delta x} -r\right)
+& \theta c\left(\left.z\right\rvert_{t+1}\right)\left(\frac{\left.Q^{+}\right\rvert_{t+1}-\left.Q^{-}\right\rvert_{t+1}}{\Delta x} -r\right)
 = 0
 \end{split}
 \]
@@ -384,7 +384,7 @@ One possible four-point or box scheme for a constant recharge is given by
 It certain conditions\footnote{see Wood, WL "Introduction to Numerical Methods
 for Water Resources" Section 4.2 Pg 76-77} it has been shown that this scheme
 is unlikely to be numerical stable for all $\Delta t$ while the alternate
-scheme replacing $c\left(Q\Delta x\right)$ with a 'typical' value $\bar{c}$ 
+scheme replacing $c\left(z\right)$ with a 'typical' value $\bar{c}$ 
 \[
 \begin{split}
 & \left(1-\omega\right)\frac{\left.Q^{-}\right\rvert_{t+\Delta t}-\left.Q^{-}\right\rvert_{t}}{\Delta t} +
@@ -442,35 +442,6 @@ q^{\left[i\right]}_{uz\rightarrow sz} dt \right\rvert_{t+\Delta t}
 Assuming $\bar{c}^{\left[i\right]}$ is not dependent upon
 $\left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}$ then this leads a simple solution for $\left.l^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}$
 
-### Estimating $\bar{c}$
-
-The above solution relies on the estimate of an "average"
-value $\bar{c}$. A relatively simple approach to
-constructing $\bar{c}$ is to take
-\[
-\bar{c} = c\left(\bar{l}_{sz} w^{-1}\right)
-\]
-where
-\[
-\bar{l}_{sz} = \frac{1}{4}\left(
-\left. l_{sz}\right\rvert_{t} +
-\left. l_{sz}\right\rvert_{t+\Delta t} +
-\left. Q^{-}\right\rvert_{t+\Delta t}+
-\left. Q^{-}\right\rvert_{t}
-\right)
-\]
-
-Since the  of $\left. l_{sz}\right\rvert_{t+\Delta t}$ is not known the approximation
-\[
-\check{l}_{sz} = \frac{1}{4}\left(
-\left. l_{sz}\right\rvert_{t} +
-\max\left(\left. l_{sz}\right\rvert_{t},\left. Q^{-}\right\rvert_{t+\Delta t}\right) +
-\left. Q^{-}\right\rvert_{t+\Delta t}+
-\left. Q^{-}\right\rvert_{t}
-\right)
-\]
-is used in the evaluation of $\bar{c}$.
-
 ### Determining the storage deficit
 
 The above scheme determines the flows at the head and foot of the HSU at
@@ -498,6 +469,16 @@ from which can be computed
 \left.s^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t} - \tilde{s}_{sz}
 \]
 
+### Estimating $\bar{c}$
+
+The above solution relies on the estimate of an "average"
+value $\bar{c}$. A relatively simple approach to
+constructing $\bar{c}$ is to take
+\[
+\bar{c} = c\left(\bar{z}\right)
+\]
+where $\bar{z}$ is a estimate of average (in space and time) of the storage
+deficit. This is approximated by $\left.s_{sz}\right\rvert_{t}$.
 
 ## Step 5: Correcting vertical stores
 
