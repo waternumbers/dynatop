@@ -4,18 +4,41 @@ dynatopGIS <- R6::R6Class(
     public = list(
         #' @description Sets up the \code{dynatop} object from a model description
         #'
-        #' @param model a model objectRasterLayer containing the dem
+        #' @param model a model object
+        #' @param verbose should more details be printed
         #' @param delta error term in checking redistribution sums
         #'
         #' @details This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model.
         #' @return A new `dynatop` object
         initialize = function(mdl, verbose=FALSE, delta = 1e-13){
-
+            
             private$check_model(mdl,verbose,delta)
             private$create_prop()
             ## return so can be chained
             invisible(self)
         },
+        #' List the required data series
+        list_data_series= function(){
+            
+        },
+        
+        #' Initialisation of the hillslope HSU store
+        #'
+        #' @description Initialises a Dynamic TOPMODEL int eh simpliest way possible.
+        #'
+        #' @param model a dynamic TOPMODEL model list object
+        #' @param initial_recharge Initial recharge to the saturated zone in steady state in m/s
+        #'
+        #' @details Initialises a Dynamic TOPMODEL int eh simpliest way possible.
+        initialise = function(model,initial_recharge){
+            ## check initial discharge
+            if( !is.numeric(initial_recharge) | length(initial_recharge) > 1 | any( initial_recharge < 0 ) ){
+                stop("Initial discharge should be a single positive numeric value")
+            }
+            private$apply_initialise()
+            invisible(self)
+        }
+ 
     ),
     private = list(
         ## stores of data
@@ -125,8 +148,7 @@ dynatopGIS <- R6::R6Class(
                                paste(model[[jj]]$name[!idx],collapse=" ")))
                 }
             }
-
-            
+     
             ## checks on redistribution
             fcheck <- function(x){
                 all(x$idx %in% all_hsu) & (abs(sum(x$frc)-1) < delta)
@@ -138,8 +160,7 @@ dynatopGIS <- R6::R6Class(
                                paste(model[[jj]]$id[!idx],sep=" ")))
                 }
             }
-                 
- 
+            
             ## specific checks on channel network connectivity
             chn_con <- lapply(model$channel$flow_direction,function(x){x$idx})
             if( any(sapply(chn_con,length)>1) ){
@@ -191,25 +212,38 @@ dynatopGIS <- R6::R6Class(
         ## function to mutate from model to internal structure
         create_prop = function(){
             components <- private$scope$components
-            for(jj in setdiff(components,"param")){
+            data_series_list <- list()
+            param_list <- list()
+            for(tbl in setdiff(components,"param")){
                 ## what should the properties of each column be
-                prop <- private$definition(jj,TRUE,TRUE)
+                prop <- private$definition(tbl,TRUE,TRUE)
                 out <- list()
-
+                data_series_list[[tbl]] <- list()
+                param_list[[tbl]] <- list()
                 for(ii in 1:nrow(prop)){
                     nm <- prop$name[ii]
                     out[[ nm ]] <- switch(
                         prop$role[ii],
-                        attribute = unname( provate$model[[tbl]][[nm]] ),
-                        data_series = unname( provate$model[[tbl]][[nm]] ),
-                        parameter = unname( provate$model$param[ provate$model[[tbl]][[nm]] ]),
-                        state = rep(NA,nrow(provate$model[[tbl]])),
-                        tmp = rep(NA, nrow(provate$model[[tbl]]))
+                        attribute = unname( private$model[[tbl]][[nm]] ),
+                        data_series = unname( private$model[[tbl]][[nm]] ),
+                        parameter = unname( private$model$param[ private$model[[tbl]][[nm]] ]),
+                        state = rep(NA,nrow(private$model[[tbl]])),
+                        tmp = rep(NA, nrow(private$model[[tbl]]))
                     )
-                    
+                    if( prop$role[ii] == "data_series" ){
+                        data_series_list[[tbl]][[ii]] <- unname( private$model[[tbl]][[nm]] )
+                    }
+                    if( prop$role[ii] == "parameter" ){
+                        param_list[[tbl]][[ii]] <- unname( private$model[[tbl]][[nm]] )
+                    }
                 }
-                private$prop[[jj]] <- out
+                private$prop[[tbl]] <- out
+                param_list[[tbl]] <- unique(unlist(param_list[[tbl]]))
+                data_series_list[[tbl]] <- unique(unlist(data_series_list[[tbl]]))
+                                            
             }
+            ## put list of parameters and data_series in properties
+            
         },
         ## Function for defining the elements of a model object
         ##
@@ -289,7 +323,47 @@ dynatopGIS <- R6::R6Class(
             
             return(out)
         },
-        
+        ## Apply initialisation
+        apply_initialise = function(initial_recharge){
+            ## ###########################################
+            ## Initialise the states
+                                        #browser()
+            ## maximum lateral flow from saturated zone per unit area
+            private$prop$hillslope$l_szmax <- exp( private$prop$param[private$prop$hillslope$ln_t0] )*private$prop$hillslope$s_bar
+            
+            ## initialise the root zone
+            private$prop$hillslope$s_rz <- pmax( pmin( private$prop$param[ private$prop$hillslope$s_rz0 ], 1) ,0 ) * private$prop$param[ private$prop$hillslope$s_rzmax ]
+            
+            private$prop$hillslope$s_uz  <- private$prop$hillslope$s_sf <- 0
+            
+            ## initialise the saturated zone
+            private$prop$hillslope$sum_l_sz_in <- private$prop$hillslope$l_sz <- pmin(private$prop$hillslope$l_szmax,initial_recharge)
+            private$prop$hillslope$s_sz <- pmax(0, private$prop$param[ private$prop$hillslope$m ]*( log(private$prop$hillslope$l_szmax) - log(private$prop$hillslope$l_sz)))
+            
+            private$prop$channel$sum_l_sz_in <- initial_recharge
+            
+            ## take an initial step to ensure mass balance in simulations
+            input <- unique(check_model(model,use_states=TRUE)
+            tmp <- setNames(as.xts(matrix(0,2,length(input)),order.by=Sys.time()+c(0,15*60)),input)
+            
+            model <- dynatop(model,tmp,use_states=TRUE)$model
+            
+            ## initialise the unsaturated zone based on recharge
+            ##model$hillslope$state$s_uz <- pmax(0, initial_recharge * model$hillslope$param$t_d * model$hillslope$state$s_sz)
+            
+            ##saturated zone
+            ## initialise the saturated zone
+            ##model$hillslope$state$l_sz_in <- model$hillslope$state$l_sz <- pmin(model$hillslope$state$l_szmax,initial_recharge)
+            
+            ## compute the deficit
+            ##gamma <- sum(model$hillslope$attr$area*(model$hillslope$attr$atb_bar - model$hillslope$param$ln_t0))  / sum(model$hillslope$attr$area)
+            ##model$hillslope$state$s_sz <- pmax(0, model$hillslope$param$m*(gamma + log(model$hillslope$state$l_sz)))
+            
+            ## unsaturated storage by inverse of eqn for q_uz in Beven & Wood 1983
+            
+            ## model$hillslope$state$s_uz <- pmax(0, initial_recharge * model$hillslope$param$t_d * model$hillslope$state$s_sz)
+        }
+
         
         
         

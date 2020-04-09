@@ -37,8 +37,9 @@ initialise <- function(model,initial_recharge){
     ## take an initial step to ensure mass balance in simulations
     input <- check_model(model,use_states=TRUE)
     tmp <- setNames(as.xts(matrix(0,2,length(input)),order.by=Sys.time()+c(0,15*60)),input)
+    ts <- list(step=15*50,sub_step=15*60,n_sub_step=1)
     
-    model <- dynatop(model,tmp,use_states=TRUE)$model
+    model <- dynatop::dynatop_sim(model,as.matrix(tmp),index(tmp),ts)$model
     
     ## initialise the unsaturated zone based on recharge
     ##model$hillslope$state$s_uz <- pmax(0, initial_recharge * model$hillslope$param$t_d * model$hillslope$state$s_sz)
