@@ -12,7 +12,7 @@ model_description <- function(type=c("hillslope","channel","point_inflow","gauge
     type <- match.arg(type)
 
     if(type=="hillslope"){
-        out <- data.frame(name = c("id","atb_bar","s_bar","area","delta_x","sz_band","sf_band", # attributes associated with catchment HSU
+        out <- data.frame(name = c("id","atb_bar","s_bar","area","delta_x","sz_dir","sf_dir", # attributes associated with catchment HSU
                                    "precip","pet", # names of input series
                                    "q_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","t_sf", # parameter names
                                    "s_sf","s_rz","s_uz","s_sz","sum_l_sz_in","l_sz","l_szmax", # states
@@ -22,7 +22,7 @@ model_description <- function(type=c("hillslope","channel","point_inflow","gauge
                                    rep("parameter",7),
                                    rep("state",7),
                                    rep("tmp",17)),
-                          type = c("integer",rep("numeric",6),
+                          type = c("integer",rep("numeric",4),rep("list",2),
                                    rep("character",2),
                                    rep("character",7),
                                    rep("numeric",7),
@@ -32,17 +32,17 @@ model_description <- function(type=c("hillslope","channel","point_inflow","gauge
 
     }
     if(type=="channel"){
-        out <- data.frame(name= c("id","area","sz_band","sf_band","length","next_id", # states
+        out <- data.frame(name= c("id","area","length","flow_dir", # states
                                   "precip","pet", # inputs
                                   "v_ch", # parameters
                                   "sum_l_sz_in", #state
                                   "p","e_p","l_sf","s_ch","sum_l_sz_in_t"),
-                          role = c(rep("attribute",6),
+                          role = c(rep("attribute",4),
                                    rep("data_series",2),
                                    rep("parameter",1),
                                    rep("state",1),
                                    rep("tmp",5)),
-                          type = c("integer",rep("numeric",4),"integer",
+                          type = c("integer",rep("numeric",2),"list",
                                    rep("character",2),
                                    rep("character",1),
                                    rep("numeric",1),

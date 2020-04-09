@@ -17,7 +17,12 @@ pkgdown::build_site(pacPath)
 ###########################################################################
 ## This converts the exdata for Swindale into the data object used in the examples.
 devtools::load_all(pacPath)
-model <- readRDS( system.file("extdata","Swindale.rds",package="dynatop") )
+model <- readRDS( system.file("extdata","Swindale_from_r6.rds",package="dynatop") )
+for(ii in c("precip","pet")){
+    for(jj in c("hillslope","channel")){
+        model[[jj]][[ii]] <- switch(ii,precip="Rainfall",pet="PET")
+    }
+}
 
 qr <- read.csv( system.file("extdata","start=2009-11-18_end=2009-11_4_int=0.25-hours_units=mm.hr-1.tsv",package="dynatop") ,sep="\t")
 obs <- as.xts(qr[,c("Flow","Rainfall")],order.by= as.POSIXct(qr[,'Date'],format="%d/%m/%Y %H:%M",tz='GMT'))
@@ -25,9 +30,17 @@ obs <- as.xts(qr[,c("Flow","Rainfall")],order.by= as.POSIXct(qr[,'Date'],format=
 obs$Rainfall <- obs$Rainfall/1000 # convert to m/timestep
 obs$PET <- evap_est(index(obs),0,5/1000) # in m
 
+
 Swindale <- list(model=model,obs=obs)
 save("Swindale",file="./dynatop/data/Swindale.rda")
 
+devtools::load_all(pacPath)
+
+profvis::profvis({
+    m1 <- dynatop$new(model,1e-6)
+    m1$add_data(obs)
+    m1$sim()
+})
 
 
 ##################################
