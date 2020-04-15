@@ -33,7 +33,7 @@ dynatop <- R6::R6Class(
         },
         sim = function(mass_check=FALSE,return_states=NULL,
                        sz_opt=list(omega=1,theta=1)){
-            browser()
+            
             out <- dynatop::dynatop_sim(private$model,
                                         private$time_series$obs_data,
                                         private$time_series$index,
@@ -41,7 +41,7 @@ dynatop <- R6::R6Class(
                                         mass_check,
                                         return_states,
                                         sz_opt)
-            browser()
+            
             private$model <- out$model
             private$time_series$channel_input <- out$channel_input
             if(mass_check){

@@ -39,7 +39,7 @@ devtools::load_all(pacPath)
 profvis::profvis({
     m1 <- dynatop$new(model,1e-6)
     m1$add_data(obs)
-    m1$sim()
+    m1$sim(mass_check=TRUE)
 })
 
 

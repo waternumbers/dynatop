@@ -124,7 +124,8 @@ check_model <- function(model, verbose=FALSE, use_states=FALSE,delta=1e-13){
         stop(paste("Surface flow redistribution is not valid for HSUs:",
                    paste(model$hillslope$id[!idx],collapse=" ")))
     }
-    idx <- sapply(model$channel$flow_dir,fcheck)
+    
+    idx <- sapply(model$channel$flow_dir,function(x){is.null(x) | fcheck(x)})
     if( any(!idx) ){
         stop(paste("Channel flow redistribution is not valid for HSUs:",
                    paste(model$channel$id[!idx],collapse=" ")))
