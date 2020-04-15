@@ -217,7 +217,7 @@ dynatop_sim <- function(model,obs_data,obs_index,ts,
             if( mass_check ){
                 vol_ch_sf <- lateral_flux$sf[ channel$id ]
                 vol_ch_sz <- ( (channel$s_ch-ch0$s_ch)*channel$area ) - vol_ch_sf
-                browser()
+                
                 mass_errors[ ((it-1)*ts$n_sub_step) + inner,] <-
                     c(it,inner,
                       sum(hs0$s_sf*hs0$area)+
