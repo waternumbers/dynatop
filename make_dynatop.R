@@ -34,13 +34,17 @@ obs$PET <- evap_est(index(obs),0,5/1000) # in m
 Swindale <- list(model=model,obs=obs)
 save("Swindale",file="./dynatop/data/Swindale.rda")
 
-devtools::load_all(pacPath)
+devtools::load_all(pacPath); m1 <- dynatop$new(model)$add_data(obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel()
 
-profvis::profvis({
-    m1 <- dynatop$new(model,1e-6)
+devtools::load_all(pacPath)
+devtools::load_all(pacPath); m1 <- dynatop$new(model)$add_data(obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)
+m1$sim_hillslope(mass_check=TRUE)
+#profvis::profvis({
+    m1 <- dynatop$new(model)
     m1$add_data(obs)
-    m1$sim(mass_check=TRUE)
-})
+    m1$initialise(1e-6)
+    m1$sim_hillslope(mass_check=TRUE)
+#})
 
 
 ##################################
