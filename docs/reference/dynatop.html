@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Run dynamic topmodel — dynatop • dynatop</title>
+<title>R6 Class for Dynamic TOPMODEL — dynatop • dynatop</title>
 
 
 <!-- jquery -->
@@ -35,8 +35,9 @@
 
 
 
-<meta property="og:title" content="Run dynamic topmodel — dynatop" />
-<meta property="og:description" content="Run dynamic topmodel" />
+<meta property="og:title" content="R6 Class for Dynamic TOPMODEL — dynatop" />
+<meta property="og:description" content="R6 Class for Dynamic TOPMODEL
+R6 Class for Dynamic TOPMODEL" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -69,7 +70,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1</span>
       </span>
     </div>
 
@@ -94,15 +95,6 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-    <li>
-      <a href="../articles/Banding.html">Banding of HSUs</a>
-    </li>
-    <li>
-      <a href="../articles/Checks_of_the_Hillslope_HRU.html">Checks of the Hillslope HRU</a>
-    </li>
-    <li>
-      <a href="../articles/Checks_of_the_Time_Delay_routing.html">Checks of the Time Delay Routing</a>
-    </li>
     <li>
       <a href="../articles/Selected_References.html">Selected References</a>
     </li>
@@ -141,73 +133,238 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Run dynamic topmodel</h1>
+    <h1>R6 Class for Dynamic TOPMODEL</h1>
     <small class="dont-index">Source: <a href='https://github.com/waternumbers/dynatop/blob/master/R/dynatop.R'><code>R/dynatop.R</code></a></small>
     <div class="hidden name"><code>dynatop.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Run dynamic topmodel</p>
+    <p>R6 Class for Dynamic TOPMODEL</p>
+<p>R6 Class for Dynamic TOPMODEL</p>
     </div>
 
-    <pre class="usage"><span class='fu'>dynatop</span>(
-  <span class='no'>model</span>,
-  <span class='no'>obs_data</span>,
-  <span class='kw'>initial_recharge</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>sim_time_step</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>use_states</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>mass_check</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>return_states</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>sz_opt</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span>(<span class='kw'>omega</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>theta</span> <span class='kw'>=</span> <span class='fl'>1</span>)
-)</pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>model</th>
-      <td><p>A Dynamic TOPMODEL object (see vignette)</p></td>
-    </tr>
-    <tr>
-      <th>obs_data</th>
-      <td><p>an xts object containing equally spaced time series of observed data.</p></td>
-    </tr>
-    <tr>
-      <th>initial_recharge</th>
-      <td><p>Initial recharge to the saturated zone in steady state in m/s</p></td>
-    </tr>
-    <tr>
-      <th>sim_time_step</th>
-      <td><p>simulation timestep in hours, default value of NULL results in data time step</p></td>
-    </tr>
-    <tr>
-      <th>use_states</th>
-      <td><p>should the states in the model be used (default FALSE)</p></td>
-    </tr>
-    <tr>
-      <th>mass_check</th>
-      <td><p>return time series of mass balance errors</p></td>
-    </tr>
-    <tr>
-      <th>return_states</th>
-      <td><p>a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be returned</p></td>
-    </tr>
-    <tr>
-      <th>sz_opt</th>
-      <td><p>a named list e.g. list(omega=1,theta=1) of parameters controlling the kinematic wave solution for the saturated zone.</p></td>
-    </tr>
-    </table>
 
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <h2 class="hasAnchor" id="methods"><a class="anchor" href="#methods"></a>Methods</h2>
 
-    <p>use_states, currently does not impose any checks on the state values. return_states fives the states at the end of the timestep. The default values of sz_opt (omega=1,theta=1) ensure there are no negative fluxes. Other values may produce negative values in whiich case theese are set to 0 and a warning issued.</p>
+    
+<h3>Public methods</h3>
+
+<ul>
+<li><p><a href='#method-new'><code>dynatop$new()</code></a></p></li>
+<li><p><a href='#method-add_data'><code>dynatop$add_data()</code></a></p></li>
+<li><p><a href='#method-clear_data'><code>dynatop$clear_data()</code></a></p></li>
+<li><p><a href='#method-initialise'><code>dynatop$initialise()</code></a></p></li>
+<li><p><a href='#method-sim_hillslope'><code>dynatop$sim_hillslope()</code></a></p></li>
+<li><p><a href='#method-sim_channel'><code>dynatop$sim_channel()</code></a></p></li>
+<li><p><a href='#method-sim'><code>dynatop$sim()</code></a></p></li>
+<li><p><a href='#method-get_channel_inflow'><code>dynatop$get_channel_inflow()</code></a></p></li>
+<li><p><a href='#method-plot_channel_inflow'><code>dynatop$plot_channel_inflow()</code></a></p></li>
+<li><p><a href='#method-get_gauge_flow'><code>dynatop$get_gauge_flow()</code></a></p></li>
+<li><p><a href='#method-plot_gauge_flow'><code>dynatop$plot_gauge_flow()</code></a></p></li>
+<li><p><a href='#method-get_obs_data'><code>dynatop$get_obs_data()</code></a></p></li>
+<li><p><a href='#method-get_model'><code>dynatop$get_model()</code></a></p></li>
+<li><p><a href='#method-get_mass_errors'><code>dynatop$get_mass_errors()</code></a></p></li>
+<li><p><a href='#method-get_states'><code>dynatop$get_states()</code></a></p></li>
+<li><p><a href='#method-plot_state'><code>dynatop$plot_state()</code></a></p></li>
+<li><p><a href='#method-clone'><code>dynatop$clone()</code></a></p></li>
+</ul>
+<p><hr>
+<a id="method-new"></a></p><h3>Method <code>new()</code></h3>
+<p>Creates a dynatop class object from the a list based model description as generated by dynatopGIS.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$new(model, use_states = FALSE, verbose = FALSE, delta = 1e-13)</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>model</code></dt><dd><p>a dynamic TOPMODEL list object</p></dd>
+
+<dt><code>use_states</code></dt><dd><p>logical if states should be imported</p></dd>
+
+<dt><code>verbose</code></dt><dd><p>if set prints out further information</p></dd>
+
+<dt><code>delta</code></dt><dd><p>error term in checking redistribution sums</p></dd>
+
+</dl><p></div></p>
+<h3>Details</h3>
+<p>This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.</p>
+
+<h3>Returns</h3>
+<p>invisible(self) suitable for chaining</p>
+<p><hr>
+<a id="method-add_data"></a></p><h3>Method <code>add_data()</code></h3>
+<p>Adds observed data to a dynatop object</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$add_data(obs_data)</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>obs_data</code></dt><dd><p>an xts object of observed data</p></dd>
+
+</dl><p></div></p>
+<h3>Details</h3>
+<p>This function makes some basic consistency checks on the observations to ensure they have uniform timestep and all required series are present.</p>
+
+<h3>Returns</h3>
+<p>invisible(self) suitable for chaining</p>
+<p><hr>
+<a id="method-clear_data"></a></p><h3>Method <code>clear_data()</code></h3>
+<p>Clears all forcing and simulation data except current states</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$clear_data()</pre><p></div></p>
+
+<h3>Returns</h3>
+<p>invisible(self) suitable for chaining</p>
+<p><hr>
+<a id="method-initialise"></a></p><h3>Method <code>initialise()</code></h3>
+<p>Initialises a dynatop object in the simpliest way possible.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$initialise(initial_recharge)</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>initial_recharge</code></dt><dd><p>Initial recharge to the saturated zone in steady state in m/s</p></dd>
+
+</dl><p></div></p>
+<h3>Returns</h3>
+<p>invisible(self) suitable for chaining</p>
+<p><hr>
+<a id="method-sim_hillslope"></a></p><h3>Method <code>sim_hillslope()</code></h3>
+<p>Simulate the hillslope output of a dynatop object</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$sim_hillslope(mass_check = FALSE, keep_states = NULL, sub_step = NULL)</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>mass_check</code></dt><dd><p>Flag indicating is a record of mass balance errors shuld be kept</p></dd>
+
+<dt><code>keep_states</code></dt><dd><p>a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept</p></dd>
+
+<dt><code>sub_step</code></dt><dd><p>simulation timestep in seconds, default value of NULL results in data time step</p></dd>
+
+</dl><p></div></p>
+<h3>Details</h3>
+<p>Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!</p>
+
+<p><hr>
+<a id="method-sim_channel"></a></p><h3>Method <code>sim_channel()</code></h3>
+<p>Simulate the channel output of a dynatop object</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$sim_channel(mass_check = FALSE)</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>mass_check</code></dt><dd><p>Flag indicating is a record of mass balance errors shuld be kept</p></dd>
+
+</dl><p></div></p>
+<h3>Returns</h3>
+<p>invisible(self) for chaining</p>
+<p><hr>
+<a id="method-sim"></a></p><h3>Method <code>sim()</code></h3>
+<p>Simulate the hillslope and channel componets of a dynatop object</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$sim(mass_check = FALSE, keep_states = NULL, sub_step = NULL)</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>mass_check</code></dt><dd><p>Flag indicating is a record of mass balance errors shuld be kept</p></dd>
+
+<dt><code>keep_states</code></dt><dd><p>a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept</p></dd>
+
+<dt><code>sub_step</code></dt><dd><p>simulation timestep in seconds, default value of NULL results in data time step</p></dd>
+
+</dl><p></div></p>
+<h3>Details</h3>
+<p>Calls the sim_hillslope and sim_channel in sequence. Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!</p>
+
+<h3>Returns</h3>
+<p>invisible(self) for chaining</p>
+<p><hr>
+<a id="method-get_channel_inflow"></a></p><h3>Method <code>get_channel_inflow()</code></h3>
+<p>Return channel inflow as an xts series</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$get_channel_inflow(total = FALSE)</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>total</code></dt><dd><p>logical if plot total inflow is to be plotted</p></dd>
+
+</dl><p></div></p>
+<p><hr>
+<a id="method-plot_channel_inflow"></a></p><h3>Method <code>plot_channel_inflow()</code></h3>
+<p>Plot the channel inflow</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$plot_channel_inflow(total = FALSE)</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>total</code></dt><dd><p>logical if plot total inflow is to be plotted</p></dd>
+
+</dl><p></div></p>
+<p><hr>
+<a id="method-get_gauge_flow"></a></p><h3>Method <code>get_gauge_flow()</code></h3>
+<p>Return flow at the gauges as an xts series</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$get_gauge_flow(gauge = colnames(private$time_series$gauge_flow))</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>gauge</code></dt><dd><p>names of gauges to return (default is all gauges)</p></dd>
+
+</dl><p></div></p>
+<p><hr>
+<a id="method-plot_gauge_flow"></a></p><h3>Method <code>plot_gauge_flow()</code></h3>
+<p>Get the flow at gauges</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$plot_gauge_flow(gauge = names(private$time_series$gauge_flow))</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>gauge</code></dt><dd><p>names of gauges to return (default is all gauges)</p></dd>
+
+</dl><p></div></p>
+<p><hr>
+<a id="method-get_obs_data"></a></p><h3>Method <code>get_obs_data()</code></h3>
+<p>Get the observed data</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$get_obs_data()</pre><p></div></p>
+
+<p><hr>
+<a id="method-get_model"></a></p><h3>Method <code>get_model()</code></h3>
+<p>Return the model</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$get_model()</pre><p></div></p>
+
+<p><hr>
+<a id="method-get_mass_errors"></a></p><h3>Method <code>get_mass_errors()</code></h3>
+<p>Return the model</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$get_mass_errors()</pre><p></div></p>
+
+<p><hr>
+<a id="method-get_states"></a></p><h3>Method <code>get_states()</code></h3>
+<p>Return states</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$get_states(record = FALSE)</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>record</code></dt><dd><p>logical TRUE if the record should be returned. Otherwise surrent states returned</p></dd>
+
+</dl><p></div></p>
+<p><hr>
+<a id="method-plot_state"></a></p><h3>Method <code>plot_state()</code></h3>
+<p>Plot a current state of the system</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$plot_state(state)</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>state</code></dt><dd><p>the name of the state to be plotted</p></dd>
+
+</dl><p></div></p>
+<p><hr>
+<a id="method-clone"></a></p><h3>Method <code>clone()</code></h3>
+<p>The objects of this class are cloneable with this method.</p><h3>Usage</h3>
+<p><div class="r"></p><pre>dynatop$clone(deep = FALSE)</pre><p></div></p>
+
+<h3>Arguments</h3>
+<p><div class="arguments"></p><dl class='dl-horizontal'>
+<dt><code>deep</code></dt><dd><p>Whether to make a deep clone.</p></dd>
+
+</dl><p></div></p>
+
+
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
-      <li><a href="#arguments">Arguments</a></li>
-      <li><a href="#details">Details</a></li>
+      <li><a href="#methods">Methods</a></li>
     </ul>
 
   </div>

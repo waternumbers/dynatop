@@ -17,7 +17,7 @@ pkgdown::build_site(pacPath)
 ###########################################################################
 ## This converts the exdata for Swindale into the data object used in the examples.
 devtools::load_all(pacPath)
-model <- readRDS( system.file("extdata","Swindale_from_r6.rds",package="dynatop") )
+model <- readRDS( system.file("extdata","Swindale.rds",package="dynatop") )
 for(ii in c("precip","pet")){
     for(jj in c("hillslope","channel")){
         model[[jj]][[ii]] <- switch(ii,precip="Rainfall",pet="PET")
@@ -34,146 +34,53 @@ obs$PET <- evap_est(index(obs),0,5/1000) # in m
 Swindale <- list(model=model,obs=obs)
 save("Swindale",file="./dynatop/data/Swindale.rda")
 
-devtools::load_all(pacPath); m1 <- dynatop$new(model)$add_data(obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel()
+## ########################################
+## This code uses Swindale and fits nearly all the input and output calls
+rm(list=ls())
+devtools::load_all("./dynatop"); data("Swindale"); m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel(mass_check=TRUE)
 
-devtools::load_all(pacPath)
-devtools::load_all(pacPath); m1 <- dynatop$new(model)$add_data(obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)
-m1$sim_hillslope(mass_check=TRUE)
-#profvis::profvis({
-    m1 <- dynatop$new(model)
-    m1$add_data(obs)
+head( m1$get_channel_inflow() )
+head( m1$get_channel_inflow(TRUE) )
+m1$plot_channel_inflow()
+m1$plot_channel_inflow(TRUE)
+head( m1$get_gauge_flow() )
+head( m1$get_gauge_flow("channel_18") )
+m1$plot_gauge_flow()
+m1$plot_gauge_flow("channel_18")
+head( m1$get_obs_data() )
+tmp <- m1$get_model()
+head( m1$get_mass_errors() )
+head( m1$get_states() )
+head( m1$get_states(TRUE) )
+m1$plot_state("s_sf")
+
+## ################################
+## This code profiles the Swindale simulation
+## needs to be a longer run of worthwile output
+rm(list=ls())
+devtools::load_all("./dynatop"); data("Swindale")
+
+
+profvis::profvis({
+    m1 <- dynatop$new(Swindale$model)
+    m1$add_data(Swindale$obs)
     m1$initialise(1e-6)
-    m1$sim_hillslope(mass_check=TRUE)
-#})
+    m1$sim(mass_check=TRUE)
+})
+plot(merge( Swindale$obs[,'Flow'],m1$get_gauge_flow()))
 
-
-##################################
-## Bodging back together the test catchments
+## ###########################################
+## This hits more of the models compoents for testing
 rm(list=ls())
-pacPath <- "./dynatop"
-devtools::load_all(pacPath)
-
-data("test_catchments")
-
-## change hillslope names
-tmp <- names(test_catchments$simple_hillslope$hillslope)
-tmpr <- c("qsf_max"="q_sfmax",
-          "srz_max"="s_rzmax",
-          "srz_0"="s_rz0",
-          "td"="t_d",
-          "tsf"="t_sf")
-for(ii in names(tmpr)){
-    tmp <- gsub(ii,tmpr[ii],tmp)
-}
-names(test_catchments$simple_hillslope$hillslope) <- tmp
-
-chng <- data.frame(t = "hillslope",
-                   v="sz_band",
-                   c="numeric",
-                   stringsAsFactors=FALSE)
-chng[1,] <- c("hillslope","sz_band","numeric")
-chng[2,] <- c("hillslope","sf_band","numeric")
-chng[3,] <- c("channel","sz_band","numeric")
-chng[4,] <- c("channel","sf_band","numeric")
-chng[5,] <- c("channel","id","integer")
-chng[6,] <- c("channel","next_id","integer")
-chng[7,] <- c("gauge","id","integer")
-chng[8,] <- c("point_inflow","id","integer")
-
-for(ii in 1:nrow(chng)){
-    tmp <- test_catchments$simple_hillslope[[ chng[ii,'t'] ]][[ chng[ii,'v'] ]]
-    tmp <- switch(chng[ii,'c'],
-                  "numeric" = as.numeric(tmp),
-                  "integer" = as.integer(tmp),
-                  stop("missing type"))
-    test_catchments$simple_hillslope[[ chng[ii,'t'] ]][[ chng[ii,'v'] ]] <- tmp
-}
-
-
-
-check_model(test_catchments$simple_hillslope)
-
-
-save(test_catchments,file="./dynatop/data/test_catchments.rda")
-
-
-
-
-
-###########################################
-## trying to get a decent cimulation for Swindale
-rm(list=ls())
-pacPath <- './dynatop'
-devtools::load_all(pacPath)
-
-hillslope_volume <- function(mdl,ignore_sz=FALSE){
-  tmp <- mdl$hillslope
-  if(!ignore_sz){
-    sum( tmp$area * (tmp$s_sf + tmp$s_rz + tmp$s_uz - tmp$s_sz) )
-  }else{
-    sum( tmp$area * (tmp$s_sf + tmp$s_rz + tmp$s_uz) )
-  }
-}
-
-data("Swindale")
-#model <- band_model(Swindale$model,5)
-model <- Swindale$model
-## to fix elsewhere
-
-
-
-model$hillslope[,'precip'] <- model$channel[,'precip'] <- "Rainfall"
-model$hillslope[,'pet'] <- model$channel[,'pet'] <- "PET"
-
-mdlb$param <- c(q_sfmax_default=Inf,
+devtools::load_all("./dynatop"); data("Swindale"); 
+Swindale$model$param <- c(q_sfmax_default=Inf,
                  m_default=0.0063,
-                 ln_t0_default=3.46,
+                 ln_t0_default=7.46,
                  s_rz0_default=0.98,
                  s_rzmax_default=0.1,
                  v_ch_default=0.8,
-                 t_d_default=8,#1,#8*60*60,
-                 t_sf_default=3#.6e+05
+                 t_d_default=8*60*60,
+                 t_sf_default=3.6e+05
                  )
+m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel(mass_check=TRUE)
 
-mdlb <- band_model(model,5)
-mdlb$hillslope[,'precip'] <- mdlb$channel[,'precip'] <- "Rainfall"
-mdlb$hillslope[,'pet'] <- mdlb$channel[,'pet'] <- "PET"
-
-obs <- Swindale$obs
-#obs$PET[] <- 0
-#obs$Rainfall[] <- 0
-
-model0 <- initialise(model,0.000001)
-v0 <- hillslope_volume(model0)
-qhat3 <- dynatop(model0,obs,sim_time_step=300,use_states=TRUE)
-vend <- hillslope_volume(qhat3$model)
-v0 + (sum(obs$Rainfall)*sum(model$hillslope$area)) + (sum(obs$Rainfall)*sum(model$channel$area)) - (sum(qhat3$channel_input)*15*60) - vend
-
-mdlb0 <- initialise(mdlb,0.000001)
-vb0 <- hillslope_volume(mdlb0)
-qhatb <- dynatop(mdlb0,obs,sim_time_step=3600,use_states=TRUE,mass_check=TRUE) #0.000001)
-qhatb2 <- dynatop(qhatb$model,obs,sim_time_step=3600,use_states=TRUE,mass_check=TRUE)
-vbend <- hillslope_volume(qhatb$model)
-
-vb0 + (sum(obs$Rainfall)*sum(mdlb$hillslope$area)) + (sum(obs$Rainfall)*sum(mdlb$channel$area)) - (sum(qhatb$channel_input)*15*60) - vbend
-
-x11();plot(cbind(Swindale$obs[,'Flow'],rowSums(qhatb$channel_input),
-                 rowSums(qhatb2$channel_input)))
-
-chhat <- time_delay_routing(mdlb,qhatb$channel_input)
-x11();plot(cbind(Swindale$obs[,'Flow'],rowSums(qhatb$channel_input),chhat))
-plot(chhat)
-
-
-######################
-
-rm(list=ls())
-pacPath <- "./dynatop"
-devtools::load_all(pacPath)
-fn <- list.files(file.path(pacPath,"vignettes"),pattern="*.Rmd$",full.names=TRUE)
-rc <- rep(NA,length(fn))
-for(ii in 1:length(fn)){
-    print(fn[ii])
-    rc[ii] <- system.time({ rmarkdown::render(fn[ii],quiet=TRUE) })['elapsed']
-    print(rc)
-}

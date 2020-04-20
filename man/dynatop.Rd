@@ -16,6 +16,17 @@ R6 Class for Dynamic TOPMODEL
 \item \href{#method-clear_data}{\code{dynatop$clear_data()}}
 \item \href{#method-initialise}{\code{dynatop$initialise()}}
 \item \href{#method-sim_hillslope}{\code{dynatop$sim_hillslope()}}
+\item \href{#method-sim_channel}{\code{dynatop$sim_channel()}}
+\item \href{#method-sim}{\code{dynatop$sim()}}
+\item \href{#method-get_channel_inflow}{\code{dynatop$get_channel_inflow()}}
+\item \href{#method-plot_channel_inflow}{\code{dynatop$plot_channel_inflow()}}
+\item \href{#method-get_gauge_flow}{\code{dynatop$get_gauge_flow()}}
+\item \href{#method-plot_gauge_flow}{\code{dynatop$plot_gauge_flow()}}
+\item \href{#method-get_obs_data}{\code{dynatop$get_obs_data()}}
+\item \href{#method-get_model}{\code{dynatop$get_model()}}
+\item \href{#method-get_mass_errors}{\code{dynatop$get_mass_errors()}}
+\item \href{#method-get_states}{\code{dynatop$get_states()}}
+\item \href{#method-plot_state}{\code{dynatop$plot_state()}}
 \item \href{#method-clone}{\code{dynatop$clone()}}
 }
 }
@@ -125,6 +136,175 @@ Simulate the hillslope output of a dynatop object
 Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
 }
 
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-sim_channel"></a>}}
+\subsection{Method \code{sim_channel()}}{
+Simulate the channel output of a dynatop object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim_channel(mass_check = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{mass_check}}{Flag indicating is a record of mass balance errors shuld be kept}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+invisible(self) for chaining
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-sim"></a>}}
+\subsection{Method \code{sim()}}{
+Simulate the hillslope and channel componets of a dynatop object
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim(mass_check = FALSE, keep_states = NULL, sub_step = NULL)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{mass_check}}{Flag indicating is a record of mass balance errors shuld be kept}
+
+\item{\code{keep_states}}{a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept}
+
+\item{\code{sub_step}}{simulation timestep in seconds, default value of NULL results in data time step}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Details}{
+Calls the sim_hillslope and sim_channel in sequence. Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
+}
+
+\subsection{Returns}{
+invisible(self) for chaining
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get_channel_inflow"></a>}}
+\subsection{Method \code{get_channel_inflow()}}{
+Return channel inflow as an xts series
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$get_channel_inflow(total = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{total}}{logical if plot total inflow is to be plotted}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-plot_channel_inflow"></a>}}
+\subsection{Method \code{plot_channel_inflow()}}{
+Plot the channel inflow
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_channel_inflow(total = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{total}}{logical if plot total inflow is to be plotted}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get_gauge_flow"></a>}}
+\subsection{Method \code{get_gauge_flow()}}{
+Return flow at the gauges as an xts series
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$get_gauge_flow(gauge = colnames(private$time_series$gauge_flow))}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{gauge}}{names of gauges to return (default is all gauges)}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-plot_gauge_flow"></a>}}
+\subsection{Method \code{plot_gauge_flow()}}{
+Get the flow at gauges
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_gauge_flow(gauge = names(private$time_series$gauge_flow))}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{gauge}}{names of gauges to return (default is all gauges)}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get_obs_data"></a>}}
+\subsection{Method \code{get_obs_data()}}{
+Get the observed data
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$get_obs_data()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get_model"></a>}}
+\subsection{Method \code{get_model()}}{
+Return the model
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$get_model()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get_mass_errors"></a>}}
+\subsection{Method \code{get_mass_errors()}}{
+Return the model
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$get_mass_errors()}\if{html}{\out{</div>}}
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-get_states"></a>}}
+\subsection{Method \code{get_states()}}{
+Return states
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$get_states(record = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{record}}{logical TRUE if the record should be returned. Otherwise surrent states returned}
+}
+\if{html}{\out{</div>}}
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-plot_state"></a>}}
+\subsection{Method \code{plot_state()}}{
+Plot a current state of the system
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_state(state)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{state}}{the name of the state to be plotted}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-clone"></a>}}

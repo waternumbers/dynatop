@@ -3,3 +3,8 @@
 export(dynatop)
 export(evap_est)
 export(resample_xts)
+import(raster)
+import(xts)
+importFrom(stats,end)
+importFrom(stats,start)
+importFrom(zoo,index)
