@@ -1,0 +1,193 @@
+---
+title: "Time Delay Channel Routing"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Time Delay Channel Routing}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+The `dynatop` function in the dynamic TOPMODEL R package implements a set of numerical solutions to the
+governing equations of the dynamic TOPMODEL hillslope formulation. This
+returns the inflow to the channel reachs specified in the model. 
+This vignette documents the formulation and the numerical solution used to route these channel inflows, along with other diffuse and point inputs to the model.
+
+# Notation and nomenclature
+
+Table [tab:hru_notation] outlines the notation used in this document.
+
+
+  Quantity type                                   Symbol                    Description                                                                   unit
+  --------------------------------------  -----------------------------   ----------------------------------------------------------------------- -----------------
+  Dischage at the point $x$ at time $t$         $q\left(x,t\right)$           Instananeous discharge at the point x on the channel network                                                 - 
+  A gauged location                                       $g$              A gagued point on the channel network                                                 - 
+  Channel inflow                                $h\left(x,t\right)$        Inflow from the hillslope to a point on the channel network                  m$^3$/s
+  Diffuse inflow                                $d\left(x,t\right)$        Inflow from diffuse inputs to a point on the channel network                  m$^3$/s
+  Diffuse inflow                                $p\left(x,t\right)$        Inflow from a point source to a point on the channel network                  m$^3$/s
+  Velocity                                      $v_{ch}\left(x\right)$     Effective velocity of water convience at a point ont eh channel network       m/s
+  
+  Table: Outline of notation for describing time delay histogram routing
+  HRUs[]{data-label="tab:channel_notation"}
+     
+# Time Delay Channel Routing
+
+Using a time delay routing approach the discharge at the gauge $g$ at time $t$ can be computed from the inflows of the upstream points on the channel newtork $x \in \mathcal{X}$ and the time it takes the effect of the inflow to been seen at the gauge $\delta_{x\rightarrow g}$ as
+\[
+q\left(g,t\right) = \int_{x\in\mathcal{X}} h\left(x,t-\delta_{x\rightarrow g}\right) dx
+\]
+
+The conceptualisation of Dynamic Topmodel breaks the channel network down into
+$n$ disjoint channel HRUs whose inflows contribute to the discharge at the
+gauge giving
+\[
+q\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\delta_{x\rightarrow g}\right) dx 
+\]
+
+# Numerical Solution
+
+Consider the contribution to the gauges flow from a single channel HRU
+\[
+\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\delta_{x\rightarrow g}\right) dx d\tau
+\]
+
+To further derive the numerical solution a number of assumpptions are made.
+The first assumption is that the channel represents a single reach of river such the a spatial location $x \in \mathcal{X}_{i}$ can be replaced by a unique length $l$ from the head of the reach. The maximum value of $l$, denoted$\tilde{L}$, is the lower of the length of the reach $L$ or the distance to the gauge from the head of the reach.
+The contribution of the channel HRU to the gauged flow can be expressed as
+\[
+\int_{0}^{\tilde{L}}
+h\left(l,t-\delta_{l\rightarrow g}\right) dl
+\]
+
+The second assumption is that there is a constant effecive velocity $v$ within the reach. The time delay $\delta_{l\rightarrow g}$ can then be written in terms of the time delay for the head of the reach  $\delta_{0\rightarrow g}$ as
+\[
+\delta_{l\rightarrow g} = \delta_{0\rightarrow g} - lv^{-1}
+\]
+The contribution of the channel HRU to the discharge at the gauge then becomes
+\[
+\int_{0}^{\tilde{L}}
+h\left(l,t-\delta_{0\rightarrow g}+lv^{-1}\right) dl
+\]
+
+Since the model is solved in discrete time the interal can be divided up into
+time steps.
+Let $d_{min}$ be the largest and $d_{max}$ the smallest integers such that $d_{min} < d_{max}$ and
+\[
+d_{min}\Delta t < \delta_{0\rightarrow g}-\tilde{L}v^{-1} <
+\delta_{0\rightarrow g} < d_{max}\Delta t
+\]
+Then taking $\Delta l = v\Delta t$  we can divide the integral up to give
+\[
+\sum\limits_{j=d_{min}}^{d_{max}-1} \int_{0}^{\Delta l}
+h\left(l,t-j\Delta lv^{-1}-\lambda v^{-1}\right) d\lambda
+- \int_{0}^{\delta_{0\rightarrow g}-\tilde{L}v^{-1} - d_{min}\Delta lv^{-1}}
+h\left(l,t-d_{min}\Delta lv^{-1}-\lambda v^{-1}\right) d\lambda
+- \int_{\delta_{0\rightarrow g} - \left(d_{max}-1\right)\Delta
+  lv^{-1}}^{\Delta l} h\left(l,t-\left(d_{max}-1\right)\Delta lv^{-1}-\lambda v^{-1}\right) d\lambda
+\]
+
+The second assumption is that there is no spatial pattern in the inflow to the
+reach and constant inflow over time steps so that we can write 
+\[
+h\left(l,t-\tau\right) = \bar{h}_{t} \quad \forall
+l\in\left(0,L\right),\tau\in\left(0,\Delta t\right)
+\]
+an express the contribution to the gauged flow as
+\[
+\sum\limits_{j=d_{min}}^{d_{max}-1} \Delta l \bar{h}_{t-j\Delta lv^{-1}}
+- \left(\delta_{0\rightarrow g}v - d_{min}\Delta l - \tilde{L}\right)
+\bar{h}_{t-d_{min}\Delta l v^{-1}}
+- \left( d_{max}\Delta l - \delta_{0\rightarrow g}v \right) \bar{h}_{t-\left(d_{max}-1\right)\Delta lv^{-1}}
+\]
+
+This can now be expressed in terms of a polynomial of the the backward shift
+operator $z^{-1}$ as $B\left(z^{-1}\right) \bar{h}_{t-d_{min}\Delta t}$ where 
+
+- for $d_{max}=d_{min}+1$
+\[
+B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
+d_{min}\Delta l - \tilde{L}\right) - \left(d_{max}\Delta l -
+\delta_{0\rightarrow g}v\right)\right)  = \tilde{L}
+\]
+- for $d_{max}=d_{min}+2$
+\[
+B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
+d_{min}\Delta l - \tilde{L}\right)\right) + \left(\Delta l - \left(d_{max}\Delta l - \delta_{0\rightarrow g}v\right)\right) z^{-1}
+\]
+- for $d_{max}>d_{min}+2$
+\[
+B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
+d_{min}\Delta l - \tilde{L}\right)\right) + \Delta l z^{-1} + \ldots + \Delta l
+z^{-(d_{max}-d_{min}-2)} + \left(\Delta l - \left(d_{max}\Delta l - \delta_{0\rightarrow g}v\right)\right) z^{-(d_{max}-d_{min}-1)}
+\]
+
+This shows that the instanaeous flow at the outlet can be approximated
+from the $\bar{h}_{t-d_{min}\Delta t}$ by a linear operation.
+It remains to be shown that $\bar{h}_{t-d_{min}\Delta t}$ can be related to
+the output of the `dynatop` function which is
+\[
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\tau \right) dx d\tau
+\]
+Under the channel routing assumptions
+\[
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+h\left(x,t-\tau \right) dx d\tau =
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t}\int_{0}^{L}
+h\left(l,t-\tau \right) dl d\tau =
+L \bar{h}_{t}
+\]
+
+The contribution to the discharge at the channel outlet is therefore a linear
+filtering of the output of `dynatop`. From summing the coeffiecnts of
+$B\left(z^{-1}\right)$ the fraction of the `dynatop` output returned as
+discharge at the gauge is $\tilde{L}/L$. This implies mass conservation the
+inputs of channel HRUs above the gauge, while if the gauge is sited within the
+HRU mass is proportional to the fraction fo the reach above it.
+
+# Diffuse and Point inputs
+
+Diffuse input are considered as external inputs that occur over the whole
+channel HRU while point inputs occur at a given location on the channel
+network.
+
+## Diffuse inputs
+
+Diffuse inputs are handled in exactly the same way as hillslope inputs. In
+this case the each value in the input time series is expected to be the total
+volume of input over the time step (m$^3$) dived by length of the time step
+($s$) to give an effective time averaged flow (m$^3$/s) to the HRU, that is:
+\[
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+d\left(x,t-\tau \right) dx d\tau
+\]
+
+## Point inputs
+
+Since the contributions to the simualted discharge at the gauge can be
+computed individually and summed it is possible to think of a point input as
+notional channel with infinitesimally small length. This results
+$d_{max}=d_{min}+1$ and a ratio $\tilde{L}/L=1$. 
+
+In this case that each value in the input time series is inflow averaged over
+the preceeding time step, that is
+\[
+\bar{p}_{t} = 
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t} p\left(x,t-\tau \right) d\tau
+\]
+The assumptions used for hillslope routing above lead to contribution to the
+outflow being $\bar{p}_{t-d_{min}\Delta t}$.
+
+

@@ -36,7 +36,6 @@ dynatop <- R6::R6Class(
         clear_data = function(){
             private$time_series <- list()
             private$state_record <- list()
-            private$mass_check <- NULL
             private$info$ts <- list()
         },
         #' @description Initialises a dynatop object in the simpliest way possible.
@@ -50,6 +49,7 @@ dynatop <- R6::R6Class(
             if( !is.numeric(initial_recharge) | length(initial_recharge) > 1 | any( initial_recharge < 0 ) ){
                 stop("Initial discharge should be a single positive numeric value")
             }
+            
             private$init_hs(initial_recharge)
             private$init_ch()
             invisible(self)
@@ -93,9 +93,122 @@ dynatop <- R6::R6Class(
                 ## TODO add a mass check
                 warning("Channel mass check not yet implimented")
             }
+            ## check presence of channel_inflow
+            if( nrow(private$time_series$channel_inflow) !=
+                length(private$time_series$index) ){
+                stop("Suitable channel_inflow not available")
+            }
+            if( length(private$time_series$index) < 2 ){
+                stop("Insufficent data to perform a simulation")
+            }
             private$sim_ch()
+
+            invisible(self)
+        },
+        #' @description Simulate the hillslope and channel componets of a dynatop object
+        #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
+        #' @param mass_check Flag indicating is a record of mass balance errors shuld be kept
+        #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
+        #'
+        #' @details Calls the sim_hillslope and sim_channel in sequence. Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
+        #'
+        #' @return invisible(self) for chaining
+        sim = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL){
+            self$sim_hillslope(mass_check,keep_states,sub_step)
+            self$sim_channel()
+            invisible(self)
+        },
+        ## ############
+        ## Functions for extracting and plotting data
+        #' @description Return channel inflow as an xts series
+        #' @param total logical if plot total inflow is to be plotted
+        get_channel_inflow = function(total=FALSE){
+            ## browser()
+            x <- private$time_series$channel_inflow
+            if(total){
+                x <- rowSums(x)
+            }
+            xts::xts(x,
+                     order.by=private$time_series$index)
+        },
+        #' @description Plot the channel inflow
+        #' @param total logical if plot total inflow is to be plotted
+        plot_channel_inflow = function(total=FALSE){
+            ## browser()
+            x <- self$get_channel_inflow(total)
+            plot(x)
+        },
+        #' @description Return flow at the gauges as an xts series
+        #' @param gauge names of gauges to return (default is all gauges)
+        get_gauge_flow = function(gauge=colnames(private$time_series$gauge_flow)){
+            ## browser()
+            gauge <- match.arg(gauge,colnames(private$time_series$gauge_flow),
+                               several.ok=TRUE)
+            xts::xts(private$time_series$gauge_flow[,gauge],
+                     order.by=private$time_series$index)
+        },
+        #' @description Get the flow at gauges
+        #' @param gauge names of gauges to return (default is all gauges)
+        plot_gauge_flow = function(gauge=names(private$time_series$gauge_flow)){
+            ## browser()
+            plot( self$get_gauge_flow(gauge) )
+        },
+        #' @description Get the observed data
+        get_obs_data = function(){
+            ## browser()
+            xts::xts(private$time_series$obs,
+                     order.by=private$time_series$index)
+        },
+        #' @description Return the model
+        get_model = function(){
+            private$model
+        },
+        #' @description Return the model
+        get_mass_errors = function(){
+            ## browser()
+            if( !("mass_errors" %in% names(private$time_series)) ){
+                stop("Mass errors are not available")
+            }
+                
+            x <- private$time_series$mass_errors
+            idx <- private$time_series$index[x[,"DateTime"]]
+            idx <- idx + x[,"step"]
+            jdx <- setdiff(colnames(x),c("DateTime","step"))
+            xts::xts(private$time_series$mass_errors[,jdx],
+                     order.by=idx)
+        },
+        #' @description Return states
+        #' @param record logical TRUE if the record should be returned. Otherwise surrent states returned
+        get_states = function(record=FALSE){
+            ## if( nrow(private$time_series$channel_inflow == 0) ){
+            ##     stop("No simulation is available")
+            ## }
+            ## browser()
+            if( record ){
+                return( private$state_record )
+            }else{
+                return( private$extract_states(private$model$hillslope,"hillslope") )
+            }            
+        },
+        #' @description Plot a current state of the system
+        #' @param state the name of the state to be plotted
+        plot_state = function(state){
+            ## browser()
+            tmp <- private$model_description("hillslope",include_states=TRUE)
+            if( !all(tmp$name[tmp$role=="state"] %in% names(private$model$hillslope)) ){
+                stop("Model states are not initialised")
+            }
+            state <- match.arg(state,tmp$name[tmp$role=="state"])
+            x <- setNames(
+                private$extract_states(private$model$hillslope,"hillslope")[,state],
+                private$model$hillslope$id)
+            x <- x[paste(private$model$map$hillslope)]
+            
+            raster::plot( raster::raster(crs = private$model$map$scope$crs,
+                                 ext = private$model$map$scope$ext,
+                                 resolution = private$model$map$scope$res,
+                                 vals = x) )
         }
-        
         
     ),
     private = list(
@@ -105,12 +218,12 @@ dynatop <- R6::R6Class(
         info = list(),
         model = NULL,
         state_record = list(),
-        mass_check = list(),
         ## this code checks the model
         check_model = function(model, use_states, verbose, delta=1e-13){
 
             ## check all components of the model exist
-            components <- c("hillslope","channel","param","gauge","point_inflow")
+            components <- c("hillslope","channel","param","gauge",
+                            "point_inflow","diffuse_inflow")
             idx <- components %in% names(model)
             if( !all(idx) ){
                 stop(paste("Missing componets:",paste(components[!idx],collapse=",")))
@@ -199,8 +312,16 @@ dynatop <- R6::R6Class(
                     (model[[jj]]$fraction >= 0) &
                     (model[[jj]]$fraction <= 1)
                 if( any(!idx) ){
-                    stop(paste("The following", ii , "are incorrectly specified:",
+                    stop(paste("The following", jj , "are incorrectly specified:",
                                paste(model[[jj]]$name[!idx],collapse=" ")))
+                }
+            }
+            
+            ## all diffuse inflows should be to channels
+            if(nrow(model[["diffuse_inflow"]]) > 0){
+                if( any(!(model[[jj]]$id %in% model[['channel']]$id)) ){
+                    stop(paste("The following diffuse_inputs are incorrectly specified:",
+                               paste(model[["diffuse_input"]]$name[!idx],collapse=" ")))
                 }
             }
             
@@ -349,11 +470,10 @@ dynatop <- R6::R6Class(
             colnames(tmp) <- input
                         
             ## simulate a time step to sort out mass balance
-            ## TODO needs to be altered to match actual call
             ## will presume it returns the actual model to private
             private$sim_hs(FALSE,NULL,NULL,tmp)
             private$time_series$channel_inflow <- NULL # remove this which is generated
-
+            private$time_series$mass_errors <- NULL
             ## initialise the unsaturated zone based on recharge
             ##model$hillslope$state$s_uz <- pmax(0, initial_recharge * model$hillslope$param$t_d * model$hillslope$state$s_sz)
             
@@ -377,6 +497,10 @@ dynatop <- R6::R6Class(
             sz_opt <- list(omega=1,theta=1)
             
             ## compute time substep
+            if( !is.null(sub_step) | !is.finite(sub_step[1]) | length(sub_step)>0 ){
+                stop("sub_step should be a single finite value")
+            }
+            
             ts <- private$comp_ts(sub_step)
             
             ## convert model to variables in function
@@ -403,8 +527,8 @@ dynatop <- R6::R6Class(
             }
             
             ## initialise the channel inflow output
-            channel_inflow <- matrix(NA,nrow(obs_data),length(model$channel$id))
-            colnames(channel_inflow) <- model$channel$id
+            channel_inflow <- matrix(NA,nrow(obs_data),length(channel$id))
+            colnames(channel_inflow) <- channel$id
             
             ## initialise the mass check output if required
             if( mass_check ){
@@ -434,7 +558,7 @@ dynatop <- R6::R6Class(
                 ## loop sub steps
                 for(inner in 1:ts$n_sub_step){
                     
-                    ## stor previous version of model if need mass check
+                    ## store previous version of model if need mass check
                     if( mass_check ){
                         hs0 <- hillslope
                         ch0 <- channel
@@ -472,12 +596,14 @@ dynatop <- R6::R6Class(
                     hillslope$s_sf <- hillslope$s_sf - hillslope$q_sf_rz
                     
                     ## solve ODE
+                    
                     tilde_rz <- fode( hillslope$p + (hillslope$q_sf_rz/ts$sub_step),
                                      hillslope$e_p/hillslope$s_rzmax,
                                      hillslope$s_rz,ts$sub_step )
                     
                     ## work out actual evapotranspiration by mass balance
-                    hillslope$e_t <- hillslope$s_rz + hillslope$p*ts$sub_step - tilde_rz
+                    hillslope$e_t <- hillslope$s_rz + hillslope$p*ts$sub_step +
+                        hillslope$q_sf_rz - tilde_rz
                     ## new storage value
                     hillslope$s_rz <- pmin(tilde_rz,hillslope$s_rzmax)
                     
@@ -497,12 +623,7 @@ dynatop <- R6::R6Class(
                     hillslope$s_uz <- tilde_uz
                     
                     ## Step 4: Solve saturated zone
-                    ## if mass check compute theinitial mass
-                    
-                    if( mass_check ){
-                        mass_s_sz <-  -sum(hillslope$s_sz*hillslope$area)
-                    }
-                    
+                   
                     ## move current states to values for start of the time step
                     hillslope$sum_l_sz_in_t <- hillslope$sum_l_sz_in # total inflow at start of time step
                     hillslope$l_sz_t <- hillslope$l_sz # total outflow at start of time step
@@ -573,14 +694,15 @@ dynatop <- R6::R6Class(
                         vol_ch_sz <- ( (channel$s_ch-ch0$s_ch)*channel$area ) - vol_ch_sf
                         
                         mass_errors[ ((it-1)*ts$n_sub_step) + inner,] <-
-                            c(it,inner,
-                              sum(hs0$s_sf*hs0$area)+
-                              sum(ch0$s_ch*ch0$area) +
-                              sum(hillslope$q_rz_sf*hillslope$area) +
-                              sum(hillslope$q_sz_sf*hillslope$area) -
-                              sum(hillslope$q_sf_rz*hillslope$area) -
-                              sum(hillslope$s_sf*hillslope$area) -
-                              sum(vol_ch_sf),
+                            c(it,(inner-1)*ts$sub_step,
+                              sum( ((hs0$s_sf + 
+                                     hillslope$q_rz_sf +
+                                     hillslope$q_uz_sf +
+                                     hillslope$q_sz_sf -
+                                     hillslope$q_sf_rz -
+                                     hillslope$l_sf -
+                                     hillslope$s_sf) * hs0$area) +
+                                   lateral_flux$sf[ hillslope$id ] ),
                               sum((hs0$s_rz +
                                    hillslope$p*ts$sub_step +
                                    hillslope$q_sf_rz -
@@ -594,13 +716,22 @@ dynatop <- R6::R6Class(
                                    hillslope$q_uz_sz -
                                    hillslope$q_uz_sf -
                                    hillslope$s_uz)*hs0$area),
-                              mass_s_sz +
-                              sum(hillslope$q_uz_sz*hillslope$area) -
-                              sum(hillslope$q_sz_sf*hillslope$area) -
-                              - sum(hillslope$s_sz*hillslope$area) -
+                              sum( (hs0$s_sz -
+                                    hillslope$q_uz_sz +
+                                    hillslope$q_sz_sf -
+                                    hillslope$s_sz)*hs0$area ) +
                               sum(vol_ch_sz)
+
+                              ## mass_s_sz +
+                              ## sum(hillslope$q_uz_sz*hillslope$area) -
+                              ## sum(hillslope$q_sz_sf*hillslope$area) -
+                              ## - sum(hillslope$s_sz*hillslope$area) -
+                              ## sum(vol_ch_sz)
                               )
-                        ##print( mass_errors[ ((it-1)*ts$n_sub_step) + inner,] )
+                        if( any( abs(mass_errors[ ((it-1)*ts$n_sub_step) + inner, 3:6]) > 1e-6) ){
+                            browser()
+                            print( mass_errors[ ((it-1)*ts$n_sub_step) + inner,] )
+                        }
                     }
                 } ## end of sub_step loop
                 
@@ -613,21 +744,21 @@ dynatop <- R6::R6Class(
                 ## handle returning states
                 if( return_states$idx[it] ){
                     return_states$store[[ sum(return_states$idx[1:it]) ]]  <-
-                                            private$get_states(hillslope,"hillslope")
+                                            private$extract_states(hillslope,"hillslope")
                 }
             } ## end of timestep loop
 
 
             ## copy states back into model
-            tmp <- private$get_states(hillslope,"hillslope")
-            nm <- c("id",setdiff( names(model$hillslope),names(tmp)))
-            model$hillslope <- merge(model$hillslope[,nm],tmp,by="id",all=TRUE)
-            tmp <- private$get_states(channel,"channel")
-            nm <- c("id",setdiff( names(model$channel),names(tmp)))
-            model$channel <- merge(model$channel[,nm],tmp,by="id",all=TRUE)
+            tmp <- private$extract_states(hillslope,"hillslope")
+            nm <- c("id",setdiff( names(private$model$hillslope),names(tmp)))
+            private$model$hillslope <- merge(private$model$hillslope[,nm],tmp,by="id",all=TRUE)
+            tmp <- private$extract_states(channel,"channel")
+            nm <- c("id",setdiff( names(private$model$channel),names(tmp)))
+            private$model$channel <- merge(private$model$channel[,nm],tmp,by="id",all=TRUE)
 
             ## write to private storage
-            private$model <- model
+            ##private$model <- model
             private$time_series$channel_inflow <- channel_inflow
             if(mass_check){
                 private$time_series$mass_errors <- mass_errors
@@ -640,7 +771,10 @@ dynatop <- R6::R6Class(
             
         },
         ## decribes a model with or without states and tempory variables
-        model_description = function(type=c("hillslope","channel","point_inflow","gauge"),include_states=FALSE,include_tmp=FALSE){
+        model_description = function(type=c("hillslope","channel",
+                                            "diffuse_inflow","point_inflow",
+                                            "gauge"),
+                                     include_states=FALSE,include_tmp=FALSE){
             type <- match.arg(type)
             
             if(type=="hillslope"){
@@ -687,6 +821,14 @@ dynatop <- R6::R6Class(
                     name = c("name","id","fraction"),
                     type=c("character","integer","numeric"),
                     role = c("data_series",rep("property",2)),
+                    stringsAsFactors=FALSE)
+            }
+
+            if(type=="diffuse_inflow"){
+                out <- data.frame(
+                    name = c("name","id"),
+                    type=c("character","integer"),
+                    role = c("data_series","property"),
                     stringsAsFactors=FALSE)
             }
             
@@ -752,7 +894,7 @@ dynatop <- R6::R6Class(
             return(out)
         },
         ## convert a data frame to a storage list
-        get_states = function(obj,type=c("hillslope","channel")){
+        extract_states = function(obj,type=c("hillslope","channel")){
             type <- match.arg(type)
 
             stt <- private$model_description(type,TRUE)
@@ -834,8 +976,6 @@ dynatop <- R6::R6Class(
         },
         sim_ch = function(){
 
-            ## TODO - re impliment diffuse inputs to channel
-
             ## initialise the output
             out <- matrix(NA,length(private$time_series$index),
                           nrow(private$model$gauge))
@@ -876,11 +1016,15 @@ dynatop <- R6::R6Class(
                     ## get time object
                     tt <- private$model$gauge$linear_time[[rw]]$diffuse[[iid]]
                     ## compute polynomial
-                    ply <- fply(tt)
+                    ply <- fpoly(tt)
                     npad <- length(ply)-1
                     ## compute input
                     x <- private$time_series$channel_inflow[,iid]
-                    ##TODO add diffuse inputs to x
+                    ## add diffuse inputs to x
+                    nm <- private$model$diffuse_inflow$name[private$model$diffuse_inflow$id==id]
+                    x <- x + rowSums(private$time_series$obs[,nm])
+
+                    ## add initial padding to input
                     x <- c(rep(x[1],npad),x)
                     ## apply polynomial
                     q <- filter(x,ply,method="conv",sides=1)
