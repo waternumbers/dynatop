@@ -497,7 +497,7 @@ dynatop <- R6::R6Class(
             sz_opt <- list(omega=1,theta=1)
             
             ## compute time substep
-            if( !is.null(sub_step) | !is.finite(sub_step[1]) | length(sub_step)>0 ){
+            if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
                 stop("sub_step should be a single finite value")
             }
             
