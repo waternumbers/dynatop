@@ -90,6 +90,6 @@ evap_est <- function(ts, eMin=0, eMax=0){
     frc <- pmin(1,pmax(0,frc))
     pet <- pet + daily_pet[ as.POSIXlt(ts)$yday + 1]*0.5*(1-cos(frc*pi))
 
-    return(as.xts(pet,order.by=ts))
+    return(xts::xts(pet,order.by=ts))
 }
 
