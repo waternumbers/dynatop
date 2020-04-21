@@ -67,7 +67,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1</span>
       </span>
     </div>
 
@@ -92,15 +92,6 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
-    <li>
-      <a href="../articles/Banding.html">Banding of HSUs</a>
-    </li>
-    <li>
-      <a href="../articles/Checks_of_the_Hillslope_HRU.html">Checks of the Hillslope HRU</a>
-    </li>
-    <li>
-      <a href="../articles/Checks_of_the_Time_Delay_routing.html">Checks of the Time Delay Routing</a>
-    </li>
     <li>
       <a href="../articles/Selected_References.html">Selected References</a>
     </li>
@@ -143,28 +134,35 @@
       <small>Source: <a href='https://github.com/waternumbers/dynatop/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="dynatopgis-01" class="section level1">
+<h1 class="page-header">
+<a href="#dynatopgis-01" class="anchor"></a>dynatopGIS 0.1</h1>
+<div id="breaking-changes" class="section level2">
+<h2 class="hasAnchor">
+<a href="#breaking-changes" class="anchor"></a>Breaking Changes</h2>
+<ul>
+<li>Code base reformulated in an Object orientated form using the <code>R6</code> package. Except for change below algorithms as for v0.0.4</li>
+<li>Input format of model changed to reflect <code>dynatopGIS</code> v0.1</li>
+<li>Removal of banding functions since these are now in dynatopGIS</li>
+</ul>
+</div>
+<div id="new-features" class="section level2">
+<h2 class="hasAnchor">
+<a href="#new-features" class="anchor"></a>New Features</h2>
+<ul>
+<li>Reformulation allows for data and code to saved in a single object allowing fuller reproducibility</li>
+<li>Additional plotting and data extraction functions</li>
+</ul>
+</div>
+</div>
     <div id="dynatop-004" class="section level1">
 <h1 class="page-header">
 <a href="#dynatop-004" class="anchor"></a>dynatop 0.0.4</h1>
-<div id="to-do" class="section level2">
+<div id="breaking-changes-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#to-do" class="anchor"></a>TO DO</h2>
+<a href="#breaking-changes-1" class="anchor"></a>Breaking changes</h2>
 <ul>
-<li>Change getting starting vignette to Swindale
-<ul>
-<li>Add data from NFS example</li>
-</ul>
-</li>
-<li>Change perfromance vignette to make use of banding</li>
-<li>Write banding vignette</li>
-<li>Check other vignettes</li>
-</ul>
-</div>
-<div id="breaking-changes" class="section level2">
-<h2 class="hasAnchor">
-<a href="#breaking-changes" class="anchor"></a>Breaking changes</h2>
-<ul>
-<li>New solutions to the surface and saturated zone means models for previous versions of dynatop will not work. See the model description and the <code>dynatopGIS</code> package (&gt;0.0.4) for a method of generating models int he revised format</li>
+<li>New solutions to the surface and saturated zone means models for previous versions of dynatop will not work. See the model description and the <code>dynatopGIS</code> package (0.0.4) for a method of generating models int he revised format</li>
 </ul>
 </div>
 <div id="other-changes" class="section level2">
@@ -182,9 +180,9 @@
     <div id="dynatop-003" class="section level1">
 <h1 class="page-header">
 <a href="#dynatop-003" class="anchor"></a>dynatop 0.0.3</h1>
-<div id="new-features" class="section level2">
+<div id="new-features-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#new-features" class="anchor"></a>New features</h2>
+<a href="#new-features-1" class="anchor"></a>New features</h2>
 <ul>
 <li>Added time delay histogram river routing. See vignettes on theory and use.</li>
 </ul>
@@ -197,9 +195,9 @@
 <li>Improved handling of case of infinite saturated zone deficit</li>
 </ul>
 </div>
-<div id="breaking-changes-1" class="section level2">
+<div id="breaking-changes-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#breaking-changes-1" class="anchor"></a>Breaking changes</h2>
+<a href="#breaking-changes-2" class="anchor"></a>Breaking changes</h2>
 <ul>
 <li>The model structure has been adapted to allow for the channel connectivity and specification of gauges and inputs on the channel network. See the model object vignette. If using dynatopGIS then rerun create_model.</li>
 </ul>
@@ -252,9 +250,9 @@
 <p>This package is the result of an almost complete rewrite of the dynatopmodel package formally CRAN and the associated development code (not in the public domain).</p>
 <p>This package contains the code for model evaluation and helpers for preparing time series input data. The package <a href="https://waternumbers.github.io/dynatopGIS/">dynatopGIS</a> contains the tools for preparing models from GIS data.</p>
 </div>
-<div id="new-features-1" class="section level2">
+<div id="new-features-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#new-features-1" class="anchor"></a>New Features</h2>
+<a href="#new-features-2" class="anchor"></a>New Features</h2>
 <ul>
 <li>New definition of a dynamic TOPMODEL ‘object’ - seperates out GIS data for more compact size - introduces the concept of Hydrological Response Unit (HRU) types - Altered HRU definition table to allow for more transparent and easy reparameterisation - Altered HRU definition table to allow for more transparent use of multiple input series (referenced by name, not input column)</li>
 <li>Altered input of time series data to a single xts object containing names columns</li>
@@ -281,6 +279,7 @@
     <div id="tocnav">
       <h2>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
+        <li><a href="#dynatopgis-01">0.1</a></li>
         <li><a href="#dynatop-004">0.0.4</a></li>
         <li><a href="#dynatop-003">0.0.3</a></li>
         <li><a href="#dynatop-002">0.0.2</a></li>

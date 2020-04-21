@@ -1,16 +1,24 @@
-# dynatop 0.0.4
+# dynatopGIS 0.1
 
-## TO DO
-- Change getting starting vignette to Swindale
-    - Add data from NFS example
-- Change perfromance vignette to make use of banding
-- Write banding vignette
-- Check other vignettes
+## Breaking Changes
+
+- Code base reformulated in an Object orientated form using the `R6`
+  package. Except for change below algorithms as for v0.0.4
+- Input format of model changed to reflect `dynatopGIS` v0.1
+- Removal of banding functions since these are now in dynatopGIS
+
+## New Features
+
+- Reformulation allows for data and code to saved in a single object allowing fuller
+  reproducibility
+- Additional plotting and data extraction functions
+
+# dynatop 0.0.4
 
 ## Breaking changes
 - New solutions to the surface and saturated zone means models for previous
   versions of dynatop will not work. See the model description and the
-  `dynatopGIS` package (>0.0.4) for a method of generating models int he
+  `dynatopGIS` package (0.0.4) for a method of generating models int he
   revised format
 
 ## Other changes

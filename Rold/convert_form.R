@@ -41,40 +41,29 @@ convert_dynatop <- function(model){
                  channel = model_description("channel",TRUE,TRUE))
     ## TODO - trim desc so only returns what is needed
 
-    ## unpack the matrices into lists
-    tmp <- as.matrix(summary(model$Fsf))
-    Fsf <- lapply(by(tmp[,2:3],tmp[,1],unique,simplify=FALSE),as.list)
-    tmp <- as.matrix(summary(model$Fsz))
-    Fsz <- lapply(by(tmp[,2:3],tmp[,1],unique,simplify=FALSE),as.list)
-
     ## convert into lists
     for(tbl in names(desc)){
         out[[tbl]] <- list()
         for(ii in 1:nrow(desc[[tbl]])){
             nm <- desc[[tbl]]$name[ii]
             out[[tbl]][[ nm ]] <- switch(desc[[tbl]]$role[ii],
-                                        attribute = unname( model[[tbl]][[nm]] ),
-                                        data_series = unname( model[[tbl]][[nm]] ),
-                                        parameter = unname( model$param[ model[[tbl]][[nm]] ]),
-                                        state = unname( model[[tbl]][[nm]] ),
-                                        tmp = rep(0, nrow(model[[tbl]]))
-                                        )
+                                         attribute = unname( model[[tbl]][[nm]] ),
+                                         data_series = unname( model[[tbl]][[nm]] ),
+                                         parameter = unname( model$param[ model[[tbl]][[nm]] ]),
+                                         state = unname( model[[tbl]][[nm]] ),
+                                         tmp = rep(0, nrow(model[[tbl]]))
+                                         )
         }
-        ## copy the upstream locations to the lists
-        out[[tbl]]$Fsz <- Fsz[paste(out[[tbl]]$id)]
-        out[[tbl]]$Fsf <- Fsf[paste(out[[tbl]]$id)]
     }
-
-    ## work out the sequences for computing the lateral flux bands these are the index in the vectors NOT the id
-    out$sqnc <- list(sf_band=list(),sz_band=list())
+    
+    ## work out the sequences for computing the lateral flux bands these are the index in the hillslope vectors NOT the id
+    out$sqnc <- list(sf=list(),sz=list())
     for(ii in names(out$sqnc)){
-        tmp <- sort(unique(c(model$hillslope[[ii]],
-                             model$channel[[ii]]))) # sorted list of unique bands
-        for(jj in 1:length(tmp)){
-            out$sqnc[[ii]][[jj]] <- list(
-                hillslope = which(model$hillslope[[ii]] == tmp[jj]),
-                channel = which(model$channel[[ii]] == tmp[jj]))
-        }
+        bnd <- switch(ii,
+                      sf = sapply(model$hillslope$sf_dir,function(x){x$band}),
+                      sz = sapply(model$hillslope$sz_dir,function(x){x$band})
+                      )
+        out$sqnc[[ii]] <- by(1:length(model$hillslope$id),bnd,c)
     }
 
     ## storage for lateral fluxes stored as volumes
