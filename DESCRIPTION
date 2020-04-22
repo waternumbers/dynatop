@@ -17,14 +17,14 @@ ByteCompile: true
 Imports:
 	R6,	
 	zoo,
-	xts,
-	raster
+	xts
 Depends:
 	R (>= 3.5.0)
 BugReports: https://github.com/waternumbers/dynatop/issues
 URL: https://waternumbers.github.io/dynatop/, https://github.com/waternumbers/dynatop
 RoxygenNote: 7.0.2
-Suggests: 
+Suggests:
+    raster,
     knitr,
     rmarkdown,
     covr,
