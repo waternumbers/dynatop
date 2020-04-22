@@ -5,8 +5,8 @@
 #' @name dynatop-package
 #' @docType package
 #' @import xts
-#' @import raster
+# #' @import raster
 #' @importFrom zoo index
-#' @importFrom stats start end
+#' @importFrom stats start end aggregate
 #'
 NULL

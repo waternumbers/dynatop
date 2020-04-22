@@ -193,6 +193,11 @@ dynatop <- R6::R6Class(
         #' @description Plot a current state of the system
         #' @param state the name of the state to be plotted
         plot_state = function(state){
+            if( !("raster" %in% rownames(installed.packages())) ){
+                stop( "The raster package is required for plotting the maps of states - please install or add to libPath" )
+            }
+            
+            
             ## browser()
             tmp <- private$model_description("hillslope",include_states=TRUE)
             if( !all(tmp$name[tmp$role=="state"] %in% names(private$model$hillslope)) ){
