@@ -6,6 +6,8 @@
   package. Except for change below algorithms as for v0.0.4
 - Input format of model changed to reflect `dynatopGIS` v0.1
 - Removal of banding functions since these are now in dynatopGIS
+- All units now in m and seconds
+- Precipitation and PET inputs now expected to be metres accured over the timestep rather then m per hour
 
 ## New Features
 
