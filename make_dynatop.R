@@ -37,7 +37,9 @@ save("Swindale",file="./dynatop/data/Swindale.rda")
 ## ########################################
 ## This code uses Swindale and fits nearly all the input and output calls
 rm(list=ls())
-devtools::load_all("./dynatop"); data("Swindale"); m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel(mass_check=TRUE)
+devtools::load_all("./dynatop"); data("Swindale");
+
+profvis::profvis({m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel(mass_check=TRUE)})
 
 head( m1$get_channel_inflow() )
 head( m1$get_channel_inflow(TRUE) )
