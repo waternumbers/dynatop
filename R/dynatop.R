@@ -453,7 +453,7 @@ dynatop <- R6::R6Class(
             model <- private$model
             
             ## maximum lateral flow from saturated zone per unit area
-            model$hillslope$l_szmax <- exp( model$param[model$hillslope$ln_t0] )*model$hillslope$s_bar
+            l_szmax <- exp( model$param[model$hillslope$ln_t0] )*model$hillslope$s_bar
             
             ## initialise the root zone
             model$hillslope$s_rz <- pmax( pmin( model$param[ model$hillslope$s_rz0 ], 1) ,0 ) * model$param[ model$hillslope$s_rzmax ]
@@ -461,11 +461,9 @@ dynatop <- R6::R6Class(
             model$hillslope$s_uz  <- model$hillslope$s_sf <- 0
             
             ## initialise the saturated zone
-            model$hillslope$sum_l_sz_in <- model$hillslope$l_sz <- pmin(model$hillslope$l_szmax,initial_recharge)
-            model$hillslope$s_sz <- pmax(0, model$param[ model$hillslope$m ]*( log(model$hillslope$l_szmax) - log(model$hillslope$l_sz)))
+            model$hillslope$l_sz_inst <- pmin(l_szmax,initial_recharge)
+            model$hillslope$s_sz <- pmax(0, model$param[ model$hillslope$m ]*( log(l_szmax) - log(model$hillslope$l_sz)))
             
-            model$channel$sum_l_sz_in <- initial_recharge
-
             ## put model back into private storage
             private$model <- model
             
@@ -476,6 +474,7 @@ dynatop <- R6::R6Class(
                         
             ## simulate a time step to sort out mass balance
             ## will presume it returns the actual model to private
+            
             private$sim_hs(FALSE,NULL,NULL,tmp)
             private$time_series$channel_inflow <- NULL # remove this which is generated
             private$time_series$mass_errors <- NULL
@@ -497,9 +496,6 @@ dynatop <- R6::R6Class(
         ## ###############################
         ## function to perform simulations
         sim_hs = function(mass_check,keep_states,sub_step,obs_data=NULL){
-            
-            ## set this which is a hnager over and need removing
-            sz_opt <- list(omega=1,theta=1)
             
             ## compute time substep
             if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
@@ -546,9 +542,15 @@ dynatop <- R6::R6Class(
             return_states <- list(idx = idx,
                                   store = rep(list(NULL),sum(idx))
                                   )
+
+            ## compute the constants for each HSU
+            hillslope$l_szmax <- exp( hillslope$ln_t0 )*hillslope$s_bar*hillslope$area # max lateral flow as [m3/s]
+            sf_lambda <- ts$sub_step/hillslope$t_sf
+            sf_k1 <- 1- exp(-sf_lambda)
+            sf_k2 <- 1 - ((1 - exp(-sf_lambda))/sf_lambda)
+            rm(sf_lambda)
             
-            ## start loop of time steps
-            
+            ## start loop of time steps            
             for(it in 1:nrow(obs_data)){
                 
                 ## set the inputs to the hillslope and channel
@@ -572,26 +574,39 @@ dynatop <- R6::R6Class(
                     
                     ## remove fluxes from previous time step since not needed
                     ## should be over written but...
-                    lateral_flux$sf[] <- 0
+                    lateral_flux$sf[] <- 0 # stores the inflow volume to each HSU as a volume [m3]
                     lateral_flux$sz[] <- 0
                     
                     ## Step 1: Distribute any surface storage downslope
-                    for(idx in sqnc$sf){ ## loop all bands of surface in hillslopes
-                        ## compute surface flux                        
-                        hillslope$l_sf[idx] <- lateral_flux$sf[ hillslope$id[idx] ] / hillslope$area[idx]
-                        ## compute the new state value
-                        tilde_sf <- fode( hillslope$l_sf[idx]/ts$sub_step, 1/hillslope$t_sf[idx],
-                                         hillslope$s_sf[idx],ts$sub_step)
-                        ## work out out flow
-                        hillslope$l_sf[idx] <- hillslope$s_sf[idx] + hillslope$l_sf[idx] - tilde_sf
-                        hillslope$s_sf[idx] <- tilde_sf
-                        
-                        for(ii in idx){
-                            lateral_flux$sf[ hillslope$sf_dir[[ii]]$idx ]  <-
-                                lateral_flux$sf[ hillslope$sf_dir[[ii]]$idx ] + 
-                                hillslope$sf_dir[[ii]]$frc * hillslope$l_sf[ii] * hillslope$area[ii]
-                        }
+                    ## move the following so computed once
+                    
+                    ## initialise hillslope lateral flow out as volume
+                    hillslope$l_sf <- hillslope$area * sf_k1
+                    for(ii in sqnc$sf){ ## loop through all HSUs in order
+                        hillslope$l_sf[ii] <- hillslope$l_sf[ii] + sf_k2[ii]*lateral_flux$sf[ hillslope$id[ii] ]
+                        lateral_flux$sf[ hillslope$sf_dir[[ii]]$idx ] <- lateral_flux$sf[ hillslope$sf_dir[[ii]]$idx ] +
+                            hillslope$sf_dir[[ii]]$frc*hillslope$l_sf[ii]
                     }
+                    hillslope$l_sf <- hillslope$l_sf / hillslope$area # convert to [m]
+                    ## mass balance to get ne storage
+                    hillslope$s_sf <- hillslope$s_sf + (lateral_flux$sf[ hillslope$id ]/ hillslope$area) - hillslope$l_sf
+                    
+                    ## for(idx in sqnc$sf){ ## loop all bands of surface in hillslopes
+                    ##     ## compute surface flux                        
+                    ##     hillslope$l_sf[idx] <- lateral_flux$sf[ hillslope$id[idx] ] / hillslope$area[idx]
+                    ##     ## compute the new state value
+                    ##     tilde_sf <- fode( hillslope$l_sf[idx]/ts$sub_step, 1/hillslope$t_sf[idx],
+                    ##                      hillslope$s_sf[idx],ts$sub_step)
+                    ##     ## work out out flow
+                    ##     hillslope$l_sf[idx] <- hillslope$s_sf[idx] + hillslope$l_sf[idx] - tilde_sf
+                    ##     hillslope$s_sf[idx] <- tilde_sf
+                        
+                    ##     for(ii in idx){
+                    ##         lateral_flux$sf[ hillslope$sf_dir[[ii]]$idx ]  <-
+                    ##             lateral_flux$sf[ hillslope$sf_dir[[ii]]$idx ] + 
+                    ##             hillslope$sf_dir[[ii]]$frc * hillslope$l_sf[ii] * hillslope$area[ii]
+                    ##     }
+                    ## }
                     
                     
                     
@@ -600,8 +615,7 @@ dynatop <- R6::R6Class(
                     hillslope$q_sf_rz <- pmin( hillslope$q_sfmax*ts$sub_step,hillslope$s_sf )
                     hillslope$s_sf <- hillslope$s_sf - hillslope$q_sf_rz
                     
-                    ## solve ODE
-                    
+                    ## solve ODE                    
                     tilde_rz <- fode( hillslope$p + (hillslope$q_sf_rz/ts$sub_step),
                                      hillslope$e_p/hillslope$s_rzmax,
                                      hillslope$s_rz,ts$sub_step )
@@ -628,67 +642,42 @@ dynatop <- R6::R6Class(
                     hillslope$s_uz <- tilde_uz
                     
                     ## Step 4: Solve saturated zone
-                   
-                    ## move current states to values for start of the time step
-                    hillslope$sum_l_sz_in_t <- hillslope$sum_l_sz_in # total inflow at start of time step
-                    hillslope$l_sz_t <- hillslope$l_sz # total outflow at start of time step
-                    channel$sum_l_sz_in_t <- channel$sum_l_sz_in
-                    ## evaluate the values of the initial components of the kinematic solution
-                    hillslope$Q_minus_t <- pmin( hillslope$sum_l_sz_in_t, hillslope$l_szmax ) # inflow to saturated zone at start of timestep
-                    hillslope$Q_plus_t <- pmin( hillslope$l_sz_t, hillslope$l_szmax ) # outflow at start of timestep
-                    
+                    ## this is omega=theta=1 solution with explicit velocity and average inflow
+                                        
                     ## compute velocity estimate and kinematic parameters
-                    cbar <- (hillslope$l_szmax/hillslope$m)*
-                        exp(- hillslope$s_sz / hillslope$m)
-                    lambda <- sz_opt$omega + sz_opt$theta*cbar*ts$sub_step/hillslope$delta_x
-                    lambda_prime <- sz_opt$omega + (1-sz_opt$theta)*cbar*ts$sub_step/hillslope$delta_x
+                    cbar <- (hillslope$l_szmax/hillslope$m)*exp(- hillslope$s_sz / hillslope$m)
+                    lambda <- cbar*ts$sub_step/hillslope$delta_x
                     
-                    ## update flows by looping through bands
-                    for(idx in sqnc$sz){
-                        hillslope$sum_l_sz_in[idx] <- lateral_flux$sz[ hillslope$id[idx] ] / hillslope$area[idx] ## current inflow in m/s
+                    ## initialise hillslope instantaneous lateral flow out as [m3/s]
+                    hillslope$l_sz_inst <- hillslope$area*(hillslope$l_sz_inst + lambda*(hillslope$q_uz_sz/ts$sub_step))
+                    
+                    ## initialise the lateralflux otuflow volume [m3]
+                    hillslope$l_sz <- (ts$sub_step/2)*hillslope$l_sz_inst
+                    ## loop HSUs
+                    for(ii in sqnc$sz){ ## loop through all HSUs in order
                         
-                        ## compute the new state value
-                        ## jdx <- hillslope$sum_l_sz_in[idx] > hillslope$l_szmax[idx]
-                        ## hillslope$Q_minus_tDt[idx[!jdx]] <- hillslope$sum_l_sz_in[idx[!jdx]]
-                        ## hillslope$Q_minus_tDt[idx[jdx]] <- hillslope$l_szmax[idx[jdx]]    
-                        
-                        hillslope$Q_minus_tDt[idx] <- pmin( hillslope$sum_l_sz_in[idx],hillslope$l_szmax[idx] ) # current inflow to saturated zone
-                        
-                        k <- lambda_prime[idx] * hillslope$Q_plus_t[idx] +
-                            (1-lambda_prime[idx]) * hillslope$Q_minus_t[idx] +
-                            cbar[idx]*hillslope$q_uz_sz[idx]/hillslope$delta_x[idx]
-
-                        hillslope$l_sz[idx] <- pmin( (k - (1-lambda[idx])*hillslope$Q_minus_tDt[idx])/lambda[idx] , hillslope$l_szmax[idx] )
-                        
-                        if( any(hillslope$l_sz[idx]<0) ){
-                            warning("Negative flow in kinematic solutions, consider revising weights")
-                            hillslope$l_sz[idx] <- pmax(hillslope$l_sz[idx],0)
-                        }
-                        
-                        for(ii in idx){
-                            
-                            lateral_flux$sz[ hillslope$sz_dir[[ii]]$idx ] <-
-                                lateral_flux$sz[ hillslope$sz_dir[[ii]]$idx ] +
-                                hillslope$sz_dir[[ii]]$frc * hillslope$l_sz[ii] * hillslope$area[ii]
-                            
-                        }
+                        q_in <- lateral_flux$sz[ hillslope$id[ii] ] / ts$sub_step
+                        if(q_in > hillslope$l_szmax[ii]){ q_in <- hillslope$l_szmax[ii]}
+                        hillslope$l_sz_inst[ii] <- hillslope$l_sz_inst[ii] + lambda[ii] * q_in
+                        hillslope$l_sz[ii] <- hillslope$l_sz[ii] + (ts$sub_step/2)*hillslope$l_sz_inst[ii]
+                        if(hillslope$l_sz[ii] > hillslope$l_szmax[ii]){ hillslope$l_sz[ii] <- hillslope$l_szmax[ii]}
+                        lateral_flux$sz[ hillslope$sz_dir[[ii]]$idx ] <- lateral_flux$sz[ hillslope$sz_dir[[ii]]$idx ] +
+                            hillslope$sz_dir[[ii]]$idx*hillslope$l_sz[ii]
                     }
+                    ## convert back units to [m]
+                    hillslope$l_sz_inst <- hillslope$l_sz_inst / hillslope$area
+                    hillslope$l_sz <- hillslope$l_sz/hillslope$area
                     
                     ## update volumes in hillslope
-                    tilde_sz <- hillslope$s_sz +
-                        ts$sub_step*(hillslope$l_sz_t + hillslope$l_sz)/2 -
-                        ts$sub_step*(hillslope$sum_l_sz_in_t + hillslope$sum_l_sz_in)/2 -
-                        hillslope$q_uz_sz
-                    
+                    tilde_sz <- hillslope$s_sz + (lateral_flux$sz[ hillslope$id ]/ hillslope$area) - hillslope$l_sz
                     hillslope$s_sz <- pmax(0,tilde_sz)
                     hillslope$q_sz_sf <- hillslope$s_sz - tilde_sz
                     
                     ## update volume of inflow to channel
                     ##browser()
-                    channel$sum_l_sz_in <- lateral_flux$sz[channel$id] / channel$area
                     channel$s_ch <-  channel$s_ch +
                         (lateral_flux$sf[channel$id] / channel$area ) +
-                        ts$sub_step*(channel$sum_l_sz_in_t + channel$sum_l_sz_in)/2
+                        (lateral_flux$sz[channel$id] / channel$area )
                     
                     ## step 5 - correct the stores for saturation flows
                     saturated_index <- hillslope$s_sz <= 0
@@ -732,14 +721,9 @@ dynatop <- R6::R6Class(
                                     hillslope$s_sz)*hs0$area ) +
                               sum(vol_ch_sz)
 
-                              ## mass_s_sz +
-                              ## sum(hillslope$q_uz_sz*hillslope$area) -
-                              ## sum(hillslope$q_sz_sf*hillslope$area) -
-                              ## - sum(hillslope$s_sz*hillslope$area) -
-                              ## sum(vol_ch_sz)
                               )
                         if( any( abs(mass_errors[ ((it-1)*ts$n_sub_step) + inner, 3:6]) > 1e-6) ){
-                            browser()
+                            ##browser()
                             print( mass_errors[ ((it-1)*ts$n_sub_step) + inner,] )
                         }
                     }
@@ -758,7 +742,7 @@ dynatop <- R6::R6Class(
                 }
             } ## end of timestep loop
 
-
+            
             ## copy states back into model
             tmp <- private$extract_states(hillslope,"hillslope")
             nm <- c("id",setdiff( names(private$model$hillslope),names(tmp)))
@@ -791,18 +775,19 @@ dynatop <- R6::R6Class(
                 out <- data.frame(name = c("id","atb_bar","s_bar","area","delta_x","sz_dir","sf_dir", # attributes associated with catchment HSU
                                            "precip","pet", # names of input series
                                            "q_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","t_sf", # parameter names
-                                           "s_sf","s_rz","s_uz","s_sz","sum_l_sz_in","l_sz","l_szmax", # states
-                                           "p","e_p","e_t","l_sf","q_sf_rz","q_rz_sf","q_rz_uz","q_uz_sz","q_uz_sf","q_sz_sf","e_t","l_sf","sum_l_sz_in_t","l_sz_t","Q_minus_t","Q_plus_t","Q_minus_tDt"), ## tempory stores not needed for next timestep
+                                           "s_sf","s_rz","s_uz","s_sz","l_sz_inst", # states
+                                           "p","e_p","e_t","l_sf","l_sz","l_sz_max",
+                                           "q_sf_rz","q_rz_sf","q_rz_uz","q_uz_sz","q_uz_sf","q_sz_sf"), ## tempory stores not needed for next timestep
                                   role = c(rep("attribute",7),
                                            rep("data_series",2),
                                            rep("parameter",7),
-                                           rep("state",7),
-                                           rep("tmp",17)),
+                                           rep("state",5),
+                                           rep("tmp",12)),
                                   type = c("integer",rep("numeric",4),rep("list",2),
                                            rep("character",2),
                                            rep("character",7),
-                                           rep("numeric",7),
-                                           rep("numeric",17)
+                                           rep("numeric",5),
+                                           rep("numeric",12)
                                    ),
                                   stringsAsFactors=FALSE)
                 
@@ -811,17 +796,17 @@ dynatop <- R6::R6Class(
                 out <- data.frame(name= c("id","area","length","flow_dir", # states
                                           "precip","pet", # inputs
                                           "v_ch", # parameters
-                                          "sum_l_sz_in", #state
+                                          # "sum_l_sz_in", #state
                                           "p","e_p","l_sf","s_ch","sum_l_sz_in_t"),
                                   role = c(rep("attribute",4),
                                            rep("data_series",2),
                                            rep("parameter",1),
-                                           rep("state",1),
+                                           # rep("state",1),
                                            rep("tmp",5)),
                                   type = c("integer",rep("numeric",2),"list",
                                            rep("character",2),
                                            rep("character",1),
-                                           rep("numeric",1),
+                                           # rep("numeric",1),
                                            rep("numeric",5)),
                                   stringsAsFactors=FALSE)
             }
@@ -894,7 +879,7 @@ dynatop <- R6::R6Class(
                               sf = sapply(model$hillslope$sf_dir,function(x){x$band}),
                               sz = sapply(model$hillslope$sz_dir,function(x){x$band})
                               )
-                out$sqnc[[ii]] <- by(1:length(model$hillslope$id),bnd,c)
+                out$sqnc[[ii]] <- (1:length(model$hillslope$id))[order(bnd)]
             }
             
             ## storage for lateral fluxes stored as volumes
