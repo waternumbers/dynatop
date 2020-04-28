@@ -218,7 +218,7 @@ dynatop <- R6::R6Class(
     ),
     private = list(
         ## stores of data
-        version = 0.1,
+        version = 0.101,
         time_series = list(),
         info = list(),
         model = NULL,
@@ -548,6 +548,7 @@ dynatop <- R6::R6Class(
                                   )
             
             ## start loop of time steps
+            
             for(it in 1:nrow(obs_data)){
                 
                 ## set the inputs to the hillslope and channel
@@ -576,8 +577,7 @@ dynatop <- R6::R6Class(
                     
                     ## Step 1: Distribute any surface storage downslope
                     for(idx in sqnc$sf){ ## loop all bands of surface in hillslopes
-                        ## compute surface flux
-                        
+                        ## compute surface flux                        
                         hillslope$l_sf[idx] <- lateral_flux$sf[ hillslope$id[idx] ] / hillslope$area[idx]
                         ## compute the new state value
                         tilde_sf <- fode( hillslope$l_sf[idx]/ts$sub_step, 1/hillslope$t_sf[idx],
@@ -648,12 +648,16 @@ dynatop <- R6::R6Class(
                         hillslope$sum_l_sz_in[idx] <- lateral_flux$sz[ hillslope$id[idx] ] / hillslope$area[idx] ## current inflow in m/s
                         
                         ## compute the new state value
+                        ## jdx <- hillslope$sum_l_sz_in[idx] > hillslope$l_szmax[idx]
+                        ## hillslope$Q_minus_tDt[idx[!jdx]] <- hillslope$sum_l_sz_in[idx[!jdx]]
+                        ## hillslope$Q_minus_tDt[idx[jdx]] <- hillslope$l_szmax[idx[jdx]]    
+                        
                         hillslope$Q_minus_tDt[idx] <- pmin( hillslope$sum_l_sz_in[idx],hillslope$l_szmax[idx] ) # current inflow to saturated zone
                         
                         k <- lambda_prime[idx] * hillslope$Q_plus_t[idx] +
                             (1-lambda_prime[idx]) * hillslope$Q_minus_t[idx] +
                             cbar[idx]*hillslope$q_uz_sz[idx]/hillslope$delta_x[idx]
-                        
+
                         hillslope$l_sz[idx] <- pmin( (k - (1-lambda[idx])*hillslope$Q_minus_tDt[idx])/lambda[idx] , hillslope$l_szmax[idx] )
                         
                         if( any(hillslope$l_sz[idx]<0) ){
@@ -680,6 +684,7 @@ dynatop <- R6::R6Class(
                     hillslope$q_sz_sf <- hillslope$s_sz - tilde_sz
                     
                     ## update volume of inflow to channel
+                    ##browser()
                     channel$sum_l_sz_in <- lateral_flux$sz[channel$id] / channel$area
                     channel$s_ch <-  channel$s_ch +
                         (lateral_flux$sf[channel$id] / channel$area ) +

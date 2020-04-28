@@ -1,5 +1,5 @@
 pandoc: '2.6'
-pkgdown: 1.4.1
+pkgdown: 1.5.1
 pkgdown_sha: ~
 articles:
   Selected_References: Selected_References.html
@@ -7,4 +7,5 @@ articles:
   The_solution_of_Dynamic_TOPMODEL: The_solution_of_Dynamic_TOPMODEL.html
   Time_Delay_Channel_Routing: Time_Delay_Channel_Routing.html
   dynatop: dynatop.html
+last_built: 2020-04-28T14:55Z
 
