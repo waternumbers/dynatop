@@ -255,8 +255,7 @@ dynatop <- R6::R6Class(
                                 paste(prop$name[!idx],collapse=",")) )
                 }
                 
-                ## check data types
-                
+                ## check data types               
                 tmp <- sapply(model[[ii]],class) # types of the columns
                 idx <- tmp[ prop$name ] != prop$type
                 if( any( idx ) ){

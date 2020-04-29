@@ -1,0 +1,41 @@
+---
+title: "Notes on the Implimentation"
+output: 
+  bookdown::html_document2:
+    number_sections: false
+    toc: true
+    toc_depth: 2
+pkgdown:
+  as_is: true
+vignette: >
+  %\VignetteIndexEntry{Notes on the Implimentation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This document represents some informal notes on relating the code to the model
+equations as given in the vignettes.
+
+# Input Series
+
+It is expected that the precipitation and evapotranspiration inputs series are
+given in $m$ accured over the time step. Using the notation used for
+describing the model this is $\int_{\Delta t} p dt$ and 
+$\int_{\Delta t} e_p dt$.
+
+The data series for the diffuse and point inputs used in the channel routing
+should be in $m^3/s$ and are presumed constant over the time step.
+
+# Relating the notation and code variables
+
+To aid the readability of the code the variables are labelled consistently
+with regards to the vignettes. For example:
+
+- Single subscript: $l_{sz}$ becomes `l_sz`, $s_{uz}$ becomes `s_uz` etc
+- Directional variables: $q_{rz \rightarrow uz}$ becomes `q_rz_uz`, etc.
+- Integrated valiables: $\int_{\Delta t}l_{sz} dt$ becomes `il_sz`, $\int_{\Delta t}q_{rz \rightarrow uz} dt$ becomes `iq_rz_uz`
+- Variables with a tilde: $\tilde{s}_{sz}$ becomes `ts_sz`
+- Greek letters are spelt: $\lambda$ becomes `lambda`
+
+In general we store values within list elements
+														 

@@ -5,13 +5,13 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Dynamic TOPMODEL Implimentation • dynatop</title>
+<title>The Dynamic TOPMODEL equations • dynatop</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
 <!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
-<script src="../pkgdown.js"></script><meta property="og:title" content="The Dynamic TOPMODEL Implimentation">
+<script src="../pkgdown.js"></script><meta property="og:title" content="The Dynamic TOPMODEL equations">
 <meta property="og:description" content="dynatop">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -57,13 +57,16 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/Notes_on_the_implimentation.html">UNKNOWN TITLE</a>
+    </li>
+    <li>
       <a href="../articles/Selected_References.html">Selected References</a>
     </li>
     <li>
       <a href="../articles/The_Model_Object.html">The Model Object</a>
     </li>
     <li>
-      <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Dynamic TOPMODEL Implimentation</a>
+      <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Dynamic TOPMODEL equations</a>
     </li>
     <li>
       <a href="../articles/Time_Delay_Channel_Routing.html">Time Delay Channel Routing</a>
@@ -94,7 +97,7 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1 data-toc-skip>The Dynamic TOPMODEL Implimentation</h1>
+      <h1 data-toc-skip>The Dynamic TOPMODEL equations</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/../vignettes/The_solution_of_Dynamic_TOPMODEL.Rmd"><code>../vignettes/The_solution_of_Dynamic_TOPMODEL.Rmd</code></a></small>
@@ -119,13 +122,17 @@ surface)</p>
 for ‘similar’ areas of hill slope the catchment a each time step.
 The second termed “channel” represents a length of river channel in a
 simplified manner allowing the extraction of the inflow from the hillslope.</p>
+<p>The solutions outlined below take an operator splitting approach allow
+sequential solution of the HSUs and processes with the HSUs. In doing this the
+choice has been made to represent the exchange of fluxes between and within
+HSUs as volumes (integrals of the flux over the timestep).</p>
 <div id="notation-and-nomenclature" class="section level1">
 <h1 class="hasAnchor">
 <a href="#notation-and-nomenclature" class="anchor"></a>Notation and nomenclature</h1>
 <p>The notation used can be broken down as follows. Table <a href="#tab:exchange-notation">1</a> outlines the notation used for describing a fluxes exchanged between HSUs. These variables are common across all HSUs.
 Table <a href="#tab:hs-notation">2</a> outlines the notation used for describing a hill
-slope HSU and Table <a href="#tab:ch-notation">3</a> for the channel HSU.
-All other notation is given in Table <a href="#tab:other-notation">4</a>.</p>
+slope HSU.
+All other notation is given in Table <a href="#tab:other-notation">3</a>.</p>
 <p>The following conventions are used:</p>
 <ul>
 <li><p>All fluxes (<span class="math inline">\(q_{* \rightarrow *}\)</span> and <span class="math inline">\(l_{*}\)</span>) are considered to be greater or
@@ -150,7 +157,7 @@ variable <span class="math inline">\(x\)</span> at time <span class="math inline
 <tbody>
 <tr class="odd">
 <td align="left">Lateral fluxes from HSUs</td>
-<td align="center"><span class="math inline">\(l_{ex}\)</span></td>
+<td align="center"><span class="math inline">\(l_{sf}\)</span></td>
 <td align="left">Total lateral flux from surface store</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
@@ -164,8 +171,8 @@ variable <span class="math inline">\(x\)</span> at time <span class="math inline
 </tr>
 <tr class="odd">
 <td align="left">Other HSU properties</td>
-<td align="center"><span class="math inline">\(f^{\left[k,j\right]}_{ex}\)</span></td>
-<td align="left">Fraction of <span class="math inline">\(l_{ex}\)</span> going from <span class="math inline">\(j\)</span>th</td>
+<td align="center"><span class="math inline">\(f^{\left[k,j\right]}_{sf}\)</span></td>
+<td align="left">Fraction of <span class="math inline">\(l_{sf}\)</span> going from <span class="math inline">\(j\)</span>th</td>
 <td align="center">-</td>
 </tr>
 <tr class="even">
@@ -201,7 +208,7 @@ HSU</caption>
 <tbody>
 <tr class="odd">
 <td align="left">Storage</td>
-<td align="center"><span class="math inline">\(s_{ex}\)</span></td>
+<td align="center"><span class="math inline">\(s_{sf}\)</span></td>
 <td align="left">Surface excess storage</td>
 <td align="center">m</td>
 </tr>
@@ -225,7 +232,7 @@ HSU</caption>
 </tr>
 <tr class="odd">
 <td align="left">Vertical fluxes within HSU</td>
-<td align="center"><span class="math inline">\(q_{ex \rightarrow rz}\)</span></td>
+<td align="center"><span class="math inline">\(q_{sf \rightarrow rz}\)</span></td>
 <td align="left">Flow from the surface excess store to the</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
@@ -251,7 +258,7 @@ HSU</caption>
 </tr>
 <tr class="odd">
 <td align="left"></td>
-<td align="center"><span class="math inline">\(q_{rz \rightarrow ex}\)</span></td>
+<td align="center"><span class="math inline">\(q_{rz \rightarrow sf}\)</span></td>
 <td align="left">Flow from the root zone to the surface</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
@@ -271,7 +278,7 @@ HSU</caption>
 </tr>
 <tr class="even">
 <td align="left"></td>
-<td align="center"><span class="math inline">\(q_{sz \rightarrow ex}\)</span></td>
+<td align="center"><span class="math inline">\(q_{sz \rightarrow sf}\)</span></td>
 <td align="left">Flow from saturated zone to surface</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
@@ -291,7 +298,7 @@ HSU</caption>
 </tr>
 <tr class="odd">
 <td align="left"></td>
-<td align="center"><span class="math inline">\(q_{exmax}\)</span></td>
+<td align="center"><span class="math inline">\(q_{sfmax}\)</span></td>
 <td align="left">Maximum flow rate from surface excess to</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
@@ -329,7 +336,7 @@ HSU</caption>
 </tr>
 <tr class="odd">
 <td align="left"></td>
-<td align="center"><span class="math inline">\(T_{ex}\)</span></td>
+<td align="center"><span class="math inline">\(T_{sf}\)</span></td>
 <td align="left">Surface excess storage time constant</td>
 <td align="center">s</td>
 </tr>
@@ -349,33 +356,7 @@ HSU</caption>
 </table>
 <table class="table">
 <caption>
-<span id="tab:ch-notation">Table 3: </span> Outline of notation for describing “channel”
-HSUs</caption>
-<thead><tr class="header">
-<th></th>
-<th align="center">Symbol</th>
-<th align="left">Description</th>
-<th align="center">unit</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td>Storage</td>
-<td align="center"><span class="math inline">\(s_ch\)</span></td>
-<td align="left"></td>
-<td align="center"></td>
-</tr>
-<tr class="even">
-<td>Other HSU properties</td>
-<td align="center"><span class="math inline">\(a_{ch}\)</span></td>
-<td align="left">Area</td>
-<td align="center">m<span class="math inline">\(^2\)</span>
-</td>
-</tr>
-</tbody>
-</table>
-<table class="table">
-<caption>
-<span id="tab:other-notation">Table 4: </span> Eternal inputs to HSUs</caption>
+<span id="tab:other-notation">Table 3: </span> Eternal inputs to HSUs</caption>
 <thead><tr class="header">
 <th align="left">Symbol</th>
 <th align="left">Description</th>
@@ -388,18 +369,20 @@ HSUs</caption>
 <td align="center">s</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\int_{\Delta t} p dt\)</span></td>
-<td align="left">Accumulated precipitation over a timestepm</td>
+<td align="left">
+<span class="math inline">\(p\)</span> Precipitation rate</td>
+<td align="left">m/s</td>
 <td align="center"></td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\int_{\Delta t} e_p dt\)</span></td>
-<td align="left">Accumulated potential evapotranspiration over a time step</td>
-<td align="center">m</td>
+<td align="left">
+<span class="math inline">\(e_p\)</span> Potential evapotran</td>
+<td align="left">spiration rate m/s</td>
+<td align="center"></td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\mathcal{S}^{\left[i\right]}_{ex}\)</span></td>
-<td align="left">The set of values <span class="math inline">\(j\)</span> for which <span class="math inline">\(f_{ex}^{\left[i,j\right]}&gt;0\)</span>
+<td align="left"><span class="math inline">\(\mathcal{S}^{\left[i\right]}_{sf}\)</span></td>
+<td align="left">The set of values <span class="math inline">\(j\)</span> for which <span class="math inline">\(f_{sf}^{\left[i,j\right]}&gt;0\)</span>
 </td>
 <td align="center">-</td>
 </tr>
@@ -412,31 +395,29 @@ HSUs</caption>
 </tbody>
 </table>
 </div>
-<div id="exchange-of-fluxes-between-hsus" class="section level1">
+<div id="order-of-hsus-and-the-exchange-of-fluxes" class="section level1">
 <h1 class="hasAnchor">
-<a href="#exchange-of-fluxes-between-hsus" class="anchor"></a>Exchange of fluxes between HSUs</h1>
-<p>Fluxes between the HSUs occur at two levels, the surface (<span class="math inline">\(l_{ex}\)</span>) and the
+<a href="#order-of-hsus-and-the-exchange-of-fluxes" class="anchor"></a>Order of HSUs and the exchange of fluxes</h1>
+<p>Fluxes between the HSUs occur at two levels, the surface (<span class="math inline">\(l_{sf}\)</span>) and the
 saturated zone (<span class="math inline">\(l_{sz}\)</span>).
 If all the lateral flux from an HSU is redirected to HSUs within the catchment then
 <span class="math display">\[
-\sum\limits_{j} f^{\left[j,i\right]}_{ex} =
+\sum\limits_{j} f^{\left[j,i\right]}_{sf} =
     \sum\limits_{k} f^{\left[k,i\right]}_{sz} =1
 \]</span></p>
-<p>The total incoming flux to the <span class="math inline">\(i\)</span>th HSU over at
-time at each level is
-given by</p>
+<p>The total incoming flux to the <span class="math inline">\(i\)</span>th HSU expressed in <span class="math inline">\(m^3/s\)</span> is for each
+level given by</p>
 <p><span class="math display">\[
-\sum_{j \in \mathcal{S}^{\left[i\right]}_{ex}} f_{ex}^{\left[i,j\right]}
-\frac{a^{\left[j\right]}}{a^{\left[i\right]}}\int_{\Delta t}l^{\left[j\right]}_{ex}dt
+\sum_{j \in \mathcal{S}^{\left[i\right]}_{*}} f_{*}^{\left[i,j\right]}a^{\left[j\right]}
+l^{\left[j\right]}_{*}
 \]</span></p>
-<p>and</p>
+<p>Over a time step <span class="math inline">\(\Delta t\)</span> the volume of the incoming flux in <span class="math inline">\(m^3\)</span> is</p>
 <p><span class="math display">\[
-\sum_{j} f_{sz}^{\left[i,j\right]}
-\frac{a^{\left[j\right]}}{a^{\left[i\right]}}\int_{\Delta t}l^{\left[j\right]}_{sz}dt
+\sum_{j \in \mathcal{S}^{\left[i\right]}_{*}} f_{*}^{\left[i,j\right]} a^{\left[j\right]}
+\int_{\Delta t}l^{\left[j\right]}_{*}dt
 \]</span></p>
 <p>The solutions proposed for the individual HSUs are limited to the situation
-that the HSUs can be ordered for each level so that they can be solved in a
-sequence that results in all input fluxes from other HSUs being known.</p>
+that the HSUs can be ordered for each level so when solved in sequence the input fluxes from other HSUs (as given above) are known.</p>
 </div>
 <div id="hill-slope-hsu" class="section level1">
 <h1 class="hasAnchor">
@@ -454,70 +435,66 @@ taken to be constant.</p>
 <p>For the <span class="math inline">\(i\)</span>th hill slope HSU the alteration of the surface excess store is
 given by
 <span class="math display">\[
-\frac{ds^{\left[i\right]}_{ex}}{dt} =  
-    \sum\limits_{j \in \mathcal{S}_{ex}^{\left[i\right]}} f^{\left[i,j\right]}_{ex}\frac{a^{\left[j\right]}}{a^{\left[i\right]}}l^{\left[j\right]}_{ex}
-    - l^{\left[i\right]}_{ex}
-    + q^{\left[i\right]}_{sz \rightarrow ex}
-    + q^{\left[i\right]}_{rz \rightarrow ex}
-    - q^{\left[i\right]}_{ex \rightarrow rz}
+\frac{ds^{\left[i\right]}_{sf}}{dt} =  
+    \sum\limits_{j \in \mathcal{S}_{sf}^{\left[i\right]}} f^{\left[i,j\right]}_{sf}\frac{a^{\left[j\right]}}{a^{\left[i\right]}}l^{\left[j\right]}_{sf}
+    - l^{\left[i\right]}_{sf}
+    + q^{\left[i\right]}_{sz \rightarrow sf}
+    + q^{\left[i\right]}_{rz \rightarrow sf}
+    - q^{\left[i\right]}_{sf \rightarrow rz}
 \]</span></p>
 <p>The solution of this is approximated through two stages.
-The first stage computes the lateral flux <span class="math inline">\(l^{\left[i\right]}_{ex}\)</span> from the HSU based on the storage at
+The first stage computes the lateral flux <span class="math inline">\(l^{\left[i\right]}_{sf}\)</span> from the HSU based on the storage at
 the start of the time step; ignoring the potential
 vertical flux within the HSU.
-The second stage, carried out in Step 6 corrects for the vertical fluxes.</p>
+The second stage, carried out in Step 5 corrects for the vertical fluxes.</p>
 <p>The computation of the lateral flux from the surface excess storage is based on two assumption</p>
 <ol style="list-style-type: decimal">
 <li>There are minimal non-linearities so the surface excess store of a hill slope HSU can be treated as linear tanks with
-<span class="math inline">\(l^{\left[i\right]}_{ex} = \frac{1}{T^{\left[i\right]}_{ex}} s^{\left[i\right]}_{ex}\)</span>.</li>
+<span class="math inline">\(l^{\left[i\right]}_{sf} = \frac{1}{T^{\left[i\right]}_{sf}} s^{\left[i\right]}_{sf}\)</span>.</li>
 <li>The inflow is approximatley constant during the timestep.</li>
 </ol>
 <p>Under these assumptions we write
 <span class="math display">\[
-\frac{d\tilde{s}_{ex}}{dt} = \frac{1}{\Delta t} \sum\limits_{j \in \mathcal{S}_{ex}^{\left[i\right]}} f^{\left[i,j\right]}_{ex}\frac{a^{\left[j\right]}}{a^{\left[i\right]}} \int_{\Delta t}l^{\left[j\right]}_{ex}dt
-- \frac{1}{T_{ex}^{\left[i\right]}} \tilde{s}
-\quad \left. \tilde{s}_{ex} \right\rvert_{t} = \left. s_{ex} \right\rvert_{t}
+\frac{d\tilde{s}_{sf}}{dt} = \frac{1}{\Delta t} \sum\limits_{j \in \mathcal{S}_{sf}^{\left[i\right]}} f^{\left[i,j\right]}_{sf}\frac{a^{\left[j\right]}}{a^{\left[i\right]}} \int_{\Delta t}l^{\left[j\right]}_{sf}dt
+- \frac{1}{T_{sf}^{\left[i\right]}} \tilde{s}
+\quad \left. \tilde{s}_{sf} \right\rvert_{t} = \left. s_{sf} \right\rvert_{t}
 \]</span></p>
 <p>which can be solved to give
 <span class="math display">\[
-\left. \tilde{s}_{ex} \right\rvert_{t+\Delta t} =
-\left. s_{ex}^{\left[i\right]}\right\rvert_{t}
-\exp\left(-\frac{\Delta t}{T_{ex}^{\left[i\right]}}\right)
-+ \left(1 - \exp\left(-\frac{\Delta t}{T_{ex}^{\left[i\right]}}\right)\right)
-\frac{T_{ex}^{\left[i\right]}}{\Delta t} \sum\limits_{j \in \mathcal{S}_{ex}^{\left[i\right]}} f^{\left[i,j\right]}_{ex}\frac{a^{\left[j\right]}}{a^{\left[i\right]}} \int_{\Delta t}l^{\left[j\right]}_{ex}dt
+\left. \tilde{s}_{sf} \right\rvert_{t+\Delta t} =
+\left. s_{sf}^{\left[i\right]}\right\rvert_{t}
+\sfp\left(-\frac{\Delta t}{T_{sf}^{\left[i\right]}}\right)
++ \left(1 - \exp\left(-\frac{\Delta t}{T_{sf}^{\left[i\right]}}\right)\right)
+\frac{T_{sf}^{\left[i\right]}}{\Delta t} \sum\limits_{j \in \mathcal{S}_{sf}^{\left[i\right]}} f^{\left[i,j\right]}_{sf}\frac{a^{\left[j\right]}}{a^{\left[i\right]}} \int_{\Delta t}l^{\left[j\right]}_{sf}dt
 \]</span></p>
 <p>Mass balance gives
 <span class="math display">\[
- \int_{\Delta t}l^{\left[i\right]}_{ex}dt 
- = \left. s_{ex}^{\left[i\right]}\right\rvert_{t}
- - \left. \tilde{s}_{ex}\right\rvert_{t+\Delta t}
-+ \sum\limits_{j \in \mathcal{S}_{ex}^{\left[i\right]}} f^{\left[i,j\right]}_{ex}\frac{a^{\left[j\right]}}{a^{\left[i\right]}} \int_{\Delta t}l^{\left[j\right]}_{ex}dt
- \]</span>
-which can be evaluated since due to the ordering assumption
-<span class="math display">\[
-\sum\limits_{j \in \mathcal{S}_{ex}^{\left[i\right]}} f^{\left[i,j\right]}_{ex}\frac{a^{\left[j\right]}}{a^{\left[i\right]}} \int_{\Delta t}l^{\left[j\right]}_{ex}dt
-\]</span>
-is known.</p>
+ \int_{\Delta t}l^{\left[i\right]}_{sf}dt 
+ = \left. s_{sf}^{\left[i\right]}\right\rvert_{t}
+ - \left. \tilde{s}_{sf}\right\rvert_{t+\Delta t}
++ \sum\limits_{j \in \mathcal{S}_{sf}^{\left[i\right]}} f^{\left[i,j\right]}_{sf}\frac{a^{\left[j\right]}}{a^{\left[i\right]}} \int_{\Delta t}l^{\left[j\right]}_{sf}dt
+ \]</span></p>
 </div>
 <div id="step-2-root-zone" class="section level2">
 <h2 class="hasAnchor">
 <a href="#step-2-root-zone" class="anchor"></a>Step 2: Root Zone</h2>
 <p>For a single HSU
 <span class="math display">\[
-\frac{ds_{rz}}{dt}=p + q_{ex \rightarrow rz}
--\frac{s_{rx}}{s_{rzmax}}e_{p}-q_{rz \rightarrow ex} - q_{rz \rightarrow uz}
+\frac{ds_{rz}}{dt}=p + q_{sf \rightarrow rz}
+-\frac{s_{rx}}{s_{rzmax}}e_{p}-q_{rz \rightarrow sf} - q_{rz \rightarrow uz}
 \]</span>
 Assuming all the water in the surface excess store is available to the root
-zone so long as <span class="math inline">\(q_{ex \rightarrow rz} \leq q_{exmax}\)</span> the integral of the
+zone so long as <span class="math inline">\(q_{sf \rightarrow rz} \leq q_{sfmax}\)</span> the integral of the
 flow from the surface excess store can be approximated by
 <span class="math display">\[
-\int\limits_{\Delta t} q_{ex \rightarrow rz} dt =
-\min\left(q_{exmax}\Delta t,\left.\tilde{s}_{ex}\right.\rvert_{t+\Delta t}\right)
+\int\limits_{\Delta t} q_{sf \rightarrow rz} dt =
+\min\left(q_{sfmax}\Delta t,\left.\tilde{s}_{sf}\right.\rvert_{t+\Delta t}\right)
 \]</span>
-Using this the root zone is solved as a two step process. Firstly the ODE
+Using this and assuming constant precipitation and potential
+evapotranspiration rates over the time step the root zone is solved as a two step process. Firstly the ODE
 <span class="math display">\[
 \frac{d\tilde{s}_{rz}}{dt} = p
-+ \frac{1}{\Delta t}\int\limits_{\Delta t} q_{ex \rightarrow rz} dt
++ \frac{1}{\Delta t}\int\limits_{\Delta t} q_{sf \rightarrow rz} dt
 - \frac{e_{p}}{s_{rzmax}}\tilde{s}_{rz} \quad
 \left. \tilde{s}_{rz}\right\rvert_{t} = \left. s_{rz}\right\rvert_{t}
 \]</span>
@@ -527,7 +504,7 @@ is solved to give
 \left. s_{rz}\right\rvert_{t} \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta
 t\right)
 + \left(p
-+ \frac{1}{\Delta t}\int\limits_{\Delta t} q_{ex \rightarrow rz} dt \right)
++ \frac{1}{\Delta t}\int\limits_{\Delta t} q_{sf \rightarrow rz} dt \right)
 \frac{s_{srmax}}{e_p}
 \left(1 - \exp\left(-\frac{e_{p}}{s_{rzmax}}\Delta t\right)\right)
 \]</span>
@@ -547,7 +524,7 @@ storage or the unsaturated zone. If <span class="math inline">\(\left. s_{sz}\ri
 flux from the root zone is passed to the
 surface excess store giving
 <span class="math display">\[
-\int_{\Delta t} q_{rz \rightarrow ex} dt =
+\int_{\Delta t} q_{rz \rightarrow sf} dt =
 \left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} -
 \left. s_{rz}\right\rvert_{t + \Delta t}
 \quad
@@ -556,7 +533,7 @@ surface excess store giving
 <p>If <span class="math inline">\(\left. s_{sz}\right\rvert_{t} &gt; 0\)</span> then the flux from the root zone is
 passed to the unsaturated zone store by taking
 <span class="math display">\[
-\int_{\Delta t} q_{rz \rightarrow ex} dt = 0
+\int_{\Delta t} q_{rz \rightarrow sf} dt = 0
 \quad
 \int_{\Delta t} q_{rz \rightarrow uz} dt =
 \left. \tilde{s}_{rz}\right\rvert_{t + \Delta t} -
@@ -637,16 +614,16 @@ expressed as a function of lateral flow per unit width.</p>
 \]</span>
 to which a numerical solution is sort.
 Let <span class="math inline">\(Q^{+}\)</span> and <span class="math inline">\(Q^{-}\)</span> be the lateral flows at the foot and head of the slope
-respectivly.</p>
+respectivly and ${r} a constant inflow per unit length.</p>
 <p>One possible four-point or box scheme for a constant recharge is given by
 <span class="math display">\[
 \begin{split}
 &amp; \left(1-\omega\right)\frac{\left.Q^{-}\right\rvert_{t+1}-\left.Q^{-}\right\rvert_{t}}{\Delta t} +
 \omega\frac{\left.Q^{+}\right\rvert_{t+1}-\left.Q^{+}\right\rvert_{t}}{\Delta t} +
 \left(1-\theta\right)c\left(\left.z\right\rvert_{t}\right)
-\left(\frac{\left.Q^{+}\right\rvert_{t}-\left.Q^{-}\right\rvert_{t}}{\Delta x} -r\right)
+\left(\frac{\left.Q^{+}\right\rvert_{t}-\left.Q^{-}\right\rvert_{t}}{\Delta x} -\bar{r}\right)
 + \\
-&amp; \theta c\left(\left.z\right\rvert_{t+1}\right)\left(\frac{\left.Q^{+}\right\rvert_{t+1}-\left.Q^{-}\right\rvert_{t+1}}{\Delta x} -r\right)
+&amp; \theta c\left(\left.z\right\rvert_{t+1}\right)\left(\frac{\left.Q^{+}\right\rvert_{t+1}-\left.Q^{-}\right\rvert_{t+1}}{\Delta x} -\bar{r}\right)
 = 0
 \end{split}
 \]</span></p>
@@ -658,54 +635,74 @@ scheme replacing <span class="math inline">\(c\left(z\right)\)</span> with a ‘
 &amp; \left(1-\omega\right)\frac{\left.Q^{-}\right\rvert_{t+\Delta t}-\left.Q^{-}\right\rvert_{t}}{\Delta t} +
 \omega\frac{\left.Q^{+}\right\rvert_{t+\Delta t}-\left.Q^{+}\right\rvert_{t}}{\Delta t} +
 \left(1-\theta\right)\bar{c}
-\left(\frac{\left.Q^{+}\right\rvert_{t}-\left.Q^{-}\right\rvert_{t}}{\Delta x} - r\right)
+\left(\frac{\left.Q^{+}\right\rvert_{t}-\left.Q^{-}\right\rvert_{t}}{\Delta x} - \bar{r}\right)
 + \\
-&amp; \theta \bar{c}\left(\frac{\left.Q^{+}\right\rvert_{t+\Delta t}-\left.Q^{-}\right\rvert_{t+\Delta t}}{\Delta x} - r\right)
+&amp; \theta \bar{c}\left(\frac{\left.Q^{+}\right\rvert_{t+\Delta t}-\left.Q^{-}\right\rvert_{t+\Delta t}}{\Delta x} - \bar{r}\right)
 = 0
 \end{split}
 \]</span>
 is stable for <span class="math inline">\(\omega \geq 0.5\)</span>, <span class="math inline">\(\theta \geq 0.5\)</span>.</p>
-<p>Consider the <span class="math inline">\(i\)</span> th HSU. The impact of saturation at <span class="math inline">\(s^{\left[i\right]}_{sz}\)</span>=0 is to limits the
-lateral flow to <span class="math inline">\(l^{\left[i\right]}_{szmax}\)</span> all points and times producing return flow to the
-surface excess store. There is however no guarentee that the inflow to the
-saturated zone store from other HSUs, given by
+<p>Rearranging this and taking
 <span class="math display">\[
-\sum_{j\in\mathcal{S}^{\left[i\right]}_{sz}}f_{sz}^{\left[i,j\right]}\frac{a^{\left[j\right]}}{a^{\left[i\right]}}l^{\left[j\right]}_{sz}. 
+\lambda = \frac{\bar{c}\Delta t}{\Delta x}
 \]</span>
-is less then <span class="math inline">\(l_{szmax}^{\left[i\right]}\)</span>. In estimating
+gives</p>
+<p><span class="math display">\[
+\begin{split}
+  \left( \omega + \theta \lambda \right) &amp;
+  \left.Q^{+}\right\rvert_{t+\Delta t} +
+  \left(1 - \omega - \theta \lambda \right) \left. Q^- \right\rvert_{t+\Delta t} \\
+  &amp; - \left( \omega - \left(1-\theta\right)\lambda \right) \left.Q^{+}\right\rvert_{t}
+  - \left(1 - \omega + \left(1 - \theta\right)\lambda \right) \left. Q^- \right\rvert_{t}
+\\
+&amp; - \lambda \Delta x \bar{r} =0
+\end{split}
+\]</span></p>
+<p>Consider the <span class="math inline">\(i\)</span> th HSU. The impact of saturation at
+<span class="math inline">\(s^{\left[i\right]}_{sz}=0\)</span> is to limits the lateral flow to <span class="math inline">\(l^{\left[i\right]}_{szmax}\)</span> all points and times producing return flow to the
+surface excess store. There is however no guarentee that the inflow to the
+saturated zone store from other HSUs, given by</p>
+<p><span class="math display">\[
+\sum_{j\in\mathcal{S}^{\left[i\right]}_{sz}}f_{sz}^{\left[i,j\right]}\frac{a^{\left[j\right]}}{a^{\left[i\right]}}l^{\left[j\right]}_{sz}. 
+\]</span></p>
+<p>is less then <span class="math inline">\(l_{szmax}^{\left[i\right]}\)</span>. In estimating
 <span class="math inline">\(l_{sz}^{\left[i\right]}\)</span> the solution proposed allows lateral flow to
 occur at values exceeding <span class="math inline">\(l^{\left[i\right]}_{szmax}\)</span> within the HSU, but
 limits the fluxes transfered to and from the HSU.</p>
-<p>Introducing <span class="math inline">\(\tilde{l}^{\left[i\right]}_{sz}\)</span> to be the unconstrained internal
-flux such that
-<span class="math inline">\(l_{sz}^{\left[i\right]} =  \min\left(\tilde{l}^{\left[i\right]}_{sz},l^{\left[i\right]}_{szmax}\right)\)</span>,
-taking
+<p>Suppose that <span class="math inline">\(l_{szmaz}\geq\left.l_{sz}^{\left[i\right]}\right\rvert_{t}\geq 0\)</span>.
+This provides an estimate of <span class="math inline">\(\left.Q^{+}\right\rvert_{t}\)</span>.
+Since the inflow from the other HSUs is represented as a volume take
 <span class="math display">\[
-Q^{-} = \min\left(
-\sum_{j}f_{sz}^{\left[i,j\right]}\frac{a^{\left[j\right]}}{a^{\left[i\right]}}l^{\left[j\right]}_{sz},
+\bar{Q}^{-} = \left.Q^{-}\right\rvert_{t} =
+\left.Q^{-}\right\rvert_{t+\Delta t} =
+\min\left(\frac{1}{a^{\left[i\right]}\Delta t}
+\sum_{j}f_{sz}^{\left[i,j\right]}a^{\left[j\right]}\int_{\Delta
+  t}l^{\left[j\right]}_{sz} dt,
 l_{szmax}^{\left[i\right]}\right)
+\]</span></p>
+<p>Constant recharge for every cross section means that
+<span class="math inline">\(\int_{\Delta t} q_{uz\rightarrow sz} dt = r \Delta x \Delta t\)</span>.</p>
+<p>An initial estimate of the lateral flux from the saturated zone at the end of
+the time step <span class="math inline">\(\left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}\)</span>
+is thus given by</p>
+<p><span class="math display">\[
+\left( \omega + \theta \lambda^{\left[i\right]} \right)
+\left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t} =
+\left( \omega - \left(1-\theta\right)\lambda^{\left[i\right]} \right)
+\left.l^{\left[i\right]}_{sz}\right\rvert_{t} +
+\frac{\lambda^{\left[i\right]}}{\Delta t}\left(\bar{Q}^{\left[i\right]}\Delta t +
+\int_{\Delta t} q^{\left[i\right]}_{uz\rightarrow sz} dt \right)
 \]</span>
-and noting that a constant recharge for every cross section means that
-<span class="math inline">\(\int_{\Delta t} q_{uz\rightarrow sz} dt = r \Delta x \Delta t\)</span> allows the
-numeric scheme to be written as
+Assuming <span class="math inline">\(\bar{c}^{\left[i\right]}\)</span> and hence <span class="math inline">\(\lambda^{\left[i\right]}\)</span> is not dependent upon
+<span class="math inline">\(\left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}\)</span> then this
+leads a simple solution for
+<span class="math inline">\(\left.l^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}\)</span>
+as
 <span class="math display">\[
-\begin{split}
-\left( \omega + \theta\frac{\bar{c}^{\left[i\right]}\Delta t}{\Delta x} \right) &amp;
-\left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}
- + \left(1 - \omega - \theta\frac{\bar{c}^{\left[i\right]}\Delta t}{\Delta x}
- \right) \left. Q^- \right\rvert_{t+\Delta t} \\
-&amp; - \left( \omega + \left(1-\theta\right)\frac{\bar{c}^{\left[i\right]}\Delta t}{\Delta x} \right)
-\left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t}
-- \left(1 - \omega - \left(1 -
-\theta\right)\frac{\bar{c}^{\left[i\right]}\Delta t}{\Delta x} \right) \left. Q^- \right\rvert_{t}
-\\
-&amp; - \frac{\bar{c}^{\left[i\right]}}{\Delta x} \left. \int_{\Delta t}
-q^{\left[i\right]}_{uz\rightarrow sz} dt \right\rvert_{t+\Delta t}
-=0
-\end{split}
-\]</span>
-Assuming <span class="math inline">\(\bar{c}^{\left[i\right]}\)</span> is not dependent upon
-<span class="math inline">\(\left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}\)</span> then this leads a simple solution for <span class="math inline">\(\left.l^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}\)</span></p>
+\left.l^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t} = \min\left(
+\left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t},
+l^{\left[i\right]}_{szmax}\right)
+\]</span></p>
 <div id="determining-the-storage-deficit" class="section level3">
 <h3 class="hasAnchor">
 <a href="#determining-the-storage-deficit" class="anchor"></a>Determining the storage deficit</h3>
@@ -730,7 +727,7 @@ from which can be computed
 \max\left(0,\tilde{s}_{sz}\right)
 \]</span> and
 <span class="math display">\[
-\left.\int_{\Delta t} q^{\left[i\right]}_{sz\rightarrow ex} dt \right\rvert_{t+\Delta t} =
+\left.\int_{\Delta t} q^{\left[i\right]}_{sz\rightarrow sf} dt \right\rvert_{t+\Delta t} =
 \left.s^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t} - \tilde{s}_{sz}
 \]</span></p>
 </div>
@@ -753,12 +750,12 @@ deficit. This is approximated by <span class="math inline">\(\left.s_{sz}\right\
 <a href="#step-5-correcting-vertical-stores" class="anchor"></a>Step 5: Correcting vertical stores</h2>
 <p>Having evaluated the stores in the direction of gravity there is the need to
 correct for vertical fluxes returning water to the surface thus increase
-<span class="math inline">\(s_{ex}\)</span>.</p>
+<span class="math inline">\(s_{sf}\)</span>.</p>
 <p>If saturation has occured, that is
 <span class="math inline">\(\left. s_{sz}\right. \rvert_{t+\Delta t}=0\)</span>,
 then there can be no water stored in the unsaturated zone. Let
 <span class="math display">\[
-\int_{\Delta t} q_{uz \rightarrow ex}dt = \left\{ \begin{array}{cc}
+\int_{\Delta t} q_{uz \rightarrow sf}dt = \left\{ \begin{array}{cc}
   \left.\tilde{s}_{uz}\right. \rvert_{t+\Delta t} &amp;
   \left. s_{sz}\right. \rvert_{t+\Delta t}=0\\
   0 &amp; \mathrm{otherwise}
@@ -767,43 +764,30 @@ then there can be no water stored in the unsaturated zone. Let
 \]</span></p>
 <p>The correction of the stores then takes the form
 <span class="math display">\[
-\left. s_{ex} \right. \rvert_{t+\Delta t} =
-\left.\tilde{s}_{ex}\right. \rvert_{t+\Delta t}  + \int_{\Delta t} q_{rz
-  \rightarrow ex} dt + \int_{\Delta t} q_{sz \rightarrow ex} dt + \int_{\Delta t} q_{uz \rightarrow ex} dt
+\left. s_{sf} \right. \rvert_{t+\Delta t} =
+\left.\tilde{s}_{sf}\right. \rvert_{t+\Delta t}  + \int_{\Delta t} q_{rz
+  \rightarrow sf} dt + \int_{\Delta t} q_{sz \rightarrow sf} dt + \int_{\Delta t} q_{uz \rightarrow sf} dt
 \]</span>
 and
 <span class="math display">\[
 \left. s_{uz} \right. \rvert_{t+\Delta t} =
 \left.\tilde{s}_{uz}\right. \rvert_{t+\Delta t} - \int_{\Delta t} q_{uz
-  \rightarrow ex} dt
+  \rightarrow sf} dt
 \]</span></p>
 </div>
 </div>
 <div id="channel-hsu" class="section level1">
 <h1 class="hasAnchor">
 <a href="#channel-hsu" class="anchor"></a>Channel HSU</h1>
-<p>The average inflow to a channel HSU over the time step in cumecs is given by
-total flux to the channel HSU in cubic meters divided by the time step <span class="math inline">\(\Delta t\)</span>. The total flux to the channel is given by
+<p>The current implimentation of the channel HSU calculates the average discharge
+to the channel over the time step in <span class="math inline">\(m^3/s\)</span>. This is given for the <span class="math inline">\(k\)</span> th channel HSU as
 <span class="math display">\[
-a_{ch}^{\left[k\right]} \int_{\Delta t} v^{\left[k\right]} = 
-    \sum\limits_{j} f^{\left[k,j\right]}_{ex}a^{\left[j\right]}\int_{\Delta t}l^{\left[j\right]}_{ex}dt
-    + \sum\limits_{j} f^{\left[k,j\right]}_{sz}a^{\left[j\right]}\int_{\Delta t}l^{\left[j\right]}_{sz} dt
-    + p\Delta t
-\]</span>
-where the integrals of the lateral fuxes are evaluated in the earlier steps.</p>
-<div id="total-flux-to-channel-hsus" class="section level2">
-<h2 class="hasAnchor">
-<a href="#total-flux-to-channel-hsus" class="anchor"></a>Total Flux to channel HSUs</h2>
-<p>It is presumed that, from the perspective of the hillslope the channel acts as
-a sink. That is there is no feedback from the channel to the hillslope.
-For a single reach:
-<span class="math display">\[
-v^{\left[k\right]} = 
-    \sum\limits_{j} f^{\left[k,j\right]}_{ex}\frac{a^{\left[j\right]}}{a^{\left[k\right]}}l^{\left[j\right]}_{ex}
-    + \sum\limits_{j} f^{\left[k,j\right]}_{sz}\frac{a^{\left[j\right]}}{a^{\left[k\right]}}l^{\left[j\right]}_{sz}
-    + p
+\frac{1}{\Delta t} \left(
+\sum\limits_{j}
+f^{\left[k,j\right]}_{sf}a^{\left[j\right]}l^{\left[j\right]}_{sf} +
+\sum\limits_{j}
+f^{\left[k,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz} \right) + p
 \]</span></p>
-</div>
 </div>
 <div id="appendix-ordinary-differential-equations-solutions" class="section level1">
 <h1 class="hasAnchor">
