@@ -1,5 +1,18 @@
 #' R6 Class for Dynamic TOPMODEL
 #' @export
+
+## TODO
+## DONE - change seq so convert form is called as part of initialize
+## DONE - in convert form keep names things so we can convert parameters back to characters
+## NOT WORKING - alter convert form so it can convert back (or another function)
+## DONE - use convert form to store seq centrally
+## DONE - drop tmp variables from model description
+## DONE - change model description so it is list
+## DONE - use model_description to determine which tables should exist as well as properties
+## - create tmp variables in the simulation code for hillslope - access other bits by copy and unname
+## - change sim code notation to match vignette
+## - Check simulation for mass balance
+## - Other TODO scattered in code
 dynatop <- R6::R6Class(
     "dynatop",
     public = list(
@@ -14,9 +27,10 @@ dynatop <- R6::R6Class(
         #'
         #' @details This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
         initialize = function(model, use_states=FALSE, verbose=FALSE, delta = 1e-13){
-            ## check model will fail if there is an error, convert model if 
+            ## check model will fail if there is an error
             private$check_model(model,use_states,verbose,delta)
             ## convert model here
+            private$digest_model(model)
             invisible(self)
         },
         #' @description Adds observed data to a dynatop object
@@ -64,7 +78,7 @@ dynatop <- R6::R6Class(
         #' @details Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
         sim_hillslope = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL){
             ## check presence of states
-            tmp <- private$model_description("hillslope",include_states=TRUE)
+            tmp <- private$model_description$hillslope
             if( !all(tmp$name[tmp$role=="state"] %in% names(private$model$hillslope)) ){
                 stop("Model states are not initialised")
             }
@@ -163,7 +177,7 @@ dynatop <- R6::R6Class(
         },
         #' @description Return the model
         get_model = function(){
-            private$model
+            private$reform_model()
         },
         #' @description Return the model
         get_mass_errors = function(){
@@ -201,7 +215,7 @@ dynatop <- R6::R6Class(
             
             
             ## browser()
-            tmp <- private$model_description("hillslope",include_states=TRUE)
+            tmp <- private$model_description$hillslope
             if( !all(tmp$name[tmp$role=="state"] %in% names(private$model$hillslope)) ){
                 stop("Model states are not initialised")
             }
@@ -225,12 +239,117 @@ dynatop <- R6::R6Class(
         info = list(),
         model = NULL,
         state_record = list(),
+        ## decribes a model tables
+        ## roles are either
+        ## - attribute
+        ## - parameter
+        ## - data_series
+        ## - state
+        ## - output_label
+        model_description = list(
+            hillslope = data.frame(name = c("id","atb_bar","s_bar","area","delta_x","sz_dir","sf_dir", # attributes associated with catchment HSU
+                                            "precip","pet", # names of input series
+                                            "q_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","t_sf", # parameter names
+                                            "s_sf","s_rz","s_uz","s_sz","l_sz"), # states
+                                   role = c(rep("attribute",7),
+                                            rep("data_series",2),
+                                            rep("parameter",7),
+                                            rep("state",5)),
+                                   type = c("integer",rep("numeric",4),rep("list",2),
+                                            rep("character",2),
+                                            rep("character",7),
+                                            rep("numeric",5)),
+                                   stringsAsFactors=FALSE),
+            channel = data.frame(name= c("id","area","length","flow_dir", # states
+                                         "precip","pet", # inputs
+                                         "v_ch"), # parameters
+                                 role = c(rep("attribute",4),
+                                          rep("data_series",2),
+                                          rep("parameter",1)),
+                                 type = c("integer",rep("numeric",2),"list",
+                                          rep("character",2),
+                                          rep("character",1)),
+                                 stringsAsFactors=FALSE),
+            point_inflow = data.frame(name = c("name","id","fraction"),
+                                      type=c("character","integer","numeric"),
+                                      role = c("data_series",rep("attribute",2)),
+                                      stringsAsFactors=FALSE),
+            diffuse_inflow = data.frame(name = c("name","id"),
+                                        type=c("character","integer"),
+                                        role = c("data_series","attribute"),
+                                        stringsAsFactors=FALSE),
+            gauge = data.frame(name = c("name","id","fraction"),
+                               type=c("character","integer","numeric"),
+                               role = c("output_label",rep("attribute",2)),
+                               stringsAsFactors=FALSE)
+        ),
+        ## convert the form of the model for internal storage
+        ## we presume the model has been checked!!
+        digest_model = function(model){
+            ## initialise output model format as a list
+            out <- list()
+            ## store to record the names of the data series required
+            data_series <- list(); ds_cnt <- 1;
+            
+            ## convert into lists
+            for(tbl in names(private$model_description)){
+                prop <- private$model_description[[tbl]]
+                out[[tbl]] <- as.list( model[[tbl]] )
+                ## remove names so they don;t propergate
+                for(ii in names(out[[tbl]])){
+                    out[[tbl]][[ii]] <- unname(out[[tbl]][[ii]])
+                }
+                ## handle parameters - note name of vector is the parameter name
+                for(ii in prop$name[prop$role=="parameter"]){
+                    out[[tbl]][[ ii ]] <- model$param[ out[[tbl]][[ii]] ]
+                }
+                ## get input series
+                for(ii in prop$name[prop$role=="data_series"]){
+                    data_series[[ds_cnt]] <- unique( out[[tbl]][[ ii ]] )
+                    ds_cnt <- ds_cnt + 1
+                }
+            }
+
+            ## work out the sequences for computing the lateral flux bands these are the index in the hillslope vectors NOT the id
+            out$sqnc <- list(sf=list(),sz=list())
+            for(ii in names(out$sqnc)){
+                bnd <- switch(ii,
+                              sf = sapply(model$hillslope$sf_dir,function(x){x$band}),
+                              sz = sapply(model$hillslope$sz_dir,function(x){x$band})
+                              )
+                out$sqnc[[ii]] <- (1:length(model$hillslope$id))[order(bnd)]
+            }
+
+            ## copy to private
+            private$info$data_series <- unique( do.call(c,data_series) )
+            private$model <- out
+            
+            invisible( self )
+        },
+        ## convert the form the internal storage to that input
+        ## we presume the model has been checked!!
+        reform_model = function(){
+            ## initialise output model format as a list
+            out <- list()
+            
+            ## convert into lists
+            for(tbl in names(private$model_description)){
+                prop <- private$model_description[[tbl]]
+                out[[tbl]] <- as.data.frame( private$model[[tbl]] ,
+                                            stringsAsFactors=FALSE)
+                
+                ## handle parameters - note name of vector is the parameter name
+                for(ii in prop$name[prop$role=="parameter"]){
+                    out[[tbl]][,ii] <- names( private$model[[tbl]][[ii]] )
+                }
+            }
+            return(out)
+        },
         ## this code checks the model
         check_model = function(model, use_states, verbose, delta=1e-13){
-
+            
             ## check all components of the model exist
-            components <- c("hillslope","channel","param","gauge",
-                            "point_inflow","diffuse_inflow")
+            components <- names(private$model_description)
             idx <- components %in% names(model)
             if( !all(idx) ){
                 stop(paste("Missing componets:",paste(components[!idx],collapse=",")))
@@ -244,8 +363,11 @@ dynatop <- R6::R6Class(
                               data_series = list())
             for(ii in setdiff(components,"param")){
                 ## what should the properties of each column be
-                prop <- private$model_description(ii,include_states=use_states)
-                
+                prop <- private$model_description[[ii]]
+                if(!use_states){
+                    prop <- prop[ !(prop$role=="state"), ]
+                }
+                                
                 if(!is.data.frame(model[[ii]])){
                     stop(paste("Table",ii,"should be a data.frame"))
                 }
@@ -403,10 +525,10 @@ dynatop <- R6::R6Class(
             ## TODO add checks to map
             
             ## if here we have passed all tests then return
-            ##invisible( self )
-            private$model <- model
-            private$info$data_series <- unique(req_names[["data_series"]])
+            invisible( self )
+            
         },
+        
         ## check and add obsservations
         check_obs = function(obs){
             req_series <- private$info$data_series
@@ -766,139 +888,11 @@ dynatop <- R6::R6Class(
             }
             
         },
-        ## decribes a model with or without states and tempory variables
-        model_description = function(type=c("hillslope","channel",
-                                            "diffuse_inflow","point_inflow",
-                                            "gauge"),
-                                     include_states=FALSE,include_tmp=FALSE){
-            type <- match.arg(type)
-            
-            if(type=="hillslope"){
-                out <- data.frame(name = c("id","atb_bar","s_bar","area","delta_x","sz_dir","sf_dir", # attributes associated with catchment HSU
-                                           "precip","pet", # names of input series
-                                           "q_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","t_sf", # parameter names
-                                           "s_sf","s_rz","s_uz","s_sz","l_sz_inst", # states
-                                           "p","e_p","e_t","l_sf","l_sz","l_sz_max",
-                                           "q_sf_rz","q_rz_sf","q_rz_uz","q_uz_sz","q_uz_sf","q_sz_sf"), ## tempory stores not needed for next timestep
-                                  role = c(rep("attribute",7),
-                                           rep("data_series",2),
-                                           rep("parameter",7),
-                                           rep("state",5),
-                                           rep("tmp",12)),
-                                  type = c("integer",rep("numeric",4),rep("list",2),
-                                           rep("character",2),
-                                           rep("character",7),
-                                           rep("numeric",5),
-                                           rep("numeric",12)
-                                   ),
-                                  stringsAsFactors=FALSE)
-                
-            }
-            if(type=="channel"){
-                out <- data.frame(name= c("id","area","length","flow_dir", # states
-                                          "precip","pet", # inputs
-                                          "v_ch", # parameters
-                                          # "sum_l_sz_in", #state
-                                          "p","e_p","l_sf","s_ch","sum_l_sz_in_t"),
-                                  role = c(rep("attribute",4),
-                                           rep("data_series",2),
-                                           rep("parameter",1),
-                                           # rep("state",1),
-                                           rep("tmp",5)),
-                                  type = c("integer",rep("numeric",2),"list",
-                                           rep("character",2),
-                                           rep("character",1),
-                                           # rep("numeric",1),
-                                           rep("numeric",5)),
-                                  stringsAsFactors=FALSE)
-            }
-            
-            if(type=="point_inflow"){
-                out <- data.frame(
-                    name = c("name","id","fraction"),
-                    type=c("character","integer","numeric"),
-                    role = c("data_series",rep("property",2)),
-                    stringsAsFactors=FALSE)
-            }
-
-            if(type=="diffuse_inflow"){
-                out <- data.frame(
-                    name = c("name","id"),
-                    type=c("character","integer"),
-                    role = c("data_series","property"),
-                    stringsAsFactors=FALSE)
-            }
-            
-            if(type=="gauge"){
-                out <- data.frame(
-                    name = c("name","id","fraction"),
-                    type=c("character","integer","numeric"),
-                    role = c("output_label",rep("property",2)),
-                    stringsAsFactors=FALSE)
-            }
-            
-            if(!include_states){
-                out <- out[out$role!="state",,drop=FALSE]
-            }
-            if(!include_tmp){
-                out <- out[out$role!="tmp",,drop=FALSE]
-            }
-            
-            return(out)
-        },
-        ## convert the form of the hillslope model
-        convert_form = function(){
-
-            model <- private$model
-
-            ## initialise output as a list
-            out <- list()
-            
-            ## get the descriptions of the variabels to be returned
-            desc <- list(hillslope = private$model_description("hillslope",TRUE,TRUE),
-                         channel = private$model_description("channel",TRUE,TRUE))
-            ## TODO - trim desc so only returns what is needed
-            
-            ## convert into lists
-            for(tbl in names(desc)){
-                out[[tbl]] <- list()
-                for(ii in 1:nrow(desc[[tbl]])){
-                    nm <- desc[[tbl]]$name[ii]
-                    out[[tbl]][[ nm ]] <- switch(desc[[tbl]]$role[ii],
-                                                 attribute = unname( model[[tbl]][[nm]] ),
-                                                 data_series = unname( model[[tbl]][[nm]] ),
-                                                 parameter = unname( model$param[ model[[tbl]][[nm]] ]),
-                                                 state = unname( model[[tbl]][[nm]] ),
-                                                 tmp = rep(0, nrow(model[[tbl]]))
-                                                 )
-                }
-            }
-            
-            ## work out the sequences for computing the lateral flux bands these are the index in the hillslope vectors NOT the id
-            out$sqnc <- list(sf=list(),sz=list())
-            for(ii in names(out$sqnc)){
-                bnd <- switch(ii,
-                              sf = sapply(model$hillslope$sf_dir,function(x){x$band}),
-                              sz = sapply(model$hillslope$sz_dir,function(x){x$band})
-                              )
-                out$sqnc[[ii]] <- (1:length(model$hillslope$id))[order(bnd)]
-            }
-            
-            ## storage for lateral fluxes stored as volumes
-            out$lateral_flux <- list(sf = rep(0,max(c(model$hillslope$id,model$channel$id))),
-                                     sz = rep(0,max(c(model$hillslope$id,model$channel$id))))
-
-            ## copy model to private and populate the required data series names
-            #private$model <- model
-            #private$info$data_series <- unique(req_names[["data_series"]])
-
-            return(out)
-        },
         ## convert a data frame to a storage list
         extract_states = function(obj,type=c("hillslope","channel")){
             type <- match.arg(type)
 
-            stt <- private$model_description(type,TRUE)
+            stt <- private$model_description[[type]]
             stt <- c("id",stt$name[stt$role=="state"])
             out <- as.data.frame( obj[stt], stringsAsFactors=FALSE )
             return(out)
@@ -1054,7 +1048,6 @@ dynatop <- R6::R6Class(
 
             private$time_series$gauge_flow <- out
         }
-        
     )
     )
 
