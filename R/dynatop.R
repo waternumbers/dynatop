@@ -14,7 +14,9 @@ dynatop <- R6::R6Class(
         #'
         #' @details This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
         initialize = function(model, use_states=FALSE, verbose=FALSE, delta = 1e-13){
+            ## check model will fail if there is an error, convert model if 
             private$check_model(model,use_states,verbose,delta)
+            ## convert model here
             invisible(self)
         },
         #' @description Adds observed data to a dynatop object
@@ -400,7 +402,8 @@ dynatop <- R6::R6Class(
 
             ## TODO add checks to map
             
-            ## if here we have passed all tests
+            ## if here we have passed all tests then return
+            ##invisible( self )
             private$model <- model
             private$info$data_series <- unique(req_names[["data_series"]])
         },
@@ -884,7 +887,11 @@ dynatop <- R6::R6Class(
             ## storage for lateral fluxes stored as volumes
             out$lateral_flux <- list(sf = rep(0,max(c(model$hillslope$id,model$channel$id))),
                                      sz = rep(0,max(c(model$hillslope$id,model$channel$id))))
-            
+
+            ## copy model to private and populate the required data series names
+            #private$model <- model
+            #private$info$data_series <- unique(req_names[["data_series"]])
+
             return(out)
         },
         ## convert a data frame to a storage list
