@@ -62,7 +62,6 @@ m1$plot_state("s_sf")
 rm(list=ls())
 devtools::load_all("./dynatop"); data("Swindale")
 
-
 profvis::profvis({
     m1 <- dynatop$new(Swindale$model)
     m1$add_data(Swindale$obs)
@@ -76,13 +75,17 @@ plot(merge( Swindale$obs[,'Flow'],m1$get_gauge_flow()))
 rm(list=ls())
 devtools::load_all("./dynatop"); data("Swindale"); 
 Swindale$model$param <- c(q_sfmax_default=Inf,
-                 m_default=0.0063,
-                 ln_t0_default=7.46,
+                 m_default=9,
+                 ln_t0_default=.0746,
                  s_rz0_default=0.98,
                  s_rzmax_default=0.1,
-                 v_ch_default=0.8,
-                 t_d_default=8*60*60,
-                 t_sf_default=3.6e+05
+                 v_ch_default=0.4,
+                 t_d_default=80*60*60,
+                 t_sf_default=7*60*60
                  )
 m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel(mass_check=TRUE)
+m1$plot_gauge_flow()
+m1$sim()$plot_gauge_flow()
+x11()
+
 
