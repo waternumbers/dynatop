@@ -2,16 +2,7 @@
 #' @export
 
 ## TODO
-## DONE - change seq so convert form is called as part of initialize
-## DONE - in convert form keep names things so we can convert parameters back to characters
-## DONE - alter convert form so it can convert back (or another function)
-## DONE - use convert form to store seq centrally
-## DONE - drop tmp variables from model description
-## DONE - change model description so it is list
-## DONE - use model_description to determine which tables should exist as well as properties
-## DONE - create tmp variables in the simulation code for hillslope
 ## - ensure uname used in sim_hs when accessing other bits by copy and unname
-## DONE - Check simulation for mass balance
 ## - why is simulation so shit
 ## - are states being copied back?
 ## - No paraemter sensitivity why?
@@ -191,13 +182,8 @@ dynatop <- R6::R6Class(
             if( !("mass_errors" %in% names(private$time_series)) ){
                 stop("Mass errors are not available")
             }
-                
-            x <- private$time_series$mass_errors
-            idx <- private$time_series$index[x[,"DateTime"]]
-            idx <- idx + x[,"step"]
-            jdx <- setdiff(colnames(x),c("DateTime","step"))
-            xts::xts(private$time_series$mass_errors[,jdx],
-                     order.by=idx)
+            xts::xts(private$time_series$mass_errors,
+                     order.by=private$time_series$index)
         },
         #' @description Return states
         #' @param record logical TRUE if the record should be returned. Otherwise surrent states returned
@@ -207,7 +193,9 @@ dynatop <- R6::R6Class(
             ## }
             ## browser()
             if( record ){
-                return( private$state_record )
+                
+                return( setNames(private$time_series$state_record,
+                                 private$time_series$index) )
             }else{
                 return( private$extract_states(private$model$hillslope,"hillslope") )
             }            
@@ -325,6 +313,21 @@ dynatop <- R6::R6Class(
                               )
                 out$sqnc[[ii]] <- (1:length(model$hillslope$id))[order(bnd)]
             }
+
+            ## reprocess the fractions of the routing so it includes area ratio correctly
+            ## initialise vector of areas
+            tmp <- rep(NA,max(c(model$hillslope$id,model$channel$id)))
+            tmp[model$channel$id] <- model$channel$area
+            tmp[model$hillslope$id] <- model$hillslope$area
+            out$sf_dir_a <- model$hillslope$sf_dir
+            out$sz_dir_a <- model$hillslope$sz_dir
+            for(ii in 1:length(out$sf_dir_a)){
+                out$sf_dir_a[[ii]]$frc <- model$hillslope$area[ii] * out$sf_dir_a[[ii]]$frc /
+                    tmp[ out$sf_dir_a[[ii]]$idx ]
+                out$sz_dir_a[[ii]]$frc <- model$hillslope$area[ii] * out$sz_dir_a[[ii]]$frc /
+                    tmp[ out$sz_dir_a[[ii]]$idx ]
+            }
+            rm(tmp)
 
             ## copy to private
             private$info$data_series <- unique( do.call(c,data_series) )
@@ -594,22 +597,50 @@ dynatop <- R6::R6Class(
         ## ###########################################
         ## Initialise the states
         init_hs = function(initial_recharge){
-            model <- private$model
+            ## take local copy of hillslope
+            hillslope <- private$model$hillslope
+            ## take local copy of the area scaled routing of saturated zone
+            sz_dir <- private$model$sz_dir_a
+            ## compute the timestep
+            ts <- private$comp_ts(NULL)
             
             ## maximum lateral flow from saturated zone per unit area
-            l_szmax <- exp( model$hillslope$ln_t0 )*model$hillslope$s_bar
+            l_szmax <- exp( hillslope$ln_t0 )*hillslope$s_bar
+
+            ## initialise the surface storage
+            hillslope$s_sf <- rep(0,length(hillslope$id))
             
             ## initialise the root zone
-            model$hillslope$s_rz <- pmax( pmin( model$hillslope$s_rz0, 1) ,0 ) * model$hillslope$s_rzmax
+            hillslope$s_rz <- pmax( pmin( hillslope$s_rz0, 1) ,0 ) * hillslope$s_rzmax
+
+            ## take recharge to be average inflow rate to saturated zone and solve for
+            ## steady state
+            bq_uz_sz <- initial_recharge
+            il_sz_in <- rep(0,max(c(private$model$channel$id,
+                                    private$model$hillslope$id)))
+            il_sz <- rep(0,length(hillslope$id))
+            hillslope$s_sz <- hillslope$l_sz <- rep(NA,length(hillslope$id))
             
-            model$hillslope$s_uz  <- model$hillslope$s_sf <- rep(0,length(model$hillslope$id))
-            
-            ## initialise the saturated zone
-            model$hillslope$l_sz <- pmin(l_szmax,initial_recharge)
-            model$hillslope$s_sz <- pmax(0, model$hillslope$m*( log(l_szmax) - log(model$hillslope$l_sz)))
+            for(ii in private$model$sqnc$sz){ ## loop through all HSUs in order
+                ## solve for instananeous outlflow
+                
+                qbar <- min(l_szmax[ii], il_sz_in[ hillslope$id[ii] ]/ts$sub_step)
+                hillslope$l_sz[ii] <- min( l_szmax[ii] , qbar+bq_uz_sz )
+                il_sz[ii] <- hillslope$l_sz[ii]*ts$step
+                ## pass downslope
+                il_sz_in[ sz_dir[[ii]]$idx ] <-
+                    il_sz_in[ sz_dir[[ii]]$idx ] + sz_dir[[ii]]$frc*il_sz[ii]
+            }
+            ## compute the deficit based on flow
+            hillslope$s_sz <- pmax(0, hillslope$m*( log(l_szmax) - log(hillslope$l_sz)))
+
+            ## TODO handel flow to surface?
+
+            ## solve for unsaturated zone
+            hillslope$s_uz <- hillslope$t_d*bq_uz_sz*hillslope$s_sz
             
             ## put model back into private storage
-            private$model <- model
+            private$model$hillslope <- hillslope
             
         },
         ## ###############################
@@ -629,6 +660,10 @@ dynatop <- R6::R6Class(
             hillslope <- private$model$hillslope
             channel <- private$model$channel[c("id","precip","area")]
 
+            ## take local copy of the area scaled routings
+            sf_dir <- private$model$sf_dir_a
+            sz_dir <- private$model$sz_dir_a
+            
             ## take a local copy of observed data
             obs_data <- private$time_series$obs_data
             
@@ -637,8 +672,9 @@ dynatop <- R6::R6Class(
             colnames(channel_inflow) <- channel$id
             state_record <- rep(list(NULL),nrow(obs_data))
             if( mass_check ){
-                mass_errors <- matrix(NA,nrow(obs_data),4)
-                colnames(mass_errors) <- c("s_sf","s_rz","s_uz","s_sz")
+                mass_errors <- matrix(NA,nrow(obs_data),8)
+                colnames(mass_errors) <- c("p","e_t","s_sf","s_rz","s_uz",
+                                           "s_sz","channel_inflow","total")
             }else{
                 mass_errors <- NULL
             }
@@ -667,21 +703,7 @@ dynatop <- R6::R6Class(
             omega_1 <- exp(-ts$sub_step/hillslope$t_sf )
             omega_2 <- (1-omega_1)*(hillslope$t_sf/ts$sub_step)
 
-            ## reprocess the fractions of the routing so it includes area ratio correctly
-            ## initialise vector of areas
-            tmp <- rep(NA,max(c(hillslope$id,channel$id)))
-            tmp[channel$id] <- channel$area
-            tmp[hillslope$id] <- hillslope$area
-            sf_dir <- hillslope$sf_dir
-            sz_dir <- hillslope$sz_dir
-            for(ii in 1:length(sf_dir)){
-                sf_dir[[ii]]$frc <- hillslope$area[ii] * sf_dir[[ii]]$frc /
-                    tmp[ sf_dir[[ii]]$idx ]
-                sz_dir[[ii]]$frc <- hillslope$area[ii] * sz_dir[[ii]]$frc /
-                    tmp[ sz_dir[[ii]]$idx ]
-            }
-            rm(tmp)
-            
+                        
             ## initialise vertical flux stores
             iq_sf_rz <- rep(NA,length(hillslope$id))
             iq_rz_uz <- rep(NA,length(hillslope$id))
@@ -720,12 +742,15 @@ dynatop <- R6::R6Class(
                 
                 ## start mass check
                 if(mass_check){
-                    ## initialise with volume stored
-                    mass_errors[it,] <- c(
-                        sum(hillslope$s_sf*hillslope$area),
-                        sum(hillslope$s_rz*hillslope$area),
-                        sum(hillslope$s_uz*hillslope$area),
-                        sum(hillslope$s_sz*hillslope$area))
+                    ## initialise with volume stored and precip volume
+                    ## initialise e_t to be accumulated
+                    mass_errors[it,"p"] <- sum(p*ts$step*hillslope$area) +
+                        sum(channel_inflow[it,]*channel$area)
+                    mass_errors[it,"e_t"] <- 0
+                    mass_errors[it,"s_sf"] <- sum(hillslope$s_sf*hillslope$area)
+                    mass_errors[it,"s_rz"] <- sum(hillslope$s_rz*hillslope$area)
+                    mass_errors[it,"s_uz"] <- sum(hillslope$s_uz*hillslope$area)
+                    mass_errors[it,"s_sz"] <- sum(hillslope$s_sz*hillslope$area)
                 }
                                        
                 ## loop sub steps
@@ -752,13 +777,8 @@ dynatop <- R6::R6Class(
                     ## compute flow to root zone and correct storage
                     iq_sf_rz <- pmin( hillslope$q_sfmax*ts$sub_step,hillslope$s_sf )
                     hillslope$s_sf <- hillslope$s_sf - iq_sf_rz
-                    
-                    ## mass check if required
-                    if( mass_check ){
-                        mass_errors[it,"s_sf"] <- mass_errors[it,"s_sf"] +
-                            sum( (il_sf_in[hillslope$id] - il_sf - iq_sf_rz)*hillslope$area )
-                    }
 
+                    
                     ## Step 2: solve the root zone for hillslope elements
                     ## solve ODE                    
                     ts_rz <- fode( p + (iq_sf_rz/ts$sub_step),
@@ -767,6 +787,12 @@ dynatop <- R6::R6Class(
                     
                     ## work out actual evapotranspiration by mass balance
                     ie_t <- hillslope$s_rz + p*ts$sub_step + iq_sf_rz - ts_rz
+
+                    if(mass_check){
+                        mass_errors[it,'e_t'] <- mass_errors[it,'e_t'] +
+                            sum(ie_t*hillslope$area)
+                    }
+                    
                     ## new storage value
                     hillslope$s_rz <- pmin(ts_rz,hillslope$s_rzmax)
                     
@@ -776,11 +802,6 @@ dynatop <- R6::R6Class(
                     iq_rz_sf <- iq_rz_uz*is_sat
                     iq_rz_uz <- iq_rz_uz*!is_sat
                     
-                    ## mass balance if required
-                    if(mass_check){
-                        mass_errors[it,"s_rz"] <- mass_errors[it,"s_rz"] +
-                            sum( (p*ts$sub_step + iq_sf_rz - ie_t - iq_rz_sf - iq_rz_uz)*hillslope$area )
-                    }
                         
                     ## Step 3: Unsaturated zone
                     ## solve ODE
@@ -790,32 +811,31 @@ dynatop <- R6::R6Class(
                     ## work out outflow
                     iq_uz_sz <- hillslope$s_uz + iq_rz_uz - ts_uz
                     hillslope$s_uz <- ts_uz
-                    ## mass check if required
-                    if(mass_check){
-                        mass_errors[it,"s_uz"] <- mass_errors[it,"s_uz"] +
-                            sum( (iq_rz_uz - iq_uz_sz)*hillslope$area )
-                    }
-                    
+                                        
                     ## Step 4: Solve saturated zone
                     ## this is omega=theta=1 solution with explicit velocity and average inflow
                                         
                     ## compute velocity estimate and kinematic parameters
                     cbar <- (l_szmax/hillslope$m)*exp(- hillslope$s_sz / hillslope$m)
+                    ##cbar <- hillslope$l_sz /hillslope$m
                     lambda <- cbar*ts$sub_step/hillslope$delta_x
                     l_1 <- 1/(1+lambda)
                     l_2 <- lambda*l_1
+                    l_1[lambda==0] <- 0 ## this is a bodge to say no velocity no flow unless input
                     ## loop HSUs
                     il_sz <- hillslope$l_sz ## initialise integral calc
                     bq_uz_sz <- iq_uz_sz / ts$sub_step
+                    
                     for(ii in private$model$sqnc$sz){ ## loop through all HSUs in order
-                        ## solve for instananeous outlfoe
-                        hillslope$l_sz[ii] <- min(
-                            l_szmax[ii],
-                            l_1[ii] * hillslope$l_sz[ii]
-                            + l_2[ii]*( min(l_szmax[ii],
-                                               il_sz_in[ii]/ts$sub_step)
-                                + bq_uz_sz[ii] )
-                        )
+                        if(hillslope$s_sz[ii]==0){
+                            #browser()
+                            pjs <- rnorm(1)
+                        }
+                        ## solve for instananeous outlflow
+                        qbar <- min(l_szmax[ii], il_sz_in[hillslope$id[ii]]/ts$sub_step)
+                        hillslope$l_sz[ii] <- min( l_szmax[ii],
+                                                  l_1[ii] * hillslope$l_sz[ii] +
+                                                  l_2[ii]*( qbar + bq_uz_sz[ii] ))
                         ## integral of outflow
                         il_sz[ii] <- (ts$sub_step/2)*(il_sz[ii] + hillslope$l_sz[ii])
                         ## pass downslope
@@ -828,12 +848,6 @@ dynatop <- R6::R6Class(
                     hillslope$s_sz <- pmax(0,ts_sz)
                     ## compute the flux to the surface
                     iq_sz_sf <- hillslope$s_sz - ts_sz
-
-                    if(mass_check){
-                        ## remember signes are reversed since defict
-                        mass_errors[it,"s_sz"] <- mass_errors[it,"s_sz"] +
-                            sum( (il_sz + iq_sz_sf - iq_uz_sz - il_sz_in[hillslope$id])*hillslope$area )
-                    }
                    
                     ## step 5 - correct the stores for saturation flows
                     is_sat <- hillslope$s_sz <= 0
@@ -842,13 +856,6 @@ dynatop <- R6::R6Class(
                     hillslope$s_sf <- hillslope$s_sf +
                         iq_rz_sf + iq_sz_sf + iq_uz_sf
 
-                    if(mass_check){
-                        mass_errors[it,"s_uz"] <- mass_errors[it,"s_uz"] -
-                            sum( iq_uz_sf*hillslope$area )
-                        mass_errors[it,"s_sf"] <- mass_errors[it,"s_sf"] +
-                            sum( (iq_rz_sf + iq_sz_sf + iq_uz_sf)*hillslope$area )
-                    }
-
                     ## update volume of flow to channel
                     channel_inflow[it,] <- channel_inflow[it,] +
                         il_sf_in[channel$id] + il_sz_in[channel$id]
@@ -856,20 +863,26 @@ dynatop <- R6::R6Class(
                 
                 } ## end of sub_step loop
 
-                ## convert channel inflow to [m3/s]
-                channel_inflow[it,] <- channel_inflow[it,]*channel$area/ts$step
-
+ 
                 ## complete mass balance check
                 if( mass_check ){
+                    ## subtract of final values for net change in stores
+                    mass_errors[it,"s_sf"] <- mass_errors[it,"s_sf"] - sum(hillslope$s_sf*hillslope$area)
+                    mass_errors[it,"s_rz"] <- mass_errors[it,"s_rz"] - sum(hillslope$s_rz*hillslope$area)
+                    mass_errors[it,"s_uz"] <- mass_errors[it,"s_uz"] - sum(hillslope$s_uz*hillslope$area)
+                    mass_errors[it,"s_sz"] <- sum(hillslope$s_sz*hillslope$area) -
+                        mass_errors[it,"s_sz"] ## opposite since deficit
+                    mass_errors[it,"channel_inflow"] <- -sum(channel_inflow[it,]*
+                                                             channel$area )
+                    mass_errors[it,"e_t"] <- -mass_errors[it,"e_t"]
                     
-                    ## record of changes should equal final state...
-                    mass_errors[it,] <- mass_errors[it,] -
-                        c(sum(hillslope$s_sf*hillslope$area),
-                          sum(hillslope$s_rz*hillslope$area),
-                          sum(hillslope$s_uz*hillslope$area),
-                          sum(hillslope$s_sz*hillslope$area))
+
+                    ## work out total mass balance
+                    mass_errors[it,"total"] <-
+                        sum( mass_errors[it,setdiff(colnames(mass_errors),"total")])
                     
-                    if( any( abs(mass_errors[it,]) > 1e-6 ) ){
+                    if( abs(mass_errors[it,"total"]) > 1e-6  ){
+                        browser()
                         cat("Iteration ",it," large mass errors:","\n")
                         cat( mass_errors[it,], " \n")
                     }
@@ -877,10 +890,12 @@ dynatop <- R6::R6Class(
 
                 ## copy states if requires
                 if( keep_states[it] ){
-                    state_record[[it]] <- private$get_states(model)
+                    state_record[[it]] <- private$extract_states(hillslope,"hillslope")
                 }
                 
-                    
+                ## convert channel inflow to [m3/s]
+                channel_inflow[it,] <- channel_inflow[it,]*channel$area/ts$step
+
                 
             } ## end of timestep loop
 
