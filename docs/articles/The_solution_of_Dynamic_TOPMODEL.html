@@ -57,7 +57,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/Notes_on_the_implimentation.html">UNKNOWN TITLE</a>
+      <a href="../articles/Notes_on_the_implimentation.html">Notes on the Implimentation</a>
     </li>
     <li>
       <a href="../articles/Selected_References.html">Selected References</a>
@@ -463,7 +463,7 @@ The second stage, carried out in Step 5 corrects for the vertical fluxes.</p>
 <span class="math display">\[
 \left. \tilde{s}_{sf} \right\rvert_{t+\Delta t} =
 \left. s_{sf}^{\left[i\right]}\right\rvert_{t}
-\sfp\left(-\frac{\Delta t}{T_{sf}^{\left[i\right]}}\right)
+\exp\left(-\frac{\Delta t}{T_{sf}^{\left[i\right]}}\right)
 + \left(1 - \exp\left(-\frac{\Delta t}{T_{sf}^{\left[i\right]}}\right)\right)
 \frac{T_{sf}^{\left[i\right]}}{\Delta t} \sum\limits_{j \in \mathcal{S}_{sf}^{\left[i\right]}} f^{\left[i,j\right]}_{sf}\frac{a^{\left[j\right]}}{a^{\left[i\right]}} \int_{\Delta t}l^{\left[j\right]}_{sf}dt
 \]</span></p>
@@ -579,7 +579,7 @@ after computation of the saturated zone in Step 5.</p>
 <div id="step-4-saturated-zone" class="section level2">
 <h2 class="hasAnchor">
 <a href="#step-4-saturated-zone" class="anchor"></a>Step 4: Saturated Zone</h2>
-<p>For the <span class="math inline">\(i\)</span> th hill slope HSU the change in saturated zone storage deficit is
+<p>For a hill slope HSU the change in saturated zone storage deficit is
 evaluated using a kinematic wave approximation.
 For an infinitesimal slab
 <span class="math display">\[
@@ -612,39 +612,39 @@ expressed as a function of lateral flow per unit width.</p>
 <span class="math display">\[
 \frac{1}{c\left(z\right)}\frac{dQ}{dt} + \frac{dQ}{dx} -r = 0
 \]</span>
-to which a numerical solution is sort.
-Let <span class="math inline">\(Q^{+}\)</span> and <span class="math inline">\(Q^{-}\)</span> be the lateral flows at the foot and head of the slope
-respectivly and ${r} a constant inflow per unit length.</p>
-<p>One possible four-point or box scheme for a constant recharge is given by
+to which a numerical solution is sort.</p>
+<p>Let <span class="math inline">\(Q^{+}\)</span> and <span class="math inline">\(Q^{-}\)</span> be the lateral flows at the foot and head of the slope
+respectivly and <span class="math inline">\(\bar{r}\)</span> a constant inflow per unit length. One possible
+four-point or box scheme use a length averaged velocity <span class="math inline">\(\bar{c}\)</span> is given by
 <span class="math display">\[
 \begin{split}
 &amp; \left(1-\omega\right)\frac{\left.Q^{-}\right\rvert_{t+1}-\left.Q^{-}\right\rvert_{t}}{\Delta t} +
 \omega\frac{\left.Q^{+}\right\rvert_{t+1}-\left.Q^{+}\right\rvert_{t}}{\Delta t} +
-\left(1-\theta\right)c\left(\left.z\right\rvert_{t}\right)
-\left(\frac{\left.Q^{+}\right\rvert_{t}-\left.Q^{-}\right\rvert_{t}}{\Delta x} -\bar{r}\right)
+\left(1-\theta\right)\left.\bar{c}\right\rvert_{t}
+\left(\frac{\left.Q^{+}\right\rvert_{t}-\left.Q^{-}\right\rvert_{t}}{\Delta x} -\left.\bar{r}\right\rvert_{t}\right)
 + \\
-&amp; \theta c\left(\left.z\right\rvert_{t+1}\right)\left(\frac{\left.Q^{+}\right\rvert_{t+1}-\left.Q^{-}\right\rvert_{t+1}}{\Delta x} -\bar{r}\right)
+&amp; \theta \left.\bar{c}\right\rvert_{t+1} \left(\frac{\left.Q^{+}\right\rvert_{t+1}-\left.Q^{-}\right\rvert_{t+1}}{\Delta x} -\left.\bar{r}\right\rvert_{t+1}\right)
 = 0
 \end{split}
 \]</span></p>
-<p>It certain conditions it has been shown that this scheme
-is unlikely to be numerical stable for all <span class="math inline">\(\Delta t\)</span> while the alternate
-scheme replacing <span class="math inline">\(c\left(z\right)\)</span> with a ‘typical’ value <span class="math inline">\(\bar{c}\)</span>
+<p>Taking <span class="math inline">\(\omega=1\)</span> results in the scheme given in the 2001 Dynamic TOPMODEL
+paper. In certain conditions  it has been shown that this scheme
+is unlikely to be numerical stable for all <span class="math inline">\(\Delta t\)</span>. An alternate scheme replacing the <span class="math inline">\(\bar{c}\)</span>’s with a ‘typical’ value <span class="math inline">\(\hat{c}\)</span>
 <span class="math display">\[
 \begin{split}
 &amp; \left(1-\omega\right)\frac{\left.Q^{-}\right\rvert_{t+\Delta t}-\left.Q^{-}\right\rvert_{t}}{\Delta t} +
 \omega\frac{\left.Q^{+}\right\rvert_{t+\Delta t}-\left.Q^{+}\right\rvert_{t}}{\Delta t} +
-\left(1-\theta\right)\bar{c}
-\left(\frac{\left.Q^{+}\right\rvert_{t}-\left.Q^{-}\right\rvert_{t}}{\Delta x} - \bar{r}\right)
+\left(1-\theta\right)\hat{c}
+\left(\frac{\left.Q^{+}\right\rvert_{t}-\left.Q^{-}\right\rvert_{t}}{\Delta x} - \left.\bar{r}\right\rvert_{t}\right)
 + \\
-&amp; \theta \bar{c}\left(\frac{\left.Q^{+}\right\rvert_{t+\Delta t}-\left.Q^{-}\right\rvert_{t+\Delta t}}{\Delta x} - \bar{r}\right)
+&amp; \theta \hat{c}\left(\frac{\left.Q^{+}\right\rvert_{t+\Delta t}-\left.Q^{-}\right\rvert_{t+\Delta t}}{\Delta x} - \left.\bar{r}\right\rvert_{t+\Delta t}\right)
 = 0
 \end{split}
 \]</span>
 is stable for <span class="math inline">\(\omega \geq 0.5\)</span>, <span class="math inline">\(\theta \geq 0.5\)</span>.</p>
 <p>Rearranging this and taking
 <span class="math display">\[
-\lambda = \frac{\bar{c}\Delta t}{\Delta x}
+\lambda = \frac{\hat{c}\Delta t}{\Delta x}
 \]</span>
 gives</p>
 <p><span class="math display">\[
@@ -655,45 +655,56 @@ gives</p>
   &amp; - \left( \omega - \left(1-\theta\right)\lambda \right) \left.Q^{+}\right\rvert_{t}
   - \left(1 - \omega + \left(1 - \theta\right)\lambda \right) \left. Q^- \right\rvert_{t}
 \\
-&amp; - \lambda \Delta x \bar{r} =0
+&amp; - \lambda \Delta x \left( \left(1-\theta\right)\left.\bar{r}\right\rvert_{t}
++ \theta\left.\bar{r}\right\rvert_{t+\Delta t}\right)=0
 \end{split}
 \]</span></p>
-<p>Consider the <span class="math inline">\(i\)</span> th HSU. The impact of saturation at
-<span class="math inline">\(s^{\left[i\right]}_{sz}=0\)</span> is to limits the lateral flow to <span class="math inline">\(l^{\left[i\right]}_{szmax}\)</span> all points and times producing return flow to the
-surface excess store. There is however no guarentee that the inflow to the
-saturated zone store from other HSUs, given by</p>
-<p><span class="math display">\[
-\sum_{j\in\mathcal{S}^{\left[i\right]}_{sz}}f_{sz}^{\left[i,j\right]}\frac{a^{\left[j\right]}}{a^{\left[i\right]}}l^{\left[j\right]}_{sz}. 
-\]</span></p>
-<p>is less then <span class="math inline">\(l_{szmax}^{\left[i\right]}\)</span>. In estimating
-<span class="math inline">\(l_{sz}^{\left[i\right]}\)</span> the solution proposed allows lateral flow to
-occur at values exceeding <span class="math inline">\(l^{\left[i\right]}_{szmax}\)</span> within the HSU, but
-limits the fluxes transfered to and from the HSU.</p>
-<p>Suppose that <span class="math inline">\(l_{szmaz}\geq\left.l_{sz}^{\left[i\right]}\right\rvert_{t}\geq 0\)</span>.
-This provides an estimate of <span class="math inline">\(\left.Q^{+}\right\rvert_{t}\)</span>.
-Since the inflow from the other HSUs is represented as a volume take
+<p>A futher complication is the effect of saturation at <span class="math inline">\(z=0\)</span> which limits the
+lateral flow to <span class="math inline">\(Q\leq wg\left(0\right)\)</span> at all points and times by producing
+return flow to the surface excess store. In applying the above numerical
+scheme to a given HSU below this limit is applied to the fluxes transfered to and from the HSU.</p>
+<p>Consider the <span class="math inline">\(i\)</span>th HSU and converting to flow per unit plan area gives the maximum lateral flux as
 <span class="math display">\[
-\bar{Q}^{-} = \left.Q^{-}\right\rvert_{t} =
+l^{\left[i\right]}_{szmax}=w^{\left[i\right]}g^{\left[i\right]}\left(0\right)=g^{\left[i\right]}\left(0\right) /
+\Delta x^{\left[i\right]}
+\]</span>
+For <span class="math inline">\(l^{\left[i\right]}_{szmaz} \geq l_{sz}^{\left[i\right]}\geq 0\)</span>
+the outflow from the saturated zone as
+<span class="math display">\[
+Q^+ = a^{\left[i\right]}l^{\left[i\right]}_{sz}
+\]</span>
+The inflow is made up the sum of fractional outflow from upslope HSUs, the sum
+of which may be greater then the maximum lateral flux. Noting this and that
+the inflow from the other HSUs is represented as a volume take
+<span class="math display">\[
+\left.Q^{-}\right\rvert_{t} =
 \left.Q^{-}\right\rvert_{t+\Delta t} =
-\min\left(\frac{1}{a^{\left[i\right]}\Delta t}
-\sum_{j}f_{sz}^{\left[i,j\right]}a^{\left[j\right]}\int_{\Delta
+a^{\left[i\right]} l^{\left[i\right]}_{szin} =
+a^{\left[i\right]} \min\left(\frac{1}{\Delta t}
+\sum_{j}f_{sz}^{\left[i,j\right]}\frac{a^{\left[j\right]}}{a^{\left[i\right]}}\int_{\Delta
   t}l^{\left[j\right]}_{sz} dt,
 l_{szmax}^{\left[i\right]}\right)
 \]</span></p>
-<p>Constant recharge for every cross section means that
-<span class="math inline">\(\int_{\Delta t} q_{uz\rightarrow sz} dt = r \Delta x \Delta t\)</span>.</p>
-<p>An initial estimate of the lateral flux from the saturated zone at the end of
+<p>Since the recharge is also represented as a volume over the whole hillslope
+take
+<span class="math display">\[
+\left.\bar{r}\right\rvert_{t+\Delta t} =
+\left.\bar{r}\right\rvert_{t} =
+\frac{a^{\left[i\right]}}{\Delta x^{\left[i\right]} \Delta t}
+\int_{\Delta t} q_{uz\rightarrow sz} dt
+\]</span></p>
+<p>Subsitution gives an initial unconstrained estimate of the lateral flux from the saturated zone at the end of
 the time step <span class="math inline">\(\left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}\)</span>
-is thus given by</p>
+as</p>
 <p><span class="math display">\[
 \left( \omega + \theta \lambda^{\left[i\right]} \right)
 \left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t} =
 \left( \omega - \left(1-\theta\right)\lambda^{\left[i\right]} \right)
 \left.l^{\left[i\right]}_{sz}\right\rvert_{t} +
-\frac{\lambda^{\left[i\right]}}{\Delta t}\left(\bar{Q}^{\left[i\right]}\Delta t +
-\int_{\Delta t} q^{\left[i\right]}_{uz\rightarrow sz} dt \right)
-\]</span>
-Assuming <span class="math inline">\(\bar{c}^{\left[i\right]}\)</span> and hence <span class="math inline">\(\lambda^{\left[i\right]}\)</span> is not dependent upon
+\lambda^{\left[i\right]}\left( l^{\left[i\right]}_{szin} + 
+\frac{1}{\Delta t} \int_{\Delta t} q^{\left[i\right]}_{uz\rightarrow sz} dt \right)
+\]</span></p>
+<p>Assuming <span class="math inline">\(\hat{c}^{\left[i\right]}\)</span> and hence <span class="math inline">\(\lambda^{\left[i\right]}\)</span> is not dependent upon
 <span class="math inline">\(\left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}\)</span> then this
 leads a simple solution for
 <span class="math inline">\(\left.l^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t}\)</span>
@@ -731,18 +742,43 @@ from which can be computed
 \left.s^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t} - \tilde{s}_{sz}
 \]</span></p>
 </div>
-<div id="estimating-barc" class="section level3">
+<div id="estimating-hatc" class="section level3">
 <h3 class="hasAnchor">
-<a href="#estimating-barc" class="anchor"></a>Estimating <span class="math inline">\(\bar{c}\)</span>
+<a href="#estimating-hatc" class="anchor"></a>Estimating <span class="math inline">\(\hat{c}\)</span>
 </h3>
 <p>The above solution relies on the estimate of an “average”
-value <span class="math inline">\(\bar{c}\)</span>. A relatively simple approach to
-constructing <span class="math inline">\(\bar{c}\)</span> is to take
+value <span class="math inline">\(\hat{c}\)</span>. A relatively simple approach to
+constructing <span class="math inline">\(\hat{c}\)</span> is to take
 <span class="math display">\[
-\bar{c} = c\left(\bar{z}\right)
+\hat{c} = \frac{1}{2}\left(\left.\bar{c}\right\rvert_{t} +
+\left.\bar{c}\right\rvert_{t+\Delta t} \right)
 \]</span>
-where <span class="math inline">\(\bar{z}\)</span> is a estimate of average (in space and time) of the storage
-deficit. This is approximated by <span class="math inline">\(\left.s_{sz}\right\rvert_{t}\)</span>.</p>
+The values of <span class="math inline">\(\bar{c}\)</span> are themseleves typical velocity values over the length
+of the HSU at a given time. One method of computing these is is treat
+<span class="math inline">\(s_{sz}\)</span> as a typical value of <span class="math inline">\(z\)</span> and take
+<span class="math display">\[
+\bar{c} = c\left(s_{sz}\right)
+\]</span>
+This representation of <span class="math inline">\(\bar{c}\)</span> can be evaluated at time <span class="math inline">\(t\)</span>, but not a time
+<span class="math inline">\(t+\Delta t\)</span>. However if the <span class="math inline">\(c\left(z\right)\)</span> is montonically increasing as
+<span class="math inline">\(z\)</span> decreases (i.e. velocities increase as saturation increases) then
+<span class="math display">\[
+c\left(\left.s_{sz}\right\rvert_{t+\Delta t}\right) \leq
+c\left(\left.\check{s}_{sz}\right\rvert_{t+\Delta t}\right)
+\]</span>
+where
+<span class="math display">\[
+\left.\check{s}_{sz}\right\rvert_{t+\Delta t} =
+\max\left(0,
+\left.s_{sz}\right\rvert_{t} - l_{szin}\Delta t  - \int_{\Delta t} q^{\left[i\right]}_{uz\rightarrow sz} dt\right)
+\]</span></p>
+<p>It is therefor proposed to use the estimate
+<span class="math display">\[
+\hat{c} = \frac{1}{2}\left(
+c\left(\left.s_{sz}\right\rvert_{t}\right) +
+c\left(\left.\check{s}_{sz}\right\rvert_{t+\Delta t}\right)
+\right)
+\]</span></p>
 </div>
 </div>
 <div id="step-5-correcting-vertical-stores" class="section level2">

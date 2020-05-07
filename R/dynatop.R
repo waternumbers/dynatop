@@ -605,7 +605,7 @@ dynatop <- R6::R6Class(
             ts <- private$comp_ts(NULL)
             
             ## maximum lateral flow from saturated zone per unit area
-            l_szmax <- exp( hillslope$ln_t0 )*hillslope$s_bar
+            l_szmax <- exp( hillslope$ln_t0 )*hillslope$s_bar / hillslope$delta_x
 
             ## initialise the surface storage
             hillslope$s_sf <- rep(0,length(hillslope$id))
@@ -620,10 +620,11 @@ dynatop <- R6::R6Class(
                                     private$model$hillslope$id)))
             il_sz <- rep(0,length(hillslope$id))
             hillslope$s_sz <- hillslope$l_sz <- rep(NA,length(hillslope$id))
+
             
             for(ii in private$model$sqnc$sz){ ## loop through all HSUs in order
                 ## solve for instananeous outlflow
-                
+
                 qbar <- min(l_szmax[ii], il_sz_in[ hillslope$id[ii] ]/ts$sub_step)
                 hillslope$l_sz[ii] <- min( l_szmax[ii] , qbar+bq_uz_sz )
                 il_sz[ii] <- hillslope$l_sz[ii]*ts$step
@@ -690,7 +691,11 @@ dynatop <- R6::R6Class(
                 x <- unname( x0*ebt + a*kappa )
                 return(x)
             }
-
+            ## velocity for a given storage deficit
+            fc <- function(z){
+                
+            }
+            
             ## initialise the stores of the lateral flux inflows
             ## stored as [m3/m2] where the area is that of the receiving HSU
             il_sf_in <- rep(NA,max(c(hillslope$id,channel$id)))
@@ -698,10 +703,18 @@ dynatop <- R6::R6Class(
 
             ## compute some local constants for the hillslope HSUs
             ## max lateral flow in saturated zone as [m/s]
-            l_szmax <- exp( hillslope$ln_t0 )*hillslope$s_bar
+            ## l_szmax <- exp( hillslope$ln_t0 )*hillslope$s_bar / hillslope$delta_x
+            beta <- atan(hillslope$s_bar)
+            l_szmax <- exp( hillslope$ln_t0 )*sin(beta) / hillslope$delta_x
+            c_szmax <- exp( hillslope$ln_t0 )*sin(beta)*cos(beta)/hillslope$m
+            cosbeta_m <- cos(beta)/hillslope$m
+            rm(beta)
+            
             ## constants in surface flow solution
-            omega_1 <- exp(-ts$sub_step/hillslope$t_sf )
-            omega_2 <- (1-omega_1)*(hillslope$t_sf/ts$sub_step)
+            tmp <- ts$sub_step/hillslope$t_sf
+            omega_1 <- exp(-tmp)
+            omega_2 <- (1-omega_1)/tmp
+            omega_2[tmp==0] <- ts$sub_step
 
                         
             ## initialise vertical flux stores
@@ -752,7 +765,9 @@ dynatop <- R6::R6Class(
                     mass_errors[it,"s_uz"] <- sum(hillslope$s_uz*hillslope$area)
                     mass_errors[it,"s_sz"] <- sum(hillslope$s_sz*hillslope$area)
                 }
-                                       
+                
+                
+
                 ## loop sub steps
                 for(inner in 1:ts$n_sub_step){
                    
@@ -777,8 +792,7 @@ dynatop <- R6::R6Class(
                     ## compute flow to root zone and correct storage
                     iq_sf_rz <- pmin( hillslope$q_sfmax*ts$sub_step,hillslope$s_sf )
                     hillslope$s_sf <- hillslope$s_sf - iq_sf_rz
-
-                    
+                                        
                     ## Step 2: solve the root zone for hillslope elements
                     ## solve ODE                    
                     ts_rz <- fode( p + (iq_sf_rz/ts$sub_step),
@@ -792,7 +806,7 @@ dynatop <- R6::R6Class(
                         mass_errors[it,'e_t'] <- mass_errors[it,'e_t'] +
                             sum(ie_t*hillslope$area)
                     }
-                    
+
                     ## new storage value
                     hillslope$s_rz <- pmin(ts_rz,hillslope$s_rzmax)
                     
@@ -801,8 +815,7 @@ dynatop <- R6::R6Class(
                     is_sat <- hillslope$s_sz <= 0
                     iq_rz_sf <- iq_rz_uz*is_sat
                     iq_rz_uz <- iq_rz_uz*!is_sat
-                    
-                        
+                                            
                     ## Step 3: Unsaturated zone
                     ## solve ODE
                     ts_uz <- fode( iq_rz_uz/ts$sub_step,
@@ -811,31 +824,40 @@ dynatop <- R6::R6Class(
                     ## work out outflow
                     iq_uz_sz <- hillslope$s_uz + iq_rz_uz - ts_uz
                     hillslope$s_uz <- ts_uz
-                                        
+                    ##iq_uz_sz <-  rep(0,length(hillslope$id))             
+
+
                     ## Step 4: Solve saturated zone
                     ## this is omega=theta=1 solution with explicit velocity and average inflow
                                         
                     ## compute velocity estimate and kinematic parameters
-                    cbar <- (l_szmax/hillslope$m)*exp(- hillslope$s_sz / hillslope$m)
-                    ##cbar <- hillslope$l_sz /hillslope$m
-                    lambda <- cbar*ts$sub_step/hillslope$delta_x
-                    l_1 <- 1/(1+lambda)
-                    l_2 <- lambda*l_1
-                    l_1[lambda==0] <- 0 ## this is a bodge to say no velocity no flow unless input
+                    ##cbar <- (exp( hillslope$ln_t0 )*hillslope$s_bar/hillslope$m)*
+                    ##    exp(- hillslope$s_sz / hillslope$m)
+                    cbar <- c_szmax*exp(- hillslope$s_sz*cosbeta_m)
                     ## loop HSUs
                     il_sz <- hillslope$l_sz ## initialise integral calc
                     bq_uz_sz <- iq_uz_sz / ts$sub_step
                     
-                    for(ii in private$model$sqnc$sz){ ## loop through all HSUs in order
-                        if(hillslope$s_sz[ii]==0){
-                            #browser()
-                            pjs <- rnorm(1)
-                        }
-                        ## solve for instananeous outlflow
-                        qbar <- min(l_szmax[ii], il_sz_in[hillslope$id[ii]]/ts$sub_step)
-                        hillslope$l_sz[ii] <- min( l_szmax[ii],
-                                                  l_1[ii] * hillslope$l_sz[ii] +
-                                                  l_2[ii]*( qbar + bq_uz_sz[ii] ))
+                    for(ii in private$model$sqnc$sz){## loop through all HSUs in order
+                        
+                        ## inflow as rate
+                        l_szin <- min( il_sz_in[hillslope$id[ii]] /ts$sub_step,
+                                      l_szmax[ii] )
+                        
+                        ## compute chat
+                        cs_sz <- max(0,
+                                     hillslope$s_sz[ii]-(l_szin*ts$sub_step)-iq_uz_sz[ii])
+                        chat <- (cbar[ii] +
+                                 c_szmax[ii]*exp(- cs_sz*cosbeta_m[ii]))/2
+                                 ## (exp( hillslope$ln_t0 )*hillslope$s_bar/hillslope$m)*
+                                 ## exp(- cs_sz / hillslope$m ))/2
+                        ## compute lambda
+                        lambda <- chat*ts$sub_step/hillslope$delta_x[ii]
+                        ## solve for estimate of outflow
+                        tl_sz <- (hillslope$l_sz[ii] + lambda*(l_szin + bq_uz_sz[ii]))/
+                            (1+lambda)
+                                              
+                        hillslope$l_sz[ii] <- min( l_szmax[ii],tl_sz )
                         ## integral of outflow
                         il_sz[ii] <- (ts$sub_step/2)*(il_sz[ii] + hillslope$l_sz[ii])
                         ## pass downslope
@@ -843,6 +865,9 @@ dynatop <- R6::R6Class(
                             il_sz_in[ sz_dir[[ii]]$idx ] +
                             sz_dir[[ii]]$frc*il_sz[ii]
                     }
+                    #browser()
+                    ##print( sum(il_sz*hillslope$area) -
+                    ##       sum(il_sz_in*c(channel$area,hillslope$area)) )
                     ## update volumes in hillslope
                     ts_sz <- hillslope$s_sz + il_sz - il_sz_in[hillslope$id] - iq_uz_sz
                     hillslope$s_sz <- pmax(0,ts_sz)
