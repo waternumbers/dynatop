@@ -605,7 +605,8 @@ dynatop <- R6::R6Class(
             ts <- private$comp_ts(NULL)
             
             ## maximum lateral flow from saturated zone per unit area
-            l_szmax <- exp( hillslope$ln_t0 )*hillslope$s_bar / hillslope$delta_x
+            beta <- atan(hillslope$s_bar)
+            l_szmax <- exp( hillslope$ln_t0 )*sin(beta) / hillslope$delta_x
 
             ## initialise the surface storage
             hillslope$s_sf <- rep(0,length(hillslope$id))
@@ -633,7 +634,7 @@ dynatop <- R6::R6Class(
                     il_sz_in[ sz_dir[[ii]]$idx ] + sz_dir[[ii]]$frc*il_sz[ii]
             }
             ## compute the deficit based on flow
-            hillslope$s_sz <- pmax(0, hillslope$m*( log(l_szmax) - log(hillslope$l_sz)))
+            hillslope$s_sz <- pmax(0, hillslope$m*( log(l_szmax) - log(hillslope$l_sz))/cos(beta))
 
             ## TODO handel flow to surface?
 
@@ -833,7 +834,8 @@ dynatop <- R6::R6Class(
                     ## compute velocity estimate and kinematic parameters
                     ##cbar <- (exp( hillslope$ln_t0 )*hillslope$s_bar/hillslope$m)*
                     ##    exp(- hillslope$s_sz / hillslope$m)
-                    cbar <- c_szmax*exp(- hillslope$s_sz*cosbeta_m)
+                    cbar <- hillslope$s_sz*hillslope$delta_x*cosbeta_m
+                    ##    c_szmax*exp(- hillslope$s_sz*cosbeta_m)
                     ## loop HSUs
                     il_sz <- hillslope$l_sz ## initialise integral calc
                     bq_uz_sz <- iq_uz_sz / ts$sub_step
@@ -845,16 +847,18 @@ dynatop <- R6::R6Class(
                                       l_szmax[ii] )
                         
                         ## compute chat
-                        cs_sz <- max(0,
-                                     hillslope$s_sz[ii]-(l_szin*ts$sub_step)-iq_uz_sz[ii])
-                        chat <- (cbar[ii] +
-                                 c_szmax[ii]*exp(- cs_sz*cosbeta_m[ii]))/2
-                                 ## (exp( hillslope$ln_t0 )*hillslope$s_bar/hillslope$m)*
-                                 ## exp(- cs_sz / hillslope$m ))/2
+                        ##cs_sz <- max(0,
+                                     #hillslope$s_sz[ii]-(l_szin*ts$sub_step)-iq_uz_sz[ii])
+                        ##chat <- (cbar[ii] +
+                                 #c_szmax[ii]*exp(- cs_sz*cosbeta_m[ii]))/2
+                        
+                        chat <- cbar[ii]
                         ## compute lambda
                         lambda <- chat*ts$sub_step/hillslope$delta_x[ii]
+                        if(lambda==0){lp <- 0}else{lp <- 1}
+                        
                         ## solve for estimate of outflow
-                        tl_sz <- (hillslope$l_sz[ii] + lambda*(l_szin + bq_uz_sz[ii]))/
+                        tl_sz <- (lp*hillslope$l_sz[ii] + lambda*(l_szin + bq_uz_sz[ii]))/
                             (1+lambda)
                                               
                         hillslope$l_sz[ii] <- min( l_szmax[ii],tl_sz )

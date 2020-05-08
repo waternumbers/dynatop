@@ -100,7 +100,7 @@
       <h1 data-toc-skip>The Dynamic TOPMODEL equations</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/../vignettes/The_solution_of_Dynamic_TOPMODEL.Rmd"><code>../vignettes/The_solution_of_Dynamic_TOPMODEL.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/../../../Development/dynatop/Lowther/vignettes/The_solution_of_Dynamic_TOPMODEL.Rmd"><code>../../../Development/dynatop/Lowther/vignettes/The_solution_of_Dynamic_TOPMODEL.Rmd</code></a></small>
       <div class="hidden name"><code>The_solution_of_Dynamic_TOPMODEL.Rmd</code></div>
 
     </div>
@@ -825,14 +825,9 @@ f^{\left[k,j\right]}_{sf}a^{\left[j\right]}l^{\left[j\right]}_{sf} +
 f^{\left[k,j\right]}_{sz}a^{\left[j\right]}l^{\left[j\right]}_{sz} \right) + p
 \]</span></p>
 </div>
-<div id="appendix-ordinary-differential-equations-solutions" class="section level1">
+<div id="appendix-single-variable-non-homogeneous-ode-with-constant-input" class="section level1">
 <h1 class="hasAnchor">
-<a href="#appendix-ordinary-differential-equations-solutions" class="anchor"></a>Appendix: Ordinary Differential Equations Solutions</h1>
-<p>For completeness the solutions to the ODEs made use of above are
-documented here.</p>
-<div id="single-variable-non-homogeneous-ode-with-constant-input" class="section level2">
-<h2 class="hasAnchor">
-<a href="#single-variable-non-homogeneous-ode-with-constant-input" class="anchor"></a>Single variable non-homogeneous ODE with constant input</h2>
+<a href="#appendix-single-variable-non-homogeneous-ode-with-constant-input" class="anchor"></a>Appendix: Single variable non-homogeneous ODE with constant input</h1>
 <p>The initial condition
 problem<span class="math display">\[\frac{dx\left(t\right)}{dt} = a - b x\left(t\right) \quad x\left(0\right) = x_0\]</span>
 or more compactly
@@ -851,6 +846,21 @@ Note that <span class="math display">\[\begin{array}{c}
         x\rightarrow x_{0} + at \quad\mathrm{as}\quad b\rightarrow0\\
     \end{array}\]</span></p>
 </div>
+<div id="appendix-exponential-transmissivity-profile" class="section level1">
+<h1 class="hasAnchor">
+<a href="#appendix-exponential-transmissivity-profile" class="anchor"></a>Appendix: Exponential Transmissivity Profile</h1>
+<p>Within the kinematic solution for the saturated zone there is the presumption
+of a relationship between <span class="math inline">\(Q\)</span> and <span class="math inline">\(z\)</span>. In the case of the exponential
+transmissivity profile we get
+<span class="math display">\[
+g\left(z\right) = T_{0}\sin\beta\exp\left(-\frac{z}{m}\cos\beta\right)
+\]</span>
+and
+<span class="math display">\[
+c\left(z\right) = -\frac{d}{dz} T_{0}\sin\beta\exp\left(-\frac{z}{m}\cos\beta\right)
+= T_{0}\sin\beta\frac{\cos\beta}{m}\exp\left(-\frac{z}{m}\cos\beta\right)
+\]</span>
+The angle <span class="math inline">\(\beta\)</span> represents the slope of the HSU.</p>
 </div>
   </div>
 
