@@ -81,11 +81,10 @@ Swindale$model$param <- c(q_sfmax_default=Inf,
                  s_rzmax_default=0.1,
                  v_ch_default=0.4, ## 1000 -5000 m/h
                  t_d_default=80*60*60, ## 0.1-120 m/h - are these units correct - or is cobceptualisation other way round?
-                 t_sf_default=7*60*60
+                 t_sf_default=Inf #7*60*60
                  )
 m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel(mass_check=TRUE)
 m1$plot_gauge_flow()
 m1$sim()$plot_gauge_flow()
-x11()
 
 
