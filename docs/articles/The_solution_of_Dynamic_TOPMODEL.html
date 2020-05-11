@@ -880,6 +880,53 @@ Note that <span class="math display">\[\begin{array}{c}
         x\rightarrow x_{0} + at \quad\mathrm{as}\quad b\rightarrow0\\
     \end{array}\]</span></p>
 </div>
+<div id="appendix-a-four-point-solution-for-the-exponential-transmissivity-profile" class="section level1">
+<h1 class="hasAnchor">
+<a href="#appendix-a-four-point-solution-for-the-exponential-transmissivity-profile" class="anchor"></a>Appendix: A four point solution for the exponential transmissivity profile</h1>
+<p>Ignoring the use of a “typical” value <span class="math inline">\(\hat{c}\)</span> we can write the four point
+solution as
+<span class="math display">\[
+\begin{split}
+  \left( \omega + \theta \left.\lambda\right\rvert_{t+\Delta t} \right) &amp;
+  \left.Q^{+}\right\rvert_{t+\Delta t} +
+  \left(1 - \omega - \theta \left.\lambda\right\rvert_{t+\Delta t} \right) \left. Q^- \right\rvert_{t+\Delta t} \\
+  &amp; - \left( \omega - \left(1-\theta\right)\left.\lambda\right\rvert_{t} \right) \left.Q^{+}\right\rvert_{t}
+  - \left(1 - \omega + \left(1 - \theta\right)\left.\lambda\right\rvert_{t} \right) \left. Q^- \right\rvert_{t}
+\\
+&amp; - \Delta x \left( \left(1-\theta\right)\left.\lambda\right\rvert_{t}\left.\bar{r}\right\rvert_{t}
++ \theta\left.\lambda\right\rvert_{t+\Delta t}\left.\bar{r}\right\rvert_{t+\Delta t}\right)=0
+\end{split}
+\]</span></p>
+<p>Treating all the terms at time <span class="math inline">\(t\)</span> as known this gives</p>
+<p><span class="math display">\[
+\begin{split}
+  \left( \omega + \theta \left.\lambda\right\rvert_{t+\Delta t} \right) &amp;
+  \left.Q^{+}\right\rvert_{t+\Delta t} +
+  \left(1 - \omega - \theta \left.\lambda\right\rvert_{t+\Delta t} \right) \left. Q^- \right\rvert_{t+\Delta t} \\
+  &amp; - \Delta x\theta\left.\lambda\right\rvert_{t+\Delta t}\left.\bar{r}\right\rvert_{t+\Delta t}
+  - K = 0
+\end{split}
+\]</span>
+Treating the estimate of the kinematic velocity to be based on
+the outflow gives
+<span class="math display">\[
+\left.\lambda\right\rvert_{t+\Delta t} = \frac{\cos \beta}{w m} \left.Q^{+}\right\rvert_{t+\Delta t}
+\]</span></p>
+<p>Rearrangement provides a quadratic in the unknown
+<span class="math inline">\(\left.Q^{+}\right\rvert_{t+\Delta t}\)</span>
+<span class="math display">\[
+\theta  \frac{\cos \beta}{w m} \left.Q^{+}\right\rvert_{t+\Delta t}^2
++\left(\omega - \theta \frac{\cos \beta}{w m}\left(
+\left. Q^- \right\rvert_{t+\Delta t} +  \Delta
+x\left.\bar{r}\right\rvert_{t+\Delta t}\right )\right)
+\left.Q^{+}\right\rvert_{t+\Delta t}
++ \left(1 - \omega\right)\left. Q^- \right\rvert_{t+\Delta t}-K = 0
+\]</span></p>
+<p>The roots of this quadratic can be found using standard formulea, however the
+challange reamins in selecting the appropriate root. This can be avoided by
+choice of <span class="math inline">\(\omega=\theta=1\)</span> which results in only one of the possible roots
+being valid.</p>
+</div>
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

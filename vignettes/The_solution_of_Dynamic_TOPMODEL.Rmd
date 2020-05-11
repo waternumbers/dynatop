@@ -634,3 +634,52 @@ Note that $$\begin{array}{c}
     \end{array}$$
 
 
+# Appendix: A four point solution for the exponential transmissivity profile
+
+Ignoring the use of a "typical" value $\hat{c}$ we can write the four point
+solution as
+\[
+\begin{split}
+  \left( \omega + \theta \left.\lambda\right\rvert_{t+\Delta t} \right) &
+  \left.Q^{+}\right\rvert_{t+\Delta t} +
+  \left(1 - \omega - \theta \left.\lambda\right\rvert_{t+\Delta t} \right) \left. Q^- \right\rvert_{t+\Delta t} \\
+  & - \left( \omega - \left(1-\theta\right)\left.\lambda\right\rvert_{t} \right) \left.Q^{+}\right\rvert_{t}
+  - \left(1 - \omega + \left(1 - \theta\right)\left.\lambda\right\rvert_{t} \right) \left. Q^- \right\rvert_{t}
+\\
+& - \Delta x \left( \left(1-\theta\right)\left.\lambda\right\rvert_{t}\left.\bar{r}\right\rvert_{t}
++ \theta\left.\lambda\right\rvert_{t+\Delta t}\left.\bar{r}\right\rvert_{t+\Delta t}\right)=0
+\end{split}
+\]
+
+Treating all the terms at time $t$ as known this gives
+
+\[
+\begin{split}
+  \left( \omega + \theta \left.\lambda\right\rvert_{t+\Delta t} \right) &
+  \left.Q^{+}\right\rvert_{t+\Delta t} +
+  \left(1 - \omega - \theta \left.\lambda\right\rvert_{t+\Delta t} \right) \left. Q^- \right\rvert_{t+\Delta t} \\
+  & - \Delta x\theta\left.\lambda\right\rvert_{t+\Delta t}\left.\bar{r}\right\rvert_{t+\Delta t}
+  - K = 0
+\end{split}
+\]
+Treating the estimate of the kinematic velocity to be based on
+the outflow gives
+\[
+\left.\lambda\right\rvert_{t+\Delta t} = \frac{\cos \beta}{w m} \left.Q^{+}\right\rvert_{t+\Delta t}
+\]
+
+Rearrangement provides a quadratic in the unknown
+$\left.Q^{+}\right\rvert_{t+\Delta t}$
+\[
+\theta  \frac{\cos \beta}{w m} \left.Q^{+}\right\rvert_{t+\Delta t}^2
++\left(\omega - \theta \frac{\cos \beta}{w m}\left(
+\left. Q^- \right\rvert_{t+\Delta t} +  \Delta
+x\left.\bar{r}\right\rvert_{t+\Delta t}\right )\right)
+\left.Q^{+}\right\rvert_{t+\Delta t}
++ \left(1 - \omega\right)\left. Q^- \right\rvert_{t+\Delta t}-K = 0
+\]
+
+The roots of this quadratic can be found using standard formulea, however the
+challange reamins in selecting the appropriate root. This can be avoided by
+choice of $\omega=\theta=1$ which results in only one of the possible roots
+being valid.
