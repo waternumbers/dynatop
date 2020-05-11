@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.101</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11</span>
       </span>
     </div>
 
@@ -57,13 +57,16 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="../articles/Notes_on_the_implimentation.html">Notes on the Implimentation</a>
+    </li>
+    <li>
       <a href="../articles/Selected_References.html">Selected References</a>
     </li>
     <li>
       <a href="../articles/The_Model_Object.html">The Model Object</a>
     </li>
     <li>
-      <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Dynamic TOPMODEL Implimentation</a>
+      <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Dynamic TOPMODEL equations</a>
     </li>
     <li>
       <a href="../articles/Time_Delay_Channel_Routing.html">Time Delay Channel Routing</a>
@@ -205,8 +208,8 @@
 <div id="mass-balance" class="section level2">
 <h2 class="hasAnchor">
 <a href="#mass-balance" class="anchor"></a>Mass balance</h2>
-<p>It is possible to output the mass balance checks for each iteration of the simulation by running the <code>sim</code> or individual methods with the <code>mass_check</code> flag set to <code>TRUE</code></p>
-<div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>( <span class="no">ctch_mdl</span>$<span class="fu">initialise</span>(<span class="fl">1e-6</span>)$<span class="fu">sim</span>(<span class="kw">mass_check</span><span class="kw">=</span><span class="fl">TRUE</span>)$<span class="fu">get_mass_errors</span>() )</pre></body></html></div>
+<p>It is possible to output the mass balance checks for each iteration of the simulation by running the <code>sim</code> or individual methods with the <code>mass_check</code> flag set to <code>TRUE</code>. The returned matrix gives the volumes in the states at the start and end of the timestep along with the other fluxes as volumes.</p>
+<div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>( <span class="no">ctch_mdl</span>$<span class="fu">initialise</span>(<span class="fl">1e-6</span>)$<span class="fu">sim</span>(<span class="kw">mass_check</span><span class="kw">=</span><span class="fl">TRUE</span>)$<span class="fu">get_mass_errors</span>()[,<span class="st">'error'</span>] )</pre></body></html></div>
 <p><img src="dynatop_files/figure-html/mass_check-1.png" width="700"></p>
 </div>
 </div>
