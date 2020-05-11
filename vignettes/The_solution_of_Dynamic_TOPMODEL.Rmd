@@ -318,6 +318,8 @@ $\left.s_{uz}\right\rvert_{t+\Delta t} =0$ if $\left.s_{sz}\right\rvert_{t+\Delt
   
 ## Step 4: Saturated Zone
 
+### General Solution
+
 For a hill slope HSU the change in saturated zone storage deficit is
 evaluated using a kinematic wave approximation.
 For an infinitesimal slab
@@ -407,15 +409,55 @@ gives
 \end{split}
 \]
 
-A futher complication is the effect of saturation at $z=0$ which limits the
-lateral flow to $Q\leq wg\left(0\right)$ at all points and times by producing
+Two futher complication arise in applying the above equation. The first is
+the effect of saturation at $z=0$ which limits the lateral flow to 
+$Q\leq wg\left(0\right)$ at all points and times by producing
 return flow to the surface excess store. In applying the above numerical
 scheme to a given HSU below this limit is applied to the fluxes transfered to and from the HSU.
 
+The second complication is the estimatation of $\hat{c}$. Since $z$ and $Q$
+have a one-to-one relationship we consider that $\hat{c}$ can be thought of as
+a function of the flow rates, including $\bar{r}$. The recharge $\bar{r}$ must
+be included else the $Q^{+}$ will not alter for areas of hillslope with
+inflows (e.g. the top of hillslopes). 
+
+Assuming the saturated zone lies
+parallel to the surface with gradient $\tan\beta$  and $\bar{r}$ arrives
+in the vertical plane as estimate of the contribution of $\bar{r}$ to the
+downslope flow rate si given by $\bar{r}\sin\beta$. The estimate is $\hat{c}$
+is then based on averaging the available values to give
+\[
+\bar{Q} =
+\frac{1}{3}\left(\left.Q^{+}\right\rvert_{t} +
+\left.Q^{-}\right\rvert_{t} + \left.\bar{r}\right\rvert_{t}\sin\beta 
+\left.Q^{-}\right\rvert_{t+\Delta t} + \left.\bar{r}\right\rvert_{t+\Delta t}\sin\beta 
+\right)
+\]
+
+#### Example: Exponential Transmissivity Profile
+
+Within the kinematic solution for the saturated zone there is the presumption
+of a relationship between $Q$ and $z$. In the case of the exponential
+transmissivity profile we get
+\[
+g\left(z\right) = T_{0}\sin\beta\exp\left(-\frac{z}{m}\cos\beta\right)
+\]
+and
+\[
+c\left(z\right) = -\frac{d}{dz} T_{0}\sin\beta\exp\left(-\frac{z}{m}\cos\beta\right)
+= T_{0}\sin\beta\frac{\cos\beta}{m}\exp\left(-\frac{z}{m}\cos\beta\right)
+= \frac{\cos\beta}{m}g\left(z\right) = \frac{\cos\beta}{m}\frac{Q}{w}
+\]
+The estimate of $\hat{c}$ is thus
+\[
+\hat{c} = \frac{\cos\beta}{m}g\left(z\right) = \frac{\cos\beta}{m}\frac{\bar{Q}}{w}
+\]
+
+### Application within the model
 Consider the $i$th HSU and converting to flow per unit plan area gives the maximum lateral flux as 
 \[
-l^{\left[i\right]}_{szmax}=w^{\left[i\right]}g^{\left[i\right]}\left(0\right)=g^{\left[i\right]}\left(0\right) /
-\Delta x^{\left[i\right]}
+l^{\left[i\right]}_{szmax}=\frac{w^{\left[i\right]}g^{\left[i\right]}\left(0\right)}{a^{\left[i\right]}}
+=\frac{g^{\left[i\right]}\left(0\right)}{\Delta x^{\left[i\right]}}
 \]
 For $l^{\left[i\right]}_{szmaz} \geq l_{sz}^{\left[i\right]}\geq 0$
 the outflow from the saturated zone as
@@ -495,15 +537,10 @@ from which can be computed
 \left.s^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t} - \tilde{s}_{sz}
 \]
 
-### Estimating $\hat{c}$
 
-The above solution relies on the estimate of an "average"
-value $\hat{c}$. A relatively simple approach to
-constructing $\hat{c}$ is to take
-\[
-\hat{c} = \frac{1}{2}\left(\left.\bar{c}\right\rvert_{t} +
-\left.\bar{c}\right\rvert_{t+\Delta t} \right)
-\]
+
+
+
 The values of $\bar{c}$ are themseleves typical velocity values over the length
 of the HSU at a given time. One method of computing these is is treat
 $s_{sz}$ as a typical value of $z$ and take
@@ -596,17 +633,4 @@ Note that $$\begin{array}{c}
         x\rightarrow x_{0} + at \quad\mathrm{as}\quad b\rightarrow0\\
     \end{array}$$
 
-# Appendix: Exponential Transmissivity Profile
 
-Within the kinematic solution for the saturated zone there is the presumption
-of a relationship between $Q$ and $z$. In the case of the exponential
-transmissivity profile we get
-\[
-g\left(z\right) = T_{0}\sin\beta\exp\left(-\frac{z}{m}\cos\beta\right)
-\]
-and
-\[
-c\left(z\right) = -\frac{d}{dz} T_{0}\sin\beta\exp\left(-\frac{z}{m}\cos\beta\right)
-= T_{0}\sin\beta\frac{\cos\beta}{m}\exp\left(-\frac{z}{m}\cos\beta\right)
-\]
-The angle $\beta$ represents the slope of the HSU.

@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.101</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11</span>
       </span>
     </div>
 
@@ -100,7 +100,7 @@
       <h1 data-toc-skip>The Dynamic TOPMODEL equations</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/../../../Development/dynatop/Lowther/vignettes/The_solution_of_Dynamic_TOPMODEL.Rmd"><code>../../../Development/dynatop/Lowther/vignettes/The_solution_of_Dynamic_TOPMODEL.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/../vignettes/The_solution_of_Dynamic_TOPMODEL.Rmd"><code>../vignettes/The_solution_of_Dynamic_TOPMODEL.Rmd</code></a></small>
       <div class="hidden name"><code>The_solution_of_Dynamic_TOPMODEL.Rmd</code></div>
 
     </div>
@@ -579,6 +579,9 @@ after computation of the saturated zone in Step 5.</p>
 <div id="step-4-saturated-zone" class="section level2">
 <h2 class="hasAnchor">
 <a href="#step-4-saturated-zone" class="anchor"></a>Step 4: Saturated Zone</h2>
+<div id="general-solution" class="section level3">
+<h3 class="hasAnchor">
+<a href="#general-solution" class="anchor"></a>General Solution</h3>
 <p>For a hill slope HSU the change in saturated zone storage deficit is
 evaluated using a kinematic wave approximation.
 For an infinitesimal slab
@@ -659,14 +662,56 @@ gives</p>
 + \theta\left.\bar{r}\right\rvert_{t+\Delta t}\right)=0
 \end{split}
 \]</span></p>
-<p>A futher complication is the effect of saturation at <span class="math inline">\(z=0\)</span> which limits the
-lateral flow to <span class="math inline">\(Q\leq wg\left(0\right)\)</span> at all points and times by producing
+<p>Two futher complication arise in applying the above equation. The first is
+the effect of saturation at <span class="math inline">\(z=0\)</span> which limits the lateral flow to
+<span class="math inline">\(Q\leq wg\left(0\right)\)</span> at all points and times by producing
 return flow to the surface excess store. In applying the above numerical
 scheme to a given HSU below this limit is applied to the fluxes transfered to and from the HSU.</p>
+<p>The second complication is the estimatation of <span class="math inline">\(\hat{c}\)</span>. Since <span class="math inline">\(z\)</span> and <span class="math inline">\(Q\)</span>
+have a one-to-one relationship we consider that <span class="math inline">\(\hat{c}\)</span> can be thought of as
+a function of the flow rates, including <span class="math inline">\(\bar{r}\)</span>. The recharge <span class="math inline">\(\bar{r}\)</span> must
+be included else the <span class="math inline">\(Q^{+}\)</span> will not alter for areas of hillslope with
+inflows (e.g. the top of hillslopes).</p>
+<p>Assuming the saturated zone lies
+parallel to the surface with gradient <span class="math inline">\(\tan\beta\)</span> and <span class="math inline">\(\bar{r}\)</span> arrives
+in the vertical plane as estimate of the contribution of <span class="math inline">\(\bar{r}\)</span> to the
+downslope flow rate si given by <span class="math inline">\(\bar{r}\sin\beta\)</span>. The estimate is <span class="math inline">\(\hat{c}\)</span>
+is then based on averaging the available values to give
+<span class="math display">\[
+\bar{Q} =
+\frac{1}{3}\left(\left.Q^{+}\right\rvert_{t} +
+\left.Q^{-}\right\rvert_{t} + \left.\bar{r}\right\rvert_{t}\sin\beta 
+\left.Q^{-}\right\rvert_{t+\Delta t} + \left.\bar{r}\right\rvert_{t+\Delta t}\sin\beta 
+\right)
+\]</span></p>
+<div id="example-exponential-transmissivity-profile" class="section level4">
+<h4 class="hasAnchor">
+<a href="#example-exponential-transmissivity-profile" class="anchor"></a>Example: Exponential Transmissivity Profile</h4>
+<p>Within the kinematic solution for the saturated zone there is the presumption
+of a relationship between <span class="math inline">\(Q\)</span> and <span class="math inline">\(z\)</span>. In the case of the exponential
+transmissivity profile we get
+<span class="math display">\[
+g\left(z\right) = T_{0}\sin\beta\exp\left(-\frac{z}{m}\cos\beta\right)
+\]</span>
+and
+<span class="math display">\[
+c\left(z\right) = -\frac{d}{dz} T_{0}\sin\beta\exp\left(-\frac{z}{m}\cos\beta\right)
+= T_{0}\sin\beta\frac{\cos\beta}{m}\exp\left(-\frac{z}{m}\cos\beta\right)
+= \frac{\cos\beta}{m}g\left(z\right) = \frac{\cos\beta}{m}\frac{Q}{w}
+\]</span>
+The estimate of <span class="math inline">\(\hat{c}\)</span> is thus
+<span class="math display">\[
+\hat{c} = \frac{\cos\beta}{m}g\left(z\right) = \frac{\cos\beta}{m}\frac{\bar{Q}}{w}
+\]</span></p>
+</div>
+</div>
+<div id="application-within-the-model" class="section level3">
+<h3 class="hasAnchor">
+<a href="#application-within-the-model" class="anchor"></a>Application within the model</h3>
 <p>Consider the <span class="math inline">\(i\)</span>th HSU and converting to flow per unit plan area gives the maximum lateral flux as
 <span class="math display">\[
-l^{\left[i\right]}_{szmax}=w^{\left[i\right]}g^{\left[i\right]}\left(0\right)=g^{\left[i\right]}\left(0\right) /
-\Delta x^{\left[i\right]}
+l^{\left[i\right]}_{szmax}=\frac{w^{\left[i\right]}g^{\left[i\right]}\left(0\right)}{a^{\left[i\right]}}
+=\frac{g^{\left[i\right]}\left(0\right)}{\Delta x^{\left[i\right]}}
 \]</span>
 For <span class="math inline">\(l^{\left[i\right]}_{szmaz} \geq l_{sz}^{\left[i\right]}\geq 0\)</span>
 the outflow from the saturated zone as
@@ -714,6 +759,7 @@ as
 \left.\tilde{l}^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t},
 l^{\left[i\right]}_{szmax}\right)
 \]</span></p>
+</div>
 <div id="determining-the-storage-deficit" class="section level3">
 <h3 class="hasAnchor">
 <a href="#determining-the-storage-deficit" class="anchor"></a>Determining the storage deficit</h3>
@@ -741,19 +787,7 @@ from which can be computed
 \left.\int_{\Delta t} q^{\left[i\right]}_{sz\rightarrow sf} dt \right\rvert_{t+\Delta t} =
 \left.s^{\left[i\right]}_{sz}\right\rvert_{t+\Delta t} - \tilde{s}_{sz}
 \]</span></p>
-</div>
-<div id="estimating-hatc" class="section level3">
-<h3 class="hasAnchor">
-<a href="#estimating-hatc" class="anchor"></a>Estimating <span class="math inline">\(\hat{c}\)</span>
-</h3>
-<p>The above solution relies on the estimate of an “average”
-value <span class="math inline">\(\hat{c}\)</span>. A relatively simple approach to
-constructing <span class="math inline">\(\hat{c}\)</span> is to take
-<span class="math display">\[
-\hat{c} = \frac{1}{2}\left(\left.\bar{c}\right\rvert_{t} +
-\left.\bar{c}\right\rvert_{t+\Delta t} \right)
-\]</span>
-The values of <span class="math inline">\(\bar{c}\)</span> are themseleves typical velocity values over the length
+<p>The values of <span class="math inline">\(\bar{c}\)</span> are themseleves typical velocity values over the length
 of the HSU at a given time. One method of computing these is is treat
 <span class="math inline">\(s_{sz}\)</span> as a typical value of <span class="math inline">\(z\)</span> and take
 <span class="math display">\[
@@ -845,22 +879,6 @@ Note that <span class="math display">\[\begin{array}{c}
         x\rightarrow0 \quad\mathrm{as}\quad b\rightarrow\infty\\
         x\rightarrow x_{0} + at \quad\mathrm{as}\quad b\rightarrow0\\
     \end{array}\]</span></p>
-</div>
-<div id="appendix-exponential-transmissivity-profile" class="section level1">
-<h1 class="hasAnchor">
-<a href="#appendix-exponential-transmissivity-profile" class="anchor"></a>Appendix: Exponential Transmissivity Profile</h1>
-<p>Within the kinematic solution for the saturated zone there is the presumption
-of a relationship between <span class="math inline">\(Q\)</span> and <span class="math inline">\(z\)</span>. In the case of the exponential
-transmissivity profile we get
-<span class="math display">\[
-g\left(z\right) = T_{0}\sin\beta\exp\left(-\frac{z}{m}\cos\beta\right)
-\]</span>
-and
-<span class="math display">\[
-c\left(z\right) = -\frac{d}{dz} T_{0}\sin\beta\exp\left(-\frac{z}{m}\cos\beta\right)
-= T_{0}\sin\beta\frac{\cos\beta}{m}\exp\left(-\frac{z}{m}\cos\beta\right)
-\]</span>
-The angle <span class="math inline">\(\beta\)</span> represents the slope of the HSU.</p>
 </div>
   </div>
 

@@ -1,3 +1,11 @@
+# dynatop 0.11
+
+## New features
+
+- improved calculations within the saturated zone
+- improved mass_check
+- more complet vignette - model equation and coding notes
+
 # dynatopGIS 0.1
 
 ## Breaking Changes
