@@ -171,9 +171,10 @@ plot(out[,c('Flow','sim_1','sim_2')])
 
 It is possible to output the mass balance checks for each iteration of the
 simulation by running the `sim` or individual methods with the `mass_check`
-flag set to `TRUE`
+flag set to `TRUE`. The returned matrix gives the volumes in the states at the
+start and end of the timestep along with the other fluxes as volumes.
 
 ```{r mass_check}
-plot( ctch_mdl$initialise(1e-6)$sim(mass_check=TRUE)$get_mass_errors() )
+plot( ctch_mdl$initialise(1e-6)$sim(mass_check=TRUE)$get_mass_errors()[,'error'] )
 ```
 
