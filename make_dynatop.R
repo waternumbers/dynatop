@@ -5,7 +5,7 @@ graphics.off()
 ## path of the package
 pacPath <- './dynatop'
 ##devtools::load_all(pacPath)
-## Rcpp::compileAttributes(pacPath)
+Rcpp::compileAttributes(pacPath)
 devtools::document(pacPath)
 devtools::check(pacPath)
 tmp <- devtools::build(pacPath)
