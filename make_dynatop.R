@@ -87,4 +87,6 @@ m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim_hi
 m1$plot_gauge_flow()
 m1$sim()$plot_gauge_flow()
 
+head(m1$get_mass_errors())
+head(goog)
 

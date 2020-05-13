@@ -26,11 +26,11 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
   const NumericVector t_sf = hillslope("t_sf"),q_sfmax = hillslope("q_sfmax"),
     s_rzmax = hillslope("s_rzmax"), t_d = hillslope("t_d"), 
     s_bar = hillslope("s_bar"), m = hillslope("m"), ln_t0 = hillslope("ln_t0"),
-    delta_x = hillslope("delta_x");
+    delta_x = hillslope("delta_x"), area = hillslope("area");
 
   // seperate out the channel
   // properties
-  const IntegerVector cid = channel("id");
+  const IntegerVector cid = channel("id"), cpcol = channel("precip");
   const NumericVector carea = channel("area");
 
   // seperate out the time variables
@@ -55,9 +55,24 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
   // loop time steps
   for(int it =0; it < nit; it++) {
 
-    // initialise channel inflow to zero
+    // initialise the mass errors calc
+    mass_errors(it,0) = 0.0; // initial states
+    mass_errors(it,2) = 0.0; // precipitation
+    mass_errors(it,3) = 0.0; // e_t
+    for(int ii = 0; ii < nhsu; ii++){
+      mass_errors(it,0) += (s_sf(ii) + s_rz(ii) + s_uz(ii) - s_sz(ii))*area(ii);
+      int pc = pcol(ii) - 1;
+      mass_errors(it,2) += obs(it,pc)*area(ii);
+    }
     for(int ii =0; ii < nch; ii++){
-      channel_inflow(it,ii) = 0.0;
+      int pc = cpcol(ii) - 1 ;
+      mass_errors(it,2) += obs(it,pc)*carea(ii);
+    }
+    
+    // initialise channel inflow to precipitation
+    for(int ii =0; ii < nch; ii++){
+      int pc = cpcol(ii) - 1 ;
+      channel_inflow(it,ii) = obs(it,pc);
     }
 
     
@@ -96,9 +111,12 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
       for(int ii = 0; ii < nhsu; ii++){
 
 	// set external inputs
-	int pc = pcol(ii), ec = ecol(ii);
-	double p = obs(it,pc)/step, e_p = obs(it,ec)/step;
+	int pc = pcol(ii) - 1 , ec = ecol(ii) - 1;
+	// Rcout << pc << " " << ec << " " << obs.ncol() << std::endl;
 	
+	double p = obs(it,pc)/step, e_p = obs(it,ec)/step;
+	// Rcout << p << " " << e_p << " " << obs.ncol() << std::endl;
+							 
 	// Step 2: solve the root zone for hillslope elements
 	// compute inflow from surface
 	double q_sf_rz = s_sf(ii) / sub_step;
@@ -112,14 +130,10 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
 	double b = e_p / s_rzmax(ii);
 	double ts_rz = fode(a,b,s_rz(ii),sub_step);
 	
-	       
-	// work out actual evapotranspiration by mass balance
-	// ie_t <- hillslope$s_rz + p*ts$sub_step + iq_sf_rz - ts_rz
-	      
-	//       if(mass_check){
-	// 	mass_errors[it,'e_t'] =mass_errors[it,'e_t'] +
-	// 			       sum(ie_t*hillslope$area)
-	// 			       }
+	// add actual e_t into mass check
+	double ie_t = s_rz(ii) + (a*sub_step) - ts_rz;
+	mass_errors(it,3) += ie_t*area(ii);
+
 	// new storage value
 	s_rz(ii) = ts_rz;
 	if( ts_rz > s_rzmax(ii) ){ s_rz(ii) = s_rzmax(ii); }
@@ -135,7 +149,7 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
 	// Step 3: Unsaturated zone
 	// solve ode
 	double ts_uz = fode( iq_rz_uz/sub_step,
-			     1 / (t_d(ii) * s_sz(ii)),
+			     1.0 / (t_d(ii) * s_sz(ii)),
 			     s_uz(ii),sub_step );
 	// work out outflow
 	double iq_uz_sz = s_uz(ii) + iq_rz_uz - ts_uz;
@@ -153,7 +167,7 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
 	if (l_szin > l_szmax(ii) ){ l_szin = l_szmax(ii); }
 	
 	// compute flow for velocity calculation
-	double lbar = (2/3)*(l_szin+lbq_uz_sz) + l_sz(ii)/3.0;
+	double lbar = (2.0/3.0)*(l_szin+lbq_uz_sz) + l_sz(ii)/3.0;
 
 	// compute lambda
 	// using  c = l*Delta_x*cos(beta)/m
@@ -172,7 +186,7 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
 	// integral of outflow
 	il_sz += (sub_step/2.0)*l_sz(ii);
 	// update volumes in hillslope
-	s_sz(ii) = s_sz(ii) + il_sz - il_sz_in(ii_id) - iq_uz_sz;
+	s_sz(ii) += il_sz - il_sz_in(ii_id) - iq_uz_sz;
 	double iq_sz_sf = 0.0;
 	if( s_sz(ii) <= 0.0 ){
 	  iq_sz_sf = -s_sz(ii);
@@ -200,12 +214,24 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
       
       // loop channel elements to  update volume of flow to channel
       for(int ii =0; ii < nch; ii++){
-	int ii_id = cid(ii);
+	int ii_id = cid(ii) - 1;
 	channel_inflow(it,ii) += il_sf_in(ii_id) + il_sz_in(ii_id);
       }
 
     }
     // Rcout << "looped subsurface" << std::endl;
+    // finalise the mass errors calc
+    mass_errors(it,1) = 0.0; // final states
+    for(int ii = 0; ii < nhsu; ii++){
+      mass_errors(it,1) += (s_sf(ii) + s_rz(ii) + s_uz(ii) - s_sz(ii))*area(ii);
+    }
+    mass_errors(it,4) = 0.0; // channel inflow
+    for(int ii =0; ii < nch; ii++){
+      mass_errors(it,4) += channel_inflow(it,ii) * carea(ii);
+    }
+    mass_errors(it,5) = mass_errors(it,0) - mass_errors(it,1) +
+      mass_errors(it,2) - mass_errors(it,3) - mass_errors(it,4);
+    
     // convert channel inflow to m3/s
     for(int ii =0; ii < nch; ii++){
       channel_inflow(it,ii) = channel_inflow(it,ii) * carea(ii) / step;
