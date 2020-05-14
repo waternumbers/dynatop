@@ -5,13 +5,17 @@ graphics.off()
 ## path of the package
 pacPath <- './dynatop'
 ##devtools::load_all(pacPath)
-## Rcpp::compileAttributes(pacPath)
+Rcpp::compileAttributes(pacPath)
 devtools::document(pacPath)
 devtools::check(pacPath)
 tmp <- devtools::build(pacPath)
 install.packages(tmp)
 pkgdown::clean_site(pacPath)
 pkgdown::build_site(pacPath)
+#file.copy(file.path(pacPath,"win"),file.path(pacPath,"docs"),recursive=TRUE)
+##dir.create(file.path(pacPath,"docs","win"))
+##file.copy(file.path(pacPath,"win"),file.path(pacPath,"docs"),recursive=TRUE)
+
 #pkgdown::build_article("Time_Delay_Channel_Routing",pacPath)
 
 ###########################################################################
@@ -62,13 +66,21 @@ m1$plot_state("s_sf")
 rm(list=ls())
 devtools::load_all("./dynatop"); data("Swindale")
 
-profvis::profvis({
-    m1 <- dynatop$new(Swindale$model)
-    m1$add_data(Swindale$obs)
-    m1$initialise(1e-6)
-    m1$sim(mass_check=TRUE)
-})
-plot(merge( Swindale$obs[,'Flow'],m1$get_gauge_flow()))
+##profvis::profvis({
+
+idx <- 1:273
+m2 <-  dynatop$new(Swindale$model)$add_data(Swindale$obs[idx,])$initialise(1e-6)$sim(mass_check=TRUE)
+m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs[idx,])$initialise(1e-6)$sim(mass_check=TRUE,use_R=TRUE)
+
+
+range(m2$get_states()-m1$get_states())
+
+m1$get_states()[37,]
+m2$get_states()[37,]
+head(m1$get_states())
+
+##})
+plot(merge( Swindale$obs[,'Flow'],m1$get_gauge_flow(),m2$get_gauge_flow()))
 
 ## ###########################################
 ## This hits more of the models compoents for testing
@@ -87,4 +99,6 @@ m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim_hi
 m1$plot_gauge_flow()
 m1$sim()$plot_gauge_flow()
 
+head(m1$get_mass_errors())
+head(goog)
 
