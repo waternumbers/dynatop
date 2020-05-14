@@ -8,5 +8,6 @@
 # #' @import raster
 #' @importFrom zoo index
 #' @importFrom stats start end aggregate
-#'
+#' @importFrom Rcpp evalCpp
+#' @useDynLib dynatop
 NULL

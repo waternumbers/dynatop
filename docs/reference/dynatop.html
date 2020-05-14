@@ -73,7 +73,7 @@ R6 Class for Dynamic TOPMODEL" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12</span>
       </span>
     </div>
 
@@ -233,7 +233,12 @@ R6 Class for Dynamic TOPMODEL" />
 <p><hr>
 <a id="method-sim_hillslope"></a></p><h3>Method <code>sim_hillslope()</code></h3>
 <p>Simulate the hillslope output of a dynatop object</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>dynatop</span>$<span class='fu'>sim_hillslope</span>(<span class='kw'>mass_check</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>keep_states</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>sub_step</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre><p></div></p>
+<p><div class="r"></p><pre><span class='no'>dynatop</span>$<span class='fu'>sim_hillslope</span>(
+  <span class='kw'>mass_check</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>keep_states</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>sub_step</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>use_R</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl'>
@@ -242,6 +247,8 @@ R6 Class for Dynamic TOPMODEL" />
 <dt><code>keep_states</code></dt><dd><p>a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept</p></dd>
 
 <dt><code>sub_step</code></dt><dd><p>simulation timestep in seconds, default value of NULL results in data time step</p></dd>
+
+<dt><code>use_R</code></dt><dd><p>shoudl the R version of the simulation code be used (default FALSE)</p></dd>
 
 </dl><p></div></p>
 <h3>Details</h3>
@@ -262,7 +269,12 @@ R6 Class for Dynamic TOPMODEL" />
 <p><hr>
 <a id="method-sim"></a></p><h3>Method <code>sim()</code></h3>
 <p>Simulate the hillslope and channel componets of a dynatop object</p><h3>Usage</h3>
-<p><div class="r"></p><pre><span class='no'>dynatop</span>$<span class='fu'>sim</span>(<span class='kw'>mass_check</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>keep_states</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>sub_step</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre><p></div></p>
+<p><div class="r"></p><pre><span class='no'>dynatop</span>$<span class='fu'>sim</span>(
+  <span class='kw'>mass_check</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>keep_states</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>sub_step</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>use_R</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre><p></div></p>
 
 <h3>Arguments</h3>
 <p><div class="arguments"></p><dl'>
@@ -271,6 +283,8 @@ R6 Class for Dynamic TOPMODEL" />
 <dt><code>keep_states</code></dt><dd><p>a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept</p></dd>
 
 <dt><code>sub_step</code></dt><dd><p>simulation timestep in seconds, default value of NULL results in data time step</p></dd>
+
+<dt><code>use_R</code></dt><dd><p>shoudl the R version of the simulation code be used (default FALSE)</p></dd>
 
 </dl><p></div></p>
 <h3>Details</h3>
