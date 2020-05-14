@@ -67,11 +67,20 @@ rm(list=ls())
 devtools::load_all("./dynatop"); data("Swindale")
 
 ##profvis::profvis({
-m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim(mass_check=TRUE)
+
+idx <- 1:273
+m2 <-  dynatop$new(Swindale$model)$add_data(Swindale$obs[idx,])$initialise(1e-6)$sim(mass_check=TRUE)
+m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs[idx,])$initialise(1e-6)$sim(mass_check=TRUE,use_R=TRUE)
+
+
+range(m2$get_states()-m1$get_states())
+
+m1$get_states()[37,]
+m2$get_states()[37,]
 head(m1$get_states())
 
 ##})
-plot(merge( Swindale$obs[,'Flow'],m1$get_gauge_flow()))
+plot(merge( Swindale$obs[,'Flow'],m1$get_gauge_flow(),m2$get_gauge_flow()))
 
 ## ###########################################
 ## This hits more of the models compoents for testing

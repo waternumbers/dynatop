@@ -46,17 +46,12 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
   // dimensions
   const int nit = obs.nrow(), nhsu = id.size(),
     nch = cid.size(), max_id = max(id);
-
-  // Rcout << "Finished Declarations" << std::endl;
-  // Rcout << max_id << std::endl;
 		     
   // local constants used in the evaluation
   const NumericVector beta = atan( s_bar );
   const NumericVector cosbeta_m = cos(beta) / m;
   const NumericVector sinbeta = sin(beta);
   const NumericVector l_szmax = exp( ln_t0 )* sinbeta / delta_x;
-  
-  // Rcout << "Computed constants" << std::endl;
   
   // loop time steps
   for(int it =0; it < nit; it++) {
@@ -93,11 +88,12 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
 
 	//double a = il_sf_in(ii_id) / sub_step;
 	//double b = sub_step / t_sf(ii);
-	double il_sf = fode(il_sf_in(ii_id) / sub_step,
+	double ts_sf = fode(il_sf_in(ii_id) / sub_step,
 			    sub_step / t_sf(ii),
 			    s_sf(ii),sub_step);
 	// mass balance for new state
-	s_sf(ii) += il_sf_in(ii_id) - il_sf;
+	double il_sf = s_sf(ii) + il_sf_in(ii_id) - ts_sf;
+	s_sf(ii) = ts_sf;
 	// pass downslope
 	List dir = sf_dir(ii);
 	IntegerVector idx = dir("idx");
@@ -127,9 +123,17 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
 	if ( q_sf_rz > q_sfmax(ii) ){ q_sf_rz = q_sfmax(ii); }
 	// correct surface state
 	s_sf(ii) -= q_sf_rz*sub_step;
+	
 	// solve ODE
 	//double a = p+q_sf_rz;
 	//double b = e_p / s_rzmax(ii);
+	if( (it==41) & (ii_id==55)){
+	  Rprintf("the value of p: %e \n", p);
+	  Rprintf("the value of e_p: %e \n", e_p);
+	  Rprintf("the value of s_rz: %e \n", s_rz(ii));
+	  Rprintf("the value of q_sf_rz: %e \n", q_sf_rz);
+	}
+
 	double ts_rz = fode(p+q_sf_rz,
 			    e_p / s_rzmax(ii),
 			    s_rz(ii),sub_step);
@@ -147,7 +151,13 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
 	  iq_rz_sf = iq_rz_uz;
 	  iq_rz_uz = 0.0;
 	}
-	                                    
+	if( (it==41) & (ii_id==55)){
+	  Rprintf("the value of s_rz: %e \n", s_rz(ii));
+	  Rprintf("the value of ts_rz: %e \n", ts_rz);
+	  Rprintf("the value of iq_rz_sf : %e \n", iq_rz_sf);
+	  Rprintf("the value of iq_rz_uz : %e \n", iq_rz_uz);
+	}
+                                  
 	// Step 3: Unsaturated zone
 	// solve ode
 	double ts_uz = fode( iq_rz_uz/sub_step,
@@ -208,6 +218,12 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
 	if( s_sz(ii) <= 0.0 ){ iq_uz_sf = s_uz(ii); }
 	s_uz(ii) -= iq_uz_sf;
 	s_sf(ii) += iq_rz_sf + iq_sz_sf + iq_uz_sf;
+	if( (it==41) & (ii_id==55)){
+	  Rprintf("the value of s_sf: %e \n", s_sf(ii));
+	  Rprintf("the value of iq_rz_sf : %e \n", iq_rz_sf);
+	  Rprintf("the value of iq_sz_sf : %e \n", iq_sz_sf);
+	  Rprintf("the value of iq_uz_sf : %e \n", iq_uz_sf); 
+	}
       }
       
       // loop channel elements to  update volume of flow to channel
@@ -217,7 +233,7 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
       }
 
     }
-    // Rcout << "looped subsurface" << std::endl;
+
     // finalise the mass errors calc
     mass_errors(it,1) = 0.0; // final states
     for(int ii = 0; ii < nhsu; ii++){
@@ -234,6 +250,5 @@ void hs_sim_cpp(const NumericMatrix obs, NumericMatrix channel_inflow, NumericMa
     for(int ii =0; ii < nch; ii++){
       channel_inflow(it,ii) = channel_inflow(it,ii) * carea(ii) / step;
     }
-    // Rcout << channel_inflow(it,0) << std::endl;
   }
 }

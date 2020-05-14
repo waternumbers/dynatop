@@ -1,3 +1,12 @@
+# dynatop 0.12
+
+## New features
+
+- Main hydrological simulation code implimented in C++ usign Rcpp for better performance. 
+    - The R version of the code ca be used instead by setting the use_R input parameter to TRUE. This will be depreciated in a later version.
+    - Currently C++ code does not return intermediate states, use the R version if these are required
+
+
 # dynatop 0.11
 
 ## New features

@@ -133,7 +133,6 @@ dynatop <- R6::R6Class(
         #' @description Return channel inflow as an xts series
         #' @param total logical if plot total inflow is to be plotted
         get_channel_inflow = function(total=FALSE){
-            ## browser()
             x <- private$time_series$channel_inflow
             if(total){
                 x <- rowSums(x)
@@ -144,14 +143,12 @@ dynatop <- R6::R6Class(
         #' @description Plot the channel inflow
         #' @param total logical if plot total inflow is to be plotted
         plot_channel_inflow = function(total=FALSE){
-            ## browser()
             x <- self$get_channel_inflow(total)
             plot(x)
         },
         #' @description Return flow at the gauges as an xts series
         #' @param gauge names of gauges to return (default is all gauges)
         get_gauge_flow = function(gauge=colnames(private$time_series$gauge_flow)){
-            ## browser()
             gauge <- match.arg(gauge,colnames(private$time_series$gauge_flow),
                                several.ok=TRUE)
             xts::xts(private$time_series$gauge_flow[,gauge],
@@ -160,12 +157,10 @@ dynatop <- R6::R6Class(
         #' @description Get the flow at gauges
         #' @param gauge names of gauges to return (default is all gauges)
         plot_gauge_flow = function(gauge=names(private$time_series$gauge_flow)){
-            ## browser()
             plot( self$get_gauge_flow(gauge) )
         },
         #' @description Get the observed data
         get_obs_data = function(){
-            ## browser()
             xts::xts(private$time_series$obs,
                      order.by=private$time_series$index)
         },
@@ -175,7 +170,6 @@ dynatop <- R6::R6Class(
         },
         #' @description Return the model
         get_mass_errors = function(){
-            ## browser()
             if( !("mass_errors" %in% names(private$time_series)) ){
                 stop("Mass errors are not available")
             }
@@ -185,12 +179,7 @@ dynatop <- R6::R6Class(
         #' @description Return states
         #' @param record logical TRUE if the record should be returned. Otherwise surrent states returned
         get_states = function(record=FALSE){
-            ## if( nrow(private$time_series$channel_inflow == 0) ){
-            ##     stop("No simulation is available")
-            ## }
-            ## browser()
             if( record ){
-                
                 return( setNames(private$time_series$state_record,
                                  private$time_series$index) )
             }else{
@@ -674,7 +663,7 @@ dynatop <- R6::R6Class(
             ts <- private$comp_ts(sub_step)
             
             ## Logical if states to be kept
-            ## keep_states <- private$time_series$index %in% keep_states
+            keep_states <- private$time_series$index %in% keep_states
 
             ## make local copies of output
             ## can't initialise to NA since this produces copy rather then pointer
@@ -819,16 +808,24 @@ dynatop <- R6::R6Class(
                         il_sf[] <- 0
                         ## initialise hillslope lateral flow out as volume
                         for(ii in private$model$sqnc$sf){ ## loop through all HSUs in order
+                            ## compute new storage
+                            ts_sf <- fode(il_sf_in[hillslope$id[ii]] / ts$sub_step,
+                                          ts$sub_step/hillslope$t_sf[ii],
+                                          hillslope$s_sf[ii],
+                                          ts$sub_step)
+                            il_sf[ii] <- hillslope$s_sf[ii] + il_sf_in[hillslope$id][ii] -ts_sf
+                            hillslope$s_sf[ii] <- ts_sf
+                            
                             ## compute new integral of lateral flux
-                            il_sf[ii] <- (1-omega_1[ii])*hillslope$s_sf[ii] +
-                                (1 - omega_2[ii])*il_sf_in[hillslope$id[ii]]
+                            ##il_sf[ii] <- (1-omega_1[ii])*hillslope$s_sf[ii] +
+                            ##    (1 - omega_2[ii])*il_sf_in[hillslope$id[ii]]
                             ## pass downslope
                             il_sf_in[ sf_dir[[ii]]$idx ] <-
                                 il_sf_in[ sf_dir[[ii]]$idx ]+
                                 sf_dir[[ii]]$frc * il_sf[ii]
                         }
                         ## compute new storage
-                        hillslope$s_sf <- hillslope$s_sf + il_sf_in[hillslope$id] - il_sf
+                        ##hillslope$s_sf <- hillslope$s_sf + il_sf_in[hillslope$id] - il_sf
                         ## compute flow to root zone and correct storage
                         iq_sf_rz <- pmin( hillslope$q_sfmax*ts$sub_step,hillslope$s_sf )
                         hillslope$s_sf <- hillslope$s_sf - iq_sf_rz
@@ -916,6 +913,7 @@ dynatop <- R6::R6Class(
                         hillslope$s_uz <- hillslope$s_uz - iq_uz_sf
                         hillslope$s_sf <- hillslope$s_sf +
                             iq_rz_sf + iq_sz_sf + iq_uz_sf
+                       
                         
                         ## update volume of flow to channel
                         channel_inflow[it,] <- channel_inflow[it,] +
@@ -940,7 +938,6 @@ dynatop <- R6::R6Class(
                             mass_errors[it,"channel_inflow"]
                         
                         if( abs(mass_errors[it,"error"]) > 1e-6  ){
-                            browser()
                             cat("Iteration ",it," large mass error: ",
                                 mass_errors[it,"error"],"\n")
                         }
