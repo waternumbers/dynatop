@@ -36,10 +36,12 @@ contributed to the original R port of Dynamic TOPMODEL.
 ## Using the code
 
 Currently the packages are not available on
-[CRAN](https://cran.r-project.org/). They can be installed from within R using
-the devtools package: 
+[CRAN](https://cran.r-project.org/). The latest version can be installed from
+the git repository from within R using the devtools package: 
 
 ```
 devtools::install_github("waternumbers/dynatop")
 ```
 
+For Windows and Mac users some prebuild packages (usually including the latest
+version) are available [here](https://waternumbers.github.io/dynatop/tree/master/prebuilt)

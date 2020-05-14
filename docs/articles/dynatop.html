@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.11</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12</span>
       </span>
     </div>
 
@@ -190,7 +190,7 @@
 <p>The model currently consists of two types of HSU; hillslope and channel. These can be run individually with the <code>sim_hillslope</code> and <code>sim_channel</code> methods of sequently with the <code>sim</code> method. The individual methods check that suitabel input data is available, but not how it was generated.</p>
 <p>The initial states of the simulations can be specified in the model object. If, as in the case of this example, the states are not specified then any attempt to perform a simulation will fail.</p>
 <div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="no">ctch_mdl</span>$<span class="fu">sim</span>()
-<span class="co">#&gt; Error in self$sim_hillslope(mass_check, keep_states, sub_step): Model states are not initialised</span></pre></body></html></div>
+<span class="co">#&gt; Error in self$sim_hillslope(mass_check, keep_states, sub_step, use_R): Model states are not initialised</span></pre></body></html></div>
 <p>The states need to be initialised using the <code>initialise</code> method which requires an initial recharge rate. In the following we initialse the states and plot the initial saturates zone storage, using the chaining of commands.</p>
 <div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="no">ctch_mdl</span>$<span class="fu">initialise</span>(<span class="fl">1e-6</span>)$<span class="fu">plot_state</span>(<span class="st">"s_sz"</span>)</pre></body></html></div>
 <p><img src="dynatop_files/figure-html/initialise-1.png" width="700"></p>

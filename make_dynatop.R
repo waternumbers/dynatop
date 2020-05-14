@@ -12,6 +12,10 @@ tmp <- devtools::build(pacPath)
 install.packages(tmp)
 pkgdown::clean_site(pacPath)
 pkgdown::build_site(pacPath)
+#file.copy(file.path(pacPath,"win"),file.path(pacPath,"docs"),recursive=TRUE)
+##dir.create(file.path(pacPath,"docs","win"))
+##file.copy(file.path(pacPath,"win"),file.path(pacPath,"docs"),recursive=TRUE)
+
 #pkgdown::build_article("Time_Delay_Channel_Routing",pacPath)
 
 ###########################################################################
@@ -62,12 +66,11 @@ m1$plot_state("s_sf")
 rm(list=ls())
 devtools::load_all("./dynatop"); data("Swindale")
 
-profvis::profvis({
-    m1 <- dynatop$new(Swindale$model)
-    m1$add_data(Swindale$obs)
-    m1$initialise(1e-6)
-    m1$sim(mass_check=TRUE)
-})
+##profvis::profvis({
+m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim(mass_check=TRUE)
+head(m1$get_states())
+
+##})
 plot(merge( Swindale$obs[,'Flow'],m1$get_gauge_flow()))
 
 ## ###########################################
