@@ -6,3 +6,4 @@ $.git$
 ^\.travis\.yml$
 ^appveyor\.yml$
 make_dynatop.R
+^prebuilt$
