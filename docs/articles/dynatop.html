@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.13</span>
       </span>
     </div>
 
@@ -195,36 +195,12 @@
 <div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="no">ctch_mdl</span>$<span class="fu">initialise</span>(<span class="fl">1e-6</span>)$<span class="fu">plot_state</span>(<span class="st">"s_sz"</span>)</pre></body></html></div>
 <p><img src="dynatop_files/figure-html/initialise-1.png" width="700"></p>
 <p>The simulation can now be performed and the flow at the gauge extracted with</p>
-<div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="no">sim1</span> <span class="kw">&lt;-</span> <span class="no">ctch_mdl</span>$<span class="fu">sim</span>()$<span class="fu">get_gauge_flow</span>()
-<span class="co">#&gt; the value of p: 2.000000e-06 </span>
-<span class="co">#&gt; the value of e_p: 0.000000e+00 </span>
-<span class="co">#&gt; the value of s_rz: 1.000000e-01 </span>
-<span class="co">#&gt; the value of q_sf_rz: 5.977749e-08 </span>
-<span class="co">#&gt; the value of s_rz: 1.000000e-01 </span>
-<span class="co">#&gt; the value of ts_rz: 1.018538e-01 </span>
-<span class="co">#&gt; the value of iq_rz_sf : 0.000000e+00 </span>
-<span class="co">#&gt; the value of iq_rz_uz : 1.853800e-03 </span>
-<span class="co">#&gt; the value of s_sf: 3.605275e-03 </span>
-<span class="co">#&gt; the value of iq_rz_sf : 0.000000e+00 </span>
-<span class="co">#&gt; the value of iq_sz_sf : 3.312365e-03 </span>
-<span class="co">#&gt; the value of iq_uz_sf : 2.929097e-04</span></pre></body></html></div>
+<div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="no">sim1</span> <span class="kw">&lt;-</span> <span class="no">ctch_mdl</span>$<span class="fu">sim</span>()$<span class="fu">get_gauge_flow</span>()</pre></body></html></div>
 <p>Note that the states of the system are now those at the end of the simulation for example:</p>
 <div class="sourceCode" id="cb15"><html><body><pre class="r"><span class="no">ctch_mdl</span>$<span class="fu">plot_state</span>(<span class="st">"s_sz"</span>)</pre></body></html></div>
 <p><img src="dynatop_files/figure-html/new_states-1.png" width="700"></p>
 <p>Rerunning the simulation with the new initial states will of course produce different results</p>
 <div class="sourceCode" id="cb16"><html><body><pre class="r"><span class="no">sim2</span> <span class="kw">&lt;-</span> <span class="no">ctch_mdl</span>$<span class="fu">sim</span>()$<span class="fu">get_gauge_flow</span>()
-<span class="co">#&gt; the value of p: 2.000000e-06 </span>
-<span class="co">#&gt; the value of e_p: 0.000000e+00 </span>
-<span class="co">#&gt; the value of s_rz: 1.000000e-01 </span>
-<span class="co">#&gt; the value of q_sf_rz: 0.000000e+00 </span>
-<span class="co">#&gt; the value of s_rz: 1.000000e-01 </span>
-<span class="co">#&gt; the value of ts_rz: 1.018000e-01 </span>
-<span class="co">#&gt; the value of iq_rz_sf : 0.000000e+00 </span>
-<span class="co">#&gt; the value of iq_rz_uz : 1.800000e-03 </span>
-<span class="co">#&gt; the value of s_sf: 0.000000e+00 </span>
-<span class="co">#&gt; the value of iq_rz_sf : 0.000000e+00 </span>
-<span class="co">#&gt; the value of iq_sz_sf : 0.000000e+00 </span>
-<span class="co">#&gt; the value of iq_uz_sf : 0.000000e+00</span>
 <span class="no">out</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html">merge</a></span>( <span class="fu"><a href="https://rdrr.io/r/base/merge.html">merge</a></span>(<span class="no">swindale_obs</span>,<span class="no">sim1</span>),<span class="no">sim2</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span>(<span class="no">out</span>) <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span>(<span class="no">swindale_obs</span>),<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span>)
 <span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>(<span class="no">out</span>[,<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">'Flow'</span>,<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span>)])</pre></body></html></div>
@@ -233,19 +209,7 @@
 <h2 class="hasAnchor">
 <a href="#mass-balance" class="anchor"></a>Mass balance</h2>
 <p>It is possible to output the mass balance checks for each iteration of the simulation by running the <code>sim</code> or individual methods with the <code>mass_check</code> flag set to <code>TRUE</code>. The returned matrix gives the volumes in the states at the start and end of the timestep along with the other fluxes as volumes.</p>
-<div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>( <span class="no">ctch_mdl</span>$<span class="fu">initialise</span>(<span class="fl">1e-6</span>)$<span class="fu">sim</span>(<span class="kw">mass_check</span><span class="kw">=</span><span class="fl">TRUE</span>)$<span class="fu">get_mass_errors</span>()[,<span class="st">'error'</span>] )
-<span class="co">#&gt; the value of p: 2.000000e-06 </span>
-<span class="co">#&gt; the value of e_p: 0.000000e+00 </span>
-<span class="co">#&gt; the value of s_rz: 1.000000e-01 </span>
-<span class="co">#&gt; the value of q_sf_rz: 5.977749e-08 </span>
-<span class="co">#&gt; the value of s_rz: 1.000000e-01 </span>
-<span class="co">#&gt; the value of ts_rz: 1.018538e-01 </span>
-<span class="co">#&gt; the value of iq_rz_sf : 0.000000e+00 </span>
-<span class="co">#&gt; the value of iq_rz_uz : 1.853800e-03 </span>
-<span class="co">#&gt; the value of s_sf: 3.605275e-03 </span>
-<span class="co">#&gt; the value of iq_rz_sf : 0.000000e+00 </span>
-<span class="co">#&gt; the value of iq_sz_sf : 3.312365e-03 </span>
-<span class="co">#&gt; the value of iq_uz_sf : 2.929097e-04</span></pre></body></html></div>
+<div class="sourceCode" id="cb17"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/plot.html">plot</a></span>( <span class="no">ctch_mdl</span>$<span class="fu">initialise</span>(<span class="fl">1e-6</span>)$<span class="fu">sim</span>(<span class="kw">mass_check</span><span class="kw">=</span><span class="fl">TRUE</span>)$<span class="fu">get_mass_errors</span>()[,<span class="st">'error'</span>] )</pre></body></html></div>
 <p><img src="dynatop_files/figure-html/mass_check-1.png" width="700"></p>
 </div>
 </div>

@@ -71,7 +71,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.12</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.13</span>
       </span>
     </div>
 
@@ -141,16 +141,28 @@
       <small>Source: <a href='https://github.com/waternumbers/dynatop/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="dynatop-012" class="section level1">
-<h1 class="page-header" data-toc-text="0.12">
-<a href="#dynatop-012" class="anchor"></a>dynatop 0.12</h1>
+    <div id="dynatop-013" class="section level1">
+<h1 class="page-header" data-toc-text="0.13">
+<a href="#dynatop-013" class="anchor"></a>dynatop 0.13</h1>
 <div id="new-features" class="section level2">
 <h2 class="hasAnchor">
 <a href="#new-features" class="anchor"></a>New features</h2>
 <ul>
+<li>C++ implimentation of hillslope simulation code can now return states and is fully feature compatable with R implimentation.</li>
+<li>R implimentation of hillslope simulations will be depreciated in a future release.</li>
+</ul>
+</div>
+</div>
+    <div id="dynatop-012" class="section level1">
+<h1 class="page-header" data-toc-text="0.12">
+<a href="#dynatop-012" class="anchor"></a>dynatop 0.12</h1>
+<div id="new-features-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#new-features-1" class="anchor"></a>New features</h2>
+<ul>
 <li>Main hydrological simulation code implimented in C++ usign Rcpp for better performance.
 <ul>
-<li>The R version of the code ca be used instead by setting the use_R input parameter to TRUE. This will be depreciated in a later version.</li>
+<li>The R version of the code can be used instead by setting the use_R input parameter to TRUE. This will be depreciated in a later version.</li>
 <li>Currently C++ code does not return intermediate states, use the R version if these are required</li>
 </ul>
 </li>
@@ -160,9 +172,9 @@
     <div id="dynatop-011" class="section level1">
 <h1 class="page-header" data-toc-text="0.11">
 <a href="#dynatop-011" class="anchor"></a>dynatop 0.11</h1>
-<div id="new-features-1" class="section level2">
+<div id="new-features-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#new-features-1" class="anchor"></a>New features</h2>
+<a href="#new-features-2" class="anchor"></a>New features</h2>
 <ul>
 <li>improved calculations within the saturated zone</li>
 <li>improved mass_check</li>
@@ -184,9 +196,9 @@
 <li>Precipitation and PET inputs now expected to be metres accured over the timestep rather then m per hour</li>
 </ul>
 </div>
-<div id="new-features-2" class="section level2">
+<div id="new-features-3" class="section level2">
 <h2 class="hasAnchor">
-<a href="#new-features-2" class="anchor"></a>New Features</h2>
+<a href="#new-features-3" class="anchor"></a>New Features</h2>
 <ul>
 <li>Reformulation allows for data and code to saved in a single object allowing fuller reproducibility</li>
 <li>Additional plotting and data extraction functions</li>
@@ -218,9 +230,9 @@
     <div id="dynatop-003" class="section level1">
 <h1 class="page-header" data-toc-text="0.0.3">
 <a href="#dynatop-003" class="anchor"></a>dynatop 0.0.3</h1>
-<div id="new-features-3" class="section level2">
+<div id="new-features-4" class="section level2">
 <h2 class="hasAnchor">
-<a href="#new-features-3" class="anchor"></a>New features</h2>
+<a href="#new-features-4" class="anchor"></a>New features</h2>
 <ul>
 <li>Added time delay histogram river routing. See vignettes on theory and use.</li>
 </ul>
@@ -288,9 +300,9 @@
 <p>This package is the result of an almost complete rewrite of the dynatopmodel package formally CRAN and the associated development code (not in the public domain).</p>
 <p>This package contains the code for model evaluation and helpers for preparing time series input data. The package <a href="https://waternumbers.github.io/dynatopGIS/">dynatopGIS</a> contains the tools for preparing models from GIS data.</p>
 </div>
-<div id="new-features-4" class="section level2">
+<div id="new-features-5" class="section level2">
 <h2 class="hasAnchor">
-<a href="#new-features-4" class="anchor"></a>New Features</h2>
+<a href="#new-features-5" class="anchor"></a>New Features</h2>
 <ul>
 <li>New definition of a dynamic TOPMODEL ‘object’ - seperates out GIS data for more compact size - introduces the concept of Hydrological Response Unit (HRU) types - Altered HRU definition table to allow for more transparent and easy reparameterisation - Altered HRU definition table to allow for more transparent use of multiple input series (referenced by name, not input column)</li>
 <li>Altered input of time series data to a single xts object containing names columns</li>
