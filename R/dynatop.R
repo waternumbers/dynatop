@@ -662,36 +662,57 @@ dynatop <- R6::R6Class(
             }
             ts <- private$comp_ts(sub_step)
             
-            ## Logical if states to be kept
+            ## Logical if states to be kept and store
             keep_states <- private$time_series$index %in% keep_states
+            if(any(keep_states)){
+                state_record <- rep(list(as.data.frame(NULL)),length(private$time_series$index))
+            }else{
+                state_record <- NULL
+            }
 
-            ## make local copies of output
-            ## can't initialise to NA since this produces copy rather then pointer
-            ## in Rcpp C++ code
-            channel_inflow <- matrix(-Inf,nrow(private$time_series$obs),
+            ## Initialise the mass error store
+            if(mass_check){
+                ## set to as.numeric(NA) so type picked up by Rcpp
+                mass_errors <- matrix(as.numeric(NA),nrow(private$time_series$obs),6)
+                colnames(mass_errors) <- c("initial_state","final_state","p","e_t",
+                                           "channel_inflow","error")
+            }else{
+                mass_errors <- NULL
+            }
+            
+            ## make local copy of channel_inflow
+            channel_inflow <- matrix(as.numeric(NA),nrow(private$time_series$obs),
                                      length(private$model$channel$id))
             colnames(channel_inflow) <- private$model$channel$id
-            mass_errors <- matrix(-Inf,nrow(private$time_series$obs),6)
-            colnames(mass_errors) <- c("initial_state","final_state","p","e_t",
-                                       "channel_inflow","error")
-
+                        
             if(! use_R ){
-                if(any(keep_states)){
-                    stop("States are currently not saved for intermediate timesteps in the C++ code set use_R=TRUE to use the R version")
+                ## create dummy input for Rcpp if no mass error computed
+                if( !mass_check ){
+                    mass_errors <- matrix(-Inf,1,1)
                 }
+                
                 ## use the Cpp version
-                hs_sim_cpp(private$time_series$obs,
-                           channel_inflow,
+                hs_sim_cpp(channel_inflow,
                            mass_errors,
+                           state_record,
+                           private$time_series$obs,
+                           keep_states,
+                           mass_check,
                            private$model$hillslope,
                            private$model$channel,
                            ts,
                            private$model$sz_dir_a,
                            private$model$sf_dir_a,
                            private$model$sqnc)
+
+                ## tidy up dummy input
+                if( !mass_check ){
+                    mass_errors <- NULL
+                }
+                
             }else{
                 ## use the r version with warnings
-
+                warning("R version of simulation code will be deprecitated in a future version")
                
                 ## take a local copy of the hillslope part of the model and channel id
                 hillslope <- private$model$hillslope
@@ -703,19 +724,7 @@ dynatop <- R6::R6Class(
                 
                 ## take a local copy of observed data
                 obs_data <- private$time_series$obs_data
-                
-                ## initialise the time series outputs
-                channel_inflow <- matrix(NA,nrow(obs_data),length(channel$id))
-                colnames(channel_inflow) <- channel$id
-                state_record <- rep(list(NULL),nrow(obs_data))
-                if( mass_check ){
-                    mass_errors <- matrix(NA,nrow(obs_data),6)
-                    colnames(mass_errors) <- c("initial_state","final_state","p","e_t",
-                                               "channel_inflow","error")
-                }else{
-                    mass_errors <- NULL
-                }
-                
+                                
                 ## simple function for solving ODE
                 fode <- function(a,b,x0,t){
                     ## b <- pmax(b,1e-10)
@@ -957,12 +966,13 @@ dynatop <- R6::R6Class(
                 
                 ## copy model with revised states back
                 private$model$hillslope <- hillslope
-                private$time_series$state_record <- state_record
+                
             }
             
             ## copy to storage
             private$time_series$channel_inflow <- channel_inflow
             private$time_series$mass_errors <- mass_errors
+            private$time_series$state_record <- state_record
             
         },
         ## convert a data frame to a storage list

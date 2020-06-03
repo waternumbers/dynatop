@@ -69,18 +69,24 @@ devtools::load_all("./dynatop"); data("Swindale")
 ##profvis::profvis({
 
 idx <- 1:273
-m2 <-  dynatop$new(Swindale$model)$add_data(Swindale$obs[idx,])$initialise(1e-6)$sim(mass_check=TRUE)
-m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs[idx,])$initialise(1e-6)$sim(mass_check=TRUE,use_R=TRUE)
+m2 <-  dynatop$new(Swindale$model)$add_data(Swindale$obs[idx,])$initialise(1e-6)$sim(mass_check=FALSE,keep_states=zoo::index(Swindale$obs))
+m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs[idx,])$initialise(1e-6)$sim(mass_check=FALSE,use_R=TRUE,keep_states=zoo::index(Swindale$obs))
 
 
 range(m2$get_states()-m1$get_states())
 
 m1$get_states()[37,]
 m2$get_states()[37,]
-head(m1$get_states())
 
+tail(m2$get_mass_errors())
+tail(m1$get_mass_errors())
 ##})
 plot(merge( Swindale$obs[,'Flow'],m1$get_gauge_flow(),m2$get_gauge_flow()))
+
+s2 <- m2$get_states(TRUE)
+s1 <- m1$get_states(TRUE)
+
+range(s2[[67]] - s1[[67]])
 
 ## ###########################################
 ## This hits more of the models compoents for testing
