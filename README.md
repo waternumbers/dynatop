@@ -44,5 +44,4 @@ devtools::install_github("waternumbers/dynatop")
 ```
 
 For Windows and Mac users some prebuild packages (usually including the latest
-version) are available
-[here](https://github.com/waternumbers/dynatop/tree/master/prebuilt) someitmes..
+version) are available from the waternumbers drat repository [here](https://github.com/waternumbers/drat).
