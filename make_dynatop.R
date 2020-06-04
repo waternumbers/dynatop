@@ -4,7 +4,6 @@ graphics.off()
 
 ## path of the package
 pacPath <- './dynatop'
-##devtools::load_all(pacPath)
 Rcpp::compileAttributes(pacPath)
 devtools::document(pacPath)
 devtools::check(pacPath)
@@ -13,11 +12,6 @@ devtools::check(pacPath)
 pkgdown::clean_site(pacPath)
 pkgdown::build_site(pacPath)
 pkgdown::clean_site(pacPath)
-
-
-tmp <- devtools::build(pacPath)
-install.packages(tmp)
-
 
 ## build, populate drat
 ## linux
@@ -90,8 +84,7 @@ head( m1$get_states(TRUE) )
 m1$plot_state("s_sf")
 
 ## ################################
-## This code profiles the Swindale simulation
-## needs to be a longer run of worthwile output
+## This code checks the cpp and r versions of the simulation
 rm(list=ls())
 devtools::load_all("./dynatop"); data("Swindale")
 
