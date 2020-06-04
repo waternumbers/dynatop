@@ -10,9 +10,12 @@ devtools::document(pacPath)
 devtools::check(pacPath)
 tmp <- devtools::build(pacPath)
 install.packages(tmp)
-pkgdown::clean_site(pacPath)
-pkgdown::build_site(pacPath)
-#file.copy(file.path(pacPath,"win"),file.path(pacPath,"docs"),recursive=TRUE)
+
+
+#pkgdown::clean_site(pacPath)
+#pkgdown::build_site(pacPath)
+
+                                        #file.copy(file.path(pacPath,"win"),file.path(pacPath,"docs"),recursive=TRUE)
 ##dir.create(file.path(pacPath,"docs","win"))
 ##file.copy(file.path(pacPath,"win"),file.path(pacPath,"docs"),recursive=TRUE)
 
