@@ -31,5 +31,6 @@ Suggests:
     knitr,
     rmarkdown,
     covr,
-    bookdown
+    bookdown,
+    pkgdown
 VignetteBuilder: knitr
