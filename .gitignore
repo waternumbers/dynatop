@@ -3,4 +3,4 @@
 **.so
 .Rhistory
 inst/doc
-doc/*
+docs/*
