@@ -9,5 +9,5 @@
 #' @importFrom zoo index
 #' @importFrom stats start end aggregate
 #' @importFrom Rcpp evalCpp
-#' @useDynLib dynatop
+#' @useDynLib dynatop, .registration=TRUE
 NULL
