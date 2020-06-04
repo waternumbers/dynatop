@@ -2,6 +2,5 @@
 **.o
 **.so
 .Rhistory
-**/RcppExports.*
 inst/doc
 doc/*
