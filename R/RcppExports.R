@@ -2,6 +2,6 @@
 # Generator token: 10BE3573-1514-4C36-9D1C-5A225CD40393
 
 hs_sim_cpp <- function(channel_inflow, mass_errors, state_record, obs, keep_states, mass_check, hillslope, channel, ts, sz_dir, sf_dir, sqnc) {
-    invisible(.Call('_dynatop_hs_sim_cpp', PACKAGE = 'dynatop', channel_inflow, mass_errors, state_record, obs, keep_states, mass_check, hillslope, channel, ts, sz_dir, sf_dir, sqnc))
+    invisible(.Call(`_dynatop_hs_sim_cpp`, channel_inflow, mass_errors, state_record, obs, keep_states, mass_check, hillslope, channel, ts, sz_dir, sf_dir, sqnc))
 }
 
