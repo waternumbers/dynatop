@@ -25,7 +25,7 @@ rhub::validate_email() # for first time that session
 pkgName <- sub('\\.tar.gz$', '', basename(tmp)) 
 ## rhub::platforms()[,1] # lists platforms
 mch <- rhub::check(path = tmp,
-                   platform = c("macos-highsierra-release-cran","windows-x86_64-patched"))
+                   platform = c("macos-highsierra-release-cran","windows-x86_64-release"))
 
 tmp <- paste0(pkgName,".tgz")
 download.file(file.path(mch$urls()$artifacts[1],tmp),tmp)
