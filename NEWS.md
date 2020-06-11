@@ -23,7 +23,7 @@
 - improved mass_check
 - more complet vignette - model equation and coding notes
 
-# dynatopGIS 0.1
+# dynatop 0.1
 
 ## Breaking Changes
 
