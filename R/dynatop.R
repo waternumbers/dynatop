@@ -151,7 +151,7 @@ dynatop <- R6::R6Class(
         get_gauge_flow = function(gauge=colnames(private$time_series$gauge_flow)){
             gauge <- match.arg(gauge,colnames(private$time_series$gauge_flow),
                                several.ok=TRUE)
-            xts::xts(private$time_series$gauge_flow[,gauge],
+            xts::xts(private$time_series$gauge_flow[,gauge,drop=FALSE],
                      order.by=private$time_series$index)
         },
         #' @description Get the flow at gauges
