@@ -1006,6 +1006,7 @@ dynatop <- R6::R6Class(
             chn_con[channel$id] <- unname(chn_con)
             
             ## compute the time to travel down each reach
+            
             reach_time <- unname( channel$length / channel$v_ch )
             reach_time[channel$id] <- unname(reach_time)
 
@@ -1064,25 +1065,23 @@ dynatop <- R6::R6Class(
             out <- matrix(NA,length(private$time_series$index),
                           length(private$model$linear_channel))
             colnames(out) <- names(private$model$linear_channel)
-
-            ## function to make polynonial and initial conditions
+            
+            ## function to make polynonial representing tiem delay histogram
             fpoly <- function(x){
-                t2g <- c(x$head_to_gauge, x$head_to_gauge - x$reach_time )
-                t2g <- pmax(t2g,0) ## ensure it is 0
-                qfrac <- min(1, (t2g[1]-t2g[2])/x$reach_time )# min fixed divide by 0 of points
-                ## divide by time step
-                t2g <- t2g / private$info$ts$step
-                d2g <- floor(t2g) + 1 # limits on steps to have
-
-                ply <- rep(0,d2g[1])
-                idx <- d2g[2]:d2g[1]
-                ply[idx] <- 1
-                if(t2g[1]>t2g[2]){
-                    delta <- t2g - d2g
-                    delta[1] <- 1-delta[1]
-                    ply[d2g] <- ply[d2g] - delta
+                if( x$reach_time == 0 ){
+                    ## point input
+                    ms <- floor(x$head_to_gauge/private$info$ts$step)+1
+                    ply <- rep(0,ms)
+                    ply[ms] <- 1
+                }else{
+                    ms <- ceiling(x$head_to_gauge/private$info$ts$step)
+                    ply <- (0:ms)*private$info$ts$step
+                    ply[ply<=x$head_to_gauge - x$reach_time] <- x$head_to_gauge - x$reach_time
+                    ply[ply>x$head_to_gauge] <- x$head_to_gauge
+                    ply <- diff(ply)
+                    ply <- ply/x$reach_time 
                 }
-                return(qfrac*(ply/sum(ply)))
+                return(ply)
             }
     
             ## Loop gauges
