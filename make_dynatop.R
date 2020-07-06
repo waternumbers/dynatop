@@ -18,7 +18,7 @@ pkgdown::clean_site(pacPath)
 dratPath <- "~/Documents/Software/drat"
 tmp <- devtools::build(pacPath)
 install.packages(tmp)
-drat::insertPackage(tmp,dratPath)
+drat::insertPackage(tmp,dratPath,action="prune")
 
 ## mac and windows
 rhub::validate_email() # for first time that session
@@ -29,11 +29,11 @@ mch <- rhub::check(path = tmp,
 
 tmp <- paste0(pkgName,".tgz")
 download.file(file.path(mch$urls()$artifacts[1],tmp),tmp)
-drat::insertPackage(tmp,dratPath)
+drat::insertPackage(tmp,dratPath,action="prune")
 
 tmp <- paste0(pkgName,".zip")
 download.file(file.path(mch$urls()$artifacts[2],tmp),tmp)
-drat::insertPackage(tmp,dratPath)
+drat::insertPackage(tmp,dratPath,action="prune")
 
 ## tidy up drat
 drat::pruneRepo(dratPath,pkg=pkgName,remove="git")## this only does source files
