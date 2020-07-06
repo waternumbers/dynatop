@@ -18,7 +18,7 @@ dynatop <- R6::R6Class(
             ## check model will fail if there is an error
             private$check_model(model,use_states,verbose,delta)
             ## convert model here
-            private$digest_model(model)
+            private$digest_model(model,use_states)
             invisible(self)
         },
         #' @description Adds observed data to a dynatop object
@@ -32,6 +32,7 @@ dynatop <- R6::R6Class(
             self$clear_data()
             ## check input and get model timestep
             private$check_obs(obs_data)
+            private$digest_obs(obs_data)
             invisible(self)
         },
         #' @description Clears all forcing and simulation data except current states
@@ -265,67 +266,55 @@ dynatop <- R6::R6Class(
         ),
         ## convert the form of the model for internal storage
         ## we presume the model has been checked!!
-        digest_model = function(model){
-            ## initialise output model format as a list
-            ## copy anything that requires no alteration
-            out <- list(param=model$param)
+        digest_model = function(model,use_states){
+            ## create extra rows in data frame which contain the variable values
+            ## for when they are passed as strings (e.g. parameters)
+
             ## store to record the names of the data series required
             data_series <- list(); ds_cnt <- 1;
             
             ## convert into lists
             for(tbl in names(private$model_description)){
                 prop <- private$model_description[[tbl]]
-                out[[tbl]] <- as.list( model[[tbl]] )
-                ## remove names so they don;t propergate
-                for(ii in names(out[[tbl]])){
-                    out[[tbl]][[ii]] <- unname(out[[tbl]][[ii]])
-                }
-                ## handle parameters - note name of vector is the parameter name
+
+                ## handle parameters
+                ## create extra _val columns
+                ## note names of param vector is the parameter name
                 for(ii in prop$name[prop$role=="parameter"]){
-                    out[[tbl]][[ ii ]] <- model$param[ out[[tbl]][[ii]] ]
+                    model[[tbl]][[ paste0(ii,"_value") ]] <- model$param[ model[[tbl]][[ii]] ]
                 }
                 
                 ## get input series
                 for(ii in prop$name[prop$role=="data_series"]){
-                    ## add back in names used in export
-                    ## recall names are converted to index when data loaded
-                    names(out[[tbl]][[ ii ]]) <- out[[tbl]][[ii]] 
-                    data_series[[ds_cnt]] <- unique( out[[tbl]][[ ii ]] )
+                    data_series[[ds_cnt]] <- unique( model[[tbl]][[ ii ]] )
                     ds_cnt <- ds_cnt + 1
                 }
+
+                ## handle states
+                for(ii in prop$name[prop$role=="state"]){
+                    if(!use_states | !(ii %in% names(model[[tbl]]))){
+                        model[[tbl]][[ii]] <- NA
+                    }
+                }
+                
+
             }
 
-            ## work out the sequences for computing the lateral flux bands these are the index in the hillslope vectors NOT the id
-            out$sqnc <- list(sf=list(),sz=list())
-            for(ii in names(out$sqnc)){
+            ## work out the sequences for computing the lateral flux bands
+            ## these are the C++ index in the row of the data.frame NOT the id
+            model$sqnc <- list(sf=list(),sz=list())
+            for(ii in names(model$sqnc)){
                 bnd <- switch(ii,
                               sf = sapply(model$hillslope$sf_dir,function(x){x$band}),
                               sz = sapply(model$hillslope$sz_dir,function(x){x$band})
                               )
-                out$sqnc[[ii]] <- (1:length(model$hillslope$id))[order(bnd)]
+                model$sqnc[[ii]] <- (1:length(model$hillslope$id))[order(bnd)] -1 ## minus 1 since c++ starts at 0
             }
-
-            ## reprocess the fractions of the routing so it includes area ratio correctly
-            ## initialise vector of areas
-            tmp <- rep(NA,max(c(model$hillslope$id,model$channel$id)))
-            tmp[model$channel$id] <- model$channel$area
-            tmp[model$hillslope$id] <- model$hillslope$area
-            out$sf_dir_a <- model$hillslope$sf_dir
-            out$sz_dir_a <- model$hillslope$sz_dir
-            for(ii in 1:length(out$sf_dir_a)){
-                out$sf_dir_a[[ii]]$frc <- model$hillslope$area[ii] * out$sf_dir_a[[ii]]$frc /
-                    tmp[ out$sf_dir_a[[ii]]$idx ]
-                out$sz_dir_a[[ii]]$frc <- model$hillslope$area[ii] * out$sz_dir_a[[ii]]$frc /
-                    tmp[ out$sz_dir_a[[ii]]$idx ]
-            }
-            rm(tmp)
 
             ## copy to private
             private$info$data_series <- unique( do.call(c,data_series) )
-            private$model <- out
-            ## TODO inc in description
-            private$model$map <- model$map
-            
+            private$model <- model
+          
             invisible( self )
         },
         ## convert the form the internal storage to that input
@@ -334,29 +323,14 @@ dynatop <- R6::R6Class(
             
             ## initialise output model format as a list
             ## include variables that don;t need transformation
-            out <- list(param=private$model$param)
+            out <- list()
             
             ## convert into lists
             for(tbl in names(private$model_description)){
                 print(tbl)
                 ## required properties
                 prop <- private$model_description[[tbl]]
-
-                ## get names of all series
-                nm <- names(private$model[[tbl]])
-                nm <- split(nm,nm%in%c("sz_dir","sf_dir","flow_dir"))
-                out[[tbl]] <- as.data.frame( private$model[[tbl]][nm[["FALSE"]]] ,
-                                            stringsAsFactors=FALSE)
-                for(ii in nm[["TRUE"]]){
-                    ##print(ii)
-                    out[[tbl]][,ii] <- private$model[[tbl]][ii]
-                }
-                
-                
-                ## handle parameters - note name of vector is the parameter name
-                for(ii in prop$name[prop$role %in% c("parameter","data_series")]){
-                    out[[tbl]][,ii] <- names( private$model[[tbl]][[ii]] )
-                }
+                out[[tbl]] <- private$model[,prop$name,drop=FALSE]
             }
 
             ## TODO inc in description
@@ -570,20 +544,21 @@ dynatop <- R6::R6Class(
             if( !all(is.finite(obs[,req_series])) ){
                 stop("There are non finite values in the required time series")
             }
-
-            ## All checks passed add to private
+        },
+        digest_obs = function(obs){
+            ## Assumes all checks passed
             private$time_series$obs_data <- as.matrix(obs)
             private$time_series$index <- index(obs)
 
-            ## set the data series flags in the model
-            idx <- setNames(1:ncol(obs),names(obs))
+            ## set the data series index in the model
+            ## index is in C++ numbering starting from 0
+            idx <- setNames((1:ncol(obs))-1,names(obs))
             for(tbl in names(private$model_description)){
                 ## required properties
                 prop <- private$model_description[[tbl]]
 
-                ## handle parameters - note name of vector is the parameter name
                 for(ii in prop$name[prop$role == "data_series"]){
-                    private$model[[tbl]][[ii]]  <-  idx[ private$model[[tbl]][[ii]] ]
+                    private$model[[tbl]][[ paste0(ii,"_index") ]]  <-  idx[ private$model[[tbl]][[ii]] ]
                 }
             }
         },
@@ -604,52 +579,10 @@ dynatop <- R6::R6Class(
         ## ###########################################
         ## Initialise the states
         init_hs = function(initial_recharge){
-            ## take local copy of hillslope
-            hillslope <- private$model$hillslope
-            ## take local copy of the area scaled routing of saturated zone
-            sz_dir <- private$model$sz_dir_a
-            ## compute the timestep
-            ts <- private$comp_ts(NULL)
-            
-            ## maximum lateral flow from saturated zone per unit area
-            beta <- atan(hillslope$s_bar)
-            l_szmax <- exp( hillslope$ln_t0 )*sin(beta) / hillslope$delta_x
 
-            ## initialise the surface storage
-            hillslope$s_sf <- rep(0,length(hillslope$id))
-            
-            ## initialise the root zone
-            hillslope$s_rz <- pmax( pmin( hillslope$s_rz0, 1) ,0 ) * hillslope$s_rzmax
-
-            ## take recharge to be average inflow rate to saturated zone and solve for
-            ## steady state
-            bq_uz_sz <- initial_recharge
-            il_sz_in <- rep(0,max(c(private$model$channel$id,
-                                    private$model$hillslope$id)))
-            il_sz <- rep(0,length(hillslope$id))
-            hillslope$s_sz <- hillslope$l_sz <- rep(NA,length(hillslope$id))
-
-            
-            for(ii in private$model$sqnc$sz){ ## loop through all HSUs in order
-                ## solve for instananeous outlflow
-
-                qbar <- min(l_szmax[ii], il_sz_in[ hillslope$id[ii] ]/ts$sub_step)
-                hillslope$l_sz[ii] <- min( l_szmax[ii] , qbar+bq_uz_sz )
-                il_sz[ii] <- hillslope$l_sz[ii]*ts$step
-                ## pass downslope
-                il_sz_in[ sz_dir[[ii]]$idx ] <-
-                    il_sz_in[ sz_dir[[ii]]$idx ] + sz_dir[[ii]]$frc*il_sz[ii]
-            }
-            ## compute the deficit based on flow
-            hillslope$s_sz <- pmax(0, hillslope$m*( log(l_szmax) - log(hillslope$l_sz))/cos(beta))
-
-            ## TODO handel flow to surface?
-
-            ## solve for unsaturated zone
-            hillslope$s_uz <- hillslope$t_d*bq_uz_sz*hillslope$s_sz
-            
-            ## put model back into private storage
-            private$model$hillslope <- hillslope
+            hs_init_cpp(private$model$hillslope,
+                        private$model$sqnc,
+                        as.numeric(initial_recharge))
             
         },
         ## ###############################
@@ -665,314 +598,47 @@ dynatop <- R6::R6Class(
             ## Logical if states to be kept and store
             keep_states <- private$time_series$index %in% keep_states
             if(any(keep_states)){
-                state_record <- rep(list(as.data.frame(NULL)),length(private$time_series$index))
+                private$time_series$state_record <- rep(list(as.data.frame(NULL)),length(private$time_series$index))
             }else{
-                state_record <- NULL
+                private$time_series$state_record <- NULL
             }
 
             ## Initialise the mass error store
             if(mass_check){
                 ## set to as.numeric(NA) so type picked up by Rcpp
-                mass_errors <- matrix(as.numeric(NA),nrow(private$time_series$obs),6)
-                colnames(mass_errors) <- c("initial_state","final_state","p","e_t",
-                                           "channel_inflow","error")
+                private$time_series$mass_errors <- matrix(as.numeric(NA),nrow(private$time_series$obs),6)
+                colnames(private$time_series$mass_errors) <-
+                    c("initial_state","final_state","p","e_t",
+                      "channel_inflow","error")
             }else{
-                mass_errors <- NULL
+                ## initialise so can pass correctly
+                private$time_series$mass_errors <- matrix(-Inf,1,1)
             }
             
             ## make local copy of channel_inflow
-            channel_inflow <- matrix(as.numeric(NA),nrow(private$time_series$obs),
-                                     length(private$model$channel$id))
-            colnames(channel_inflow) <- private$model$channel$id
+            private$time_series$channel_inflow <- matrix(as.numeric(NA),
+                                                         nrow(private$time_series$obs),
+                                                         length(private$model$channel$id))
+            colnames(private$time_series$channel_inflow) <- private$model$channel$id
                         
-            if(! use_R ){
-                ## create dummy input for Rcpp if no mass error computed
-                if( !mass_check ){
-                    mass_errors <- matrix(-Inf,1,1)
-                }
-                
-                ## use the Cpp version
-                hs_sim_cpp(channel_inflow,
-                           mass_errors,
-                           state_record,
-                           private$time_series$obs,
-                           keep_states,
-                           mass_check,
-                           private$model$hillslope,
-                           private$model$channel,
-                           ts,
-                           private$model$sz_dir_a,
-                           private$model$sf_dir_a,
-                           private$model$sqnc)
-
-                ## tidy up dummy input
-                if( !mass_check ){
-                    mass_errors <- NULL
-                }
-                
-            }else{
-                ## use the r version with warnings
-                warning("R version of simulation code will be deprecitated in a future version")
-               
-                ## take a local copy of the hillslope part of the model and channel id
-                hillslope <- private$model$hillslope
-                channel <- private$model$channel[c("id","precip","area")]
-                
-                ## take local copy of the area scaled routings
-                sf_dir <- private$model$sf_dir_a
-                sz_dir <- private$model$sz_dir_a
-                
-                ## take a local copy of observed data
-                obs_data <- private$time_series$obs_data
-                                
-                ## simple function for solving ODE
-                fode <- function(a,b,x0,t){
-                    ## b <- pmax(b,1e-10)
-                    ebt <- exp(-b*t)
-                    kappa <- (1-ebt)/b
-                    kappa[b==0] <- t
-                    ## kappa <- pmin(t,(1-ebt)/b)
-                    ## x <- unname( x0*ebt + (a/b)*(1-ebt) )
-                    x <- unname( x0*ebt + a*kappa )
-                    return(x)
-                }
-                
-                ## initialise the stores of the lateral flux inflows
-                ## stored as [m3/m2] where the area is that of the receiving HSU
-                il_sf_in <- rep(NA,max(c(hillslope$id,channel$id)))
-                il_sz_in <- rep(NA,max(c(hillslope$id,channel$id)))
-                
-                ## compute some local constants for the hillslope HSUs
-                ## max lateral flow in saturated zone as [m/s]
-                ## l_szmax <- exp( hillslope$ln_t0 )*hillslope$s_bar / hillslope$delta_x
-                beta <- atan(hillslope$s_bar)
-                cosbeta_m <- cos(beta)/hillslope$m
-                sinbeta <- sin(beta)
-                l_szmax <- exp( hillslope$ln_t0 )*sinbeta / hillslope$delta_x
-                rm(beta)
-                
-                ## constants in surface flow solution
-                tmp <- ts$sub_step/hillslope$t_sf
-                omega_1 <- exp(-tmp)
-                omega_2 <- (1-omega_1)/tmp
-                omega_2[tmp==0] <- ts$sub_step
-                
-                
-                ## initialise vertical flux stores
-                iq_sf_rz <- rep(NA,length(hillslope$id))
-                iq_rz_uz <- rep(NA,length(hillslope$id))
-                iq_rz_sf <- rep(NA,length(hillslope$id))
-                iq_uz_sz <- rep(NA,length(hillslope$id))
-                
-                ## initialise storage for tempory variables
-                ## input series
-                p <- e_p <- rep(NA,length(hillslope$id))
-                ## used in surface storage solution
-                il_sf <- rep(NA,length(hillslope$id))
-                ## used in root zone storage solution
-                ts_rz <- rep(NA,length(hillslope$id)) ## intermediate solution of s_rz
-                ie_t <- rep(NA,length(hillslope$id)) # actual evapotranspiration vol [m]
-                is_sat <- rep(NA,length(hillslope$id)) # logical indicating if saturated
-                ## used in unsaturated zone solution
-                ts_uz <- rep(NA,length(hillslope$id)) ## intermediate solution of s_uz
-                ## used in saturated zone solution
-                ts_sz <- rep(NA,length(hillslope$id)) ## intermediate solution of s_sz
-                il_sz <- rep(NA,length(hillslope$id)) ## integral of lateral outflow
-                
-                
-                ## start loop of time steps            
-                for(it in 1:nrow(obs_data)){
-                    
-                    ## set the inputs to the hillslope
-                    ## set as rate m/s
-                    p <- obs_data[it,hillslope$precip]/ts$step
-                    e_p <- obs_data[it,hillslope$pet]/ts$step
-                    
-                    ## initialise channel inflow volume of precip
-                    ## This is accumulate as volume [m3/m2] then converted to flow at end
-                    channel_inflow[it,] <- obs_data[it,channel$precip]
-                
-                    ## start mass check
-                    if(mass_check){
-                        ## initialise with volume stored and precip volume
-                        ## initialise e_t to be accumulated
-                        mass_errors[it,"initial_state"] <- sum(
-                            hillslope$area *
-                            (hillslope$s_sf + hillslope$s_rz +
-                             hillslope$s_uz - hillslope$s_sz) )
-                        mass_errors[it,"p"] <- sum(hillslope$area * p*ts$step) +
-                            sum(channel_inflow[it,]*channel$area) ## this is precip to channel
-                        mass_errors[it,"e_t"] <- 0
-                    }
-                    
-                    
-                    ## loop sub steps
-                    for(inner in 1:ts$n_sub_step){
-                        
-                        ## initialise lateral influxes to HSUs to zero
-                        il_sf_in[] <- 0
-                        il_sz_in[] <- 0
-                        
-                        ## Step 1: Distribute any surface storage downslope                  
-                        il_sf[] <- 0
-                        ## initialise hillslope lateral flow out as volume
-                        for(ii in private$model$sqnc$sf){ ## loop through all HSUs in order
-                            ## compute new storage
-                            ts_sf <- fode(il_sf_in[hillslope$id[ii]] / ts$sub_step,
-                                          ts$sub_step/hillslope$t_sf[ii],
-                                          hillslope$s_sf[ii],
-                                          ts$sub_step)
-                            il_sf[ii] <- hillslope$s_sf[ii] + il_sf_in[hillslope$id][ii] -ts_sf
-                            hillslope$s_sf[ii] <- ts_sf
-                            
-                            ## compute new integral of lateral flux
-                            ##il_sf[ii] <- (1-omega_1[ii])*hillslope$s_sf[ii] +
-                            ##    (1 - omega_2[ii])*il_sf_in[hillslope$id[ii]]
-                            ## pass downslope
-                            il_sf_in[ sf_dir[[ii]]$idx ] <-
-                                il_sf_in[ sf_dir[[ii]]$idx ]+
-                                sf_dir[[ii]]$frc * il_sf[ii]
-                        }
-                        ## compute new storage
-                        ##hillslope$s_sf <- hillslope$s_sf + il_sf_in[hillslope$id] - il_sf
-                        ## compute flow to root zone and correct storage
-                        iq_sf_rz <- pmin( hillslope$q_sfmax*ts$sub_step,hillslope$s_sf )
-                        hillslope$s_sf <- hillslope$s_sf - iq_sf_rz
-                        
-                        ## Step 2: solve the root zone for hillslope elements
-                        ## solve ODE                    
-                        ts_rz <- fode( p + (iq_sf_rz/ts$sub_step),
-                                      e_p/hillslope$s_rzmax,
-                                      hillslope$s_rz,ts$sub_step )
-                        
-                        ## work out actual evapotranspiration by mass balance
-                        ie_t <- hillslope$s_rz + p*ts$sub_step + iq_sf_rz - ts_rz
-                        
-                        if(mass_check){
-                            mass_errors[it,'e_t'] <- mass_errors[it,'e_t'] +
-                                sum(ie_t*hillslope$area)
-                        }
-                        
-                        ## new storage value
-                        hillslope$s_rz <- pmin(ts_rz,hillslope$s_rzmax)
-                        
-                        ## split root zone flow
-                        iq_rz_uz <- ts_rz - hillslope$s_rz ## presume goes to unsaturated zone
-                        is_sat <- hillslope$s_sz <= 0
-                        iq_rz_sf <- iq_rz_uz*is_sat
-                        iq_rz_uz <- iq_rz_uz*!is_sat
-                        
-                        ## Step 3: Unsaturated zone
-                        ## solve ODE
-                        ts_uz <- fode( iq_rz_uz/ts$sub_step,
-                                      1 / (hillslope$t_d * hillslope$s_sz),
-                                      hillslope$s_uz,ts$sub_step )
-                        ## work out outflow
-                        iq_uz_sz <- hillslope$s_uz + iq_rz_uz - ts_uz
-                        hillslope$s_uz <- ts_uz
-                        
-                        ## Step 4: Solve saturated zone
-                        ## this is omega=theta=1 solution with
-                        ## explicit velocity and average inflow                    
-                        
-                        il_sz <- hillslope$l_sz ## initialise integral calc
-                        bq_uz_sz <- iq_uz_sz / ts$sub_step ## flow for uz as rate allowing for angle
-                        lbq_uz_sz <- bq_uz_sz*sinbeta
-                        
-                        ## loop HSUs                    
-                        for(ii in private$model$sqnc$sz){## loop through all HSUs in order
-                            
-                            ## inflow as rate
-                            l_szin <- min( il_sz_in[hillslope$id[ii]] /ts$sub_step,
-                                          l_szmax[ii] )
-                            
-                            ## compute flow for velocity calculation
-                            lbar <- (2/3)*(l_szin+lbq_uz_sz[ii]) +
-                                hillslope$l_sz[ii]/3
-                            lbar <- min(lbar,l_szmax[ii])
-                            
-                            ## compute lambda
-                            ## using  c = l*Delta_x*cos(beta)/m
-                            ## lambda = c*Delta_t/Delta_x
-                            lambda <- lbar*ts$sub_step*cosbeta_m[ii]
-                            if(lambda==0){lp <- 0}else{lp <- 1} # lambda=0 implies no flow!
-                            
-                            ## solve for estimate of outflow
-                            tl_sz <- (lp*hillslope$l_sz[ii] + lambda*(l_szin + bq_uz_sz[ii]))/
-                                (1+lambda)
-                            
-                            hillslope$l_sz[ii] <- min( l_szmax[ii],tl_sz )
-                            ## integral of outflow
-                            il_sz[ii] <- (ts$sub_step/2)*(il_sz[ii] + hillslope$l_sz[ii])
-                            ## pass downslope
-                            il_sz_in[ sz_dir[[ii]]$idx ] <-
-                                il_sz_in[ sz_dir[[ii]]$idx ] +
-                                sz_dir[[ii]]$frc*il_sz[ii]
-                        }
-                        
-                        ## update volumes in hillslope
-                        ts_sz <- hillslope$s_sz + il_sz - il_sz_in[hillslope$id] - iq_uz_sz
-                        hillslope$s_sz <- pmax(0,ts_sz)
-                        ## compute the flux to the surface
-                        iq_sz_sf <- hillslope$s_sz - ts_sz
-                        
-                        ## step 5 - correct the stores for saturation flows
-                        is_sat <- hillslope$s_sz <= 0
-                        iq_uz_sf <- hillslope$s_uz*is_sat
-                        hillslope$s_uz <- hillslope$s_uz - iq_uz_sf
-                        hillslope$s_sf <- hillslope$s_sf +
-                            iq_rz_sf + iq_sz_sf + iq_uz_sf
-                       
-                        
-                        ## update volume of flow to channel
-                        channel_inflow[it,] <- channel_inflow[it,] +
-                            il_sf_in[channel$id] + il_sz_in[channel$id]
-                        
-                        
-                    } ## end of sub_step loop
-                    
-                    
-                    ## complete mass balance check
-                    if( mass_check ){
-                        mass_errors[it,"final_state"] <- sum(
-                            hillslope$area *
-                            (hillslope$s_sf + hillslope$s_rz +
-                             hillslope$s_uz - hillslope$s_sz) )
-                        mass_errors[it,"channel_inflow"] <- sum(channel_inflow[it,]*
-                                                                channel$area )
-                        ## work out the error
-                        mass_errors[it,"error"] <-
-                            mass_errors[it,"initial_state"] + mass_errors[it,"p"] -
-                            mass_errors[it,"final_state"] - mass_errors[it,"e_t"] -
-                            mass_errors[it,"channel_inflow"]
-                        
-                        if( abs(mass_errors[it,"error"]) > 1e-6  ){
-                            cat("Iteration ",it," large mass error: ",
-                                mass_errors[it,"error"],"\n")
-                        }
-                    }
-                    
-                    ## copy states if requires
-                    if( keep_states[it] ){
-                        state_record[[it]] <- private$extract_states(hillslope,"hillslope")
-                    }
-                    
-                    ## convert channel inflow to [m3/s]
-                    channel_inflow[it,] <- channel_inflow[it,]*channel$area/ts$step
-                    
-                    
-                } ## end of timestep loop
-                
-                
-                ## copy model with revised states back
-                private$model$hillslope <- hillslope
-                
-            }
             
-            ## copy to storage
-            private$time_series$channel_inflow <- channel_inflow
-            private$time_series$mass_errors <- mass_errors
-            private$time_series$state_record <- state_record
+            
+            ## use the Cpp version
+            hs_sim_cpp(private$model$hillslope,
+                       private$model$channel,
+                       private$model$sqnc,
+                       private$time_series$obs,
+                       ts,
+                       private$time_series$channel_inflow,
+                       mass_check,
+                       private$time_series$mass_errors,
+                       keep_states,
+                       private$time_series$state_record)
+            
+            ## tidy up dummy input
+            if( !mass_check ){
+                private$time_series$mass_errors <- NULL
+            }
             
         },
         ## convert a data frame to a storage list
@@ -1007,7 +673,7 @@ dynatop <- R6::R6Class(
             
             ## compute the time to travel down each reach
             
-            reach_time <- unname( channel$length / channel$v_ch )
+            reach_time <- unname( channel$length / channel$v_ch_value )
             reach_time[channel$id] <- unname(reach_time)
 
 
