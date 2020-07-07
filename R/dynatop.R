@@ -296,10 +296,14 @@ dynatop <- R6::R6Class(
                         model[[tbl]][[ii]] <- NA
                     }
                 }
-                
-
             }
 
+            ## chage indexs used for flow redistributions
+            model$hillslope$id_index <- model$hillslope$id - 1
+            model$channel$id_index <- model$channel$id - 1
+            model$hillslope$sf_dir_index <- lapply(model$hillslope$sf_dir, function(x){x$idx <- x$idx-1; return(x)})
+            model$hillslope$sz_dir_index <- lapply(model$hillslope$sf_dir, function(x){x$idx <- x$idx-1; return(x)})
+            
             ## work out the sequences for computing the lateral flux bands
             ## these are the C++ index in the row of the data.frame NOT the id
             model$sqnc <- list(sf=list(),sz=list())
@@ -579,7 +583,16 @@ dynatop <- R6::R6Class(
         ## ###########################################
         ## Initialise the states
         init_hs = function(initial_recharge){
-
+            beta <- atan(private$model$hillslope$s_bar)
+            
+            l_szmax <- exp( private$model$hillslope$ln_t0_value )*sin(beta) / private$model$hillslope$delta_x
+            
+            print(l_szmax[private$model$sqnc$sz+1])
+            for(ii in private$model$sqnc$sz){
+                
+                print( c(private$model$hillslope$id[ii+1], private$model$hillslope$sz_dir_index[[ii+1]]$idx ))
+            }
+            
             hs_init_cpp(private$model$hillslope,
                         private$model$sqnc,
                         as.numeric(initial_recharge))
