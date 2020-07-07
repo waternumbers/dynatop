@@ -55,6 +55,7 @@ dynatop <- R6::R6Class(
             }
             
             private$init_hs(initial_recharge)
+            ##print("returned from init_hs")
             private$init_ch()
             invisible(self)
         },
@@ -583,19 +584,13 @@ dynatop <- R6::R6Class(
         ## ###########################################
         ## Initialise the states
         init_hs = function(initial_recharge){
-            beta <- atan(private$model$hillslope$s_bar)
-            
-            l_szmax <- exp( private$model$hillslope$ln_t0_value )*sin(beta) / private$model$hillslope$delta_x
-            
-            print(l_szmax[private$model$sqnc$sz+1])
-            for(ii in private$model$sqnc$sz){
-                
-                print( c(private$model$hillslope$id[ii+1], private$model$hillslope$sz_dir_index[[ii+1]]$idx ))
-            }
-            
+            ## TODO check initial recharge
+                        
             hs_init_cpp(private$model$hillslope,
                         private$model$sqnc,
-                        as.numeric(initial_recharge))
+                        as.numeric(initial_recharge[1]))
+
+            ##print("returning from init_hs")
             
         },
         ## ###############################

@@ -4,22 +4,18 @@
 #include "csu.h"
 
 using namespace Rcpp;
-
 // Thing to do
-// 1. Move class object to seperate files
 // 2. Profile and optimise if possible
 // 3. check matches r code on MS sims
 
 
-
-  
 // [[Rcpp::export]]
 void hs_init_cpp(DataFrame hillslope, const List sqnc, const double q0){
-  Rcout << "Running init" << std::endl;
+  // Rcout << "Running init" << std::endl;
   
   // unpack the saturated zone sequence
   std::vector<int> sqnc_sz = as<std::vector<int>>(sqnc("sz"));
-  // unpack the required elements of the hillslope
+    // unpack the required elements of the hillslope
   IntegerVector id = hillslope("id_index"),p_idx = hillslope("precip_index"),
     e_idx = hillslope("pet_index");
   NumericVector area = hillslope("area"), delta_x = hillslope("delta_x"),
@@ -32,38 +28,40 @@ void hs_init_cpp(DataFrame hillslope, const List sqnc, const double q0){
   NumericVector s_sf = hillslope("s_sf"), s_rz = hillslope("s_rz"),
     s_uz = hillslope("s_uz"), s_sz = hillslope("s_sz"), l_sz = hillslope("l_sz");
   List sf_dir = hillslope("sf_dir_index"), sz_dir = hillslope("sz_dir_index") ;
+
   // give a time value - not needed except for initialisation of HSU
   double ts = -999.0;
   // Loop to set up the HSUs
   List sf,sz;
-  int max_id = max(id); // using rcpp max
   std::vector<hsu> vhsu;
   for(int ii =0; ii<id.size(); ++ii){
     // compute the surface redistribution
     sf = sf_dir(ii);
     sz = sz_dir(ii);
-    
+  
     hsu tmp = hsu( id(ii), p_idx(ii), e_idx(ii),
-		   area(ii), s_bar(ii), delta_x(ii),
-		   as<std::vector<double>>(sf("frc")),
-		   as<std::vector<int>>(sf("idx")),
-		   as<std::vector<double>>(sz("frc")),
-		   as<std::vector<int>>(sz("idx")),
-		   t_sf(ii), q_sfmax(ii), s_rzmax(ii),
-		   s_rz0(ii),
-		   t_d(ii), m(ii), ln_t0(ii),
-		   s_sf(ii), s_rz(ii), s_uz(ii), s_sz(ii),
-		   l_sz(ii),
-		   ts);
+  		   area(ii), s_bar(ii), delta_x(ii),
+  		   as<std::vector<double>>(sf("frc")),
+  		   as<std::vector<int>>(sf("idx")),
+  		   as<std::vector<double>>(sz("frc")),
+  		   as<std::vector<int>>(sz("idx")),
+  		   t_sf(ii), q_sfmax(ii), s_rzmax(ii),
+  		   s_rz0(ii),
+  		   t_d(ii), m(ii), ln_t0(ii),
+  		   s_sf(ii), s_rz(ii), s_uz(ii), s_sz(ii),
+  		   l_sz(ii),
+  		   ts);
     vhsu.push_back(tmp);
   }
   // initialise
-  std::vector<double> l_sz_in(max_id,0.0);
+  int len_redist_vec = max(id)+1; // using rcpp max
+  std::vector<double> l_sz_in(len_redist_vec,0.0);
   for(uint sq = 0; sq < sqnc_sz.size(); ++sq){
     int ii = sqnc_sz[sq];
+    //Rcout << sq << " " << ii << std::endl;
     vhsu[ii].initialise(q0,l_sz_in);
   }
-  
+    
   // I would have though that altering the numericvectors chnaged the data frame but...
   hillslope("s_sf") = s_sf;
   hillslope("s_rz") = s_rz;
@@ -80,7 +78,7 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
 		bool mass_check, NumericMatrix mass_errors,
 		LogicalVector keep_states, List state_record){
   
-  //ProfilerStart("dynaprof.log");
+  ProfilerStart("dynaprof.log");
   
   // unpack the sequences
   std::vector<int> sqnc_sz = as<std::vector<int>>(sqnc("sz"));
@@ -109,8 +107,7 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
   NumericVector channel_area = channel("area");
 
   // find out highest id - presumed a hillslope
-  int max_id = max(id); // using rcpp max
-  
+    
   // Loop to set up the hillslope HSUs
   std::vector<hsu> vhsu;
   List sf,sz;
@@ -153,7 +150,8 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
 					  Named("id") = l_sz);
   
   // lateral flux records - initialise to 0.0
-  std::vector<double> il_sf_in(max_id,0.0), il_sz_in(max_id,0.0);
+  int len_redist_vec = max(id) +1; // using rcpp max
+  std::vector<double> il_sf_in(len_redist_vec,0.0), il_sz_in(len_redist_vec,0.0);
 
   // observation vector
   std::vector<double> obs_vec(obs.ncol(),0.0);
@@ -251,5 +249,5 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
       state_record(it) = clone(df_state);
     }
   }    
-  //ProfilerStop();
+  ProfilerStop();
 } 
