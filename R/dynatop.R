@@ -453,25 +453,49 @@ dynatop <- R6::R6Class(
             ## checks on redistribution
             ## TODO ad check that going down band?
             ## TODO add check on bound parameter
-            fcheck <- function(x){
-                all(x$idx %in% all_hsu) & (abs(sum(x$frc)-1) < delta)
+            
+            ## check sf
+            ds_hsu <- do.call(c,lapply(model$hillslope$sf_dir,function(x){x$idx}))
+            ds_sum <- sapply(model$hillslope$sf_dir,function(x){sum(x$frc)})
+            ds_sum <- abs(ds_sum-1)<delta
+            if(!all(ds_hsu %in% all_hsu)){
+                stop("Surface flow resistirbution is not valid: unexpected recieving HSUs")
             }
-            idx <- sapply(model$hillslope$sz_dir,fcheck)
-            if( any(!idx) ){
-                stop(paste("Saturated flow redistribution is not valid for HSUs:",
-                           paste(model$hillslope$id[!idx],collapse=" ")))
-            }
-            idx <- sapply(model$hillslope$sf_dir,fcheck)
-            if( any(!idx) ){
-                stop(paste("Surface flow redistribution is not valid for HSUs:",
-                           paste(model$hillslope$id[!idx],collapse=" ")))
+            if(!all(ds_sum)){
+                stop(paste("Surface flow resistirbution is not valid: Fractions do not sum to one for HSUs",paste(model$hillslope$id[!ds_sum],collapse=", ")))
             }
             
-            idx <- sapply(model$channel$flow_dir,function(x){is.null(x) | fcheck(x)})
-            if( any(!idx) ){
-                stop(paste("Channel flow redistribution is not valid for HSUs:",
-                           paste(model$channel$id[!idx],collapse=" ")))
+            ## check sz
+            ds_hsu <- do.call(c,lapply(model$hillslope$sz_dir,function(x){x$idx}))
+            ds_sum <- sapply(model$hillslope$sz_dir,function(x){sum(x$frc)})
+            ds_sum <- abs(ds_sum-1)<delta
+            if(!all(ds_hsu %in% all_hsu)){
+                stop("Saturated Zone flow resistirbution is not valid: unexpected recieving HSUs")
             }
+            if(!all(ds_sum)){
+                stop(paste("Saturated Zone flow resistirbution is not valid: Fractions do not sum to one for HSUs",paste(model$hillslope$id[!ds_sum],collapse=", ")))
+            }
+            
+            
+            ## fcheck <- function(x){
+            ##     all(x$idx %in% all_hsu) & (abs(sum(x$frc)-1) < delta)
+            ## }
+            ## idx <- sapply(model$hillslope$sz_dir,fcheck)
+            ## if( any(!idx) ){
+            ##     stop(paste("Saturated flow redistribution is not valid for HSUs:",
+            ##                paste(model$hillslope$id[!idx],collapse=" ")))
+            ## }
+            ## idx <- sapply(model$hillslope$sf_dir,fcheck)
+            ## if( any(!idx) ){
+            ##     stop(paste("Surface flow redistribution is not valid for HSUs:",
+            ##                paste(model$hillslope$id[!idx],collapse=" ")))
+            ## }
+            
+            ## idx <- sapply(model$channel$flow_dir,function(x){is.null(x) | fcheck(x)})
+            ## if( any(!idx) ){
+            ##     stop(paste("Channel flow redistribution is not valid for HSUs:",
+            ##                paste(model$channel$id[!idx],collapse=" ")))
+            ## }
             
             ## specific checks on channel network connectivity - used in channel simulation
             chn_con <- lapply(model$channel$flow_dir,function(x){x$idx})
