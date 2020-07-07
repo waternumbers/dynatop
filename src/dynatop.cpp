@@ -3,7 +3,7 @@
 using namespace Rcpp;
 
 // Thing to do
-// 1. Alter indexing of redistribution so starts at 0
+// 1. Move class object to seperate files
 // 2. Profile and optimise if possible
 // 3. check matches r code
 
@@ -36,6 +36,10 @@ private:
   // flux vectors
   double iq_sf_rz, iq_rz_uz, iq_uz_sz;
 
+  // dimensions
+  uint n_sf, n_sz;
+  bool e_sf, e_sz;
+
 public:
   // constructor
   hillslope_hsu(const int& id_, const int& p_idx_, const int& e_idx_,
@@ -66,6 +70,11 @@ public:
     cosbeta_m = std::cos(beta) / m;
     l_szmax = std::exp(ln_t0) * sinbeta / delta_x;
     iq_sfmax = (q_sfmax)*(timestep);
+    // empty and size flags for indexes
+    e_sf = sf_idx.empty();
+    n_sf = sf_idx.size();
+    e_sz = sz_idx.empty();
+    n_sz = sz_idx.size();
   }
 
   int get_id(){
@@ -76,40 +85,46 @@ public:
     return area * (s_sf + s_rz + s_uz - s_sz);
   }
 
+  // void fode2(){
+  //   ebt = exp(-b*(timestep));
+  //   kappa = (1-ebt)/b;
+  //   if( b == 0.0 ){
+  //     kappa = timestep;
+  //   }
+  //   x = x*ebt + a*kappa;
+  // }
+  
   void fode(double& x, double& a, double& b){
-    // Rcout << "a is: " << a << std::endl;
-    // Rcout << "b is: " << b << std::endl;
-    // Rcout << "x0 is: " << x0 << std::endl;
-    // Rcout << "t is: " << t << std::endl;
-    double ebt = exp(-b*(timestep));
-    double kappa = (1-ebt)/b;
-    if( b == 0.0 ){
-      kappa = timestep;
+    if( b== 0.0 ){
+      x = x + a*timestep;
+    }else{
+      double ebt = std::exp(-b*(timestep));
+      x = x*ebt + a*(1-ebt)/b;
     }
-    // Rcout << "b is: " << b << std::endl;
-    // Rcout << "ebt is: " << ebt << std::endl;
-    // Rcout << "kappa is: " << kappa << std::endl;
-    x = x*ebt + a*kappa;
   }
 
-  void initialise(const double& q_uz_sz, std::vector<double>& il_sz_rec){
+  void initialise(const double& q_uz_sz, std::vector<double>& l_sz_rec){
     // set surface to 0
     s_sf = 0.0;
     // root zone based on fractions filled
-    s_rz = s_rzmax*s_rz0;
+    s_rz = std::min(1.0,s_rz0)*s_rzmax;
     // initial flow to saturated zone
     // solve steady state saturated zone
-    double il_sf_in = il_sz_rec[id] / area;
-    l_sz = std::min( l_szmax, (il_sf_in/timestep) + q_uz_sz );
-    double il_sz = l_sz*area;
+    Rcout << l_szmax << std::endl;
+    double l_sf_in = std::min( l_szmax,l_sz_rec[id] / area);
+    l_sz = std::min( l_szmax, l_sf_in + q_uz_sz );
+    //double il_sz = l_sz*area;
     // Pass downslope
     // check flow vector
-    if (!sz_idx.empty()) {
+    if (!e_sz) {
       // pass flow on
-      for(uint jj =0; jj < sz_idx.size(); ++jj){
+      Rcout << id << ": ";
+      for(uint jj =0; jj < n_sz; ++jj){
     	int ii = sz_idx[jj];
-    	il_sz_rec[ii] +=  sz_frc[jj]*area*il_sz;
+	Rcout << ii << " ";
+    	l_sz_rec[ii] +=  sz_frc[jj]*area*l_sz;
       }
+      Rcout << std::endl;
     }
     // compute deficit based on flow
     s_sz = std::max( 0.0, ( std::log(l_szmax) - std::log(l_sz))/cosbeta_m );
@@ -126,13 +141,13 @@ public:
     // solve for storage
     double a = il_sf_in/timestep;
     double b = timestep/t_sf;
-    fode(s_sf, a,b); //il_sf_in/timestep, timestep/t_sf);
+    fode(s_sf, a,b);
     // finalise lateral outflow
     il_sf -= s_sf;
     // check flow vector
-    if (!sf_idx.empty()) {
+    if (!e_sf) {
       // pass flow on
-      for(uint jj =0; jj < sf_idx.size(); ++jj){
+      for(uint jj =0; jj < n_sf; ++jj){
     	int ii = sf_idx[jj];
     	il_sf_rec[ii] +=  sf_frc[jj]*area*il_sf;
       }
@@ -214,9 +229,9 @@ public:
 	
     // pass lateral flux downslope
     // check flow vector
-    if (!sz_idx.empty()) {
+    if (!e_sz) {
       // pass flow on
-      for(uint jj =0; jj < sz_idx.size(); ++jj){
+      for(uint jj =0; jj < n_sz; ++jj){
     	int ii = sz_idx[jj];
     	il_sz_rec[ii] +=  sz_frc[jj]*area*il_sz;
       }
@@ -293,7 +308,7 @@ void hs_init_cpp(DataFrame hillslope, const List sqnc, const double q0){
   // unpack the saturated zone sequence
   std::vector<int> sqnc_sz = as<std::vector<int>>(sqnc("sz"));
   // unpack the required elements of the hillslope
-  IntegerVector id = hillslope("id"),p_idx = hillslope("precip_index"),
+  IntegerVector id = hillslope("id_index"),p_idx = hillslope("precip_index"),
     e_idx = hillslope("pet_index");
   NumericVector area = hillslope("area"), delta_x = hillslope("delta_x"),
     s_bar = hillslope("s_bar");
@@ -304,7 +319,7 @@ void hs_init_cpp(DataFrame hillslope, const List sqnc, const double q0){
     ln_t0 = hillslope("ln_t0_value");
   NumericVector s_sf = hillslope("s_sf"), s_rz = hillslope("s_rz"),
     s_uz = hillslope("s_uz"), s_sz = hillslope("s_sz"), l_sz = hillslope("l_sz");
-  List sf_dir = hillslope("sf_dir"), sz_dir = hillslope("sz_dir") ;
+  List sf_dir = hillslope("sf_dir_index"), sz_dir = hillslope("sz_dir_index") ;
   // give a time value - not needed except for initialisation of HSU
   double ts = -999.0;
   // Loop to set up the HSUs
@@ -331,10 +346,10 @@ void hs_init_cpp(DataFrame hillslope, const List sqnc, const double q0){
     hsu.push_back(tmp);
   }
   // initialise
-  std::vector<double> il_sz_in(max_id,0.0);
+  std::vector<double> l_sz_in(max_id,0.0);
   for(uint sq = 0; sq < sqnc_sz.size(); ++sq){
     int ii = sqnc_sz[sq];
-    hsu[ii].initialise(q0,il_sz_in);
+    hsu[ii].initialise(q0,l_sz_in);
   }
 
   // I would have though that altering the numericvectors chnaged the data frame but...
@@ -360,7 +375,7 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
   std::vector<int> sqnc_sf = as<std::vector<int>>(sqnc("sz"));
   
   // unpack the required elements of the hillslope
-  IntegerVector id = hillslope("id"),p_idx = hillslope("precip_index"),
+  IntegerVector id = hillslope("id_index"),p_idx = hillslope("precip_index"),
     e_idx = hillslope("pet_index");
   NumericVector area = hillslope("area"), delta_x = hillslope("delta_x"),
     s_bar = hillslope("s_bar");
@@ -371,14 +386,14 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
     ln_t0 = hillslope("ln_t0_value");
   NumericVector s_sf = hillslope("s_sf"), s_rz = hillslope("s_rz"),
     s_uz = hillslope("s_uz"), s_sz = hillslope("s_sz"), l_sz = hillslope("l_sz");
-  List sf_dir = hillslope("sf_dir"), sz_dir = hillslope("sz_dir") ;
+  List sf_dir = hillslope("sf_dir_index"), sz_dir = hillslope("sz_dir_index") ;
 
   // unpack time values
   int n_sub_step = ts("n_sub_step");
   double step = ts("step"), sub_step = ts("sub_step");
 
   // unpack the channel information
-  IntegerVector channel_id = channel("id"), channle_p_idx = channel("precip_index");
+  IntegerVector channel_id = channel("id_index"), channel_p_idx = channel("precip_index");
   NumericVector channel_area = channel("area");
 
   // find out highest id - presumed a hillslope
@@ -410,7 +425,9 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
   // loop to form channel HSUs
   std::vector<channel_hsu> csu;
   for(int ii =0; ii<channel_id.size(); ++ii){
-    channel_hsu tmp = channel_hsu( id(ii), p_idx(ii), area(ii), sub_step);
+    channel_hsu tmp = channel_hsu(channel_id(ii),
+				  channel_p_idx(ii),
+				  channel_area(ii), sub_step);
     csu.push_back(tmp);
   }
 
@@ -453,7 +470,7 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
     }
     
     // initialise the channel inflow volume to zero
-    for(uint sq = 0; sq < channel_id.size(); sq++){
+    for(uint sq = 0; sq < csu.size(); sq++){
       csu[sq].initialise();
     }
     
@@ -487,7 +504,7 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
       }
 
       // Add to the channel volume
-      for(uint sq = 0; sq < channel_id.size(); sq++){
+      for(uint sq = 0; sq < csu.size(); sq++){
 	double ipa(0.0);
 	csu[sq].add_inflow(obs_vec,il_sf_in,il_sz_in,ipa);
 	if(mass_check){
