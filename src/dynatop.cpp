@@ -15,8 +15,8 @@ void hs_init_cpp(DataFrame hillslope, const List sqnc, const double q0){
   
   // unpack the saturated zone sequence
   std::vector<int> sqnc_sz = as<std::vector<int>>(sqnc("sz"));
-    // unpack the required elements of the hillslope
-  IntegerVector id = hillslope("id_index"),p_idx = hillslope("precip_index"),
+  // unpack the required elements of the hillslope
+  IntegerVector id = hillslope("id_index"), p_idx = hillslope("precip_index"),
     e_idx = hillslope("pet_index");
   NumericVector area = hillslope("area"), delta_x = hillslope("delta_x"),
     s_bar = hillslope("s_bar");
@@ -166,6 +166,9 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
   NumericVector tmp;
   for(int it =0; it < obs.nrow(); ++it) {
 
+    // check for interupt
+    if(it % 100 == 0){ Rcpp::checkUserInterrupt(); }
+    
     // set the observed vector as a rate
     tmp = obs(it,_) / step;
     obs_vec = as<std::vector<double>>(tmp);
