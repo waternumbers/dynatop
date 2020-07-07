@@ -92,9 +92,10 @@ void hsu::sf(std::vector<double>& il_sf_rec){
   il_sf -= s_sf;
   // check flow vector
   if (!e_sf) {
+    int ii;
     // pass flow on
     for(uint jj =0; jj < n_sf; ++jj){
-      int ii = sf_idx[jj];
+      ii = sf_idx[jj];
       il_sf_rec[ii] +=  sf_frc[jj]*area*il_sf;
     }
   }
@@ -177,8 +178,9 @@ void hsu::sz(std::vector<double>& il_sz_rec){
   // check flow vector
   if (!e_sz) {
     // pass flow on
+    int ii;
     for(uint jj =0; jj < n_sz; ++jj){
-      int ii = sz_idx[jj];
+      ii = sz_idx[jj];
       il_sz_rec[ii] +=  sz_frc[jj]*area*il_sz;
     }
   }
