@@ -396,6 +396,18 @@ dynatop <- R6::R6Class(
                     stop( paste("Incorrect types in table",ii,"columns:",
                                 paste(prop$name[idx],collapse=",")) )
                 }
+
+                ## check all numeric values are finite and positive
+                idx <- setNames(rep(FALSE,length(prop$name)),prop$name)
+                for(jj in prop$name[prop$type=="numeric"]){
+                    if(any(!is.finite(model[[ii]][[jj]])) | !all(model[[ii]][[jj]]>=0)){
+                        idx[jj] <- TRUE
+                    }
+                }
+                if(any(idx)){
+                    stop("Non-finite or nagative values in table ",ii," columns: ",
+                         paste(prop$name[idx],collapse=", "))
+                }
                 
                 ## take the required names
                 for(jj in names(req_names)){
