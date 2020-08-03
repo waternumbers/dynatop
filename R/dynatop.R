@@ -8,17 +8,18 @@ dynatop <- R6::R6Class(
         #'
         #' @param model a dynamic TOPMODEL list object
         #' @param use_states logical if states should be imported
+        #' @param drop_map logical if the map should be dropped
         #' @param verbose if set prints out further information
         #' @param delta error term in checking redistribution sums
         #'
         #' @return invisible(self) suitable for chaining
         #'
         #' @details This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
-        initialize = function(model, use_states=FALSE, verbose=FALSE, delta = 1e-13){
+        initialize = function(model, use_states=FALSE, drop_map=FALSE, verbose=FALSE, delta = 1e-13){
             ## check model will fail if there is an error
             private$check_model(model,use_states,verbose,delta)
             ## convert model here
-            private$digest_model(model,use_states)
+            private$digest_model(model,use_states,drop_map)
             invisible(self)
         },
         #' @description Adds observed data to a dynatop object
@@ -167,8 +168,8 @@ dynatop <- R6::R6Class(
                      order.by=private$time_series$index)
         },
         #' @description Return the model
-        get_model = function(){
-            private$reform_model()
+        get_model = function(drop_map=FALSE){
+            private$reform_model(as.logical(drop_map))
         },
         #' @description Return the model
         get_mass_errors = function(){
@@ -191,6 +192,10 @@ dynatop <- R6::R6Class(
         #' @description Plot a current state of the system
         #' @param state the name of the state to be plotted
         plot_state = function(state){
+            if( is.null(private$model$map) ){
+                stop("The model contains no maps of HSU locations")
+            }
+            
             if( !("raster" %in% rownames(installed.packages())) ){
                 stop( "The raster package is required for plotting the maps of states - please install or add to libPath" )
             }
@@ -267,7 +272,7 @@ dynatop <- R6::R6Class(
         ),
         ## convert the form of the model for internal storage
         ## we presume the model has been checked!!
-        digest_model = function(model,use_states){
+        digest_model = function(model,use_states,drop_map){
             ## create extra rows in data frame which contain the variable values
             ## for when they are passed as strings (e.g. parameters)
 
@@ -316,6 +321,11 @@ dynatop <- R6::R6Class(
                 model$sqnc[[ii]] <- (1:length(model$hillslope$id))[order(bnd)] -1 ## minus 1 since c++ starts at 0
             }
 
+            ## remove the map if required
+            if(drop_map){
+                model["map"] <- list(NULL)
+            }
+                        
             ## copy to private
             private$info$data_series <- unique( do.call(c,data_series) )
             private$model <- model
@@ -324,7 +334,7 @@ dynatop <- R6::R6Class(
         },
         ## convert the form the internal storage to that input
         ## we presume the model has been checked!!
-        reform_model = function(){
+        reform_model = function(drop_map){
             
             ## initialise output model format as a list
             ## include variables that don;t need transformation
@@ -338,8 +348,11 @@ dynatop <- R6::R6Class(
                 out[[tbl]] <- private$model[,prop$name,drop=FALSE]
             }
 
+            ## add map if required
+            if(!drop_map){
+                out$map <- private$model$map
+            }
             ## TODO inc in description
-            out$map <- private$model$map
             return(out)
         },
         ## this code checks the model
@@ -544,6 +557,7 @@ dynatop <- R6::R6Class(
             }
 
             ## TODO add checks to map
+            
             
             ## if here we have passed all tests then return
             invisible( self )
