@@ -23,14 +23,14 @@ This vignette documents the formulation and the numerical solution used to route
 Table [tab:hru_notation] outlines the notation used in this document.
 
 
-  Quantity type                                   Symbol                    Description                                                                   unit
-  --------------------------------------  -----------------------------   ----------------------------------------------------------------------- -----------------
-  Dischage at the point $x$ at time $t$         $q\left(x,t\right)$           Instananeous discharge at the point x on the channel network                                                 - 
-  A gauged location                                       $g$              A gagued point on the channel network                                                 - 
-  Channel inflow                                $h\left(x,t\right)$        Inflow from the hillslope to a point on the channel network                  m$^3$/s
-  Diffuse inflow                                $d\left(x,t\right)$        Inflow from diffuse inputs to a point on the channel network                  m$^3$/s
-  Diffuse inflow                                $p\left(x,t\right)$        Inflow from a point source to a point on the channel network                  m$^3$/s
-  Velocity                                      $v_{ch}\left(x\right)$     Effective velocity of water convience at a point ont eh channel network       m/s
+| Quantity type                         | Symbol                 | Description                                                             | unit    |
+| -------                               | :---:                  | -----------------------------                                           | :---:   |
+| Dischage at the point $x$ at time $t$ | $q\left(x,t\right)$    | Instananeous discharge at the point x on the channel network            | -       |
+| A gauged location                     | $g$                    | A gagued point on the channel network                                   | -       |
+| Channel inflow                        | $h\left(x,t\right)$    | Inflow from the hillslope to a point on the channel network             | m$^3$/s |
+| Diffuse inflow                        | $d\left(x,t\right)$    | Inflow from diffuse inputs to a point on the channel network            | m$^3$/s |
+| Diffuse inflow                        | $p\left(x,t\right)$    | Inflow from a point source to a point on the channel network            | m$^3$/s |
+| Velocity                              | $v_{ch}\left(x\right)$ | Effective velocity of water convience at a point ont eh channel network | m/s     |
   
   Table: Outline of notation for describing time delay histogram routing
   HRUs[]{data-label="tab:channel_notation"}
