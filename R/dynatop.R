@@ -512,15 +512,24 @@ dynatop <- R6::R6Class(
             
             ## specific checks on channel network connectivity - used in channel simulation
             chn_con <- lapply(model$channel$flow_dir,function(x){x$idx})
-            
-            if( any(sapply(chn_con,length)>1) ){
-                stop("Only channels routing to single HSUs are supported")
-            }
+
+            n_chn_con <- sapply(chn_con,length) # number of connections
             is_outlet <- sapply(chn_con,is.null) # identify outlets
-            if( !all(do.call(c,chn_con) %in% model$channel$id) ){
-                stop("Channels routing to non channel HSUs, set next_id to NA to represent an outflow")
+            is_in_network <- sapply(chn_con,function(x,y){all(x%in%y)},y=model$channel$id)
+                                    
+            if( any(n_chn_con>1) ){
+                stop("Only channel HSUs routing to single channel HSUs are supported",
+                     "\n",
+                     "Channels HSUs with multiple downstream connections are ids: ",
+                     paste(mdl$channel$id[n_chn_con>1],collapse=", "))
             }
-            
+            if( !all(is_in_network) ){
+                ##do.call(c,chn_con) %in% model$channel$id) ){
+                stop("Channels routing to non channel HSUs are ",
+                     paste(mdl$channel$id[!is_in_network],collapse=", "),
+                     "\n",
+                     "Set next_id to NA to represent an outflow")
+            }
             
             to_outlet <- is_outlet
             ## loop channels at top of network
