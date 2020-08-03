@@ -45,8 +45,9 @@ int hsu::get_id(){
 double hsu::get_vol(){
   return area * (s_sf + s_rz + s_uz - s_sz);
 }
-  
+
 void hsu::fode(double& x, double& a, double& b){
+  // x = (x + a*timestep) / (1 + b*timestep);
   if( b== 0.0 ){
     x = x + a*timestep;
   }else{
@@ -93,7 +94,7 @@ void hsu::sf(std::vector<double>& il_sf_rec){
   // check flow vector
   if (!e_sf) {
     int ii;
-    // pass flow on
+    //pass flow on
     for(uint jj =0; jj < n_sf; ++jj){
       ii = sf_idx[jj];
       il_sf_rec[ii] +=  sf_frc[jj]*area*il_sf;
@@ -177,17 +178,23 @@ void hsu::sz(std::vector<double>& il_sz_rec){
   // pass lateral flux downslope
   // check flow vector
   if (!e_sz) {
+    double fa = area*il_sz;
+
     // pass flow on
     int ii;
+    double q;
     for(uint jj =0; jj < n_sz; ++jj){
-      ii = sz_idx[jj];
-      il_sz_rec[ii] +=  sz_frc[jj]*area*il_sz;
+      //ii = sz_idx[jj];
+      //q = il_sz_rec[jj];
+      //q = 
+      il_sz_rec[sz_idx[jj]] +=  sz_frc[jj]*fa; //area*il_sz;
+      //il_sz_rec[sz_idx[jj]] = il_sz_rec[sz_idx[jj]] + sz_frc[jj]*fa; 
     }
   }
   
   // pass flow back up vertically
   if( s_sz <= 0.0 ){
-    s_sf += s_uz - s_sz; // ass iq_sz_sf and iq_uz_sf
+    s_sf += s_uz - s_sz; // as iq_sz_sf and iq_uz_sf
     s_sz = 0.0;
     s_uz = 0.0;
   }
