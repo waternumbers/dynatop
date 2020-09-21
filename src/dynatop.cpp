@@ -143,11 +143,11 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
   // declare data frame of states
   // these are pointers so update and need to be cloned to store
   DataFrame df_state = DataFrame::create( Named("id") = id,
-					  Named("id") = s_sf,
-					  Named("id") = s_rz,
-					  Named("id") = s_uz,
-					  Named("id") = s_sz,
-					  Named("id") = l_sz);
+					  Named("s_sf") = s_sf,
+					  Named("s_rz") = s_rz,
+					  Named("s_uz") = s_uz,
+					  Named("s_sz") = s_sz,
+					  Named("l_sz") = l_sz);
   
   // lateral flux records - initialise to 0.0
   int len_redist_vec = max(id) +1; // using rcpp max
