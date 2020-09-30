@@ -1,6 +1,6 @@
 #include "hsu.h"
 // hillslope class
-// note the code takes pointers to the inputs used
+// note the code takes references to the inputs used
 
 // constructor
 hsu::hsu(const int& id_, const int& p_idx_, const int& e_idx_,
@@ -125,10 +125,10 @@ void hsu::rz(std::vector<double>& obs, double& ipa, double& iea){
   // correct storage
   s_rz -= iq_rz_uz;
   // if saturated then flow to surface
-  if( s_sz <= 0.0 ){
-    s_sf += iq_rz_uz; // send water to surface in effect iq_rz_sf
-    iq_rz_uz = 0.0;
-  }
+  // if( s_sz <= 0.0 ){
+  //   s_sf += iq_rz_uz; // send water to surface in effect iq_rz_sf
+  //   iq_rz_uz = 0.0;
+  // }
 }
 
 void hsu::uz(){
@@ -193,7 +193,7 @@ void hsu::sz(std::vector<double>& il_sz_rec){
   }
   
   // pass flow back up vertically
-  if( s_sz <= 0.0 ){
+  if( s_sz <= s_uz ){
     s_sf += s_uz - s_sz; // as iq_sz_sf and iq_uz_sf
     s_sz = 0.0;
     s_uz = 0.0;
