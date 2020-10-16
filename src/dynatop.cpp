@@ -1,4 +1,4 @@
-#include "gperftools/profiler.h"
+// #include "gperftools/profiler.h"
 #include "Rcpp.h"
 #include "hsu.h"
 #include "csu.h"
@@ -78,7 +78,7 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
 		bool mass_check, NumericMatrix mass_errors,
 		LogicalVector keep_states, List state_record){
   
-  ProfilerStart("dynaprof.log");
+  //ProfilerStart("dynaprof.log");
   
   // unpack the sequences
   std::vector<int> sqnc_sz = as<std::vector<int>>(sqnc("sz"));
@@ -194,20 +194,11 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
       std::fill(il_sf_in.begin(), il_sf_in.end(), 0.0);
       std::fill(il_sz_in.begin(), il_sz_in.end(), 0.0);
 
-      // surface loop
-      for(uint sq = 0; sq < sqnc_sf.size(); sq++){
-	int ii = sqnc_sf[sq];
-	//Rcout << ii << std::endl;
-	vhsu[ii].sf(il_sf_in);
-      }
-    
-      // subsurface loop
+      // single loop
       for(uint sq = 0; sq < sqnc_sz.size(); sq++){
       	int ii = sqnc_sz[sq];
 	double ipa(0.0), iea(0.0);
-      	vhsu[ii].rz(obs_vec,ipa,iea);
-      	vhsu[ii].uz();
-      	vhsu[ii].sz(il_sz_in);
+	vhsu[ii].evolve(obs_vec,il_sf_in,il_sz_in,ipa,iea);
 	
       	// get precip and ie_t values for mass balance
       	if(mass_check){
@@ -252,5 +243,5 @@ void hs_sim_cpp(DataFrame hillslope, const DataFrame channel,
       state_record(it) = clone(df_state);
     }
   }    
-  ProfilerStop();
+  //ProfilerStop();
 } 

@@ -1,4 +1,5 @@
 #include "hsu.h"
+#include <iostream>
 // hillslope class
 // note the code takes references to the inputs used
 
@@ -31,11 +32,12 @@ hsu::hsu(const int& id_, const int& p_idx_, const int& e_idx_,
   cosbeta_m = std::cos(beta) / m;
   l_szmax = std::exp(ln_t0) * sinbeta / delta_x;
   iq_sfmax = (q_sfmax)*(timestep);
+  width = area/delta_x;
   // empty and size flags for indexes
   e_sf = sf_idx.empty();
-    n_sf = sf_idx.size();
-    e_sz = sz_idx.empty();
-    n_sz = sz_idx.size();
+  n_sf = sf_idx.size();
+  e_sz = sz_idx.empty();
+  n_sz = sz_idx.size();
 }
 
 int hsu::get_id(){
@@ -46,14 +48,14 @@ double hsu::get_vol(){
   return area * (s_sf + s_rz + s_uz - s_sz);
 }
 
-void hsu::fode(double& x, double& a, double& b){
-  // x = (x + a*timestep) / (1 + b*timestep);
-  if( b== 0.0 ){
-    x = x + a*timestep;
-  }else{
-    double ebt = std::exp(-b*(timestep));
-    x = x*ebt + a*(1-ebt)/b;
-  }
+// compute storage from l_sz
+double hsu::fsz(double& x){
+  return (std::log(width*sinbeta) + ln_t0 - std::log(x))/cosbeta_m ;
+}
+
+// compute kinematic velocity form l_sz
+double hsu::fc(double& x){
+  return cosbeta_m*x/width;
 }
 
 void hsu::initialise(const double& q_uz_sz, std::vector<double>& l_sz_rec){
@@ -63,8 +65,8 @@ void hsu::initialise(const double& q_uz_sz, std::vector<double>& l_sz_rec){
   s_rz = std::min(1.0,s_rz0)*s_rzmax;
   // initial flow to saturated zone
   // solve steady state saturated zone
-  double l_sf_in = std::min( l_szmax,l_sz_rec[id] / area);
-  l_sz = std::min( l_szmax, l_sf_in + q_uz_sz );
+  double l_sz_in = std::min( l_szmax,l_sz_rec[id] / area);
+  l_sz = std::min( l_szmax, l_sz_in + q_uz_sz );
   // Pass downslope
   // check flow vector
   if (!e_sz) {
@@ -75,130 +77,109 @@ void hsu::initialise(const double& q_uz_sz, std::vector<double>& l_sz_rec){
     }
   }
   // compute deficit based on flow
-  s_sz = std::max( 0.0, ( std::log(l_szmax) - std::log(l_sz))/cosbeta_m );
+  s_sz = std::max( 0.0, fsz(l_sz)); //( std::log(l_szmax) - std::log(l_sz))/cosbeta_m );
   // solve for unsaturated zone
   s_uz = t_d*q_uz_sz*s_sz;
+  if(s_uz > s_sz){ s_uz = s_sz; }
 }
 
-void hsu::sf(std::vector<double>& il_sf_rec){
-  // get inflow per unit area
+void hsu::evolve( std::vector<double>& obs,
+		  std::vector<double>& il_sf_rec,
+		  std::vector<double>& il_sz_rec,
+		  double& ipa, double& iea){
+  // get inflows
   double il_sf_in = il_sf_rec[id] / area;
-  // initialise outflow
-  double il_sf = s_sf + il_sf_in;
-  // solve for storage
-  double a = il_sf_in/timestep;
-  double b = timestep/t_sf;
-  fode(s_sf, a,b);
-  // finalise lateral outflow
-  il_sf -= s_sf;
-  // check flow vector
-  if (!e_sf) {
-    int ii;
-    //pass flow on
-    for(uint jj =0; jj < n_sf; ++jj){
-      ii = sf_idx[jj];
-      il_sf_rec[ii] +=  sf_frc[jj]*area*il_sf;
-    }
-  }
-  // solve for verticle flow
-  iq_sf_rz = std::min(s_sf,iq_sfmax);
-  s_sf -= iq_sf_rz;
-}
-
-void hsu::rz(std::vector<double>& obs, double& ipa, double& iea){
-  //Rcout << "Called rz" <<std::endl;
-  double ip = obs[p_idx]*timestep ;
+  double il_sz_in = il_sf_rec[id] / area;
+  double ip = obs[p_idx] ; //*timestep ;
+  double iep = obs[e_idx] ; //*timestep ;
   ipa = ip*area;
-  
-  // initialise estimate of e_t
-  double ie =  s_rz + ip + iq_sf_rz ;
-  // update storage estimate
-  double a = (ip+iq_sf_rz)/timestep;
-  double b = obs[e_idx] / s_rzmax;
-  fode(s_rz, a, b);
-  // finalise estimate of evap-transpiration
-  ie -= s_rz;
-  iea = ie*area;
-  
-  // work out flow - presume goes to unsat
-  iq_rz_uz = std::max( s_rz - s_rzmax, 0.0);
-  // correct storage
-  s_rz -= iq_rz_uz;
-  // if saturated then flow to surface
-  // if( s_sz <= 0.0 ){
-  //   s_sf += iq_rz_uz; // send water to surface in effect iq_rz_sf
-  //   iq_rz_uz = 0.0;
-  // }
-}
 
-void hsu::uz(){
-  //Rcout << "Called uz" <<std::endl;
-  iq_uz_sz = s_uz + iq_rz_uz;
-  // solve for new state
-  double a = iq_rz_uz/timestep;
-  double b = 1.0 / (t_d * s_sz);
-  fode( s_uz, a,b); //iq_rz_uz/timestep, 1.0 / (t_d * s_sz));
-  // finalise outflow
-  iq_uz_sz -= s_uz;
-  // iq_uz_sf = 0.0;
-}
+  // solve down
+  // surface
+  // these are constant and could move to initialisation
+  double gamma_sf = std::exp(-timestep/t_sf);
+  double lambda_sf = (t_sf/timestep)*(1-gamma_sf);
+  double iq_sf_sz = ((gamma_sf/lambda_sf)*s_sf)+il_sf_in ;
+  if( iq_sf_sz > (timestep*q_sfmax) ){
+    iq_sf_sz = timestep*q_sfmax;
+  }
+  //double iq_sf_sz = std::min(timestep*q_sfmax, ((gamma_sf/lambda_sf)*s_sf)+il_sf_in)
 
-void hsu::sz(std::vector<double>& il_sz_rec){
-  // total inflow
-  double il_sz_in = il_sz_rec[id] / area;
-  
-  double il_sz = l_sz; // initialise integral calc
-  
-  double q_uz_sz = iq_uz_sz / timestep; // inflow rate from unsaturated zone
-  //double lbq_uz_sz = bq_uz_sz * sinbeta ;// flow for uz as rate allowing for angle
-  
-  // compute the inflow limited by saturation
-  double l_sz_in = std::min( il_sz_in / timestep, l_szmax );
-  
-  // compute flow for velocity calculation
-  double lbar = std::min( (2.0/3.0)*(l_sz_in+(q_uz_sz*sinbeta)) + l_sz/3.0,
-			  l_szmax );
-  
-  // compute lambda
-  double lambda = lbar*timestep*cosbeta_m;
-  double lp = 1.0;
-  if( lambda<=0.0 ){ lp = 0.0; }
-  
-  // solve for estimate of outflow
-  l_sz = std::min( (lp*l_sz + lambda*(l_sz_in + q_uz_sz)) / (1.0+lambda),
-		   l_szmax );
-  
-  // update integral of outflow
-  il_sz += l_sz;
-  il_sz = (timestep/2.0)*il_sz;
-  
-  // update volumes in hillslope
-  s_sz += il_sz - il_sz_in - iq_uz_sz;
-  
-  // pass lateral flux downslope
-  // check flow vector
-  if (!e_sz) {
-    double fa = area*il_sz;
+  // root zone
+  double gamma_rz = 1.0;
+  double lambda_rz = 1.0;
+  if( iep > 0.0 ){
+    gamma_rz = std::exp(-iep/s_rzmax) ;
+    lambda_rz = (s_rzmax/iep)*(1-gamma_rz) ;
+  }
+  double trz = gamma_rz * s_rz + lambda_rz*(ip+iq_sf_rz) ;
+  double iq_rz_uz = std::max(0.0, (trz-s_rzmax)/lambda_rz) ;
 
-    // pass flow on
-    int ii;
-    double q;
-    for(uint jj =0; jj < n_sz; ++jj){
-      //ii = sz_idx[jj];
-      //q = il_sz_rec[jj];
-      //q = 
-      il_sz_rec[sz_idx[jj]] +=  sz_frc[jj]*fa; //area*il_sz;
-      //il_sz_rec[sz_idx[jj]] = il_sz_rec[sz_idx[jj]] + sz_frc[jj]*fa; 
+  // sat parameters
+  double chat = (cosbeta_m*delta_x/area)*l_sz ; //velocity
+  chat = chat*timestep/delta_x ;
+  double gamma_sz = 1.0;
+  double lambda_sz = 1.0;
+  if( chat > 0.0 ){
+    gamma_sz = std::exp(-chat);
+    lambda_sz = (1-gamma_sz)/chat ;
+  }
+  
+  // unsaturated zone
+  double iq_uz_sz = s_uz + iq_rz_uz ;
+  if( l_sz < l_szmax ){
+    // may be free draining
+    double gamma_uz = exp(-timestep/(t_d*s_sz));
+    double lambda_uz = ( (t_d*s_sz)/timestep )*(1-gamma_uz);
+    double tuz = gamma_uz*s_uz + lambda_uz*iq_rz_uz ;
+    double tiq = s_uz + iq_rz_uz - tuz ;
+    double tlz = gamma_sz*l_sz + lambda_sz*(il_sz_in+tiq) ;
+    double tsz = fsz(tlz);
+    if( tsz > tuz ){
+      iq_uz_sz = tiq;
     }
   }
-  
-  // pass flow back up vertically
-  if( s_sz <= s_uz ){
-    s_sf += s_uz - s_sz; // as iq_sz_sf and iq_uz_sf
-    s_sz = 0.0;
-    s_uz = 0.0;
-  }
-  
-}
 
+  // see if it saturates
+  double iq_sat = ((l_szmax - gamma_sz*l_sz)/lambda_sz) - il_sz_in ;
+  if( iq_uz_sz > iq_sat ){
+    // adjust fluxes
+    iq_uz_sz = iq_sat;
+    iq_rz_uz = iq_uz_sz - s_uz;
+    iq_sf_rz = std::min(iq_sf_rz,
+		   ((s_rzmax - gamma_rz*s_rz)/lambda_rz) - iep + iq_rz_uz) ;
+  }
+
+  //std::cout << iq_sf_rz << " " << iq_rz_uz << " " << iq_uz_sz << std::endl;
+  
+  // solve with final flows
+  // saturated zone
+  l_sz = gamma_sz*l_sz + lambda_sz*(il_sz_in+iq_uz_sz) ;
+  s_sz = fsz(l_sz) ;
+  double il_sz = timestep*l_sz ; // this is a tempory bodge to check compiling
+  // unsaturated zone
+  s_uz = s_uz + iq_rz_uz - iq_uz_sz;
+  // root zone inc iet 
+  double iet = s_rz + iep + iq_sf_rz - iq_rz_uz;
+  s_rz = gamma_rz*s_rz + lambda_rz*(iep + iq_sf_rz - iq_rz_uz);
+  iet = iet - s_rz;
+  iea = iet*area;
+  // surface inc outflow
+  double il_sf = s_sf + il_sf_in - iq_sf_rz;
+  s_sf = gamma_sf*s_sf + lambda_sf*(il_sf_in - iq_sf_rz);
+  il_sf  = il_sf - s_sf;
+
+  //std::cout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << " " << l_sz << std::endl;
+  
+  // redistribute the outflow
+  if (!e_sz) {
+    double fsz = area*il_sz;
+    double fsf = area*il_sf;
+    // pass flow on
+    for(uint jj =0; jj < n_sz; ++jj){
+      il_sz_rec[sz_idx[jj]] +=  sz_frc[jj]*fsz;
+      il_sf_rec[sz_idx[jj]] +=  sz_frc[jj]*fsf;
+    }
+  }
+}
 
