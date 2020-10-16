@@ -24,7 +24,7 @@ private:
   const double timestep;
 
   // local variables computed from properties
-  double l_szmax, sinbeta, cosbeta_m, iq_sfmax;
+  double l_szmax, sinbeta, cosbeta_m, iq_sfmax, width;
   
   // flux vectors
   double iq_sf_rz, iq_rz_uz, iq_uz_sz;
@@ -47,11 +47,12 @@ public:
       const double& timestep_);
   int get_id();
   double get_vol();
-  void fode(double& x, double& a, double& b); 
+  double fc(double& x);
+  double fsz(double& x);
   
-  void initialise(const double& q_uz_sz, std::vector<double>& l_sz_rec);
-  void sf(std::vector<double>& il_sf_rec);  
-  void rz(std::vector<double>& obs, double& ipa, double& iea);
-  void uz();
-  void sz(std::vector<double>& il_sz_rec);
+  void initialise(const double& q_uz_sz, std::vector<double>& l_sz_rec);  
+  void evolve(std::vector<double>& obs,
+	      std::vector<double>& il_sf_rec,
+	      std::vector<double>& il_sz_rec,
+	      double& ipa, double& iea);
 };
