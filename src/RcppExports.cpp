@@ -5,30 +5,41 @@
 
 using namespace Rcpp;
 
-// hs_sim_cpp
-void hs_sim_cpp(NumericMatrix channel_inflow, NumericMatrix mass_errors, List state_record, const NumericMatrix obs, const LogicalVector keep_states, bool mass_check, List hillslope, const List channel, const List ts, const List sz_dir, const List sf_dir, const List sqnc);
-RcppExport SEXP _dynatop_hs_sim_cpp(SEXP channel_inflowSEXP, SEXP mass_errorsSEXP, SEXP state_recordSEXP, SEXP obsSEXP, SEXP keep_statesSEXP, SEXP mass_checkSEXP, SEXP hillslopeSEXP, SEXP channelSEXP, SEXP tsSEXP, SEXP sz_dirSEXP, SEXP sf_dirSEXP, SEXP sqncSEXP) {
+// hs_init_cpp
+void hs_init_cpp(DataFrame hillslope, const List sqnc, const double q0);
+RcppExport SEXP _dynatop_hs_init_cpp(SEXP hillslopeSEXP, SEXP sqncSEXP, SEXP q0SEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type channel_inflow(channel_inflowSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type mass_errors(mass_errorsSEXP);
-    Rcpp::traits::input_parameter< List >::type state_record(state_recordSEXP);
-    Rcpp::traits::input_parameter< const NumericMatrix >::type obs(obsSEXP);
-    Rcpp::traits::input_parameter< const LogicalVector >::type keep_states(keep_statesSEXP);
-    Rcpp::traits::input_parameter< bool >::type mass_check(mass_checkSEXP);
-    Rcpp::traits::input_parameter< List >::type hillslope(hillslopeSEXP);
-    Rcpp::traits::input_parameter< const List >::type channel(channelSEXP);
-    Rcpp::traits::input_parameter< const List >::type ts(tsSEXP);
-    Rcpp::traits::input_parameter< const List >::type sz_dir(sz_dirSEXP);
-    Rcpp::traits::input_parameter< const List >::type sf_dir(sf_dirSEXP);
+    Rcpp::traits::input_parameter< DataFrame >::type hillslope(hillslopeSEXP);
     Rcpp::traits::input_parameter< const List >::type sqnc(sqncSEXP);
-    hs_sim_cpp(channel_inflow, mass_errors, state_record, obs, keep_states, mass_check, hillslope, channel, ts, sz_dir, sf_dir, sqnc);
+    Rcpp::traits::input_parameter< const double >::type q0(q0SEXP);
+    hs_init_cpp(hillslope, sqnc, q0);
+    return R_NilValue;
+END_RCPP
+}
+// hs_sim_cpp
+void hs_sim_cpp(DataFrame hillslope, const DataFrame channel, const List sqnc, const NumericMatrix obs, const List ts, NumericMatrix channel_inflow, bool mass_check, NumericMatrix mass_errors, LogicalVector keep_states, List state_record);
+RcppExport SEXP _dynatop_hs_sim_cpp(SEXP hillslopeSEXP, SEXP channelSEXP, SEXP sqncSEXP, SEXP obsSEXP, SEXP tsSEXP, SEXP channel_inflowSEXP, SEXP mass_checkSEXP, SEXP mass_errorsSEXP, SEXP keep_statesSEXP, SEXP state_recordSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< DataFrame >::type hillslope(hillslopeSEXP);
+    Rcpp::traits::input_parameter< const DataFrame >::type channel(channelSEXP);
+    Rcpp::traits::input_parameter< const List >::type sqnc(sqncSEXP);
+    Rcpp::traits::input_parameter< const NumericMatrix >::type obs(obsSEXP);
+    Rcpp::traits::input_parameter< const List >::type ts(tsSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type channel_inflow(channel_inflowSEXP);
+    Rcpp::traits::input_parameter< bool >::type mass_check(mass_checkSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type mass_errors(mass_errorsSEXP);
+    Rcpp::traits::input_parameter< LogicalVector >::type keep_states(keep_statesSEXP);
+    Rcpp::traits::input_parameter< List >::type state_record(state_recordSEXP);
+    hs_sim_cpp(hillslope, channel, sqnc, obs, ts, channel_inflow, mass_check, mass_errors, keep_states, state_record);
     return R_NilValue;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_dynatop_hs_sim_cpp", (DL_FUNC) &_dynatop_hs_sim_cpp, 12},
+    {"_dynatop_hs_init_cpp", (DL_FUNC) &_dynatop_hs_init_cpp, 3},
+    {"_dynatop_hs_sim_cpp", (DL_FUNC) &_dynatop_hs_sim_cpp, 10},
     {NULL, NULL, 0}
 };
 
