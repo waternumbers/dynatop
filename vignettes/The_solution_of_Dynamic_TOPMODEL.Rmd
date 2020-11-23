@@ -54,7 +54,7 @@ All other notation is given in Table \@ref(tab:other-notation).
 The following conventions are used:
 
 -   All fluxes ($q_{* \rightarrow *}$ and $l_{*}$) are considered to be greater or
-equal to zero.
+	equal to zero.
 
 -   Superscript notation $^{\left[i\right]}$ indicates the property of
     the $i$th HSU
@@ -63,62 +63,54 @@ equal to zero.
     variable $x$ at time $t$
 	
 -	Where intermediate evaluations of some variables are compute these are distinguish by use of $\tilde{}$. For example
-	 $\tilde{s}_{rz}$ is an intermediate value in the computation of
-     $s_{rz}$.
+	$\tilde{s}_{rz}$ is an intermediate value in the computation of
+	$s_{rz}$.
 
-
-  Quantity type                                   Symbol                   Description                                        unit
-  ------------------------------------ -----------------------------       -------------------------------------------- -----------------
-  Lateral fluxes from HSUs                       $l_{sf}$                  Total lateral flux from surface store         (m$^3$/s)/m$^2$
-                                                 $l_{sz}$                  Total lateral flux from saturated zone store  (m$^3$/s)/m$^2$
-  Other HSU properties                   $f^{\left[k,j\right]}_{sf}$       Fraction of $l_{sf}$ going from $j$th              -
-                                                                           HSU to $k$th HSU
-                                         $f^{\left[k,j\right]}_{sz}$       Fraction of $l_{sz}$ going from $j$th              -
-                                                                           HSU to $k$th HSU
+	
+| Quantity type            | Symbol                      | Description                                              | unit            |
+| ---                      | :---:                       | ---                                                      | :---:           |
+| Lateral fluxes from HSUs | $l_{sf}$                    | Total lateral flux from surface store                    | (m$^3$/s)/m$^2$ |
+|                          | $l_{sz}$                    | Total lateral flux from saturated zone store             | (m$^3$/s)/m$^2$ |
+| Other HSU properties     | $f^{\left[k,j\right]}_{sf}$ | Fraction of $l_{sf}$ going from $j$th HSU to $k$th HSU   | -               |
+|                          | $f^{\left[k,j\right]}_{sz}$ | Fraction of $l_{sz}$ going from $j$ th HSU to $k$ th HSU | -               |
                                                     
-  Table: (\#tab:exchange-notation) Outline of notation for describing the exchange between HSUs
+Table: (\#tab:exchange-notation) Outline of notation for describing the exchange between HSUs
 
-
-  Quantity type                                   Symbol                   Description                                        unit
-  ------------------------------------ -----------------------------       -------------------------------------------- -----------------
-  Storage                                        $s_{sf}$                  Surface excess storage                               m
-                                                 $s_{rz}$                  Root zone storage                                    m
-                                                 $s_{uz}$                  Unsaturated zone storage                             m
-                                                 $s_{sz}$                  Saturated zone storage deficit                       m
-  Vertical fluxes within HSU               $q_{sf \rightarrow rz}$         Flow from the surface excess store to the     (m$^3$/s)/m$^2$
-                                                                           root zone
-                                           $q_{rz \rightarrow uz}$         Flow from the root zone to the unsaturated    (m$^3$/s)/m$^2$
-                                                                           zone                        
-                                           $q_{rz \rightarrow sf}$         Flow from the root zone to the surface        (m$^3$/s)/m$^2$ 
-                                                                           excess storage                  
-                                           $q_{uz \rightarrow sz}$         Flow from unsaturated to saturated zone       (m$^3$/s)/m$^2$                        
-                                           $q_{sz \rightarrow sf}$         Flow from saturated zone to surface           (m$^3$/s)/m$^2$
-                                                                           excess storage                    
-  Other HSU properties                               a                     Area                                              m$^2$
-                                                $q_{sfmax}$                Maximum flow rate from surface excess to      (m$^3$/s)/m$^2$
-                                                                           root zone
-                                                $s_{rzmax}$                Maximum root zone storage                          m
-                                                   $T_d$                   Unsaturated zone time constant per m of 
-                                                                           saturated storage deficit.                        s/m
-                                                 $l_{szmax}$               Maximum lateral flux from saturated zone      (m$^3$/s)/m$^2$         
-                                                 $T_{sf}$                  Surface excess storage time constant               s
-                                                    $m$                    Exponential transmissivity constant                -
-                                                $\Delta x$                 Effective length of the hillslope HSU              m
+	
+| Quantity type | Symbol   | Description              | unit  |
+| ---           | :---:    | ------                      | :---: |
+| Storage       | $s_{sf}$ | Surface excess storage   | m     |
+|               | $s_{rz}$ | Root zone storage        | m     |
+|               | $s_{uz}$ | Unsaturated zone storage | m     |
+|               | $s_{sz}$ | Saturated zone storage deficit| m |
+|  Vertical fluxes within HSU  |             $q_{sf \rightarrow rz}$  |       Flow from the surface excess store to the root zone |   (m$^3$/s)/m$^2$|
+|                              |             $q_{rz \rightarrow uz}$      |   Flow from the root zone to the unsaturated zone |  (m$^3$/s)/m$^2$|
+|                              |             $q_{rz \rightarrow sf}$      |   Flow from the root zone to the surface  excess storage   |   (m$^3$/s)/m$^2$ |
+|                              |             $q_{uz \rightarrow sz}$      |   Flow from unsaturated to saturated zone    |   (m$^3$/s)/m$^2$ |                       
+|                              |             $q_{sz \rightarrow sf}$      |   Flow from saturated zone to surface excess storage        |   (m$^3$/s)/m$^2$|
+|  Other HSU properties        |                       a             |        Area                                    |          m$^2$|
+|                              |                  $q_{sfmax}$          |      Maximum flow rate from surface excess to root zone  |   (m$^3$/s)/m$^2$|
+|                              |                  $s_{rzmax}$          |      Maximum root zone storage                 |         m|
+|                              |                     $T_d$            |       Unsaturated zone time constant per m of saturated storage deficit. |     s/m|
+|                              |                   $l_{szmax}$         |      Maximum lateral flux from saturated zone    |  (m$^3$/s)/m$^2$  |
+|                              |                   $T_{sf}$            |      Surface excess storage time constant       |        s|
+|                              |                      $m$             |       Exponential transmissivity constant       |         -|
+|                              |                  $\Delta x$          |       Effective length of the hillslope HSU     |         m|
                                                     
   Table: (\#tab:hs-notation) Outline of notation for describing hill slope
   HSU
 
 
 
-  Symbol                                      Description                                                                   unit
-  ------------------------------------        ---------------------------------------------------------------------------- ------
-  $\Delta t$                                  Timestep                                                                       s
-  $p$                      Precipitation rate m/s
-  $e_p$                    Potential evapotranspiration rate m/s
-  $\mathcal{S}^{\left[i\right]}_{sf}$          The set of values $j$ for which $f_{sf}^{\left[i,j\right]}>0$                 -
-  $\mathcal{S}^{\left[i\right]}_{sz}$          The set of values $j$ for which $f_{sz}^{\left[i,j\right]}>0$                 -
+| Symbol                              | Description                                                   | unit |
+|:-----------------------------------:|---------------------------------------------------------------|:----:|
+| $\Delta t$                          | Timestep                                                      | s    |
+| $p$                                 | Precipitation rate                                            | m/s  |
+| $e_p$                               | Potential evapotranspiration rate                             | m/s  |
+| $\mathcal{S}^{\left[i\right]}_{sf}$ | The set of values $j$ for which $f_{sf}^{\left[i,j\right]}>0$ | -    |
+| $\mathcal{S}^{\left[i\right]}_{sz}$ | The set of values $j$ for which $f_{sz}^{\left[i,j\right]}>0$ | -    |
   
-  Table: (\#tab:other-notation) Eternal inputs to HSUs
+  Table: (\#tab:other-notation) External inputs to HSUs
 
 
 
@@ -634,52 +626,52 @@ Note that $$\begin{array}{c}
     \end{array}$$
 
 
-# Appendix: A four point solution for the exponential transmissivity profile
+<!-- # Appendix: A four point solution for the exponential transmissivity profile -->
 
-Ignoring the use of a "typical" value $\hat{c}$ we can write the four point
-solution as
-\[
-\begin{split}
-  \left( \omega + \theta \left.\lambda\right\rvert_{t+\Delta t} \right) &
-  \left.Q^{+}\right\rvert_{t+\Delta t} +
-  \left(1 - \omega - \theta \left.\lambda\right\rvert_{t+\Delta t} \right) \left. Q^- \right\rvert_{t+\Delta t} \\
-  & - \left( \omega - \left(1-\theta\right)\left.\lambda\right\rvert_{t} \right) \left.Q^{+}\right\rvert_{t}
-  - \left(1 - \omega + \left(1 - \theta\right)\left.\lambda\right\rvert_{t} \right) \left. Q^- \right\rvert_{t}
-\\
-& - \Delta x \left( \left(1-\theta\right)\left.\lambda\right\rvert_{t}\left.\bar{r}\right\rvert_{t}
-+ \theta\left.\lambda\right\rvert_{t+\Delta t}\left.\bar{r}\right\rvert_{t+\Delta t}\right)=0
-\end{split}
-\]
+<!-- Ignoring the use of a "typical" value $\hat{c}$ we can write the four point -->
+<!-- solution as -->
+<!-- \[ -->
+<!-- \begin{split} -->
+<!--   \left( \omega + \theta \left.\lambda\right\rvert_{t+\Delta t} \right) & -->
+<!--   \left.Q^{+}\right\rvert_{t+\Delta t} + -->
+<!--   \left(1 - \omega - \theta \left.\lambda\right\rvert_{t+\Delta t} \right) \left. Q^- \right\rvert_{t+\Delta t} \\ -->
+<!--   & - \left( \omega - \left(1-\theta\right)\left.\lambda\right\rvert_{t} \right) \left.Q^{+}\right\rvert_{t} -->
+<!--   - \left(1 - \omega + \left(1 - \theta\right)\left.\lambda\right\rvert_{t} \right) \left. Q^- \right\rvert_{t} -->
+<!-- \\ -->
+<!-- & - \Delta x \left( \left(1-\theta\right)\left.\lambda\right\rvert_{t}\left.\bar{r}\right\rvert_{t} -->
+<!-- + \theta\left.\lambda\right\rvert_{t+\Delta t}\left.\bar{r}\right\rvert_{t+\Delta t}\right)=0 -->
+<!-- \end{split} -->
+<!-- \] -->
 
-Treating all the terms at time $t$ as known this gives
+<!-- Treating all the terms at time $t$ as known this gives -->
 
-\[
-\begin{split}
-  \left( \omega + \theta \left.\lambda\right\rvert_{t+\Delta t} \right) &
-  \left.Q^{+}\right\rvert_{t+\Delta t} +
-  \left(1 - \omega - \theta \left.\lambda\right\rvert_{t+\Delta t} \right) \left. Q^- \right\rvert_{t+\Delta t} \\
-  & - \Delta x\theta\left.\lambda\right\rvert_{t+\Delta t}\left.\bar{r}\right\rvert_{t+\Delta t}
-  - K = 0
-\end{split}
-\]
-Treating the estimate of the kinematic velocity to be based on
-the outflow gives
-\[
-\left.\lambda\right\rvert_{t+\Delta t} = \frac{\cos \beta}{w m} \left.Q^{+}\right\rvert_{t+\Delta t}
-\]
+<!-- \[ -->
+<!-- \begin{split} -->
+<!--   \left( \omega + \theta \left.\lambda\right\rvert_{t+\Delta t} \right) & -->
+<!--   \left.Q^{+}\right\rvert_{t+\Delta t} + -->
+<!--   \left(1 - \omega - \theta \left.\lambda\right\rvert_{t+\Delta t} \right) \left. Q^- \right\rvert_{t+\Delta t} \\ -->
+<!--   & - \Delta x\theta\left.\lambda\right\rvert_{t+\Delta t}\left.\bar{r}\right\rvert_{t+\Delta t} -->
+<!--   - K = 0 -->
+<!-- \end{split} -->
+<!-- \] -->
+<!-- Treating the estimate of the kinematic velocity to be based on -->
+<!-- the outflow gives -->
+<!-- \[ -->
+<!-- \left.\lambda\right\rvert_{t+\Delta t} = \frac{\cos \beta}{w m} \left.Q^{+}\right\rvert_{t+\Delta t} -->
+<!-- \] -->
 
-Rearrangement provides a quadratic in the unknown
-$\left.Q^{+}\right\rvert_{t+\Delta t}$
-\[
-\theta  \frac{\cos \beta}{w m} \left.Q^{+}\right\rvert_{t+\Delta t}^2
-+\left(\omega - \theta \frac{\cos \beta}{w m}\left(
-\left. Q^- \right\rvert_{t+\Delta t} +  \Delta
-x\left.\bar{r}\right\rvert_{t+\Delta t}\right )\right)
-\left.Q^{+}\right\rvert_{t+\Delta t}
-+ \left(1 - \omega\right)\left. Q^- \right\rvert_{t+\Delta t}-K = 0
-\]
+<!-- Rearrangement provides a quadratic in the unknown -->
+<!-- $\left.Q^{+}\right\rvert_{t+\Delta t}$ -->
+<!-- \[ -->
+<!-- \theta  \frac{\cos \beta}{w m} \left.Q^{+}\right\rvert_{t+\Delta t}^2 -->
+<!-- +\left(\omega - \theta \frac{\cos \beta}{w m}\left( -->
+<!-- \left. Q^- \right\rvert_{t+\Delta t} +  \Delta -->
+<!-- x\left.\bar{r}\right\rvert_{t+\Delta t}\right )\right) -->
+<!-- \left.Q^{+}\right\rvert_{t+\Delta t} -->
+<!-- + \left(1 - \omega\right)\left. Q^- \right\rvert_{t+\Delta t}-K = 0 -->
+<!-- \] -->
 
-The roots of this quadratic can be found using standard formulea, however the
-challange reamins in selecting the appropriate root. This can be avoided by
-choice of $\omega=\theta=1$ which results in only one of the possible roots
-being valid.
+<!-- The roots of this quadratic can be found using standard formulea, however the -->
+<!-- challange reamins in selecting the appropriate root. This can be avoided by -->
+<!-- choice of $\omega=\theta=1$ which results in only one of the possible roots -->
+<!-- being valid. -->
