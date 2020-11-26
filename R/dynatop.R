@@ -222,7 +222,9 @@ dynatop <- R6::R6Class(
     ),
     private = list(
         ## stores of data
-        version = 0.12,
+        version = "0.2.0.9000",
+        hillslope = list(), #storage for unpacked hillslope properties used in simulation
+        channel = list(), #storage for unpacked channel properties use in simulation
         time_series = list(),
         info = list(),
         model = NULL,
@@ -234,18 +236,18 @@ dynatop <- R6::R6Class(
         ## - state
         ## - output_label
         model_description = list(
-            hillslope = data.frame(name = c("id","atb_bar","s_bar","area","delta_x","sz_dir","sf_dir", # attributes associated with catchment HSU
+            hillslope = data.frame(name = c("id","atb_bar","s_bar","area","delta_x","width","flow_dir", # attributes associated with catchment HSU
                                             "precip","pet", # names of input series
-                                            "q_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","t_sf", # parameter names
-                                            "s_sf","s_rz","s_uz","s_sz","l_sz"), # states
+                                            "r_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","t_sf", # parameter names
+                                            "l_sf","s_rz","s_uz","l_sz"), # states
                                    role = c(rep("attribute",7),
                                             rep("data_series",2),
                                             rep("parameter",7),
-                                            rep("state",5)),
-                                   type = c("integer",rep("numeric",4),rep("list",2),
+                                            rep("state",4)),
+                                   type = c("integer",rep("numeric",5),rep("list",1),
                                             rep("character",2),
                                             rep("character",7),
-                                            rep("numeric",5)),
+                                            rep("numeric",4)),
                                    stringsAsFactors=FALSE),
             channel = data.frame(name= c("id","area","length","flow_dir", # states
                                          "precip","pet", # inputs
@@ -273,61 +275,68 @@ dynatop <- R6::R6Class(
         ## convert the form of the model for internal storage
         ## we presume the model has been checked!!
         digest_model = function(model,use_states,drop_map){
-            ## create extra rows in data frame which contain the variable values
-            ## for when they are passed as strings (e.g. parameters)
-
-            ## store to record the names of the data series required
-            data_series <- list(); ds_cnt <- 1;
-            
-            ## convert into lists
-            for(tbl in names(private$model_description)){
-                prop <- private$model_description[[tbl]]
-
-                ## handle parameters
-                ## create extra _val columns
-                ## note names of param vector is the parameter name
-                for(ii in prop$name[prop$role=="parameter"]){
-                    model[[tbl]][[ paste0(ii,"_value") ]] <- model$param[ model[[tbl]][[ii]] ]
-                }
-                
-                ## get input series
-                for(ii in prop$name[prop$role=="data_series"]){
-                    data_series[[ds_cnt]] <- unique( model[[tbl]][[ ii ]] )
-                    ds_cnt <- ds_cnt + 1
-                }
-
-                ## handle states
-                for(ii in prop$name[prop$role=="state"]){
-                    if(!use_states | !(ii %in% names(model[[tbl]]))){
-                        model[[tbl]][[ii]] <- NA
-                    }
-                }
-            }
-
-            ## chage indexs used for flow redistributions
-            model$hillslope$id_index <- model$hillslope$id - 1
-            model$channel$id_index <- model$channel$id - 1
-            model$hillslope$sf_dir_index <- lapply(model$hillslope$sf_dir, function(x){x$idx <- x$idx-1; return(x)})
-            model$hillslope$sz_dir_index <- lapply(model$hillslope$sf_dir, function(x){x$idx <- x$idx-1; return(x)})
-            
-            ## work out the sequences for computing the lateral flux bands
-            ## these are the C++ index in the row of the data.frame NOT the id
-            model$sqnc <- list(sf=list(),sz=list())
-            for(ii in names(model$sqnc)){
-                bnd <- switch(ii,
-                              sf = sapply(model$hillslope$sf_dir,function(x){x$band}),
-                              sz = sapply(model$hillslope$sz_dir,function(x){x$band})
-                              )
-                model$sqnc[[ii]] <- (1:length(model$hillslope$id))[order(bnd)] -1 ## minus 1 since c++ starts at 0
-            }
 
             ## remove the map if required
             if(drop_map){
                 model["map"] <- list(NULL)
             }
-                        
-            ## copy to private
+
+            ## order the channel and hillslope by band
+            ## This is important since the C++ code just goes down the rows..
+            model$hillslope <- model$hillslope[order(model$hillslope$band),]
+            model$channel <- model$channel[order(model$channel$band),]
+            
+            ## Process Hillslope            
+            ## process states from hillslope table
+            ## must match column order in C++ code
+            ## l_sf, s_rz, s_uz, l_sz
+            nm <- model_description$hillslope$name[model_description$hillslope$role=="state"]
+            if(use_states){
+                private$hillslope$states <- as.matrix(model$hillslope[,nm])
+            }else{
+                private$hillslope$states<- matrix(as.numeric(NA),nrow(model$hillslope),length(nm))
+            }
+            dimnames(private$hillslope$states) <- list(model$hillslope$id,nm)
+
+            ## process properties from hillslope
+            ## must match column order in C++ code
+            ## width, delta_x, beta, t_sf, k_sf,s_rzmax,t_d, m,ln_t0
+            private$hillslope$properties <- matrix(as.numeric(NA),nrow(model$hillslope),9)
+            private$hillslope$properties[,1] <- as.numeric(model$hillslope$width)
+            private$hillslope$properties[,2] <- as.numeric(model$hillslope$delta_x)
+            private$hillslope$properties[,3] <- as.numeric(atan(model$hillslope$s_bar))
+            private$hillslope$properties[,4] <- as.numeric(model$param[model$hillslope$t_sf])
+            private$hillslope$properties[,5] <- as.numeric(model$param[model$hillslope$r_sfmax])
+            private$hillslope$properties[,6] <- as.numeric(model$param[model$hillslope$s_rzmax])
+            private$hillslope$properties[,7] <- as.numeric(model$param[model$hillslope$t_d])
+            private$hillslope$properties[,8] <- as.numeric(model$param[model$hillslope$m])
+            private$hillslope$properties[,9] <- as.numeric(model$param[model$hillslope$ln_t0])
+            dimnames(private$hillslope$properties) <- list(
+                model$hillslope$id,
+                c("width","delta_x","beta","t_sf","k_sf","s_rzmax","t_d","m","ln_t0"))
+            
+            ## Add flow direction
+            private$hillslope$flow_dir <- model$hillslope$flow_dir
+
+            ## Add index
+            private$hillslope$id <- as.integer(model$hillslope$id)
+            
+            
+            ## Process channel
+            ## nothing to process - could add call to init_ch here
+            private$channel$id <- as.integer(model$channel$id)
+            private$channel$area <- as.numeric(model$channel$area)
+            
+            ## work out all the required input series
+            data_series <- list()
+            for(tbl in names(private$model_description)){
+                prop <- private$model_description[[tbl]]
+                ii <- prop$name[prop$role=="data_series"]
+                data_series[[tbl]] <- unlist(prop[,ii],use.names=FALSE)
+            }                       
             private$info$data_series <- unique( do.call(c,data_series) )
+
+            ## copy model to private
             private$model <- model
           
             invisible( self )
@@ -338,20 +347,16 @@ dynatop <- R6::R6Class(
             
             ## initialise output model format as a list
             ## include variables that don;t need transformation
-            out <- list()
+            out <- private$model
             
-            ## convert into lists
-            for(tbl in names(private$model_description)){
-                print(tbl)
-                ## required properties
-                prop <- private$model_description[[tbl]]
-                out[[tbl]] <- private$model[,prop$name,drop=FALSE]
-            }
-
             ## add map if required
             if(!drop_map){
-                out$map <- private$model$map
+                out$map <- NULL
             }
+
+            ## add hillslope states
+            out$hillslope[,names(private$hillslope$states)] <- private$hillslope$states
+            
             ## TODO inc in description
             return(out)
         },
@@ -405,7 +410,7 @@ dynatop <- R6::R6Class(
                     }
                 }
                 if(any(idx)){
-                    stop("Non-finite or nagative values in table ",ii," columns: ",
+                    stop("Non-finite or negative values in table ",ii," columns: ",
                          paste(prop$name[idx],collapse=", "))
                 }
                 
@@ -475,52 +480,18 @@ dynatop <- R6::R6Class(
                 }
             }
             
-            ## checks on redistribution
+            ## checks on hillslope redistribution
             ## TODO ad check that going down band?
-            ## TODO add check on bound parameter
             
-            ## check sf
-            ds_hsu <- do.call(c,lapply(model$hillslope$sf_dir,function(x){x$idx}))
-            ds_sum <- sapply(model$hillslope$sf_dir,function(x){sum(x$frc)})
+            ds_hsu <- do.call(c,lapply(model$hillslope$flow_dir,function(x){x$idx}))
+            ds_sum <- sapply(model$hillslope$flow_dir,function(x){sum(x$frc)})
             ds_sum <- abs(ds_sum-1)<delta
             if(!all(ds_hsu %in% all_hsu)){
-                stop("Surface flow resistirbution is not valid: unexpected recieving HSUs")
+                stop("hillslope flow resistirbution is not valid: unexpected recieving HSUs")
             }
             if(!all(ds_sum)){
-                stop(paste("Surface flow resistirbution is not valid: Fractions do not sum to one for HSUs",paste(model$hillslope$id[!ds_sum],collapse=", ")))
+                stop(paste("Hillslope flow resistirbution is not valid: Fractions do not sum to one for HSUs",paste(model$hillslope$id[!ds_sum],collapse=", ")))
             }
-            
-            ## check sz
-            ds_hsu <- do.call(c,lapply(model$hillslope$sz_dir,function(x){x$idx}))
-            ds_sum <- sapply(model$hillslope$sz_dir,function(x){sum(x$frc)})
-            ds_sum <- abs(ds_sum-1)<delta
-            if(!all(ds_hsu %in% all_hsu)){
-                stop("Saturated Zone flow resistirbution is not valid: unexpected recieving HSUs")
-            }
-            if(!all(ds_sum)){
-                stop(paste("Saturated Zone flow resistirbution is not valid: Fractions do not sum to one for HSUs",paste(model$hillslope$id[!ds_sum],collapse=", ")))
-            }
-            
-            
-            ## fcheck <- function(x){
-            ##     all(x$idx %in% all_hsu) & (abs(sum(x$frc)-1) < delta)
-            ## }
-            ## idx <- sapply(model$hillslope$sz_dir,fcheck)
-            ## if( any(!idx) ){
-            ##     stop(paste("Saturated flow redistribution is not valid for HSUs:",
-            ##                paste(model$hillslope$id[!idx],collapse=" ")))
-            ## }
-            ## idx <- sapply(model$hillslope$sf_dir,fcheck)
-            ## if( any(!idx) ){
-            ##     stop(paste("Surface flow redistribution is not valid for HSUs:",
-            ##                paste(model$hillslope$id[!idx],collapse=" ")))
-            ## }
-            
-            ## idx <- sapply(model$channel$flow_dir,function(x){is.null(x) | fcheck(x)})
-            ## if( any(!idx) ){
-            ##     stop(paste("Channel flow redistribution is not valid for HSUs:",
-            ##                paste(model$channel$id[!idx],collapse=" ")))
-            ## }
             
             ## specific checks on channel network connectivity - used in channel simulation
             chn_con <- lapply(model$channel$flow_dir,function(x){x$idx})
@@ -614,17 +585,14 @@ dynatop <- R6::R6Class(
             private$time_series$obs_data <- as.matrix(obs)
             private$time_series$index <- index(obs)
 
-            ## set the data series index in the model
+            ## set the data series index for the hillslope
             ## index is in C++ numbering starting from 0
             idx <- setNames((1:ncol(obs))-1,names(obs))
-            for(tbl in names(private$model_description)){
-                ## required properties
-                prop <- private$model_description[[tbl]]
+            private$hillslope$ext_idx <- matrix(as.integer(NA),nrow(model$hillslope),2)
+            private$hillslope$ext_idx[,1] <- idx[ model$hillslope$precip ]
+            private$hillslope$ext_idx[,2] <- idx[ model$hillslope$pet ]
+            private$channel$ext_idx <- as.integer( idx[ model$channel$precip ] )
 
-                for(ii in prop$name[prop$role == "data_series"]){
-                    private$model[[tbl]][[ paste0(ii,"_index") ]]  <-  idx[ private$model[[tbl]][[ii]] ]
-                }
-            }
         },
         ## compute the simulation timestep
         comp_ts = function(sub_step=NULL){
@@ -670,17 +638,17 @@ dynatop <- R6::R6Class(
                 private$time_series$state_record <- NULL
             }
 
-            ## Initialise the mass error store
-            if(mass_check){
-                ## set to as.numeric(NA) so type picked up by Rcpp
-                private$time_series$mass_errors <- matrix(as.numeric(NA),nrow(private$time_series$obs),6)
-                colnames(private$time_series$mass_errors) <-
-                    c("initial_state","final_state","p","e_t",
-                      "channel_inflow","error")
-            }else{
-                ## initialise so can pass correctly
-                private$time_series$mass_errors <- matrix(-Inf,1,1)
-            }
+            ## ## Initialise the mass error store
+            ## if(mass_check){
+            ##     ## set to as.numeric(NA) so type picked up by Rcpp
+            ##     private$time_series$mass_errors <- matrix(as.numeric(NA),nrow(private$time_series$obs),6)
+            ##     colnames(private$time_series$mass_errors) <-
+            ##         c("initial_state","final_state","p","e_t",
+            ##           "channel_inflow","error")
+            ## }else{
+            ##     ## initialise so can pass correctly
+            ##     private$time_series$mass_errors <- matrix(-Inf,1,1)
+            ## }
             
             ## make local copy of channel_inflow
             private$time_series$channel_inflow <- matrix(as.numeric(NA),
@@ -691,32 +659,49 @@ dynatop <- R6::R6Class(
             
             
             ## use the Cpp version
-            hs_sim_cpp(private$model$hillslope,
-                       private$model$channel,
-                       private$model$sqnc,
-                       private$time_series$obs,
-                       ts,
-                       private$time_series$channel_inflow,
-                       mass_check,
-                       private$time_series$mass_errors,
-                       keep_states,
-                       private$time_series$state_record)
+            multi_hsu_cpp(private$hillslope$id,
+                          private$hillslope$states,
+                          private$hillslope$properties,
+                          private$hillslope$flow_dir,
+                          private$hillslope$ext_idx,
+                          private$channel$id,
+                          private$channel$area,
+                          private$channel$ext_idx,
+                          private$time_series$obs,
+                          private$time_series$channel_inflow,
+                          keep_states,
+                          private$time_series$state_record,
+                          as.numeric(ts$step),
+                          as.integer(ts$n_sub_step)
+                          )
+                          
+                          
+            ## hs_sim_cpp(private$model$hillslope,
+            ##            private$model$channel,
+            ##            private$model$sqnc,
+            ##            private$time_series$obs,
+            ##            ts,
+            ##            private$time_series$channel_inflow,
+            ##            mass_check,
+            ##            private$time_series$mass_errors,
+            ##            keep_states,
+            ##            private$time_series$state_record)
             
-            ## tidy up dummy input
-            if( !mass_check ){
-                private$time_series$mass_errors <- NULL
-            }
+            ## ## tidy up dummy input
+            ## if( !mass_check ){
+            ##     private$time_series$mass_errors <- NULL
+            ## }
             
         },
-        ## convert a data frame to a storage list
-        extract_states = function(obj,type=names(private$model_description)){
-            type <- match.arg(type)
+        ## ## convert a data frame to a storage list
+        ## extract_states = function(obj,type=names(private$model_description)){
+        ##     type <- match.arg(type)
 
-            stt <- private$model_description[[type]]
-            stt <- c("id",stt$name[stt$role=="state"])
-            out <- as.data.frame( obj[stt], stringsAsFactors=FALSE )
-            return(out)
-        },
+        ##     stt <- private$model_description[[type]]
+        ##     stt <- c("id",stt$name[stt$role=="state"])
+        ##     out <- as.data.frame( obj[stt], stringsAsFactors=FALSE )
+        ##     return(out)
+        ## },
         ## #############################
         init_ch = function(){
             
@@ -791,13 +776,13 @@ dynatop <- R6::R6Class(
                 linear_time[[gauge$name[rw]]] <- tmp
             }
             
-            private$model$linear_channel <- linear_time
+            private$channel$linear_time <- linear_time
         },
         sim_ch = function(){
             ## initialise the output
             out <- matrix(NA,length(private$time_series$index),
-                          length(private$model$linear_channel))
-            colnames(out) <- names(private$model$linear_channel)
+                          length(private$channe$linear_time))
+            colnames(out) <- names(private$channel$linear_time)
             
             ## function to make polynonial representing tiem delay histogram
             fpoly <- function(x){
@@ -819,16 +804,16 @@ dynatop <- R6::R6Class(
     
             ## Loop gauges
             
-            for(id in names(private$model$linear_channel)){
+            for(id in names(private$channel$linear_time)){
 
                 ## initialise the point - set to 0
                 out[,id] <- 0
                 
                 
                 ## loop channel+diffuse upstream
-                for(iid in names(private$model$linear_channel[[id]]$diffuse)){
+                for(iid in names(private$channel$linear_time[[id]]$diffuse)){
                     ## get time object
-                    tt <- private$model$linear_channel[[id]]$diffuse[[iid]]
+                    tt <- private$channel$linear_time[[id]]$diffuse[[iid]]
                     ## compute polynomial
                     ply <- fpoly(tt)
                     npad <- length(ply)-1
@@ -847,9 +832,9 @@ dynatop <- R6::R6Class(
                 }
                 
                 ## loop point inputs upstream
-                for(iid in names(private$model$linear_channel[[id]]$point)){
+                for(iid in names(private$channel$linear_time[[id]]$point)){
                     ## get time object
-                    tt <- private$model$linear_channel[[id]]$diffuse[[iid]]
+                    tt <- private$channel$linear_time[[id]]$diffuse[[iid]]
                     ## compute polynomial
                     ply <- fply(tt)
                     npad <- length(ply)-1
