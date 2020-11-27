@@ -20,7 +20,8 @@ Imports:
 	xts,
 	Rcpp
 LinkingTo:
-	Rcpp
+	Rcpp,
+	BH
 Depends:
 	R (>= 3.5.0)
 BugReports: https://github.com/waternumbers/dynatop/issues
