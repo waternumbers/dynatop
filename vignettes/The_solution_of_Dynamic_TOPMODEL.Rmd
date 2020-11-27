@@ -21,6 +21,8 @@ knitr::opts_chunk$set(
 )
 ```
 
+* THE FOLLOWING RELATES TO V0.1 AND IS OUTDATED*
+
 The `dynatop` package represents an implimentation of the concepts behind a dynamic TOPMODEL.
 One of the underlying principles of dynamic TOPMODEL is that the landscape can be broken up into
 hydrologically similar regions, or Hydrological Similarity Units (HSUs), where
