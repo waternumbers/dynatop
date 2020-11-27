@@ -119,6 +119,8 @@ dynatop <- R6::R6Class(
             if( length(private$time_series$index) < 2 ){
                 stop("Insufficent data to perform a simulation")
             }
+            ##TODO check initiaalised
+            
             private$sim_ch()
 
             invisible(self)
@@ -132,8 +134,8 @@ dynatop <- R6::R6Class(
         #' @details Calls the sim_hillslope and sim_channel in sequence. Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
         #'
         #' @return invisible(self) for chaining
-        sim = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL,use_R=FALSE){
-            self$sim_hillslope(mass_check,keep_states,sub_step,use_R)
+        sim = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL){
+            self$sim_hillslope(mass_check,keep_states,sub_step)
             self$sim_channel()
             invisible(self)
         },
@@ -685,19 +687,7 @@ dynatop <- R6::R6Class(
                           as.numeric(ts$step),
                           as.integer(ts$n_sub_step)
                           )
-                          
-                          
-            ## hs_sim_cpp(private$model$hillslope,
-            ##            private$model$channel,
-            ##            private$model$sqnc,
-            ##            private$time_series$obs,
-            ##            ts,
-            ##            private$time_series$channel_inflow,
-            ##            mass_check,
-            ##            private$time_series$mass_errors,
-            ##            keep_states,
-            ##            private$time_series$state_record)
-            
+                                  
             ## ## tidy up dummy input
             ## if( !mass_check ){
             ##     private$time_series$mass_errors <- NULL
@@ -715,7 +705,7 @@ dynatop <- R6::R6Class(
         ## },
         ## #############################
         init_ch = function(){
-            
+            #browser()
             channel <- private$model$channel
             gauge <- private$model$gauge
             point_inflow <- private$model$point_inflow
@@ -736,7 +726,7 @@ dynatop <- R6::R6Class(
             
             ## compute the time to travel down each reach
             
-            reach_time <- unname( channel$length / channel$v_ch_value )
+            reach_time <- unname( channel$length / private$model$param[channel$v_ch] )
             reach_time[channel$id] <- unname(reach_time)
 
 
@@ -790,7 +780,7 @@ dynatop <- R6::R6Class(
             private$channel$linear_time <- linear_time
         },
         sim_ch = function(){
-            browser()
+            #browser()
             ## initialise the output
             out <- matrix(NA,length(private$time_series$index),
                           length(private$channel$linear_time))

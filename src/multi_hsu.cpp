@@ -61,7 +61,8 @@ void multi_hsu_cpp(IntegerVector id,
   // loop data timesteps
   for(int it = 0; it < ext_rec.nrow(); ++it) {
     // Rcout << it << std::endl;
-    ext = ext_rec(it,_);
+    ext = ext_rec(it,_) / timestep;
+    Rcout << "ext is " << ext(0) << " " << ext(1) << std::endl;
     for(int nn = 0; nn < n_sub_step; ++nn){
       q_sf_in.fill(0.0);
       q_sz_in.fill(0.0);
@@ -82,8 +83,8 @@ void multi_hsu_cpp(IntegerVector id,
     // populate channel inflow
     for(int ii=0; ii < channel_id.length(); ++ii){
       int id_ = channel_id[ii];
-      int edx_ = channel_ext_idx[ii];
-      channel_inflow(it,ii) = channel_area[ii]*ext[edx_] + q_sf_in[id_] + q_sz_in[id_];
+      //int edx_ = channel_ext_idx[ii];
+      //channel_inflow(it,ii) = channel_area[ii]*ext[edx_] + q_sf_in[id_] + q_sz_in[id_];
       channel_inflow(it,ii) = q_sz_in[id_];
     }
 
