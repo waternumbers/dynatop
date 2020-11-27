@@ -176,6 +176,7 @@ dynatop <- R6::R6Class(
                      order.by=private$time_series$index)
         },
         #' @description Return the model
+        #' @param drop_map should the map be returned
         get_model = function(drop_map=FALSE){
             private$reform_model(as.logical(drop_map))
         },
@@ -194,10 +195,9 @@ dynatop <- R6::R6Class(
                 return( setNames(private$time_series$state_record,
                                  private$time_series$index) )
             }else{
-                ##TODO - return the states from the hillslope
-                stop("TODO - return states from the hillslope")
-            }            
-        },
+                return( private$hillslope$states )
+            }
+       },
         #' @description Plot a current state of the system
         #' @param state the name of the state to be plotted
         plot_state = function(state){
@@ -208,19 +208,26 @@ dynatop <- R6::R6Class(
             if( !("raster" %in% rownames(installed.packages())) ){
                 stop( "The raster package is required for plotting the maps of states - please install or add to libPath" )
             }
-            
-            
-            
-            tmp <- private$model_description$hillslope
-            if( !all(tmp$name[tmp$role=="state"] %in% names(private$model$hillslope)) ){
-                stop("Model states are not initialised")
+
+            if(!(state%in%colnames(private$hillslope$states))){
+                stop("Model state does not exist")
             }
             
-            state <- match.arg(state,tmp$name[tmp$role=="state"])
-            x <- setNames(
-                private$extract_states(private$model$hillslope,"hillslope")[,state],
-                private$model$hillslope$id)
+            state <- match.arg(state,colnames(private$hillslope$states))
+
+            x <- private$hillslope$states[,state]
             x <- x[paste(private$model$map$hillslope)]
+            
+            ## tmp <- private$model_description$hillslope
+            ## if( !all(tmp$name[tmp$role=="state"] %in% names(private$model$hillslope)) ){
+            ##     stop("Model states are not initialised")
+            ## }
+            
+            ## state <- match.arg(state,tmp$name[tmp$role=="state"])
+            ## x <- setNames(
+            ##     private$extract_states(private$model$hillslope,"hillslope")[,state],
+            ##     private$model$hillslope$id)
+            ## x <- x[paste(private$model$map$hillslope)]
             
             raster::plot( raster::raster(crs = private$model$map$scope$crs,
                                  ext = private$model$map$scope$ext,
