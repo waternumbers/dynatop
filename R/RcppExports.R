@@ -5,6 +5,10 @@ multi_hsu_cpp <- function(id, states, properties, flow_dir, ext_idx, channel_id,
     invisible(.Call(`_dynatop_multi_hsu_cpp`, id, states, properties, flow_dir, ext_idx, channel_id, channel_area, channel_ext_idx, ext_rec, channel_inflow, keep_states, state_rec, timestep, n_sub_step))
 }
 
+multi_hsu_cpp_init <- function(id, states, properties, flow_dir, s_rz_0, r_uz_sz_0) {
+    invisible(.Call(`_dynatop_multi_hsu_cpp_init`, id, states, properties, flow_dir, s_rz_0, r_uz_sz_0))
+}
+
 single_hsu_cpp <- function(state_rec, ext_rec, flux_rec, properties, timestep, n_sub_step) {
     invisible(.Call(`_dynatop_single_hsu_cpp`, state_rec, ext_rec, flux_rec, properties, timestep, n_sub_step))
 }

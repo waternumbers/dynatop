@@ -28,6 +28,21 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// multi_hsu_cpp_init
+void multi_hsu_cpp_init(IntegerVector id, NumericMatrix states, NumericMatrix properties, List flow_dir, NumericVector s_rz_0, NumericVector r_uz_sz_0);
+RcppExport SEXP _dynatop_multi_hsu_cpp_init(SEXP idSEXP, SEXP statesSEXP, SEXP propertiesSEXP, SEXP flow_dirSEXP, SEXP s_rz_0SEXP, SEXP r_uz_sz_0SEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< IntegerVector >::type id(idSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type states(statesSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type properties(propertiesSEXP);
+    Rcpp::traits::input_parameter< List >::type flow_dir(flow_dirSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type s_rz_0(s_rz_0SEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type r_uz_sz_0(r_uz_sz_0SEXP);
+    multi_hsu_cpp_init(id, states, properties, flow_dir, s_rz_0, r_uz_sz_0);
+    return R_NilValue;
+END_RCPP
+}
 // single_hsu_cpp
 void single_hsu_cpp(NumericMatrix state_rec, NumericMatrix ext_rec, NumericMatrix flux_rec, NumericVector properties, double timestep, int n_sub_step);
 RcppExport SEXP _dynatop_single_hsu_cpp(SEXP state_recSEXP, SEXP ext_recSEXP, SEXP flux_recSEXP, SEXP propertiesSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP) {
@@ -46,6 +61,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dynatop_multi_hsu_cpp", (DL_FUNC) &_dynatop_multi_hsu_cpp, 14},
+    {"_dynatop_multi_hsu_cpp_init", (DL_FUNC) &_dynatop_multi_hsu_cpp_init, 6},
     {"_dynatop_single_hsu_cpp", (DL_FUNC) &_dynatop_single_hsu_cpp, 6},
     {NULL, NULL, 0}
 };

@@ -57,4 +57,5 @@ public:
   void step();
   std::vector<double> get_flux();
   std::vector<double> get_q();
+  void init(double& s_rz_0, double& r_uz_sz_0);
 };
