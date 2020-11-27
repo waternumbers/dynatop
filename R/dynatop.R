@@ -69,7 +69,7 @@ dynatop <- R6::R6Class(
         sim_hillslope = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL){
              if(mass_check){
                 ## TODO add a mass check
-                warning("Channel mass check not yet implimented")
+                warning("Hillslope mass check not yet implimented")
             }
             ## check presence of states
             tmp <- private$model_description$hillslope
@@ -194,7 +194,8 @@ dynatop <- R6::R6Class(
                 return( setNames(private$time_series$state_record,
                                  private$time_series$index) )
             }else{
-                return( private$extract_states(private$model$hillslope,"hillslope") )
+                ##TODO - return the states from the hillslope
+                stop("TODO - return states from the hillslope")
             }            
         },
         #' @description Plot a current state of the system
