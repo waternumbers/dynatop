@@ -131,12 +131,7 @@ invisible(self) suitable for chaining
 \subsection{Method \code{sim_hillslope()}}{
 Simulate the hillslope output of a dynatop object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim_hillslope(
-  mass_check = FALSE,
-  keep_states = NULL,
-  sub_step = NULL,
-  use_R = FALSE
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim_hillslope(mass_check = FALSE, keep_states = NULL, sub_step = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -147,8 +142,6 @@ Simulate the hillslope output of a dynatop object
 \item{\code{keep_states}}{a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept}
 
 \item{\code{sub_step}}{simulation timestep in seconds, default value of NULL results in data time step}
-
-\item{\code{use_R}}{shoudl the R version of the simulation code be used (default FALSE)}
 }
 \if{html}{\out{</div>}}
 }
@@ -183,12 +176,7 @@ invisible(self) for chaining
 \subsection{Method \code{sim()}}{
 Simulate the hillslope and channel componets of a dynatop object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim(
-  mass_check = FALSE,
-  keep_states = NULL,
-  sub_step = NULL,
-  use_R = FALSE
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim(mass_check = FALSE, keep_states = NULL, sub_step = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -299,6 +287,13 @@ Return the model
 \if{html}{\out{<div class="r">}}\preformatted{dynatop$get_model(drop_map = FALSE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{drop_map}}{should the map be returned}
+}
+\if{html}{\out{</div>}}
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-get_mass_errors"></a>}}
