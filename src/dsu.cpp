@@ -43,7 +43,7 @@ void hsu::step(){
   // maximum possible flow rate from uz to sz
   double r_uz_pos = std::min( 1/t_d , max_uz/timestep );
   // max rate before sz=0
-  double r_uz_0 = (lambda_szmax + lambda_szmax*(l_szmax - l_sz_in) - l_sz)/Dx;
+  double r_uz_0 = ( (1+lambda_szmax)*l_szmax - l_sz - lambda_szmax*l_sz_in ) /(lambda_szmax*Dx); //  (lambda_szmax + lambda_szmax*(l_szmax - l_sz_in) - l_sz)/Dx;
   
   //std::cout << "Dx " << Dx << std::endl;
   //std::cout << "lambda_szmax " << lambda_szmax << std::endl;
@@ -65,9 +65,20 @@ void hsu::step(){
       double upr = l_sz, lwr = 0.0;
       if(fcr < 0){
 	lwr = l_sz;
-	upr=10000.0;
+	upr = l_szmax;
       }
+      
       // solve root problem
+      if( hsu::fopt(upr) < 0.0 ){
+	
+	bool tmp_eq = lwr==upr;
+	
+	std::cout << " lwr = " << lwr << " upr = " << upr << " diff " << tmp_eq << std::endl;
+	std::cout << " fsz(l_sz) = " << fsz(l_sz) << " s_uz = " << s_uz << std::endl;
+	std::cout << " fsz(l_szmax) = " << fsz(l_szmax) << std::endl;
+	std::cout << " pos = " << r_uz_pos << " zero = " << r_uz_0 << std::endl;
+	std::cout << "f(cr) " << fcr << " f(lwr) = " << hsu::fopt(lwr) << " f(upr) = " << hsu::fopt(upr) << std::endl;
+      }
       boost::math::tools::eps_tolerance<double> tol(get_digits);
       boost::uintmax_t it = maxit; // Initally our chosen max iterations, but updated with actual.
       std::pair<double, double> r = boost::math::tools::toms748_solve(boost::bind(&hsu::fopt,this,_1), lwr, upr, tol,it);
@@ -76,8 +87,9 @@ void hsu::step(){
 	  std::cout << "Unable to locate solution in chosen iterations:"
 	    " Current best guess is between " << r.first << " and " << r.second << std::endl;
 	}
-      l_sz = r.first + (r.second - r.first)/2;
+      l_sz = std::min(l_szmax,r.first + (r.second - r.first)/2);
     }
+    
     s_sz = hsu::fsz(l_sz);
     // std::cout << "got here" << max_uz/(t_d*s_sz + timestep) << " " << 1/t_d << std::endl;
     r_uz_sz = std::min( max_uz/(t_d*s_sz + timestep), 1/t_d);
@@ -96,7 +108,7 @@ void hsu::step(){
   s_rz = (s_rz + timestep*(p+r_sf_rz-r_rz_uz)) / (1 + (ep*timestep/s_rzmax)) ;
   et = ep*(s_rz/s_rzmax);
 
-							   // std::cout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
+  //std::cout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
 }
 
 
