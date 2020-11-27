@@ -91,7 +91,7 @@ void hsu::step(){
   
   // solve root zone and surface
   r_sf_rz = std::min( r_sf_rz, ((s_rzmax - s_rz)/timestep) + ep - p + r_rz_uz);
-  std::cout << l_sf_in << " " << r_sf_rz << " " << l_sf << std::endl;
+  //std::cout << l_sf_in << " " << r_sf_rz << " " << l_sf << std::endl;
   l_sf = (l_sf + lambda_sf*(l_sf_in - Dx*r_sf_rz)) / (1 + lambda_sf);
   s_rz = (s_rz + timestep*(p+r_sf_rz-r_rz_uz)) / (1 + (ep*timestep/s_rzmax)) ;
   et = ep*(s_rz/s_rzmax);
