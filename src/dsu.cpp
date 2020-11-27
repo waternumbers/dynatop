@@ -69,16 +69,16 @@ void hsu::step(){
       }
       
       // solve root problem
-      if( hsu::fopt(upr) < 0.0 ){
+      // if( hsu::fopt(upr) < 0.0 ){
 	
-	bool tmp_eq = lwr==upr;
+      // 	bool tmp_eq = lwr==upr;
 	
-	std::cout << " lwr = " << lwr << " upr = " << upr << " diff " << tmp_eq << std::endl;
-	std::cout << " fsz(l_sz) = " << fsz(l_sz) << " s_uz = " << s_uz << std::endl;
-	std::cout << " fsz(l_szmax) = " << fsz(l_szmax) << std::endl;
-	std::cout << " pos = " << r_uz_pos << " zero = " << r_uz_0 << std::endl;
-	std::cout << "f(cr) " << fcr << " f(lwr) = " << hsu::fopt(lwr) << " f(upr) = " << hsu::fopt(upr) << std::endl;
-      }
+      // 	std::cout << " lwr = " << lwr << " upr = " << upr << " diff " << tmp_eq << std::endl;
+      // 	std::cout << " fsz(l_sz) = " << fsz(l_sz) << " s_uz = " << s_uz << std::endl;
+      // 	std::cout << " fsz(l_szmax) = " << fsz(l_szmax) << std::endl;
+      // 	std::cout << " pos = " << r_uz_pos << " zero = " << r_uz_0 << std::endl;
+      // 	std::cout << "f(cr) " << fcr << " f(lwr) = " << hsu::fopt(lwr) << " f(upr) = " << hsu::fopt(upr) << std::endl;
+      // }
       boost::math::tools::eps_tolerance<double> tol(get_digits);
       boost::uintmax_t it = maxit; // Initally our chosen max iterations, but updated with actual.
       std::pair<double, double> r = boost::math::tools::toms748_solve(boost::bind(&hsu::fopt,this,_1), lwr, upr, tol,it);
