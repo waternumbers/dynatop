@@ -17,27 +17,13 @@ hsu::hsu(double& l_sf_, double& s_rz_, double& s_uz_, double& l_sz_,
   t_d(t_d_),  // properties of unsat zone
   m(m_), ln_t0(ln_t0_),  // properties of sat zone
   timestep(timestep_)
-// hsu::hsu(std::vector<double>& states,
-// 	 std::vector<double>& ext,
-// 	 std::vector<double>& prop,
-// 	 double& timestep_):
-//   l_sf(states.at(0)), s_rz(states.at(1)), s_uz(states.at(2)), l_sz(states.at(3)),
-//   q_sf_in(ext.at(0)), q_sz_in(ext.at(1)),p(ext.at(2)), ep(ext.at(3)),
-//   w(prop.at(0)), Dx(prop.at(1)), beta(prop.at(2)), // properties of HSU [m m rad]
-//   t_sf(prop.at(3)), k_sf(prop.at(4)), // properties of surface store 
-//   s_rzmax(prop.at(5)),  // properties of root zone
-//   t_d(prop.at(6)),  // properties of unsat zone
-//   m(prop.at(7)), ln_t0(prop.at(8)),  // properties of sat zone
-//   timestep(timestep_)
-
-  
 {
   l_szmax = std::exp(ln_t0)*std::sin(beta);
   log_l_szmax = ln_t0 + std::log( std::sin(beta) );
   cosbeta_m = std::cos(beta) /m;
   lambda_szmax = hsu::flambda_sz(l_szmax);
   lambda_sf = timestep/(t_sf*Dx);
-  std::cout << lambda_sf << std::endl;
+  //std::cout << lambda_sf << std::endl;
 }
 
 void hsu::step(){
@@ -140,4 +126,25 @@ double hsu::fopt(double l){
   double ruz = std::min( max_uz/(t_d*sz + timestep), 1/t_d);
   double lambda = hsu::flambda_sz(l);
   return l - (l_sz + lambda*(l_sz_in + Dx*ruz))/(1+lambda);
+}
+
+void hsu::init(double& s_rz_0, double& r_uz_sz_0){
+  
+  // standardise inflows by width
+  l_sf_in = q_sf_in / w;
+  l_sz_in = q_sz_in / w;
+
+  // apply the initial value to the surface and root zones
+  l_sf = 0;
+  s_rz = s_rzmax*s_rz_0;
+
+  // out flux under steady state
+  l_sz = l_sz_in + Dx*r_uz_sz_0;
+  if(l_sz > l_szmax ){
+    l_sz = l_szmax;
+    s_uz = 0.0;
+  }else{
+    double s_sz = hsu::fsz(l_sz);
+    s_uz = std::min(s_sz,r_uz_sz_0*t_d*s_sz);
+  }
 }

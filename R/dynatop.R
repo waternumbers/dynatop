@@ -64,16 +64,22 @@ dynatop <- R6::R6Class(
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
         #' @param mass_check Flag indicating is a record of mass balance errors shuld be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
-        #' @param use_R shoudl the R version of the simulation code be used (default FALSE)
         #'
         #' @details Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
-        sim_hillslope = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL,
-                                 use_R=FALSE){
+        sim_hillslope = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL){
+             if(mass_check){
+                ## TODO add a mass check
+                warning("Channel mass check not yet implimented")
+            }
             ## check presence of states
             tmp <- private$model_description$hillslope
-            if( !all(tmp$name[tmp$role=="state"] %in% names(private$model$hillslope)) ){
-                stop("Model states are not initialised")
+            if( !all(is.finite(private$hillslope$states)) ){
+                stop("Model states are either no initialised or have non-finite values")
             }
+            
+            ## if( !all(tmp$name[tmp$role=="state"] %in% names(private$model$hillslope)) ){
+            ##     stop("Model states are not initialised")
+            ## }
 
             if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
                 stop("sub_step should be a single finite value")
@@ -284,13 +290,14 @@ dynatop <- R6::R6Class(
             ## order the channel and hillslope by band
             ## This is important since the C++ code just goes down the rows..
             model$hillslope <- model$hillslope[order(model$hillslope$band),]
-            model$channel <- model$channel[order(model$channel$band),]
+            ##model$channel <- model$channel[order(model$channel$band),]
             
             ## Process Hillslope            
             ## process states from hillslope table
             ## must match column order in C++ code
             ## l_sf, s_rz, s_uz, l_sz
-            nm <- model_description$hillslope$name[model_description$hillslope$role=="state"]
+            nm <- private$model_description$hillslope$name[private$model_description$hillslope$role=="state"]
+            
             if(use_states){
                 private$hillslope$states <- as.matrix(model$hillslope[,nm])
             }else{
@@ -332,8 +339,9 @@ dynatop <- R6::R6Class(
             for(tbl in names(private$model_description)){
                 prop <- private$model_description[[tbl]]
                 ii <- prop$name[prop$role=="data_series"]
-                data_series[[tbl]] <- unlist(prop[,ii],use.names=FALSE)
-            }                       
+                data_series[[tbl]] <- unique( unlist( model[[tbl]][,ii]) )
+            }
+            
             private$info$data_series <- unique( do.call(c,data_series) )
 
             ## copy model to private
@@ -355,7 +363,7 @@ dynatop <- R6::R6Class(
             }
 
             ## add hillslope states
-            out$hillslope[,names(private$hillslope$states)] <- private$hillslope$states
+            out$hillslope[,colnames(private$hillslope$states)] <- private$hillslope$states
             
             ## TODO inc in description
             return(out)
@@ -588,10 +596,10 @@ dynatop <- R6::R6Class(
             ## set the data series index for the hillslope
             ## index is in C++ numbering starting from 0
             idx <- setNames((1:ncol(obs))-1,names(obs))
-            private$hillslope$ext_idx <- matrix(as.integer(NA),nrow(model$hillslope),2)
-            private$hillslope$ext_idx[,1] <- idx[ model$hillslope$precip ]
-            private$hillslope$ext_idx[,2] <- idx[ model$hillslope$pet ]
-            private$channel$ext_idx <- as.integer( idx[ model$channel$precip ] )
+            private$hillslope$ext_idx <- matrix(as.integer(NA),nrow(private$model$hillslope),2)
+            private$hillslope$ext_idx[,1] <- idx[ private$model$hillslope$precip ]
+            private$hillslope$ext_idx[,2] <- idx[ private$model$hillslope$pet ]
+            private$channel$ext_idx <- as.integer( idx[ private$model$channel$precip ] )
 
         },
         ## compute the simulation timestep
@@ -612,12 +620,15 @@ dynatop <- R6::R6Class(
         ## Initialise the states
         init_hs = function(initial_recharge){
             ## TODO check initial recharge
-                        
-            hs_init_cpp(private$model$hillslope,
-                        private$model$sqnc,
-                        as.numeric(initial_recharge[1]))
 
-            ##print("returning from init_hs")
+            frz <- pmin(1,pmax(0,private$model$param[private$model$hillslope$s_rz0]))
+            initial_recharge <- rep_len(initial_recharge,nrow(private$model$hillslope))
+            
+            multi_hsu_cpp_init(private$hillslope$id,
+                               private$hillslope$states,
+                               private$hillslope$properties,
+                               private$hillslope$flow_dir,
+                               frz,initial_recharge);
             
         },
         ## ###############################
@@ -779,11 +790,13 @@ dynatop <- R6::R6Class(
             private$channel$linear_time <- linear_time
         },
         sim_ch = function(){
+            browser()
             ## initialise the output
             out <- matrix(NA,length(private$time_series$index),
-                          length(private$channe$linear_time))
+                          length(private$channel$linear_time))
             colnames(out) <- names(private$channel$linear_time)
-            
+
+
             ## function to make polynonial representing tiem delay histogram
             fpoly <- function(x){
                 if( x$reach_time == 0 ){
