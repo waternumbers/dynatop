@@ -1,6 +1,7 @@
 **~
 **.o
 **.so
+**.dll
 .Rhistory
 inst/doc
 docs/*
