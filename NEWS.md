@@ -1,3 +1,12 @@
+# dynatop 0.2
+
+## New features
+
+- Complete rewrite of the hillslope simulation code using a contour (cross
+  section) solution. This brings brings the model into line with the original
+  dynamic TOPMODEL concept.
+- TODO: Finish
+
 # dynatop 0.13
 
 ## New features

@@ -68,6 +68,9 @@ devtools::load_all("./dynatop"); data("Swindale");
 
 profvis::profvis({m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel(mass_check=TRUE)})
 
+
+m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel(mass_check=TRUE)
+
 head( m1$get_channel_inflow() )
 head( m1$get_channel_inflow(TRUE) )
 m1$plot_channel_inflow()

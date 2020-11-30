@@ -93,7 +93,7 @@ parameters to the parameter vector.
 In this case we change the parameter vectors to me more representative of the
 catchment
 ```{r, change_param}
-swindale_model$param <- c(q_sfmax_default=Inf,
+swindale_model$param <- c(r_sfmax_default=Inf,
                  m_default=0.0063,
                  ln_t0_default=7.46,
                  s_rz0_default=0.98,
@@ -140,7 +140,7 @@ an initial recharge rate. In the following we initialse the states and plot
 the initial saturates zone storage, using the chaining of commands.
 
 ```{r initialise}
-ctch_mdl$initialise(1e-6)$plot_state("s_sz")
+ctch_mdl$initialise(1e-6)$plot_state("l_sz")
 ```
 
 The simulation can now be performed and the flow at the gauge extracted with
@@ -153,7 +153,7 @@ Note that the states of the system are now those at the end of the simulation
 for example:
 
 ```{r new_states}
-ctch_mdl$plot_state("s_sz")
+ctch_mdl$plot_state("l_sz")
 ```
 
 Rerunning the simulation with the new initial states will of course produce
@@ -169,12 +169,13 @@ plot(out[,c('Flow','sim_1','sim_2')])
 
 ## Mass balance
 
+*TODO: Not yet implimented v0.2*
 It is possible to output the mass balance checks for each iteration of the
 simulation by running the `sim` or individual methods with the `mass_check`
 flag set to `TRUE`. The returned matrix gives the volumes in the states at the
 start and end of the timestep along with the other fluxes as volumes.
 
 ```{r mass_check}
-plot( ctch_mdl$initialise(1e-6)$sim(mass_check=TRUE)$get_mass_errors()[,'error'] )
+##plot( ctch_mdl$initialise(1e-6)$sim(mass_check=TRUE)$get_mass_errors()[,'error'] )
 ```
 
