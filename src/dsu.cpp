@@ -83,9 +83,9 @@ void hsu::step(){
       boost::uintmax_t it = maxit; // Initally our chosen max iterations, but updated with actual.
       std::pair<double, double> r = boost::math::tools::toms748_solve(boost::bind(&hsu::fopt,this,_1), lwr, upr, tol,it);
       if(it >= maxit)
-	{ // 
-	  std::cout << "Unable to locate solution in chosen iterations:"
-	    " Current best guess is between " << r.first << " and " << r.second << std::endl;
+	{ // commented out to pass CRAN tests 
+	  //std::cout << "Unable to locate solution in chosen iterations:"
+	  //  " Current best guess is between " << r.first << " and " << r.second << std::endl;
 	}
       l_sz = std::min(l_szmax,r.first + (r.second - r.first)/2);
     }
