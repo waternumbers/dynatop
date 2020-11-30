@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9000</span>
       </span>
     </div>
 
@@ -94,7 +94,10 @@
 
       
 
-      </header><div class="row">
+      </header><script src="The_solution_of_Dynamic_TOPMODEL_files/jquery-1.11.3/jquery.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="The_solution_of_Dynamic_TOPMODEL_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
+<script src="The_solution_of_Dynamic_TOPMODEL_files/bootstrap-3.3.5/js/bootstrap.min.js"></script><script src="The_solution_of_Dynamic_TOPMODEL_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script><script src="The_solution_of_Dynamic_TOPMODEL_files/bootstrap-3.3.5/shim/respond.min.js"></script><script src="The_solution_of_Dynamic_TOPMODEL_files/navigation-1.1/tabsets.js"></script><link href="The_solution_of_Dynamic_TOPMODEL_files/anchor-sections-1.0/anchor-sections.css" rel="stylesheet">
+<script src="The_solution_of_Dynamic_TOPMODEL_files/anchor-sections-1.0/anchor-sections.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>The Dynamic TOPMODEL equations</h1>
@@ -107,6 +110,9 @@
 
     
     
+<ul>
+<li>THE FOLLOWING RELATES TO V0.1 AND IS OUTDATED*</li>
+</ul>
 <p>The <code>dynatop</code> package represents an implimentation of the concepts behind a dynamic TOPMODEL.
 One of the underlying principles of dynamic TOPMODEL is that the landscape can be broken up into
 hydrologically similar regions, or Hydrological Similarity Units (HSUs), where
@@ -148,50 +154,44 @@ variable <span class="math inline">\(x\)</span> at time <span class="math inline
 <table class="table">
 <caption>
 <span id="tab:exchange-notation">Table 1: </span> Outline of notation for describing the exchange between HSUs</caption>
+<colgroup>
+<col width="18%">
+<col width="31%">
+<col width="18%">
+<col width="31%">
+</colgroup>
 <thead><tr class="header">
-<th align="left">Quantity type</th>
+<th>Quantity type</th>
 <th align="center">Symbol</th>
-<th align="left">Description</th>
+<th>Description</th>
 <th align="center">unit</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">Lateral fluxes from HSUs</td>
+<td>Lateral fluxes from HSUs</td>
 <td align="center"><span class="math inline">\(l_{sf}\)</span></td>
-<td align="left">Total lateral flux from surface store</td>
+<td>Total lateral flux from surface store</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
 <tr class="even">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(l_{sz}\)</span></td>
-<td align="left">Total lateral flux from saturated zone store</td>
+<td>Total lateral flux from saturated zone store</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
 <tr class="odd">
-<td align="left">Other HSU properties</td>
+<td>Other HSU properties</td>
 <td align="center"><span class="math inline">\(f^{\left[k,j\right]}_{sf}\)</span></td>
-<td align="left">Fraction of <span class="math inline">\(l_{sf}\)</span> going from <span class="math inline">\(j\)</span>th</td>
+<td>Fraction of <span class="math inline">\(l_{sf}\)</span> going from <span class="math inline">\(j\)</span>th HSU to <span class="math inline">\(k\)</span>th HSU</td>
 <td align="center">-</td>
 </tr>
 <tr class="even">
-<td align="left"></td>
-<td align="center"></td>
-<td align="left">HSU to <span class="math inline">\(k\)</span>th HSU</td>
-<td align="center"></td>
-</tr>
-<tr class="odd">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(f^{\left[k,j\right]}_{sz}\)</span></td>
-<td align="left">Fraction of <span class="math inline">\(l_{sz}\)</span> going from <span class="math inline">\(j\)</span>th</td>
+<td>Fraction of <span class="math inline">\(l_{sz}\)</span> going from <span class="math inline">\(j\)</span> th HSU to <span class="math inline">\(k\)</span> th HSU</td>
 <td align="center">-</td>
-</tr>
-<tr class="even">
-<td align="left"></td>
-<td align="center"></td>
-<td align="left">HSU to <span class="math inline">\(k\)</span>th HSU</td>
-<td align="center"></td>
 </tr>
 </tbody>
 </table>
@@ -199,196 +199,169 @@ variable <span class="math inline">\(x\)</span> at time <span class="math inline
 <caption>
 <span id="tab:hs-notation">Table 2: </span> Outline of notation for describing hill slope
 HSU</caption>
+<colgroup>
+<col width="15%">
+<col width="26%">
+<col width="31%">
+<col width="26%">
+</colgroup>
 <thead><tr class="header">
-<th align="left">Quantity type</th>
+<th>Quantity type</th>
 <th align="center">Symbol</th>
-<th align="left">Description</th>
+<th>Description</th>
 <th align="center">unit</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">Storage</td>
+<td>Storage</td>
 <td align="center"><span class="math inline">\(s_{sf}\)</span></td>
-<td align="left">Surface excess storage</td>
+<td>Surface excess storage</td>
 <td align="center">m</td>
 </tr>
 <tr class="even">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(s_{rz}\)</span></td>
-<td align="left">Root zone storage</td>
+<td>Root zone storage</td>
 <td align="center">m</td>
 </tr>
 <tr class="odd">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(s_{uz}\)</span></td>
-<td align="left">Unsaturated zone storage</td>
+<td>Unsaturated zone storage</td>
 <td align="center">m</td>
 </tr>
 <tr class="even">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(s_{sz}\)</span></td>
-<td align="left">Saturated zone storage deficit</td>
+<td>Saturated zone storage deficit</td>
 <td align="center">m</td>
 </tr>
 <tr class="odd">
-<td align="left">Vertical fluxes within HSU</td>
+<td>Vertical fluxes within HSU</td>
 <td align="center"><span class="math inline">\(q_{sf \rightarrow rz}\)</span></td>
-<td align="left">Flow from the surface excess store to the</td>
+<td>Flow from the surface excess store to the root zone</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
 <tr class="even">
-<td align="left"></td>
-<td align="center"></td>
-<td align="left">root zone</td>
-<td align="center"></td>
-</tr>
-<tr class="odd">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(q_{rz \rightarrow uz}\)</span></td>
-<td align="left">Flow from the root zone to the unsaturated</td>
+<td>Flow from the root zone to the unsaturated zone</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
-<tr class="even">
-<td align="left"></td>
-<td align="center"></td>
-<td align="left">zone</td>
-<td align="center"></td>
-</tr>
 <tr class="odd">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(q_{rz \rightarrow sf}\)</span></td>
-<td align="left">Flow from the root zone to the surface</td>
+<td>Flow from the root zone to the surface excess storage</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
 <tr class="even">
-<td align="left"></td>
-<td align="center"></td>
-<td align="left">excess storage</td>
-<td align="center"></td>
-</tr>
-<tr class="odd">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(q_{uz \rightarrow sz}\)</span></td>
-<td align="left">Flow from unsaturated to saturated zone</td>
-<td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
-</td>
-</tr>
-<tr class="even">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(q_{sz \rightarrow sf}\)</span></td>
-<td align="left">Flow from saturated zone to surface</td>
+<td>Flow from unsaturated to saturated zone</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
 <tr class="odd">
-<td align="left"></td>
-<td align="center"></td>
-<td align="left">excess storage</td>
-<td align="center"></td>
+<td></td>
+<td align="center"><span class="math inline">\(q_{sz \rightarrow sf}\)</span></td>
+<td>Flow from saturated zone to surface excess storage</td>
+<td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
+</td>
 </tr>
 <tr class="even">
-<td align="left">Other HSU properties</td>
+<td>Other HSU properties</td>
 <td align="center">a</td>
-<td align="left">Area</td>
+<td>Area</td>
 <td align="center">m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
 <tr class="odd">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(q_{sfmax}\)</span></td>
-<td align="left">Maximum flow rate from surface excess to</td>
+<td>Maximum flow rate from surface excess to root zone</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
 <tr class="even">
-<td align="left"></td>
-<td align="center"></td>
-<td align="left">root zone</td>
-<td align="center"></td>
-</tr>
-<tr class="odd">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(s_{rzmax}\)</span></td>
-<td align="left">Maximum root zone storage</td>
+<td>Maximum root zone storage</td>
 <td align="center">m</td>
 </tr>
-<tr class="even">
-<td align="left"></td>
-<td align="center"><span class="math inline">\(T_d\)</span></td>
-<td align="left">Unsaturated zone time constant per m of</td>
-<td align="center"></td>
-</tr>
 <tr class="odd">
-<td align="left"></td>
-<td align="center"></td>
-<td align="left">saturated storage deficit.</td>
+<td></td>
+<td align="center"><span class="math inline">\(T_d\)</span></td>
+<td>Unsaturated zone time constant per m of saturated storage deficit.</td>
 <td align="center">s/m</td>
 </tr>
 <tr class="even">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(l_{szmax}\)</span></td>
-<td align="left">Maximum lateral flux from saturated zone</td>
+<td>Maximum lateral flux from saturated zone</td>
 <td align="center">(m<span class="math inline">\(^3\)</span>/s)/m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
 <tr class="odd">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(T_{sf}\)</span></td>
-<td align="left">Surface excess storage time constant</td>
+<td>Surface excess storage time constant</td>
 <td align="center">s</td>
 </tr>
 <tr class="even">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(m\)</span></td>
-<td align="left">Exponential transmissivity constant</td>
+<td>Exponential transmissivity constant</td>
 <td align="center">-</td>
 </tr>
 <tr class="odd">
-<td align="left"></td>
+<td></td>
 <td align="center"><span class="math inline">\(\Delta x\)</span></td>
-<td align="left">Effective length of the hillslope HSU</td>
+<td>Effective length of the hillslope HSU</td>
 <td align="center">m</td>
 </tr>
 </tbody>
 </table>
 <table class="table">
 <caption>
-<span id="tab:other-notation">Table 3: </span> Eternal inputs to HSUs</caption>
+<span id="tab:other-notation">Table 3: </span> External inputs to HSUs</caption>
+<colgroup>
+<col width="34%">
+<col width="59%">
+<col width="5%">
+</colgroup>
 <thead><tr class="header">
-<th align="left">Symbol</th>
-<th align="left">Description</th>
+<th align="center">Symbol</th>
+<th>Description</th>
 <th align="center">unit</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\Delta t\)</span></td>
-<td align="left">Timestep</td>
+<td align="center"><span class="math inline">\(\Delta t\)</span></td>
+<td>Timestep</td>
 <td align="center">s</td>
 </tr>
 <tr class="even">
-<td align="left">
-<span class="math inline">\(p\)</span> Precipitation rate</td>
-<td align="left">m/s</td>
-<td align="center"></td>
+<td align="center"><span class="math inline">\(p\)</span></td>
+<td>Precipitation rate</td>
+<td align="center">m/s</td>
 </tr>
 <tr class="odd">
-<td align="left">
-<span class="math inline">\(e_p\)</span> Potential evapotran</td>
-<td align="left">spiration rate m/s</td>
-<td align="center"></td>
+<td align="center"><span class="math inline">\(e_p\)</span></td>
+<td>Potential evapotranspiration rate</td>
+<td align="center">m/s</td>
 </tr>
 <tr class="even">
-<td align="left"><span class="math inline">\(\mathcal{S}^{\left[i\right]}_{sf}\)</span></td>
-<td align="left">The set of values <span class="math inline">\(j\)</span> for which <span class="math inline">\(f_{sf}^{\left[i,j\right]}&gt;0\)</span>
+<td align="center"><span class="math inline">\(\mathcal{S}^{\left[i\right]}_{sf}\)</span></td>
+<td>The set of values <span class="math inline">\(j\)</span> for which <span class="math inline">\(f_{sf}^{\left[i,j\right]}&gt;0\)</span>
 </td>
 <td align="center">-</td>
 </tr>
 <tr class="odd">
-<td align="left"><span class="math inline">\(\mathcal{S}^{\left[i\right]}_{sz}\)</span></td>
-<td align="left">The set of values <span class="math inline">\(j\)</span> for which <span class="math inline">\(f_{sz}^{\left[i,j\right]}&gt;0\)</span>
+<td align="center"><span class="math inline">\(\mathcal{S}^{\left[i\right]}_{sz}\)</span></td>
+<td>The set of values <span class="math inline">\(j\)</span> for which <span class="math inline">\(f_{sz}^{\left[i,j\right]}&gt;0\)</span>
 </td>
 <td align="center">-</td>
 </tr>
@@ -879,53 +852,50 @@ Note that <span class="math display">\[\begin{array}{c}
         x\rightarrow0 \quad\mathrm{as}\quad b\rightarrow\infty\\
         x\rightarrow x_{0} + at \quad\mathrm{as}\quad b\rightarrow0\\
     \end{array}\]</span></p>
-</div>
-<div id="appendix-a-four-point-solution-for-the-exponential-transmissivity-profile" class="section level1">
-<h1 class="hasAnchor">
-<a href="#appendix-a-four-point-solution-for-the-exponential-transmissivity-profile" class="anchor"></a>Appendix: A four point solution for the exponential transmissivity profile</h1>
-<p>Ignoring the use of a “typical” value <span class="math inline">\(\hat{c}\)</span> we can write the four point
-solution as
-<span class="math display">\[
-\begin{split}
-  \left( \omega + \theta \left.\lambda\right\rvert_{t+\Delta t} \right) &amp;
-  \left.Q^{+}\right\rvert_{t+\Delta t} +
-  \left(1 - \omega - \theta \left.\lambda\right\rvert_{t+\Delta t} \right) \left. Q^- \right\rvert_{t+\Delta t} \\
-  &amp; - \left( \omega - \left(1-\theta\right)\left.\lambda\right\rvert_{t} \right) \left.Q^{+}\right\rvert_{t}
-  - \left(1 - \omega + \left(1 - \theta\right)\left.\lambda\right\rvert_{t} \right) \left. Q^- \right\rvert_{t}
-\\
-&amp; - \Delta x \left( \left(1-\theta\right)\left.\lambda\right\rvert_{t}\left.\bar{r}\right\rvert_{t}
-+ \theta\left.\lambda\right\rvert_{t+\Delta t}\left.\bar{r}\right\rvert_{t+\Delta t}\right)=0
-\end{split}
-\]</span></p>
-<p>Treating all the terms at time <span class="math inline">\(t\)</span> as known this gives</p>
-<p><span class="math display">\[
-\begin{split}
-  \left( \omega + \theta \left.\lambda\right\rvert_{t+\Delta t} \right) &amp;
-  \left.Q^{+}\right\rvert_{t+\Delta t} +
-  \left(1 - \omega - \theta \left.\lambda\right\rvert_{t+\Delta t} \right) \left. Q^- \right\rvert_{t+\Delta t} \\
-  &amp; - \Delta x\theta\left.\lambda\right\rvert_{t+\Delta t}\left.\bar{r}\right\rvert_{t+\Delta t}
-  - K = 0
-\end{split}
-\]</span>
-Treating the estimate of the kinematic velocity to be based on
-the outflow gives
-<span class="math display">\[
-\left.\lambda\right\rvert_{t+\Delta t} = \frac{\cos \beta}{w m} \left.Q^{+}\right\rvert_{t+\Delta t}
-\]</span></p>
-<p>Rearrangement provides a quadratic in the unknown
-<span class="math inline">\(\left.Q^{+}\right\rvert_{t+\Delta t}\)</span>
-<span class="math display">\[
-\theta  \frac{\cos \beta}{w m} \left.Q^{+}\right\rvert_{t+\Delta t}^2
-+\left(\omega - \theta \frac{\cos \beta}{w m}\left(
-\left. Q^- \right\rvert_{t+\Delta t} +  \Delta
-x\left.\bar{r}\right\rvert_{t+\Delta t}\right )\right)
-\left.Q^{+}\right\rvert_{t+\Delta t}
-+ \left(1 - \omega\right)\left. Q^- \right\rvert_{t+\Delta t}-K = 0
-\]</span></p>
-<p>The roots of this quadratic can be found using standard formulea, however the
-challange reamins in selecting the appropriate root. This can be avoided by
-choice of <span class="math inline">\(\omega=\theta=1\)</span> which results in only one of the possible roots
-being valid.</p>
+<!-- # Appendix: A four point solution for the exponential transmissivity profile -->
+<!-- Ignoring the use of a "typical" value $\hat{c}$ we can write the four point -->
+<!-- solution as -->
+<!-- \[ -->
+<!-- \begin{split} -->
+<!--   \left( \omega + \theta \left.\lambda\right\rvert_{t+\Delta t} \right) & -->
+<!--   \left.Q^{+}\right\rvert_{t+\Delta t} + -->
+<!--   \left(1 - \omega - \theta \left.\lambda\right\rvert_{t+\Delta t} \right) \left. Q^- \right\rvert_{t+\Delta t} \\ -->
+<!--   & - \left( \omega - \left(1-\theta\right)\left.\lambda\right\rvert_{t} \right) \left.Q^{+}\right\rvert_{t} -->
+<!--   - \left(1 - \omega + \left(1 - \theta\right)\left.\lambda\right\rvert_{t} \right) \left. Q^- \right\rvert_{t} -->
+<!-- \\ -->
+<!-- & - \Delta x \left( \left(1-\theta\right)\left.\lambda\right\rvert_{t}\left.\bar{r}\right\rvert_{t} -->
+<!-- + \theta\left.\lambda\right\rvert_{t+\Delta t}\left.\bar{r}\right\rvert_{t+\Delta t}\right)=0 -->
+<!-- \end{split} -->
+<!-- \] -->
+<!-- Treating all the terms at time $t$ as known this gives -->
+<!-- \[ -->
+<!-- \begin{split} -->
+<!--   \left( \omega + \theta \left.\lambda\right\rvert_{t+\Delta t} \right) & -->
+<!--   \left.Q^{+}\right\rvert_{t+\Delta t} + -->
+<!--   \left(1 - \omega - \theta \left.\lambda\right\rvert_{t+\Delta t} \right) \left. Q^- \right\rvert_{t+\Delta t} \\ -->
+<!--   & - \Delta x\theta\left.\lambda\right\rvert_{t+\Delta t}\left.\bar{r}\right\rvert_{t+\Delta t} -->
+<!--   - K = 0 -->
+<!-- \end{split} -->
+<!-- \] -->
+<!-- Treating the estimate of the kinematic velocity to be based on -->
+<!-- the outflow gives -->
+<!-- \[ -->
+<!-- \left.\lambda\right\rvert_{t+\Delta t} = \frac{\cos \beta}{w m} \left.Q^{+}\right\rvert_{t+\Delta t} -->
+<!-- \] -->
+<!-- Rearrangement provides a quadratic in the unknown -->
+<!-- $\left.Q^{+}\right\rvert_{t+\Delta t}$ -->
+<!-- \[ -->
+<!-- \theta  \frac{\cos \beta}{w m} \left.Q^{+}\right\rvert_{t+\Delta t}^2 -->
+<!-- +\left(\omega - \theta \frac{\cos \beta}{w m}\left( -->
+<!-- \left. Q^- \right\rvert_{t+\Delta t} +  \Delta -->
+<!-- x\left.\bar{r}\right\rvert_{t+\Delta t}\right )\right) -->
+<!-- \left.Q^{+}\right\rvert_{t+\Delta t} -->
+<!-- + \left(1 - \omega\right)\left. Q^- \right\rvert_{t+\Delta t}-K = 0 -->
+<!-- \] -->
+<!-- The roots of this quadratic can be found using standard formulea, however the -->
+<!-- challange reamins in selecting the appropriate root. This can be avoided by -->
+<!-- choice of $\omega=\theta=1$ which results in only one of the possible roots -->
+<!-- being valid. -->
 </div>
   </div>
 
@@ -944,7 +914,7 @@ being valid.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

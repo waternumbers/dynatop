@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9000</span>
       </span>
     </div>
 
@@ -147,7 +147,7 @@
     <p>Takes an xts time series object and resamples then to a new time step.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>resample_xts</span>(<span class='no'>obs</span>, <span class='no'>dt</span>, <span class='kw'>is.rate</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>resample_xts</span><span class='op'>(</span><span class='va'>obs</span>, <span class='va'>dt</span>, is.rate <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -180,13 +180,15 @@
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='co'># Resample Brompton rainfall to 15 minute intervals</span>
-<span class='fu'><a href='https://rdrr.io/r/base/library.html'>require</a></span>(<span class='no'>dynatop</span>)
-<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span>(<span class='st'>"Swindale"</span>)
+<span class='kw'><a href='https://rdrr.io/r/base/library.html'>require</a></span><span class='op'>(</span><span class='va'><a href='https://waternumbers.github.io/dynatop/'>dynatop</a></span><span class='op'>)</span>
+<span class='fu'><a href='https://rdrr.io/r/utils/data.html'>data</a></span><span class='op'>(</span><span class='st'>"Swindale"</span><span class='op'>)</span>
 
-<span class='no'>obs</span> <span class='kw'>&lt;-</span> <span class='fu'><a href='https://rdrr.io/pkg/dynatop/man/resample_xts.html'>resample_xts</a></span>(<span class='no'>Swindale</span>$<span class='no'>obs</span>, <span class='kw'>dt</span><span class='kw'>=</span><span class='fl'>60</span>*<span class='fl'>60</span>) <span class='co'># hourly data</span>
+<span class='va'>obs</span> <span class='op'>&lt;-</span> <span class='fu'>resample_xts</span><span class='op'>(</span><span class='va'>Swindale</span><span class='op'>$</span><span class='va'>obs</span>, dt<span class='op'>=</span><span class='fl'>60</span><span class='op'>*</span><span class='fl'>60</span><span class='op'>)</span> <span class='co'># hourly data</span>
 
 <span class='co'># check totals</span>
-<span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span>(<span class='no'>obs</span>$<span class='no'>Rainfall</span>*<span class='fl'>15</span>/<span class='fl'>60</span>, <span class='kw'>na.rm</span><span class='kw'>=</span><span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; [1] 0.04705</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span>(<span class='no'>Swindale</span>$<span class='no'>obs</span>$<span class='no'>Rainfall</span>, <span class='kw'>na.rm</span><span class='kw'>=</span><span class='fl'>TRUE</span>)</div><div class='output co'>#&gt; [1] 0.1882</div><div class='input'>
+<span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span><span class='op'>(</span><span class='va'>obs</span><span class='op'>$</span><span class='va'>Rainfall</span><span class='op'>*</span><span class='fl'>15</span><span class='op'>/</span><span class='fl'>60</span>, na.rm<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 0.04705</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span><span class='op'>(</span><span class='va'>Swindale</span><span class='op'>$</span><span class='va'>obs</span><span class='op'>$</span><span class='va'>Rainfall</span>, na.rm<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 0.1882</div><div class='input'>
 </div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -203,7 +205,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
