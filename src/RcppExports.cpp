@@ -5,41 +5,64 @@
 
 using namespace Rcpp;
 
-// hs_init_cpp
-void hs_init_cpp(DataFrame hillslope, const List sqnc, const double q0);
-RcppExport SEXP _dynatop_hs_init_cpp(SEXP hillslopeSEXP, SEXP sqncSEXP, SEXP q0SEXP) {
+// multi_hsu_cpp
+void multi_hsu_cpp(IntegerVector id, NumericMatrix states, NumericMatrix properties, List flow_dir, IntegerMatrix ext_idx, IntegerVector channel_id, NumericVector channel_area, IntegerVector channel_ext_idx, NumericMatrix ext_rec, NumericMatrix channel_inflow, LogicalVector keep_states, List state_rec, double timestep, int n_sub_step);
+RcppExport SEXP _dynatop_multi_hsu_cpp(SEXP idSEXP, SEXP statesSEXP, SEXP propertiesSEXP, SEXP flow_dirSEXP, SEXP ext_idxSEXP, SEXP channel_idSEXP, SEXP channel_areaSEXP, SEXP channel_ext_idxSEXP, SEXP ext_recSEXP, SEXP channel_inflowSEXP, SEXP keep_statesSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< DataFrame >::type hillslope(hillslopeSEXP);
-    Rcpp::traits::input_parameter< const List >::type sqnc(sqncSEXP);
-    Rcpp::traits::input_parameter< const double >::type q0(q0SEXP);
-    hs_init_cpp(hillslope, sqnc, q0);
+    Rcpp::traits::input_parameter< IntegerVector >::type id(idSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type states(statesSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type properties(propertiesSEXP);
+    Rcpp::traits::input_parameter< List >::type flow_dir(flow_dirSEXP);
+    Rcpp::traits::input_parameter< IntegerMatrix >::type ext_idx(ext_idxSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type channel_id(channel_idSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type channel_area(channel_areaSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type channel_ext_idx(channel_ext_idxSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type ext_rec(ext_recSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type channel_inflow(channel_inflowSEXP);
+    Rcpp::traits::input_parameter< LogicalVector >::type keep_states(keep_statesSEXP);
+    Rcpp::traits::input_parameter< List >::type state_rec(state_recSEXP);
+    Rcpp::traits::input_parameter< double >::type timestep(timestepSEXP);
+    Rcpp::traits::input_parameter< int >::type n_sub_step(n_sub_stepSEXP);
+    multi_hsu_cpp(id, states, properties, flow_dir, ext_idx, channel_id, channel_area, channel_ext_idx, ext_rec, channel_inflow, keep_states, state_rec, timestep, n_sub_step);
     return R_NilValue;
 END_RCPP
 }
-// hs_sim_cpp
-void hs_sim_cpp(DataFrame hillslope, const DataFrame channel, const List sqnc, const NumericMatrix obs, const List ts, NumericMatrix channel_inflow, bool mass_check, NumericMatrix mass_errors, LogicalVector keep_states, List state_record);
-RcppExport SEXP _dynatop_hs_sim_cpp(SEXP hillslopeSEXP, SEXP channelSEXP, SEXP sqncSEXP, SEXP obsSEXP, SEXP tsSEXP, SEXP channel_inflowSEXP, SEXP mass_checkSEXP, SEXP mass_errorsSEXP, SEXP keep_statesSEXP, SEXP state_recordSEXP) {
+// multi_hsu_cpp_init
+void multi_hsu_cpp_init(IntegerVector id, NumericMatrix states, NumericMatrix properties, List flow_dir, NumericVector s_rz_0, NumericVector r_uz_sz_0);
+RcppExport SEXP _dynatop_multi_hsu_cpp_init(SEXP idSEXP, SEXP statesSEXP, SEXP propertiesSEXP, SEXP flow_dirSEXP, SEXP s_rz_0SEXP, SEXP r_uz_sz_0SEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< DataFrame >::type hillslope(hillslopeSEXP);
-    Rcpp::traits::input_parameter< const DataFrame >::type channel(channelSEXP);
-    Rcpp::traits::input_parameter< const List >::type sqnc(sqncSEXP);
-    Rcpp::traits::input_parameter< const NumericMatrix >::type obs(obsSEXP);
-    Rcpp::traits::input_parameter< const List >::type ts(tsSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type channel_inflow(channel_inflowSEXP);
-    Rcpp::traits::input_parameter< bool >::type mass_check(mass_checkSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type mass_errors(mass_errorsSEXP);
-    Rcpp::traits::input_parameter< LogicalVector >::type keep_states(keep_statesSEXP);
-    Rcpp::traits::input_parameter< List >::type state_record(state_recordSEXP);
-    hs_sim_cpp(hillslope, channel, sqnc, obs, ts, channel_inflow, mass_check, mass_errors, keep_states, state_record);
+    Rcpp::traits::input_parameter< IntegerVector >::type id(idSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type states(statesSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type properties(propertiesSEXP);
+    Rcpp::traits::input_parameter< List >::type flow_dir(flow_dirSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type s_rz_0(s_rz_0SEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type r_uz_sz_0(r_uz_sz_0SEXP);
+    multi_hsu_cpp_init(id, states, properties, flow_dir, s_rz_0, r_uz_sz_0);
+    return R_NilValue;
+END_RCPP
+}
+// single_hsu_cpp
+void single_hsu_cpp(NumericMatrix state_rec, NumericMatrix ext_rec, NumericMatrix flux_rec, NumericVector properties, double timestep, int n_sub_step);
+RcppExport SEXP _dynatop_single_hsu_cpp(SEXP state_recSEXP, SEXP ext_recSEXP, SEXP flux_recSEXP, SEXP propertiesSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericMatrix >::type state_rec(state_recSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type ext_rec(ext_recSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type flux_rec(flux_recSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type properties(propertiesSEXP);
+    Rcpp::traits::input_parameter< double >::type timestep(timestepSEXP);
+    Rcpp::traits::input_parameter< int >::type n_sub_step(n_sub_stepSEXP);
+    single_hsu_cpp(state_rec, ext_rec, flux_rec, properties, timestep, n_sub_step);
     return R_NilValue;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_dynatop_hs_init_cpp", (DL_FUNC) &_dynatop_hs_init_cpp, 3},
-    {"_dynatop_hs_sim_cpp", (DL_FUNC) &_dynatop_hs_sim_cpp, 10},
+    {"_dynatop_multi_hsu_cpp", (DL_FUNC) &_dynatop_multi_hsu_cpp, 14},
+    {"_dynatop_multi_hsu_cpp_init", (DL_FUNC) &_dynatop_multi_hsu_cpp_init, 6},
+    {"_dynatop_single_hsu_cpp", (DL_FUNC) &_dynatop_single_hsu_cpp, 6},
     {NULL, NULL, 0}
 };
 

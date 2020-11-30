@@ -28,6 +28,8 @@ should be in $m^3/s$ and are presumed constant over the time step.
 
 # Relating the notation and code variables
 
+*TODO: This needs revising to reflect v0.2*
+
 To aid the readability of the code the variables are labelled consistently
 with regards to the vignettes. For example:
 
