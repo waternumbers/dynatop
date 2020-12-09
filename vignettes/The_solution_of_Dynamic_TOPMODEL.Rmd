@@ -1,7 +1,7 @@
 ---
 title: "The Dynamic TOPMODEL equations"
 output: 
-  bookdown::html_document2:
+  rmarkdown::html_vignette:
     number_sections: false
     toc: true
     toc_depth: 2
@@ -20,8 +20,6 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
-
-* THE FOLLOWING RELATES TO V0.1 AND IS OUTDATED*
 
 The `dynatop` package represents an implimentation of the concepts behind a dynamic TOPMODEL.
 One of the underlying principles of dynamic TOPMODEL is that the landscape can be broken up into
@@ -45,6 +43,11 @@ The solutions outlined below take an operator splitting approach allow
 sequential solution of the HSUs and processes with the HSUs. In doing this the
 choice has been made to represent the exchange of fluxes between and within
 HSUs as volumes (integrals of the flux over the timestep).
+
+
+
+
+
 
 # Notation and nomenclature
 
