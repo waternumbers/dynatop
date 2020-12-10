@@ -4,7 +4,7 @@
 hsu::hsu(double& l_sf_, double& s_rz_, double& s_uz_, double& l_sz_,
 	 double& q_sf_in_, double& q_sz_in_,double& p_, double& ep_,
 	 double& w_, double& Dx_, double& beta_,
-	 double& t_sf_, double& k_sf_,
+	 double& c_sf_, double& k_sf_,
 	 double& s_rzmax_,
 	 double& t_d_,
 	 double& m_, double& ln_t0_,
@@ -12,7 +12,7 @@ hsu::hsu(double& l_sf_, double& s_rz_, double& s_uz_, double& l_sz_,
   l_sf(l_sf_), s_rz(s_rz_), s_uz(s_uz_), l_sz(l_sz_),
   q_sf_in(q_sf_in_), q_sz_in(q_sz_in_),p(p_), ep(ep_),
   w(w_), Dx(Dx_), beta(beta_), // properties of HSU [m m rad]
-  t_sf(t_sf_), k_sf(k_sf_), // properties of surface store 
+  c_sf(c_sf_), k_sf(k_sf_), // properties of surface store 
   s_rzmax(s_rzmax_),  // properties of root zone
   t_d(t_d_),  // properties of unsat zone
   m(m_), ln_t0(ln_t0_),  // properties of sat zone
@@ -22,7 +22,7 @@ hsu::hsu(double& l_sf_, double& s_rz_, double& s_uz_, double& l_sz_,
   log_l_szmax = ln_t0 + std::log( std::sin(beta) );
   cosbeta_m = std::cos(beta) /m;
   lambda_szmax = hsu::flambda_sz(l_szmax);
-  lambda_sf = Dt/(t_sf*Dx);
+  lambda_sf = (c_sf*Dt)/Dx;
   //std::cout << lambda_sf << std::endl;
 }
 

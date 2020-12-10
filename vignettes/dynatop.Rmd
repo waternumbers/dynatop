@@ -100,7 +100,7 @@ swindale_model$param <- c(r_sfmax_default=Inf,
                  s_rzmax_default=0.1,
                  v_ch_default=0.8,
                  t_d_default=8*60*60,
-                 t_sf_default=3.6e+05
+                 c_sf_default=1/3.6e+05
                  )
 ```
 
