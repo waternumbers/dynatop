@@ -238,7 +238,7 @@ dynatop <- R6::R6Class(
     ),
     private = list(
         ## stores of data
-        version = "0.2.0.9000",
+        version = "0.2.0.9001",
         hillslope = list(), #storage for unpacked hillslope properties used in simulation
         channel = list(), #storage for unpacked channel properties use in simulation
         time_series = list(),
@@ -254,7 +254,7 @@ dynatop <- R6::R6Class(
         model_description = list(
             hillslope = data.frame(name = c("id","atb_bar","s_bar","area","delta_x","width","flow_dir", # attributes associated with catchment HSU
                                             "precip","pet", # names of input series
-                                            "r_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","t_sf", # parameter names
+                                            "r_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","c_sf", # parameter names
                                             "l_sf","s_rz","s_uz","l_sz"), # states
                                    role = c(rep("attribute",7),
                                             rep("data_series",2),
@@ -317,12 +317,12 @@ dynatop <- R6::R6Class(
 
             ## process properties from hillslope
             ## must match column order in C++ code
-            ## width, delta_x, beta, t_sf, k_sf,s_rzmax,t_d, m,ln_t0
+            ## width, delta_x, beta, c_sf, k_sf,s_rzmax,t_d, m,ln_t0
             private$hillslope$properties <- matrix(as.numeric(NA),nrow(model$hillslope),9)
             private$hillslope$properties[,1] <- as.numeric(model$hillslope$width)
             private$hillslope$properties[,2] <- as.numeric(model$hillslope$delta_x)
             private$hillslope$properties[,3] <- as.numeric(atan(model$hillslope$s_bar))
-            private$hillslope$properties[,4] <- as.numeric(model$param[model$hillslope$t_sf])
+            private$hillslope$properties[,4] <- as.numeric(model$param[model$hillslope$c_sf])
             private$hillslope$properties[,5] <- as.numeric(model$param[model$hillslope$r_sfmax])
             private$hillslope$properties[,6] <- as.numeric(model$param[model$hillslope$s_rzmax])
             private$hillslope$properties[,7] <- as.numeric(model$param[model$hillslope$t_d])
@@ -330,7 +330,7 @@ dynatop <- R6::R6Class(
             private$hillslope$properties[,9] <- as.numeric(model$param[model$hillslope$ln_t0])
             dimnames(private$hillslope$properties) <- list(
                 model$hillslope$id,
-                c("width","delta_x","beta","t_sf","k_sf","s_rzmax","t_d","m","ln_t0"))
+                c("width","delta_x","beta","c_sf","k_sf","s_rzmax","t_d","m","ln_t0"))
             
             ## Add flow direction
             private$hillslope$flow_dir <- model$hillslope$flow_dir

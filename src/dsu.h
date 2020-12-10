@@ -18,7 +18,7 @@ private:
 
   // //local property variables
   double &w, &Dx, &beta;
-  double &t_sf, &k_sf;
+  double &c_sf, &k_sf;
   double &s_rzmax;
   double &t_d;
   double &m, &ln_t0;

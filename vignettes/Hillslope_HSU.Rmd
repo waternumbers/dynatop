@@ -88,7 +88,7 @@ The following conventions are used:
 |                            | $s_{rzmax}$             | Maximum root zone storage depth                                    | m       |
 |                            | $T_d$                   | Unsaturated zone time constant per m of saturated storage deficit. | s/m     |
 |                            | $l_{szmax}$             | Maximum lateral flux in the saturated zone per unit width          | m$^2$/s |
-|                            | $T_{sf}$                | Surface excess storage time constant per m of hillslope length     | s/m     |
+|                            | $c_{sf}$                | Surface excess storage celerity                                    | m/s     |
 |                            | $m$                     | Exponential transmissivity constant                                | -       |
 |                            | $\Delta x$              | Length of the hillslope HSU                                        | m       |
 |                            | $w$                     | Width of hillslope cross-section                                   | m       |
@@ -123,9 +123,9 @@ The governing ODE can be written as
 \end{equation}
 where $r_{sf \rightarrow rz} \leq k_{sf}$.
 
-Assuming lateral flux is proportional to storage and taking $l_{sf} = \frac{s_{sf}}{T_{sf}}$ gives
+Assuming a constant celerity the lateral flux is proportional to storage and taking $l_{sf} = c_{sf}ss_{sf}$ gives
 \begin{equation}
-T_{sf} \frac{dl_{sf}}{dt} = -\frac{dl_{sf}}{dx} - r_{sf \rightarrow rz}
+\frac{1}{c_{sf}} \frac{dl_{sf}}{dt} = -\frac{dl_{sf}}{dx} - r_{sf \rightarrow rz}
 \end{equation}
 
 ## Root zone
@@ -253,11 +253,11 @@ hillslope when only the total inflows are known.
 For the surface zone the governing ODE can be rewritten in terms of the 
 cross section and finite difference gradient representation as
 \begin{equation}
-wT_{sf}\frac{dl_{sf}}{dt} = \frac{1}{\Delta x}\left(q_{sf}^{-} - wl_{sf}\right) - wr_{sf \rightarrow rz}
+\frac{w}{c_{sf}}\frac{dl_{sf}}{dt} = \frac{1}{\Delta x}\left(q_{sf}^{-} - wl_{sf}\right) - wr_{sf \rightarrow rz}
 \end{equation}
 or more conviently
 \begin{equation}
-T_{sf}\frac{dl_{sf}}{dt} = \frac{1}{\Delta x}\left(\frac{q_{sf}^{-}}{w} - l_{sf}\right) - r_{sf \rightarrow rz}
+\frac{1}{c_{sf}}\frac{dl_{sf}}{dt} = \frac{1}{\Delta x}\left(\frac{q_{sf}^{-}}{w} - l_{sf}\right) - r_{sf \rightarrow rz}
 \end{equation}
 
 A similar approach applied to the saturated zone yields
@@ -319,7 +319,7 @@ the unknown vertical fluxes $r_{* \rightarrow *}$ are
 
 where
 \begin{equation}
-\lambda_{sf} = \frac{\Delta t}{T_{sf} \Delta x}
+\lambda_{sf} = \frac{c_{sf}\Delta t}{\Delta x}
 \end{equation}
 and
 \begin{equation}
