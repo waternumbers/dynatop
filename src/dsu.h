@@ -22,7 +22,7 @@ private:
   double &s_rzmax;
   double &t_d;
   double &m, &ln_t0;
-  const double &timestep;
+  const double &Dt;
   
   // // other summaries of properties used internally across multiple functions
   double l_szmax=-99.0, log_l_szmax=-99.0, lambda_szmax=-99.0, lambda_sf=-99.0, cosbeta_m=-99.0;
