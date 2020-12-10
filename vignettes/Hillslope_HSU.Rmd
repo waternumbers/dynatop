@@ -1,0 +1,618 @@
+---
+title: "The Hillslope HSU"
+output: 
+  bookdown::html_document2:
+    number_sections: false
+    toc: true
+    toc_depth: 2
+pkgdown:
+  as_is: true
+vignette: >
+  %\VignetteIndexEntry{The Hillslope HSU}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+# Conceptual model
+
+One of the underlying principles of dynamic TOPMODEL is that the landscape can
+be broken up into hydrologically similar regions, or Hydrological Similarity
+Units (HSUs), where all the area within a HSU behaves in a hydrologically
+similar fashion. Further discussion and the conection of HSUs is discussed
+further in [ref].
+
+This document outlines the conceptual structure and computational
+implimentation of the hillslope HSU. The hillslope HSU is a representation of 
+an area of hillslope with, for example, simliar topgraphic, soil and upslope area
+characteristics.
+
+The hillslope HSU is considered to be a hillslope with inflow and outflow
+occuring at parallel edges seperated by a distance $\Delta x$.
+It is formed of four zones representing the surface water, which
+passes water between HSUs and drains to the root zone. The root zone characterises
+the interactions evapotranspiration and precipitation and when full spills to
+the unsaturated zone. This drains to the saturated zone which also interacts
+with other HSUs. The behaviour of the saturated zone is modelled using a kinematic wave
+approximation.
+
+In the following section the governing equations of the hillslope HSU are
+given for an infinitesimal vertical slab. The application of the cross
+sectional solution to the hillslope HSU is then considered and a numerical scheme is presented.
+	
+# Notation
+
+Table \@ref(tab:hs-x-notation) outlines the notation used for describing an
+infinitesimal slab across the hillslope HSU. 
+
+The following conventions are used:
+
+-   All properties such as slope angles and time constants are considered
+    uniform along the hillslope.
+	
+-   Precipitation and Potential Evapotranspiration occur at spatially uniform
+    rates.
+	
+-   All fluxes $r_{* \rightarrow *}$ are considered to be positive when
+	travelling in the direction of the arrow, but can in cases be negative.
+
+-   All fluxes $l_{*}$ are considered to be positive flows travelling downslope.
+
+-   The superscript $^-$ is used to denote variables at the top cross sections of the hillslope.
+
+-   $\left.x\right\rvert_t$ indicates the value of the
+    variable $x$ at time $t$
+	
+| Quantity type              | Symbol                  | Description                                                        | unit    |
+| ---                        | :---:                   | ------                                                             | :---:   |
+| Storage                    | $s_{sf}$                | Surface excess storage per unit width                              | m       |
+|                            | $s_{rz}$                | Root zone storage per unit width                                   | m       |
+|                            | $s_{uz}$                | Unsaturated zone storage per unit width                            | m       |
+|                            | $s_{sz}$                | Saturated zone storage defici per unit widtht                      | m       |
+| Vertical fluxes            | $r_{sf \rightarrow rz}$ | Flow from the surface excess store to the root zone per unit width | m/s     |
+|                            | $r_{rz \rightarrow uz}$ | Flow from the root zone to the unsaturated zone per unit width     | m/s     |
+|                            | $r_{uz \rightarrow sz}$ | Flow from unsaturated to saturated zone per unit width             | m/s     |
+| Lateral fluxes             | $l_{sf}$                | Lateral flow in the surface zone per unit width                    | m$^2$/s |
+|                            | $l_{sz}$                | Lateral flow in the saturated zone per unit width                  | m$^2$/s |
+|                            | $q_{sf}^{-}$            | Lateral inflow to the hillslope surface zone from other HSUs       | m$^3$/s |
+|                            | $q_{sz}^{-}$            | Lateral inflow to the hillslope surface zone from other HSUs       | m$^3$/s |
+| Vertical fluxes to the HSU | $p$                     | Precipitation rate                                                 | m/s     |
+|                            | $e_p$                   | Potential Evapotransipartion rate                                  | m/s     |
+| Other HSU properties       | $k_{sf}$                | Maximum flow rate from surface excess to root zone per unit width  | m/s     |
+|                            | $s_{rzmax}$             | Maximum root zone storage depth                                    | m       |
+|                            | $T_d$                   | Unsaturated zone time constant per m of saturated storage deficit. | s/m     |
+|                            | $l_{szmax}$             | Maximum lateral flux in the saturated zone per unit width          | m$^2$/s |
+|                            | $T_{sf}$                | Surface excess storage time constant per m of hillslope length     | s/m     |
+|                            | $m$                     | Exponential transmissivity constant                                | -       |
+|                            | $\Delta x$              | Length of the hillslope HSU                                        | m       |
+|                            | $w$                     | Width of hillslope cross-section                                   | m       |
+|                            | $\beta$                 | Angle of hill slope                                                | rad     |
+                                                    
+  Table: (\#tab:hs-x-notation) Outline of notation for describing a cross
+  section of the hillslope HSU
+
+
+# Equations for an Infinitesimal Slab
+
+Consider a infinitesimal vertical slab across the hillslope. We use a vertical
+slab in the belief that the vertical fluxes are gravity driven. However
+lateral fluxes occur do not occur in the horozontal plane, meaning our solution
+should, were appropraite allow for this.
+
+## Surface zone
+
+The storage in the surface zone satisfies $s_{sf} \geq 0$.
+Surface storage is increased by lateral downslope flow from upslope HSUs. 
+Water flows to the root zone at a constant rate $k_{sf}$, unless limited by
+the available storage at the surface or the ability of the root zone to
+receive water (for example if the saturation storage deficit is 0 and the root zone storage is full).
+
+In cases where lateral flows in the saturated zone produce
+saturation storage deficits water may be returned from the root
+zone to the surface giving negative values of $r_{sf \rightarrow rz}$.
+
+The governing ODE can be written as
+\begin{equation}
+\frac{ds_{sf}}{dt} = - \frac{dl_{sf}}{dx} - r_{sf \rightarrow rz}
+\end{equation}
+where $r_{sf \rightarrow rz} \leq k_{sf}$.
+
+Assuming lateral flux is proportional to storage and taking $l_{sf} = \frac{s_{sf}}{T_{sf}}$ gives
+\begin{equation}
+T_{sf} \frac{dl_{sf}}{dt} = -\frac{dl_{sf}}{dx} - r_{sf \rightarrow rz}
+\end{equation}
+
+## Root zone
+
+The root zone gains water from precipitation and the surface zone. It looses water through
+evaporation and to the unsaturated zone. The root zone storage satifies
+
+\begin{equation} 0 \leq s_{rz} \leq s_{rzmax} \end{equation}
+
+with the governing ODE
+\begin{equation}
+\frac{ds_{rz}}{dt} = p - \frac{e_p}{s_{rzmax}} s_{rz} +
+r_{sf\rightarrow rz} - r_{rz \rightarrow uz}
+\end{equation}
+
+Fluxes from the surface and to the unsaturated zone are
+controlled by the level of root zone storage along with the state of the unsaturated
+and saturated zones.
+
+For $s_{rz} \leq s_{rzmax}$ then $r_{rz \rightarrow uz} \leq 0$. Negative
+values of $r_{rz \rightarrow uz}$ may occur only when water is returned from the
+unsaturated zone due to saturation caused by lateral inflow to the saturated zone.
+
+When $s_{rz} = s_{rzmax}$ then 
+\begin{equation}
+p - e_p + r_{sf\rightarrow rz} - r_{rz \rightarrow uz} \leq 0
+\end{equation}
+In this case $r_{rz \rightarrow uz}$ may be positive if
+\begin{equation}
+p - e_p + r_{sf\rightarrow rz} > 0
+\end{equation}
+so long as the unsaturated zone can receive the water. If $r_{rz
+\rightarrow uz}$ is 'throttled' by the rate at which the unsaturated zone can
+receive water then $r_{sf\rightarrow rz}$ is adjusted (potentially becoming
+negative) to ensure the equality is met.
+
+## Unsaturated zone
+
+The unsaturated zone acts as a non-linear tank subject to the constraint 
+\begin{equation} 0 \leq s_{uz} \leq s_{sz} \end{equation}
+
+The governing ODE is written as
+\begin{equation}
+\frac{ds_{uz}}{dt} = r_{rz \rightarrow uz} - r_{uz \rightarrow sz}
+\end{equation}
+
+If water is able to path freely to the saturated zone then it flows at the rate
+$\frac{s_{uz}}{T_d s_{sz}}$. If $A_{sz}=A_{uz}$ this is interpreted to mean
+that the flow rate is $\frac{1}{T_d}$. In this situation the subsurface below
+the root zone can be considered saturated, as in there is no further available
+storage for water, but seperated into parts: an upper part with vertical
+flow and a lower part with lateral flux.
+
+It is possible that $r_{uz \rightarrow sz}$ is
+constrained by the ability of the saturated zone to receive water. If
+this is the case $r_{uz \rightarrow sz}$ occurs at the maximum
+possible rate and $r_{rz \rightarrow uz}$ limited to ensure that $A_{uz} \leq A_{sz}$.
+
+## Saturated zone
+
+The change in saturated zone storage deficit is
+evaluated using a kinematic wave approximation. 
+
+The continuity equation gives gives the conservation of mass in terms of the
+cross sectional zone flow depth $s$ and recharge $r_{uz \rightarrow
+  sz}$ as
+\begin{equation}
+\frac{ds}{dt} + \frac{dl_{sz}}{dx} -r_{uz \rightarrow sz} = 0
+\end{equation}
+
+The cross sectional flow depth $s$ can be expressed in terms
+of $s_{sat}$ the cross sectional flow depth when the whole cross section has
+lateral flux ($s_{sz}=0$) and $s_{sz}$ since $s = s_{sat}-s_{sz}$ giving
+\begin{equation}
+\frac{ds_{sz}}{dt} = \frac{dl_{sz}}{dx} - r_{uz \rightarrow sz}
+\end{equation}
+
+The Kinematic approximation then depends upon the specification of a
+transmissivity profile linking $s_{sz}$ and $l_{sz}$. This is taken to be a one-to-one montotonically
+decreasing, continuously differentiable function 
+$g: \mathcal{R^{+}}\rightarrow \mathcal{R}^{+}$ which returns the lateral flow on
+a unit width such that $l_{sz} = g\left(s_{sz}\right)$. 
+The this implies a maximum lateral flux $l_{szmax}=g\left(0\right)$.
+
+The relationship between $l_{sz}$ and $s_{sz}$ gives the kinematic
+velocity
+\begin{equation}
+c_{sz} = -\frac{dl_{sz}}{ds_{sz}} = -\frac{d}{ds_{sz}}g\left(s_{sz}\right)
+\end{equation}
+This allows the governing equation for the saturated zone to be written
+\begin{equation}
+\frac{1}{c_{sz}}\frac{dl_{sz}}{dt} = -\frac{dl_{sz}}{dx} + r_{uz \rightarrow sz}
+\end{equation}
+
+
+<!-- While the above equation is mass conservative it is not momentum -->
+<!-- conservative. Specifically $r_{uz \rightarrow sz}$ is not perpendicular -->
+<!-- to the direction of $l_{sz}$ (which is parrallel to the surface slope). A -->
+<!-- control volume based assessment of the momentum change gives the condition -->
+<!-- \begin{equation} -->
+<!-- \frac{d}{dx}\left(l_{sz}u_{sz}\right) = \frac{r^2}{w}\sin\beta -->
+<!-- \end{equation} -->
+<!-- but use of this is not considered further. -->
+
+# Solution for the HSU hillslope
+
+Given no analytical solution yet exists allowing for the evaluation of the
+properties at every cross section within the hillslope a numerical
+approximation is required.
+
+To basic approaches could be used. One is to integrate over the length of the
+hillslope. This allows for a fully mass conservative solution at the cost of
+loosing some properties relating to the length and shape of the hillslope. An
+alternative method utilised both here and in the original Dynamic TOPMODEL
+implimentation is to solve for the cross section at the foot of the
+hillslope. This solution maintains the length properties of the hillslope
+while providing adequate information for the transfer of water within the
+catchment.
+
+Evaluating the infinitesimal slab at the foot of
+the hillslope requires using approximations to the gradients of the lateral
+fluxes along the
+hillslope when only the total inflows are known.
+
+For the surface zone the governing ODE can be rewritten in terms of the 
+cross section and finite difference gradient representation as
+\begin{equation}
+wT_{sf}\frac{dl_{sf}}{dt} = \frac{1}{\Delta x}\left(q_{sf}^{-} - wl_{sf}\right) - wr_{sf \rightarrow rz}
+\end{equation}
+or more conviently
+\begin{equation}
+T_{sf}\frac{dl_{sf}}{dt} = \frac{1}{\Delta x}\left(\frac{q_{sf}^{-}}{w} - l_{sf}\right) - r_{sf \rightarrow rz}
+\end{equation}
+
+A similar approach applied to the saturated zone yields
+\begin{equation}
+\frac{1}{c_{sz}}\frac{dl_{sz}}{dt} = \frac{1}{\Delta
+x}\left(\frac{q_{sz}^{-}}{w} - l_{sz}\right) + r_{uz \rightarrow sz}
+\end{equation}
+
+# Numerical Scheme
+
+In the following section an implicit numerical scheme is derived for a time step
+$\Delta t$. 
+The basis of the solution is that a gravity driven system will maximise
+the downward flow of water within each timestep.
+
+The implicit approximations to the four ODE defining the model using
+the unknown vertical fluxes $r_{* \rightarrow *}$ are
+
+\begin{equation}
+\left. l_{sf} \right\rvert_{t+\Delta t} = 
+\left( 1+ \lambda_{sf} \right)^{-1}
+\left(
+\left. l_{sf} \right\rvert_{t} + 
+\lambda_{sf} \left(
+\frac{ \left. q_{sf}^{-} \right\rvert_{t+\Delta t}}{w} - 
+\Delta x \left. r_{sf \rightarrow rz} \right\rvert_{t+\Delta t}
+\right)
+\right)
+\end{equation}
+
+\begin{equation}
+\left. s_{rz} \right\rvert_{t+\Delta t} = 
+\left(1 + \frac{e_p\Delta t}{s_{rzmax}}\right)^{-1} \left(
+\left. s_{rz} \right\rvert_{t} + p\Delta t +
+\Delta t \left. r_{sf \rightarrow rz} \right\rvert_{t+\Delta t} - 
+\Delta t \left. r_{rz \rightarrow uz}\right\rvert_{t+\Delta t}\right)
+\end{equation}
+
+\begin{equation}
+\left. s_{uz} \right\rvert_{t+\Delta t} = 
+\left. s_{uz} \right\rvert_{t} +
+\Delta t \left(
+\left.r_{rz \rightarrow uz}\right\rvert_{t+\Delta t} -
+\left.r_{uz \rightarrow sz}\right\rvert_{t+\Delta t}
+\right)
+\end{equation}
+
+\begin{equation}
+\left. l_{sz} \right\rvert_{t+\Delta t} =
+\left(1 + \left. \lambda_{sz} \right\rvert_{t+\Delta t}\right)^{-1}
+\left(
+\left. l_{sz} \right\rvert_{t} +
+\left. \lambda_{sz} \right\rvert_{t+\Delta t} \left(
+\frac{ \left. q_{sz}^{-} \right\rvert_{t+\Delta t} }{w} +
+\Delta x
+\left.r_{uz \rightarrow sz}\right\rvert_{t+\Delta t}
+\right)\right)
+(\#eq:lsz)
+\end{equation}
+
+where
+\begin{equation}
+\lambda_{sf} = \frac{\Delta t}{T_{sf} \Delta x}
+\end{equation}
+and
+\begin{equation}
+\lambda_{sz} = \frac{c_{sz} \Delta t}{\Delta x}
+\end{equation}
+
+Now consider the evaluation of the unknown vertical fluxes. To
+maintain $\left. l_{sf} \right\rvert_{t+\Delta t} \geq 0$ requires that
+\begin{equation}
+\left. r_{sf \rightarrow uz} \right\rvert_{t+\Delta t} \leq 
+r_{sf \rightarrow uz}^{pos} = \min\left( k_{sf}, 
+\left(\lambda_{sf}\Delta x\right)^{-1}
+\left( \left. l_{sf} \right\rvert_{t} + 
+\frac{\lambda_{sf}}{w}\left. q_{sf}^{-} \right\rvert_{t+\Delta t} \right)
+\right)
+\end{equation}
+
+The upper limit of $a_{rz}$ and maximum flux from the surface store
+result in
+\begin{equation}
+ \left. r_{rz \rightarrow uz}\right\rvert_{t+\Delta t} \leq
+ r_{rz \rightarrow uz}^{pos} =  \frac{1}{\Delta t} \max\left( 0,
+\left. s^{+}_{rz} \right\rvert_{t} + p\Delta t +
+\Delta t r_{sf \rightarrow rz}^{pos} - e_p\Delta t - s_{rzmax}\right)
+\end{equation}
+
+From the unsaturated zone the implict solution when drainage to the saturated
+zone occurs at rate $\frac{s_{uz}}{T_d s_{sz}}$ gives
+\begin{equation}
+\left. s_{uz} \right\rvert_{t+\Delta t} = 
+\frac{T_d \left. s_{sz} \right\rvert_{t+\Delta t}}
+{T_d \left. s_{sz} \right\rvert_{t+\Delta t} + \Delta t}
+\left(
+\left. s_{uz} \right\rvert_{t} + \Delta t \left.r_{rz \rightarrow
+uz}\right\rvert_{t+\Delta t}\right)
+\end{equation}
+Combining this with the limit on $r_{uz \rightarrow sz}$ gives
+
+\begin{equation}
+\left. r_{uz \rightarrow sz}\right\rvert_{t+\Delta t}
+\leq \min\left(
+\frac{\left. s_{uz} \right\rvert_{t} + \Delta t \left.r_{rz \rightarrow
+uz}\right\rvert_{t+\Delta t}}
+{T_d \left. s_{sz} \right\rvert_{t+\Delta t} + \Delta t}, \frac{1}{T_d}\right)
+\end{equation}
+
+The maximum possible flux to the saturated zone then occurs when
+$\left. s_{sz} \right\rvert_{t+\Delta t}=0$ as
+\begin{equation}
+r_{uz \rightarrow sz}^{pos}
+= \min\left(
+\frac{\left. s_{uz} \right\rvert_{t} + \Delta t r_{rz \rightarrow uz}^{pos}}
+{\Delta t}, \frac{1}{T_d}\right)
+\end{equation}
+
+Rearranging the evolution of the saturated storage defict gives
+\begin{equation}
+\left.r_{uz \rightarrow sz}\right\rvert_{t+\Delta t} = 
+\frac{1}{\left.\lambda_{sz}\right\rvert_{t+\Delta t} \Delta x}\left(
+\left(1 + \left.\lambda_{sz}\right\rvert_{t+\Delta t}\right)
+\left. l_{sz} \right\rvert_{t+\Delta t} -
+\left. l_{sz} \right\rvert_{t}
+- \frac{1}{w}\left.\lambda_{sz}\right\rvert_{t+\Delta t} 
+\left. q^{-}_{sz} \right\rvert_{t+\Delta t}
+\right)
+\end{equation}
+
+Let us assume that $\left.\lambda_{sz}\right\rvert_{t+\Delta t}$ is specified
+in such a way that the right hand side of the above expression is
+monotonically increasing with respect to $\left.l_{sz}\right\rvert_{t+\Delta
+t}$ and hence maximised when 
+$\left. l_{sz} \right\rvert_{t+\Delta t} = l_{szmax}$. 
+This limits the potential value of of the vertical flux such that
+\begin{equation}
+\left.r_{uz \rightarrow sz}\right\rvert_{t+\Delta t} \leq r_{uz \rightarrow sz}^{0} = 
+\frac{1}{\left.\lambda_{sz}\right\rvert_{t+\Delta t} \Delta x}\left(
+\left(1 + \left.\lambda_{sz}\right\rvert_{t+\Delta t}\right)
+l_{szmax} -
+\left. l_{sz} \right\rvert_{t}
+- \frac{1}{w}\left.\lambda_{sz}\right\rvert_{t+\Delta t} 
+\left. q^{-}_{sz} \right\rvert_{t+\Delta t}
+\right)
+\end{equation}
+
+On the principle of maximising the downward flux two cases can be
+distiguished:
+
+1.  Case 1: $r_{uz \rightarrow sz}^{pos} \geq r_{uz \rightarrow sz}^{0}$. In
+    this case $\left. l^{+}_{sz} \right\rvert_{t+\Delta t} = l_{szmax}$ and 
+	$\left.r_{uz \rightarrow sz}\right\rvert_{t+\Delta t} = r_{uz \rightarrow
+    sz}^{0}$
+	
+2.  Case 2: $r_{uz \rightarrow sz}^{pos} < r_{uz \rightarrow sz}^{0}$
+	In this case $\left.l_{sz}\right\rvert_{t+\Delta t} \leq l_{szmax}$ and
+	satisfies
+	the equation of the implicit solution where
+\begin{equation}
+\left.r_{uz \rightarrow sz}\right\rvert_{t+\Delta t} = 
+\min \left(
+\frac{ \left. s_{uz} \right\rvert_{t} + \Delta t r_{rz \rightarrow uz}^{pos}}
+{T_d \left. s_{sz} \right\rvert_{t+\Delta t} + \Delta t},
+\frac{1}{T_d} \right)
+\end{equation}
+
+Given the solution to one of the two cases 
+\begin{equation}
+\left. s_{uz} \right\rvert_{t + \Delta t} =
+\left. r_{uz \rightarrow sz} \right\rvert_{t + \Delta t}
+T_d
+\left. s_{sz} \right\rvert_{t +\Delta t}
+\end{equation}
+and
+\begin{equation}
+\left. r_{rz \rightarrow uz} \right\rvert_{t + \Delta t} =
+\frac{1}{\Delta t}\left(
+\left. s_{uz} \right\rvert_{t + \Delta t} - \left. s_{uz} \right\rvert_{t}
+\right) +
+\left. r_{uz \rightarrow sz} \right\rvert_{t + \Delta t}
+\end{equation}
+
+The remaining vertical flow can then be solved for since
+\begin{equation}
+\left.r_{sf \rightarrow rz} \right\rvert_{t+\Delta t} = \min\left(
+r_{sf \rightarrow rz}^{pos},
+\frac{1}{\Delta t}\left(s_{rzmax} - \left. s_{rz} \right\rvert_{t}\right) +
+e_p - p + \left. r_{rz \rightarrow uz} \right\rvert_{t + \Delta
+  t} \right)
+\end{equation}
+
+Subsitution of these fluxes into the initial implicit solutions for the
+surface and root zone gives the states at $t+\Delta t$.
+
+## Evaluation of $\lambda_{sz}$
+
+In the numerical solution it is assumed that
+$\left.\lambda_{sz}\right\rvert_{t+\Delta t}$ is specified in such a way that 
+\begin{equation}
+\frac{1}{\left.\lambda_{sz}\right\rvert_{t+\Delta t} \Delta x}\left(
+\left(1 + \left.\lambda_{sz}\right\rvert_{t+\Delta t}\right)
+\left. l_{sz} \right\rvert_{t+\Delta t} -
+\left. l_{sz} \right\rvert_{t}
+- \frac{1}{w}\left.\lambda_{sz}\right\rvert_{t+\Delta t} 
+\left. q^{-}_{sz} \right\rvert_{t+\Delta t}
+\right)
+\end{equation}
+is montonically increasing with respect to
+$\left.l_{sz}\right\rvert_{t+\Delta t}$. This serves two
+purposes. The first is that it allows the specification of a unique value $\left.r_{uz
+\rightarrow sz}^{0}\right\rvert_{t+\Delta t}$ the maximum vertical inflow
+possible while maintaining $l_{sz} \leq l_{szmax}$.
+The second is ensuring a unique solution to
+$\left.l_{sz}\right\rvert_{t+\Delta t}$. 
+This can be seen by writing the condition satified by a Case 2 solution as
+\begin{equation}
+\min \left(
+\frac{ \left. s_{uz} \right\rvert_{t} + \Delta t r_{rz \rightarrow uz}^{pos}}
+{T_d \left. s_{sz} \right\rvert_{t+\Delta t} + \Delta t},
+\frac{1}{T_d} \right) = \frac{1}{\left.\lambda_{sz}\right\rvert_{t+\Delta t} \Delta x}\left(
+\left(1 + \left.\lambda_{sz}\right\rvert_{t+\Delta t}\right)
+\left. l_{sz} \right\rvert_{t+\Delta t} -
+\left. l_{sz} \right\rvert_{t}
+- \frac{1}{w}\left.\lambda_{sz}\right\rvert_{t+\Delta t} 
+\left. q^{-}_{sz} \right\rvert_{t+\Delta t}
+\right)
+\end{equation}
+Noting the relationshipe between $s_{sz}$ and $l_{sz}$ we see that the left
+hand side is decreasing while the right hand side is strictly increasing,
+hence there is a unique solution which is ameanable to location by numerical
+techniques.
+
+Through its relationship with $c_{sz}$ the value of $\lambda_{sz}$ has a
+direct relationship to $l_{sz}$ and the tranmissivity function $g$. This
+suggests that individual transmissity functions should be considered on a
+case-by-case basis. For example the exponential transmisity profile is defined
+as
+\begin{equation}
+l_{sz} = T_{0}\sin\beta \exp\left(-\frac{\cos\beta}{m}s_{sz}\right)
+\end{equation}
+which results in 
+\begin{equation}
+c_{sz} =
+\frac{\cos\beta}{m}T_{0}\sin\beta\exp\left(-\frac{\cos\beta}{m}s_{sz}\right) =
+\frac{\cos\beta}{m}l_{sz}
+\end{equation}
+and
+\begin{equation}
+\lambda_{sz} = \frac{\Delta t\cos\beta}{m\Delta x}l_{sz}=\alpha l_{sz}
+\end{equation}
+
+Subsituing this into the above expression gives
+\begin{equation}
+\frac{1}{\alpha \Delta x}\left(
+1 + \alpha \left.l_{sz}\right\rvert_{t+\Delta t} -
+\frac{\left.l_{sz}\right\rvert_{t}}{\left.l_{sz}\right\rvert_{t+\Delta t}} -
+\frac{\alpha}{w}\left. q^{-}_{sz} \right\rvert_{t+\Delta t}
+\right)
+\end{equation}
+which is clearly monotonically increasing with respect to $\left. l_{sz}
+\right\rvert_{t+\Delta t}$ so long as $\alpha>0$.
+
+A more generally valid, if not fully implict solution, can be generated by
+evaluating $\left. \lambda_{sz}\right\rvert_{t+\Delta t} > 0$ using $\left. l_{sz}
+\right\rvert_{t}$ rather then $\left. l_{sz}
+\right\rvert_{t + \Delta t}$ to give an explicit estimate of $c_{sz}$
+
+
+# Simulations - TODO
+
+To illustrate the behaviour of the Instantaneous redistribution solution
+consider the following set of simulations. Details on the HSU paraemters are
+in the attached simualtion code. The details I don't think are overly relevent
+but note that $k_{sf} = \infty$, so there is no limit to the flux from the
+surface store downwards except for that provided by increasing storage in the
+unsaturated and saturated zones.
+
+## Simulation 1
+
+Here a constant lateral flux $l_{sz}^{-} = w^{+} g\left(0\right)$ is input for
+600 timesteps (labelled by index idx). The initial saturated storage deficit
+is consumed and the laterla outflow converges to the $l_{sz}^{-}$, with no
+vertical flux taking place. This seems to be reasonable.
+
+```{r sim1s, echo=FALSE, fig.cap="Evolution of states with constant lateral flow to saturated zone eqivilent to potential maximum", out.width = '80%'}
+##knitr::include_graphics("Fig_states_IR_1.png")
+```
+
+```{r sim1f, echo=FALSE, fig.cap="Evolution of fluxes with constant lateral flow to saturated zone eqivilent to potential maximum", out.width = '80%'}
+##knitr::include_graphics("Fig_fluxes_IR_1.png")
+```
+
+## Simulation 2
+
+Here a constant lateral flux $l_{sf}^{-} = w^{+} g\left(0\right)$ is input to
+the surface store for 600 timesteps (labelled by index idx). The initial
+storage deficit in the root zone is consumed and the storage in the
+unsaturated and saturated zone grows. Note these reach an equilibrum based on
+the value of $q_{uz \rightarrow sz}$ when $v_{uz} = v_{sz}$.
+
+```{r sim2s, echo=FALSE, fig.cap="Evolution of states with constant lateral flow to the surface zone eqivilent to potential maximum lateral saturated flux", out.width = '80%'}
+##knitr::include_graphics("Fig_states_IR_2.png")
+```
+
+```{r sim2f, echo=FALSE, fig.cap="Evolution of fluxes with constant lateral flow to the surface zone eqivilent to potential maximum lateral saturated flux", out.width = '80%'}
+##knitr::include_graphics("Fig_fluxes_IR_2.png")
+```
+
+## Simulation 3
+
+In this simulation we consider a constant lateral flux 
+$l_{sf}^{-} = w^{+}	g\left(0\right) /4$ to the surface store for all 600
+timesteps (labelled by index idx). The initial root zone storage deficit
+is consumed then the unsaturated and saturated zone meeting. As this moves
+towards an equilibrium surface storage increases and stabalises. 
+After step 400 an additional inflow is applied with 
+$l_{sz}^{-} = w^{+} g\left(0\right) /2$. This leads to an adjustment to a new
+equilibrium for the saturated and unsaturated zones. The surface store
+initially deviated and water is returned from the unsaturated zone, then
+stabalises to it's previous value.
+
+```{r sim3s, echo=FALSE, fig.cap="Evolution of states for Simulation 3", out.width = '80%'}
+##knitr::include_graphics("Fig_states_IR_3.png")
+```
+```{r sim3f, echo=FALSE, fig.cap="Evolution of fluxes for Simulation 3", out.width = '80%'}
+##knitr::include_graphics("Fig_fluxes_IR_3.png")
+```
+
+
+## Going forward...
+
+Maybe you are happy with the above solutions - maybe not.
+
+As the above simulation indicate this can reach a steady state
+where the HSU is "full" in the sense that there is no storage deficit, but not
+all the available subsurface is involved in lateral flow. If the HSU is driven
+only from above ($l_{sf}$ or $p$) this indicates that
+the maximum vertical flux in a saturated subsurface ($a/T_d$) is less then the
+potential maximum lateral flux $w^{+}g\left(0\right)$. This may place a
+perceptual limit on the parameter ranges.
+
+When $v_{uz}=v_{sz}$ the seperation in the above solution is based on flow direction.
+One alternative is to assume that when $v_{uz}=v_{sz}$ the subsurface is saturated
+therefore the states should switch to $v_{uz}=v_{sz}=0$, making all the water
+in the subsurface available for lateral flow. Altering the model to impliment this and running
+Simulation 3 produces the following plots:
+
+```{r sim3is, echo=FALSE, fig.cap="Evolution of states for Simulation 3 with saturated zone switch", out.width = '80%'}
+##knitr::include_graphics("Fig_states_IR_switch_3.png")
+```
+```{r sim3if, echo=FALSE, fig.cap="Evolution of fluxes for Simulation 3 with saturated zone switch", out.width = '80%'}
+##knitr::include_graphics("Fig_fluxes_IR_switch_3.png")
+```
+
+These results indicate that subsurface flow is prioritised, no surface water is
+created. However rather then coverging to a steady state the solution
+established a stable but cyclic pattern due to the interplay of 
+$q_{uz \rightarrow sz}$ and $l_{sz}$. This would appear undesirable. 
