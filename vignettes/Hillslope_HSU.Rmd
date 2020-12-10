@@ -2,6 +2,7 @@
 title: "The Hillslope HSU"
 output: 
   bookdown::html_document2:
+    base_format: rmarkdown::html_vignette
     number_sections: false
     toc: true
     toc_depth: 2
@@ -314,7 +315,6 @@ the unknown vertical fluxes $r_{* \rightarrow *}$ are
 \Delta x
 \left.r_{uz \rightarrow sz}\right\rvert_{t+\Delta t}
 \right)\right)
-(\#eq:lsz)
 \end{equation}
 
 where

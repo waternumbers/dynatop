@@ -1,6 +1,13 @@
 ---
 title: "Time Delay Channel Routing"
-output: rmarkdown::html_vignette
+output: 
+  bookdown::html_document2:
+    base_format: rmarkdown::html_vignette
+    number_sections: false
+    toc: true
+    toc_depth: 2
+pkgdown:
+  as_is: true
 vignette: >
   %\VignetteIndexEntry{Time Delay Channel Routing}
   %\VignetteEngine{knitr::rmarkdown}
