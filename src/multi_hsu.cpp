@@ -1,4 +1,3 @@
-// #include "gperftools/profiler.h"
 #include "Rcpp.h"
 #include "dsu.h"
 
@@ -40,7 +39,7 @@ void multi_hsu_cpp(IntegerVector id,
   std::vector<hsu> vhsu;
 
   int ip=0, iep=0, idi=0;
-  
+
   for(int ii=0; ii<states.nrow(); ++ii){
     ip = ext_idx(ii,0);
     iep = ext_idx(ii,1);
@@ -57,7 +56,7 @@ void multi_hsu_cpp(IntegerVector id,
 	  );
     vhsu.push_back(h);
   }
-
+    
   // loop data timesteps
   for(int it = 0; it < ext_rec.nrow(); ++it) {
     //Rcout << it << std::endl;
@@ -93,7 +92,7 @@ void multi_hsu_cpp(IntegerVector id,
       state_rec(it) = clone(states);
     }
   }
-  
+
   //Rcout << states(0,0) << std::endl;
 }
 
