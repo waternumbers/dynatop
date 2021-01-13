@@ -69,16 +69,6 @@ void hsu::step(){
       }
       
       // solve root problem
-      // if( hsu::fopt(upr) < 0.0 ){
-	
-      // 	bool tmp_eq = lwr==upr;
-	
-      // 	std::cout << " lwr = " << lwr << " upr = " << upr << " diff " << tmp_eq << std::endl;
-      // 	std::cout << " fsz(l_sz) = " << fsz(l_sz) << " s_uz = " << s_uz << std::endl;
-      // 	std::cout << " fsz(l_szmax) = " << fsz(l_szmax) << std::endl;
-      // 	std::cout << " pos = " << r_uz_pos << " zero = " << r_uz_0 << std::endl;
-      // 	std::cout << "f(cr) " << fcr << " f(lwr) = " << hsu::fopt(lwr) << " f(upr) = " << hsu::fopt(upr) << std::endl;
-      // }
       boost::math::tools::eps_tolerance<double> tol(get_digits);
       boost::uintmax_t it = maxit; // Initally our chosen max iterations, but updated with actual.
       std::pair<double, double> r = boost::math::tools::toms748_solve(boost::bind(&hsu::fopt,this,_1), lwr, upr, tol,it);
@@ -91,11 +81,9 @@ void hsu::step(){
     }
     
     s_sz = hsu::fsz(l_sz);
-    // std::cout << "got here" << max_uz/(t_d*s_sz + Dt) << " " << 1/t_d << std::endl;
     r_uz_sz = std::min( max_uz/(t_d*s_sz + Dt), 1/t_d);
   }
-  //std::cout << max_uz << " " << s_sz << std::endl;
-      
+
   // solve unsaturated zone
   double tuz = r_uz_sz*t_d*s_sz;
   r_rz_uz = (tuz - s_uz)/Dt + r_uz_sz;
@@ -103,8 +91,11 @@ void hsu::step(){
   
   // solve root zone and surface
   r_sf_rz = std::min( r_sf_rz, ((s_rzmax - s_rz)/Dt) + ep - p + r_rz_uz);
-  //std::cout << l_sf_in << " " << r_sf_rz << " " << l_sf << std::endl;
   l_sf = (l_sf + lambda_sf*(l_sf_in - Dx*r_sf_rz)) / (1 + lambda_sf);
+  // this estimate of l_sf seems correct but returns small negative values due
+  // to rounding differences between this expression and computation of r_sf_rz
+  l_sf = std::max(l_sf, 0.0);
+
   s_rz = (s_rz + Dt*(p+r_sf_rz-r_rz_uz)) / (1 + (ep*Dt/s_rzmax)) ;
   et = ep*(s_rz/s_rzmax);
 
