@@ -6,8 +6,8 @@
 using namespace Rcpp;
 
 // multi_hsu_cpp
-void multi_hsu_cpp(IntegerVector id, NumericMatrix states, NumericMatrix properties, List flow_dir, IntegerMatrix ext_idx, IntegerVector channel_id, NumericVector channel_area, IntegerVector channel_ext_idx, NumericMatrix ext_rec, NumericMatrix channel_inflow, LogicalVector keep_states, List state_rec, double timestep, int n_sub_step);
-RcppExport SEXP _dynatop_multi_hsu_cpp(SEXP idSEXP, SEXP statesSEXP, SEXP propertiesSEXP, SEXP flow_dirSEXP, SEXP ext_idxSEXP, SEXP channel_idSEXP, SEXP channel_areaSEXP, SEXP channel_ext_idxSEXP, SEXP ext_recSEXP, SEXP channel_inflowSEXP, SEXP keep_statesSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP) {
+void multi_hsu_cpp(IntegerVector id, NumericMatrix states, NumericMatrix properties, List flow_dir, IntegerMatrix ext_idx, IntegerVector channel_id, NumericVector channel_area, IntegerVector channel_ext_idx, NumericMatrix ext_rec, NumericMatrix channel_inflow, LogicalVector keep_states, List state_rec, double timestep, int n_sub_step, bool approx_soln);
+RcppExport SEXP _dynatop_multi_hsu_cpp(SEXP idSEXP, SEXP statesSEXP, SEXP propertiesSEXP, SEXP flow_dirSEXP, SEXP ext_idxSEXP, SEXP channel_idSEXP, SEXP channel_areaSEXP, SEXP channel_ext_idxSEXP, SEXP ext_recSEXP, SEXP channel_inflowSEXP, SEXP keep_statesSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP, SEXP approx_solnSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< IntegerVector >::type id(idSEXP);
@@ -24,7 +24,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< List >::type state_rec(state_recSEXP);
     Rcpp::traits::input_parameter< double >::type timestep(timestepSEXP);
     Rcpp::traits::input_parameter< int >::type n_sub_step(n_sub_stepSEXP);
-    multi_hsu_cpp(id, states, properties, flow_dir, ext_idx, channel_id, channel_area, channel_ext_idx, ext_rec, channel_inflow, keep_states, state_rec, timestep, n_sub_step);
+    Rcpp::traits::input_parameter< bool >::type approx_soln(approx_solnSEXP);
+    multi_hsu_cpp(id, states, properties, flow_dir, ext_idx, channel_id, channel_area, channel_ext_idx, ext_rec, channel_inflow, keep_states, state_rec, timestep, n_sub_step, approx_soln);
     return R_NilValue;
 END_RCPP
 }
@@ -41,6 +42,27 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type r_uz_sz_0(r_uz_sz_0SEXP);
     multi_hsu_cpp_init(id, states, properties, flow_dir, s_rz_0, r_uz_sz_0);
     return R_NilValue;
+END_RCPP
+}
+// start_profiler
+SEXP start_profiler(SEXP str);
+RcppExport SEXP _dynatop_start_profiler(SEXP strSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< SEXP >::type str(strSEXP);
+    rcpp_result_gen = Rcpp::wrap(start_profiler(str));
+    return rcpp_result_gen;
+END_RCPP
+}
+// stop_profiler
+SEXP stop_profiler();
+RcppExport SEXP _dynatop_stop_profiler() {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    rcpp_result_gen = Rcpp::wrap(stop_profiler());
+    return rcpp_result_gen;
 END_RCPP
 }
 // single_hsu_cpp
@@ -60,8 +82,10 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_dynatop_multi_hsu_cpp", (DL_FUNC) &_dynatop_multi_hsu_cpp, 14},
+    {"_dynatop_multi_hsu_cpp", (DL_FUNC) &_dynatop_multi_hsu_cpp, 15},
     {"_dynatop_multi_hsu_cpp_init", (DL_FUNC) &_dynatop_multi_hsu_cpp_init, 6},
+    {"_dynatop_start_profiler", (DL_FUNC) &_dynatop_start_profiler, 1},
+    {"_dynatop_stop_profiler", (DL_FUNC) &_dynatop_stop_profiler, 0},
     {"_dynatop_single_hsu_cpp", (DL_FUNC) &_dynatop_single_hsu_cpp, 6},
     {NULL, NULL, 0}
 };
