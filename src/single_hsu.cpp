@@ -26,6 +26,8 @@ void single_hsu_cpp(NumericMatrix state_rec,
   double Dt = timestep / (double)n_sub_step;
   Rcout<< Dt <<std::endl;
 
+  std::vector<flink> tmp;
+  
   // initialise the hsu
   hsu h(states[0],states[1],states[2],states[3],
   	ext[0],ext[1],ext[2],ext[3],
@@ -34,7 +36,7 @@ void single_hsu_cpp(NumericMatrix state_rec,
   	properties[5],
   	properties[6],
   	properties[7],properties[8],
-  	Dt
+  	Dt, tmp
   	);
 
   // loop data timesteps
