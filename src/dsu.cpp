@@ -24,6 +24,7 @@ hsu::hsu(double& l_sf_, double& s_rz_, double& s_uz_, double& l_sz_,
   lambda_szmax = hsu::flambda_sz(l_szmax);
   lambda_sf = (c_sf*Dt)/Dx;
   n_link = links.size();
+  s_sz = hsu::fopt(l_sz);
   //std::cout << lambda_sf << std::endl;
 }
 
@@ -44,14 +45,9 @@ void hsu::step(){
   // maximum possible flow rate from uz to sz
   double r_uz_pos = std::min( 1/t_d , max_uz/Dt );
   // max rate before sz=0
-  double r_uz_0 = ( (1+lambda_szmax)*l_szmax - l_sz - lambda_szmax*l_sz_in ) /(lambda_szmax*Dx); //  (lambda_szmax + lambda_szmax*(l_szmax - l_sz_in) - l_sz)/Dx;
-  
-  //std::cout << "Dx " << Dx << std::endl;
-  //std::cout << "lambda_szmax " << lambda_szmax << std::endl;
-  //						  std::cout << "l_szmax " << l_szmax << std::endl;
-  //						  std::cout << "l_sz " << l_sz << std::endl;
+  double r_uz_0 = ( (1+lambda_szmax)*l_szmax - l_sz - lambda_szmax*l_sz_in ) /(lambda_szmax*Dx);
 	
-  double s_sz = 0.0;
+  //double s_sz = 0.0;
   if( r_uz_0 <= r_uz_pos ){
     // then sz=0
     r_uz_sz = r_uz_0;
@@ -131,21 +127,15 @@ void hsu::astep(){
   double r_uz_pos = std::min( 1/t_d , max_uz/Dt );
   // max rate before sz=0
   double r_uz_0 = (1/(alpha*Dx))*(1+(alpha*l_szmax) - (l_sz/l_szmax) - (alpha*l_sz_in));
-  
-  //std::cout << "Dx " << Dx << std::endl;
-  //std::cout << "lambda_szmax " << lambda_szmax << std::endl;
-  //						  std::cout << "l_szmax " << l_szmax << std::endl;
-  //						  std::cout << "l_sz " << l_sz << std::endl;
 
-  double s_sz = 0.0;
+  //double s_sz = 0.0;
   if( r_uz_0 <= r_uz_pos ){
     // then sz=0
     r_uz_sz = r_uz_0;
     l_sz = l_szmax ;
     s_sz = 0.0;
   }else{
-    // use approximate solution
-    s_sz = hsu::fsz(l_sz); // storage based on previous flow
+    // use approximate solution  based on previous storage
     r_uz_sz = std::min(max_uz / (t_d*s_sz + Dt),1/t_d); // flow based on current storage
     // solve for l_sz
     double gamma = alpha*(l_sz_in + Dx*r_uz_sz) - 1;
@@ -218,11 +208,20 @@ void hsu::init(double& s_rz_0, double& r_uz_sz_0){
 
   // out flux under steady state
   l_sz = l_sz_in + Dx*r_uz_sz_0;
+  
   if(l_sz > l_szmax ){
     l_sz = l_szmax;
+    s_sz = 0.0;
     s_uz = 0.0;
   }else{
-    double s_sz = hsu::fsz(l_sz);
+    s_sz = hsu::fsz(l_sz);
     s_uz = std::min(s_sz,r_uz_sz_0*t_d*s_sz);
+  }
+
+  // tranfer on the outflow
+  double q_sf = w*l_sf;
+  double q_sz = w*l_sz;
+  for(uint i =0; i<n_link; ++i){
+    links[i].eval( q_sf, q_sz );
   }
 }

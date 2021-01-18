@@ -34,7 +34,7 @@ private:
   double l_sz_in=-99.0, l_sf_in=-99.0;
 
   // // internal fluxes and maximum values of stores
-  double max_uz = 0.0, r_sf_rz=0.0, r_rz_uz=0.0, r_uz_sz=0.0, et=0.0;
+  double max_uz = 0.0, r_sf_rz=0.0, r_rz_uz=0.0, r_uz_sz=0.0, et=0.0, s_sz=-99.0;
   
   // parameters of the root finding
   const boost::uintmax_t maxit = 1000;
