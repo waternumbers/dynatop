@@ -131,7 +131,12 @@ invisible(self) suitable for chaining
 \subsection{Method \code{sim_hillslope()}}{
 Simulate the hillslope output of a dynatop object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim_hillslope(mass_check = FALSE, keep_states = NULL, sub_step = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim_hillslope(
+  mass_check = FALSE,
+  keep_states = NULL,
+  sub_step = NULL,
+  approx_soln = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

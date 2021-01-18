@@ -23,7 +23,7 @@ private:
   double &t_d;
   double &m, &ln_t0;
   const double &Dt;
-  
+
   // // other summaries of properties used internally across multiple functions
   double l_szmax=-99.0, log_l_szmax=-99.0, lambda_szmax=-99.0, lambda_sf=-99.0, cosbeta_m=-99.0;
   double l_sz_in=-99.0, l_sf_in=-99.0;
@@ -55,6 +55,7 @@ public:
       double& m_, double& ln_t0_,
       double& timestep_);
   void step();
+  void astep();
   std::vector<double> get_flux();
   std::vector<double> get_q();
   void init(double& s_rz_0, double& r_uz_sz_0);

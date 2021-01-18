@@ -66,7 +66,7 @@ dynatop <- R6::R6Class(
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
         #'
         #' @details Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
-        sim_hillslope = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL){
+        sim_hillslope = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL,approx_soln=FALSE){
              if(mass_check){
                 ## TODO add a mass check
                 warning("Hillslope mass check not yet implimented")
@@ -99,7 +99,7 @@ dynatop <- R6::R6Class(
             keep_states <- keep_states[keep_states %in% private$time_series$index]
                         
             ## simulate
-            private$sim_hs(mass_check,keep_states,sub_step[1],use_R)
+            private$sim_hs(mass_check,keep_states,sub_step[1],approx_soln)
 
             invisible(self)
         },
@@ -643,7 +643,7 @@ dynatop <- R6::R6Class(
         },
         ## ###############################
         ## function to perform simulations
-        sim_hs = function(mass_check,keep_states,sub_step, use_R){
+        sim_hs = function(mass_check,keep_states,sub_step,approx_soln){
             
             ## compute time substep
             if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
@@ -693,7 +693,8 @@ dynatop <- R6::R6Class(
                           keep_states,
                           private$time_series$state_record,
                           as.numeric(ts$step),
-                          as.integer(ts$n_sub_step)
+                          as.integer(ts$n_sub_step),
+                          as.logical(approx_soln)
                           )
                                   
             ## ## tidy up dummy input

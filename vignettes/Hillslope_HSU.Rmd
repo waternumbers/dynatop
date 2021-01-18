@@ -525,6 +525,85 @@ evaluating $\left. \lambda_{sz}\right\rvert_{t+\Delta t} > 0$ using $\left. l_{s
 \right\rvert_{t}$ rather then $\left. l_{sz}
 \right\rvert_{t + \Delta t}$ to give an explicit estimate of $c_{sz}$
 
+# Going further with Exponential Transmissivity
+
+The numerical solution above requires the solution of a well defined numerical
+problem. replacing this with a single calculation offers the possibility of
+significantly speeding up simulations of the model.
+
+Using the exponential transmissity profile defined in the previous section it
+is possible to determine that
+\begin{equation}
+r^{0}_{uz \rightarrow sz} = \frac{1}{\alpha \Delta x}\left(
+1 + \alpha l_{szmax} -
+\frac{\left.l_{sz}\right\rvert_{t}}{l_{szmax}} -
+\frac{\alpha}{w}\left. q^{-}_{sz} \right\rvert_{t+\Delta t}
+\right)
+\end{equation}
+
+The solution to Case 1 is straightforward. Case 2 requires the
+solution of the original implicit approximation which can be expressed as
+\begin{equation}
+\left. l_{sz} \right\rvert_{t+\Delta t} + \alpha \left. l_{sz}^2 \right\rvert_{t+\Delta t}=
+\left. l_{sz} \right\rvert_{t} +
+\alpha \left. l_{sz} \right\rvert_{t+\Delta t} \left(
+\frac{ \left. q_{sz}^{-} \right\rvert_{t+\Delta t} }{w} +
+\Delta x
+\left.r_{uz \rightarrow sz}\right\rvert_{t+\Delta t}
+\right)
+\end{equation}
+
+which is complex due to the dependence of 
+$\left.r_{uz \rightarrow sz}\right\rvert_{t+\Delta t}$ on
+$\left.l_{sz}\right\rvert_{t+\Delta t}$.
+
+A numerically convinient approximation can be produced by considering an explicit
+approximation of $\left.r_{uz \rightarrow sz}\right\rvert_{t+\Delta t}$ given by
+\begin{equation}
+\left.\tilde{r}_{uz \rightarrow sz}\right\rvert_{t+\Delta t} = \min \left(
+\frac{ \left. s_{uz} \right\rvert_{t} + \Delta t r_{rz \rightarrow uz}^{pos}}
+{T_d \left. s_{sz} \right\rvert_{t} + \Delta t},
+\frac{1}{T_d} \right)
+\end{equation}
+Subsitution of this into the implicit approximation gives
+\begin{equation}
+\alpha \left. l_{sz}^2 \right\rvert_{t+\Delta t} - \beta \left. l_{sz}
+\right\rvert_{t+\Delta t} - \left. l_{sz} \right\rvert_{t} = 0 
+\end{equation}
+a quadratic expression in $\left.l_{sz}\right\rvert_{t+\Delta t}$ where
+\begin{equation}
+\beta = \alpha \left(
+\frac{ \left. q_{sz}^{-} \right\rvert_{t+\Delta t} }{w} +
+\Delta x
+\left.\tilde{r}_{uz \rightarrow sz}\right\rvert_{t+\Delta t}
+\right) - 1
+\end{equation}
+
+The solutions of the quadratic are given by
+\begin{equation}
+\frac{\beta \pm \sqrt{ \beta^2 +4\alpha\left. l_{sz} \right\rvert_{t} }}{2\alpha}
+\end{equation}
+Since $\alpha$, $\left. l_{sz} \right\rvert_{t}$ and 
+$\left. l_{sz} \right\rvert_{t + \Delta t}$ are greater then zero only the
+positive root is valid meaning that
+\begin{equation}
+\left. l_{sz} \right\rvert_{t + \Delta t} = \frac{1}{\alpha}\left( \beta +
+\sqrt{ \beta^2 +4\alpha\left. l_{sz} \right\rvert_{t} } \right)
+\end{equation}
+
+Other then evaluating the unsaturated zone storage as
+\begin{equation}
+\left. s_{uz} \right\rvert_{t + \Delta t} = \min\left(
+\left. s_{sz} \right\rvert_{t +\Delta t},
+\left. s_{uz} \right\rvert_{t} + \Delta t r^{pos}_{rz \rightarrow uz}
+- \Delta t \left.\tilde{r}_{uz \rightarrow sz}\right\rvert_{t+\Delta t}
+\right)
+\end{equation}
+the numerical scheme proceeds as before.
+
+
+
+  
 
 # Simulations - TODO
 
@@ -586,33 +665,3 @@ stabalises to it's previous value.
 ##knitr::include_graphics("Fig_fluxes_IR_3.png")
 ```
 
-
-## Going forward...
-
-Maybe you are happy with the above solutions - maybe not.
-
-As the above simulation indicate this can reach a steady state
-where the HSU is "full" in the sense that there is no storage deficit, but not
-all the available subsurface is involved in lateral flow. If the HSU is driven
-only from above ($l_{sf}$ or $p$) this indicates that
-the maximum vertical flux in a saturated subsurface ($a/T_d$) is less then the
-potential maximum lateral flux $w^{+}g\left(0\right)$. This may place a
-perceptual limit on the parameter ranges.
-
-When $v_{uz}=v_{sz}$ the seperation in the above solution is based on flow direction.
-One alternative is to assume that when $v_{uz}=v_{sz}$ the subsurface is saturated
-therefore the states should switch to $v_{uz}=v_{sz}=0$, making all the water
-in the subsurface available for lateral flow. Altering the model to impliment this and running
-Simulation 3 produces the following plots:
-
-```{r sim3is, echo=FALSE, fig.cap="Evolution of states for Simulation 3 with saturated zone switch", out.width = '80%'}
-##knitr::include_graphics("Fig_states_IR_switch_3.png")
-```
-```{r sim3if, echo=FALSE, fig.cap="Evolution of fluxes for Simulation 3 with saturated zone switch", out.width = '80%'}
-##knitr::include_graphics("Fig_fluxes_IR_switch_3.png")
-```
-
-These results indicate that subsurface flow is prioritised, no surface water is
-created. However rather then coverging to a steady state the solution
-established a stable but cyclic pattern due to the interplay of 
-$q_{uz \rightarrow sz}$ and $l_{sz}$. This would appear undesirable. 

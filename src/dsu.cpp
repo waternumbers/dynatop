@@ -26,6 +26,7 @@ hsu::hsu(double& l_sf_, double& s_rz_, double& s_uz_, double& l_sz_,
   //std::cout << lambda_sf << std::endl;
 }
 
+// fully implicit step
 void hsu::step(){
   
   // standardise inflows by width
@@ -35,8 +36,7 @@ void hsu::step(){
   // max downward flux times (superscript pos description)
   r_sf_rz = std::min( k_sf , (l_sf + lambda_sf*l_sf_in)/(Dx*lambda_sf) );
   r_rz_uz = std::max( 0.0 , ((s_rz-s_rzmax)/Dt) + p + r_sf_rz - ep );
-  
-  
+   
   // max volume in unsat from drain down
   max_uz = s_uz + Dt*r_rz_uz;
   
@@ -86,6 +86,68 @@ void hsu::step(){
 
   // solve unsaturated zone
   double tuz = r_uz_sz*t_d*s_sz;
+  r_rz_uz = (tuz - s_uz)/Dt + r_uz_sz;
+  s_uz = tuz;
+  
+  // solve root zone and surface
+  r_sf_rz = std::min( r_sf_rz, ((s_rzmax - s_rz)/Dt) + ep - p + r_rz_uz);
+  l_sf = (l_sf + lambda_sf*(l_sf_in - Dx*r_sf_rz)) / (1 + lambda_sf);
+  // this estimate of l_sf seems correct but returns small negative values due
+  // to rounding differences between this expression and computation of r_sf_rz
+  l_sf = std::max(l_sf, 0.0);
+
+  s_rz = (s_rz + Dt*(p+r_sf_rz-r_rz_uz)) / (1 + (ep*Dt/s_rzmax)) ;
+  et = ep*(s_rz/s_rzmax);
+
+  //std::cout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
+}
+
+
+// The semi implicit step
+void hsu::astep(){
+  
+  // standardise inflows by width
+  l_sf_in = q_sf_in / w;
+  l_sz_in = q_sz_in / w;
+  
+  // max downward flux times (superscript pos description)
+  r_sf_rz = std::min( k_sf , (l_sf + lambda_sf*l_sf_in)/(Dx*lambda_sf) );
+  r_rz_uz = std::max( 0.0 , ((s_rz-s_rzmax)/Dt) + p + r_sf_rz - ep );
+  
+  // max volume in unsat from drain down
+  max_uz = s_uz + Dt*r_rz_uz;
+
+  // could be set during initialisation
+  double alpha = cosbeta_m*Dt/Dx;
+ 
+  // maximum possible flow rate from uz to sz
+  double r_uz_pos = std::min( 1/t_d , max_uz/Dt );
+  // max rate before sz=0
+  double r_uz_0 = (1/(alpha*Dx))*(1+(alpha*l_szmax) - (l_sz/l_szmax) - (alpha*l_sz_in));
+  
+  //std::cout << "Dx " << Dx << std::endl;
+  //std::cout << "lambda_szmax " << lambda_szmax << std::endl;
+  //						  std::cout << "l_szmax " << l_szmax << std::endl;
+  //						  std::cout << "l_sz " << l_sz << std::endl;
+
+  double s_sz = 0.0;
+  if( r_uz_0 <= r_uz_pos ){
+    // then sz=0
+    r_uz_sz = r_uz_0;
+    l_sz = l_szmax ;
+    s_sz = 0.0;
+  }else{
+    // use approximate solution
+    s_sz = hsu::fsz(l_sz); // storage based on previous flow
+    r_uz_sz = std::min(max_uz / (t_d*s_sz + Dt),1/t_d); // flow based on current storage
+    // solve for l_sz
+    double gamma = alpha*(l_sz_in + Dx*r_uz_sz) - 1;
+    l_sz = ( gamma + std::sqrt( std::pow(gamma,2) + 4*alpha*l_sz) )/(2*alpha);
+    s_sz = hsu::fsz(l_sz); // storage based on current flow
+  }
+
+  // solve unsaturated zone
+  double tuz = std::min(s_sz, s_uz + Dt*(r_rz_uz - r_uz_sz));
   r_rz_uz = (tuz - s_uz)/Dt + r_uz_sz;
   s_uz = tuz;
   
