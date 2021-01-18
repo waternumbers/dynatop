@@ -5,6 +5,7 @@
 #include <boost/integer/common_factor.hpp>  
 #include <boost/math/tools/roots.hpp>
 #include <boost/bind.hpp>
+#include "link.h"
 
 class hsu {
 private:
@@ -16,6 +17,10 @@ private:
   double &q_sf_in, &q_sz_in;
   double &p, &ep;
 
+  // outflow redistribution
+  std::vector<flink> &links;
+  uint n_link; // numebr of links
+    
   // //local property variables
   double &w, &Dx, &beta;
   double &c_sf, &k_sf;
@@ -53,7 +58,7 @@ public:
       double& s_rzmax_,
       double& t_d_,
       double& m_, double& ln_t0_,
-      double& timestep_);
+      double& timestep_, std::vector<flink>& links_);
   void step();
   void astep();
   std::vector<double> get_flux();

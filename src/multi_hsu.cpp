@@ -33,29 +33,41 @@ void multi_hsu_cpp(IntegerVector id,
   int maxid = max(id);
   if(max(channel_id)>maxid){ maxid = max(channel_id); }
   maxid +=1;
-  NumericVector q_sf_in(maxid);
-  NumericVector q_sz_in(maxid);
+  std::vector<double> q_sf_in(maxid);
+  std::vector<double> q_sz_in(maxid);
+
+  // convert all flow directions to links - do first to avoid pushback issues?
+  List fd;
+  NumericVector fdf;
+  IntegerVector fdi;
+  std::vector< std::vector<flink> > paul;
+  for(int ii=0; ii<states.nrow(); ++ii){
+    fd = flow_dir(ii);
+    fdi = fd("idx");
+    fdf = fd("frc");
+    std::vector<flink> tmp;
+    for(int i=0; i<fdi.length(); ++i){
+      int j = fdi[i];
+      flink l(fdf[i],q_sf_in[j],q_sz_in[j]);
+      tmp.push_back( l );
+    }
+    paul.push_back(tmp);
+  }
   
   // initialise the hsu
   std::vector<hsu> vhsu;
-  std::vector< std::tuple< std::vector<int>, std::vector<double> > > f_dir;
-
+  //std::vector< std::tuple< std::vector<int>, std::vector<double> > > f_dir;
+  
   int ip=0, iep=0, idi=0;
-
-  List fd; // = flow_dir(ii);
-  //NumericVector fdf; // = fd("frc");
-  //IntegerVector fdi;// = fd("idx");
-
+  
   for(int ii=0; ii<states.nrow(); ++ii){
+    //Rcout << "making hsus " << ii << std::endl;
     ip = ext_idx(ii,0);
     iep = ext_idx(ii,1);
     idi = id[ii];
 
-    fd = flow_dir(ii);
-    //    fdi = fd("idx");
-    //fdf = fd("frc");
-    f_dir.push_back( std::tuple< std::vector<int>, std::vector<double>>(as<std::vector<int>>(fd("idx")), as<std::vector<double>>(fd("frc"))) );
-    
+    //f_dir.push_back( std::tuple< std::vector<int>, std::vector<double>>(as<std::vector<int>>(fd("idx")), as<std::vector<double>>(fd("frc"))) );
+
     hsu h(states(ii,0),states(ii,1),states(ii,2),states(ii,3),
 	  q_sf_in[idi], q_sz_in[idi],ext[ip],ext[iep],
 	  properties(ii,0),properties(ii,1),properties(ii,2),
@@ -63,12 +75,10 @@ void multi_hsu_cpp(IntegerVector id,
 	  properties(ii,5),
 	  properties(ii,6),
 	  properties(ii,7),properties(ii,8),
-	  Dt
+	  Dt, paul[ii]
 	  );
     vhsu.push_back(h);
   }
-
-  std::vector<double> q(2);
   
   // loop data timesteps
   for(int it = 0; it < ext_rec.nrow(); ++it) {
@@ -76,42 +86,38 @@ void multi_hsu_cpp(IntegerVector id,
     ext = ext_rec(it,_) / timestep;
     //Rcout << "ext is " << ext(0) << " " << ext(1) << std::endl;
     for(int nn = 0; nn < n_sub_step; ++nn){
-      q_sf_in.fill(0.0);
-      q_sz_in.fill(0.0);
+      std::fill(q_sf_in.begin(), q_sf_in.end(), 0.0);
+      std::fill(q_sz_in.begin(), q_sz_in.end(), 0.0);
+      //q_sf_in.fill(0.0);
+      //q_sz_in.fill(0.0);
       for(int ii=0; ii<states.nrow(); ++ii){
 	if(approx_soln){
 	  vhsu[ii].astep();
 	}else{
-	  //vhsu[ii].step();
+	  vhsu[ii].step();
 	}
-	//List fd = flow_dir(ii);
-	//NumericVector fdf = fd("frc");
-	//IntegerVector fdi = fd("idx");
-	//fd = flow_dir(ii);
-	//fdf = fd("frc");
-	//fdi = fd("idx");
-	std::vector<double> &fdf = std::get<1>(f_dir[ii]);
-	std::vector<int> &fdi = std::get<0>(f_dir[ii]);
-	q = vhsu[ii].get_q();
+	//std::vector<double> &fdf = std::get<1>(f_dir[ii]);
+	//std::vector<int> &fdi = std::get<0>(f_dir[ii]);
+	//q = vhsu[ii].get_q();
 	// if(ii < 1){
 	//   std::vector<double> tmp_flux = vhsu[ii].get_flux();
 	//   std::cout << ii << " " << it << " " << q[0] << " " << q[1] << std::endl;
 	// 								std::cout << ii << " " << it << " " << tmp_flux[0] << " " << tmp_flux[1] << " " << tmp_flux[2] << std::endl;
 	// }
-	for(uint jj=0; jj < fdi.size(); ++jj){
-	  int &fdi_ = fdi[jj];
-	  double &fdf_ = fdf[jj];
-	  // if(ii<1){
-	  //   std::cout << ii << " " << it << " " << fdi_ << " " << fdf_ << " " << q_sf_in[fdi_] << " " << q_sz_in[fdi_] << std::endl;
+	// for(uint jj=0; jj < fdi.size(); ++jj){
+	//   int &fdi_ = fdi[jj];
+	//   double &fdf_ = fdf[jj];
+	//   // if(ii<1){
+	//   //   std::cout << ii << " " << it << " " << fdi_ << " " << fdf_ << " " << q_sf_in[fdi_] << " " << q_sz_in[fdi_] << std::endl;
 	    
-	  // }
-	  q_sf_in[fdi_] += q[0]*fdf_;
-	  q_sz_in[fdi_] += q[1]*fdf_;
-	  // if(ii<1){
-	  //   std::cout << ii << " " << it << " " << fdi_ << " " << fdf_ << " " << q_sf_in[fdi_] << " " << q_sz_in[fdi_] << " " << q[0] << " " << q[1] << std::endl;
+	//   // }
+	//   q_sf_in[fdi_] += q[0]*fdf_;
+	//   q_sz_in[fdi_] += q[1]*fdf_;
+	//   // if(ii<1){
+	//   //   std::cout << ii << " " << it << " " << fdi_ << " " << fdf_ << " " << q_sf_in[fdi_] << " " << q_sz_in[fdi_] << " " << q[0] << " " << q[1] << std::endl;
 	    
-	  // }
-	}
+	//   // }
+	// }
       }
     }
     // populate channel inflow
@@ -155,16 +161,32 @@ void multi_hsu_cpp_init(IntegerVector id,
   maxid +=1;
   NumericVector q_sf_in(maxid);
   NumericVector q_sz_in(maxid);
+
+  // convert all flow directions to links - do first to avoid pushback issues?
+  List fd;
+  NumericVector fdf;
+  IntegerVector fdi;
+  std::vector< std::vector<flink> > paul;
+  for(int ii=0; ii<states.nrow(); ++ii){
+    fd = flow_dir(ii);
+    fdi = fd("idx");
+    fdf = fd("frc");
+    std::vector<flink> tmp;
+    for(int i=0; i<fdi.length(); ++i){
+      int j = fdi[i];
+      flink l(fdf[i],q_sf_in[j],q_sz_in[j]);
+      tmp.push_back( l );
+    }
+    paul.push_back(tmp);
+  }
   
   // initialise the hsu
   std::vector<hsu> vhsu;
 
   int idi = -99;
-  
+
   for(int ii=0; ii<states.nrow(); ++ii){
     idi = id[ii];
-    
-
     
     hsu h(states(ii,0),states(ii,1),states(ii,2),states(ii,3),
 	  q_sf_in[idi], q_sz_in[idi],ext[0],ext[1],
@@ -173,7 +195,7 @@ void multi_hsu_cpp_init(IntegerVector id,
 	  properties(ii,5),
 	  properties(ii,6),
 	  properties(ii,7),properties(ii,8),
-	  Dt
+	  Dt, paul[ii]
 	  );
     vhsu.push_back(h);
   }
