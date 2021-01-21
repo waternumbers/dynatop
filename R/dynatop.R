@@ -299,7 +299,8 @@ dynatop <- R6::R6Class(
 
             ## order the channel and hillslope by band
             ## This is important since the C++ code just goes down the rows..
-            model$hillslope <- model$hillslope[order(model$hillslope$band),]
+            model$hillslope <-
+                model$hillslope[order(model$hillslope$band,decreasing=TRUE),]
             ##model$channel <- model$channel[order(model$channel$band),]
             
             ## Process Hillslope            
