@@ -100,7 +100,7 @@ void hsu::step(){
   double q_sf = w*l_sf;
   double q_sz = w*l_sz;
   for(uint i =0; i<n_link; ++i){
-    links[i].eval( q_sf, q_sz );
+    links[i].eval(q_sf, q_sz );
   }
   //std::cout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
 }
@@ -162,7 +162,7 @@ void hsu::astep(){
   double q_sf = w*l_sf;
   double q_sz = w*l_sz;
   for(uint i =0; i<n_link; ++i){
-    links[i].eval( q_sf, q_sz );
+    links[i].eval(q_sf, q_sz );
   }
   //std::cout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
 }
@@ -222,6 +222,6 @@ void hsu::init(double& s_rz_0, double& r_uz_sz_0){
   double q_sf = w*l_sf;
   double q_sz = w*l_sz;
   for(uint i =0; i<n_link; ++i){
-    links[i].eval( q_sf, q_sz );
+    links[i].eval(q_sf, q_sz );
   }
 }

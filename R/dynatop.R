@@ -200,39 +200,33 @@ dynatop <- R6::R6Class(
        },
         #' @description Plot a current state of the system
         #' @param state the name of the state to be plotted
-        plot_state = function(state){
+        plot_state = function(state,add_channel=TRUE){
             if( is.null(private$model$map) ){
-                stop("The model contains no maps of HSU locations")
+                stop("The model contains no map of HSU locations")
+            }
+            if( !file.exists(private$model$map) ){ stop("The model map file is missing") }
+            if( add_channel & !file.exists(private$model$channel) ){ warnings("File containing the channel network does not exist") }
+            
+            if(!(state%in%colnames(private$hillslope$states))){
+                stop("Model state does not exist")
             }
             
             if( !("raster" %in% rownames(installed.packages())) ){
                 stop( "The raster package is required for plotting the maps of states - please install or add to libPath" )
             }
-
-            if(!(state%in%colnames(private$hillslope$states))){
-                stop("Model state does not exist")
-            }
             
             state <- match.arg(state,colnames(private$hillslope$states))
 
             x <- private$hillslope$states[,state]
-            x <- x[paste(private$model$map$hillslope)]
+            rst <- raster::raster(private$model$map)
+            rst <- raster::subs(rst, data.frame(as.integer(names(x)),x))
+
+            raster::plot( rst)
+            if( add_channel & file.exists(private$model$channel) ){
+                chn <- raster::shapefile(private$model$channel)
+                raster::plot(chn,add=TRUE)
+            }
             
-            ## tmp <- private$model_description$hillslope
-            ## if( !all(tmp$name[tmp$role=="state"] %in% names(private$model$hillslope)) ){
-            ##     stop("Model states are not initialised")
-            ## }
-            
-            ## state <- match.arg(state,tmp$name[tmp$role=="state"])
-            ## x <- setNames(
-            ##     private$extract_states(private$model$hillslope,"hillslope")[,state],
-            ##     private$model$hillslope$id)
-            ## x <- x[paste(private$model$map$hillslope)]
-            
-            raster::plot( raster::raster(crs = private$model$map$scope$crs,
-                                 ext = private$model$map$scope$ext,
-                                 resolution = private$model$map$scope$res,
-                                 vals = x) )
         }
         
     ),
@@ -651,6 +645,21 @@ dynatop <- R6::R6Class(
                 stop("sub_step should be a single finite value")
             }
             ts <- private$comp_ts(sub_step)
+
+            ## check the Courant Numbers
+            courant_sf <- private$hillslope$properties[,"c_sf"]*ts$sub_step/private$hillslope$properties[,"delta_x"]
+            tmp <- (exp(private$hillslope$properties[,"ln_t0"])*sin(2*private$hillslope$properties[,"beta"]))/(2*private$hillslope$properties[,"m"]) ## maximum saturated zone velocity
+            courant_sz <- tmp*(ts$sub_step/private$hillslope$properties[,"delta_x"])
+            if( any(courant_sf>0.7) ){
+                warning("Courant number for surface velocity is over 0.7\n",
+                        "Suggest maximum sub step is: ", floor( min( 0.7*private$hillslope$properties[,"delta_x"]/private$hillslope$properties[,"c_sf"]) ),"seconds")
+            }
+            
+            if( any(courant_sz>0.7) ){
+                warning("Courant number for saturated zone velocity is over 0.7\n",
+                        "Suggest maximum sub step is: ", floor( min( 0.7*private$hillslope$properties[,"delta_x"]/tmp) ),"seconds")
+            }
+            rm(tmp)
             
             ## Logical if states to be kept and store
             keep_states <- private$time_series$index %in% keep_states
@@ -678,7 +687,7 @@ dynatop <- R6::R6Class(
                                                          length(private$model$channel$id))
             colnames(private$time_series$channel_inflow) <- private$model$channel$id
                         
-            
+
             
             ## use the Cpp version
             multi_hsu_cpp(private$hillslope$id,
