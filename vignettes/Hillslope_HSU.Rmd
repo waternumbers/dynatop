@@ -123,7 +123,7 @@ The governing ODE can be written as
 \end{equation}
 where $r_{sf \rightarrow rz} \leq k_{sf}$.
 
-Assuming a constant celerity the lateral flux is proportional to storage and taking $l_{sf} = c_{sf}ss_{sf}$ gives
+Assuming a constant celerity the lateral flux is proportional to storage and taking $l_{sf} = c_{sf}s_{sf}$ gives
 \begin{equation}
 \frac{1}{c_{sf}} \frac{dl_{sf}}{dt} = -\frac{dl_{sf}}{dx} - r_{sf \rightarrow rz}
 \end{equation}
@@ -173,8 +173,9 @@ The governing ODE is written as
 \end{equation}
 
 If water is able to path freely to the saturated zone then it flows at the rate
-$\frac{s_{uz}}{T_d s_{sz}}$. If $A_{sz}=A_{uz}$ this is interpreted to mean
-that the flow rate is $\frac{1}{T_d}$. In this situation the subsurface below
+$\frac{s_{uz}}{T_d s_{sz}}$. If $s_{sz}=s_{uz}=0$ this is interpreted to mean
+that the flow rate is $\frac{1}{T_d}$. 
+In this situation that $s_{sz}=s_{uz}$ the subsurface below
 the root zone can be considered saturated, as in there is no further available
 storage for water, but seperated into parts: an upper part with vertical
 flow and a lower part with lateral flux.
@@ -182,7 +183,7 @@ flow and a lower part with lateral flux.
 It is possible that $r_{uz \rightarrow sz}$ is
 constrained by the ability of the saturated zone to receive water. If
 this is the case $r_{uz \rightarrow sz}$ occurs at the maximum
-possible rate and $r_{rz \rightarrow uz}$ limited to ensure that $A_{uz} \leq A_{sz}$.
+possible rate and $r_{rz \rightarrow uz}$ limited to ensure that $s_{uz} \leq s_{sz}$.
 
 ## Saturated zone
 
@@ -202,41 +203,41 @@ lateral flux ($s_{sz}=0$) and $s_{sz}$ since $s = s_{sat}-s_{sz}$ giving
 \begin{equation}
 \frac{ds_{sz}}{dt} = \frac{dl_{sz}}{dx} - r_{uz \rightarrow sz}
 \end{equation}
-
-The Kinematic approximation then depends upon the specification of a
-transmissivity profile linking $s_{sz}$ and $l_{sz}$. This is taken to be a one-to-one montotonically
-decreasing, continuously differentiable function 
-$g: \mathcal{R^{+}}\rightarrow \mathcal{R}^{+}$ which returns the lateral flow on
-a unit width such that $l_{sz} = g\left(s_{sz}\right)$. 
-The this implies a maximum lateral flux $l_{szmax}=g\left(0\right)$.
-
 The relationship between $l_{sz}$ and $s_{sz}$ gives the kinematic
-velocity
+velocity or celerity
 \begin{equation}
-c_{sz} = -\frac{dl_{sz}}{ds_{sz}} = -\frac{d}{ds_{sz}}g\left(s_{sz}\right)
+c_{sz} = -\frac{dl_{sz}}{ds_{sz}}
 \end{equation}
 This allows the governing equation for the saturated zone to be written
 \begin{equation}
 \frac{1}{c_{sz}}\frac{dl_{sz}}{dt} = -\frac{dl_{sz}}{dx} + r_{uz \rightarrow sz}
 \end{equation}
 
+The Kinematic approximation then depends upon the specification of a
+transmissivity profile linking $s_{sz}$, $l_{sz}$ and $c_{sz}$. This is taken
+to be a one-to-one, continuously differentiable function 
+$g: \mathcal{R^{+}}\rightarrow \mathcal{R}^{+}$ which returns the lateral flow on
+a unit width such that $l_{sz} = g\left(s_{sz}\right)$ which satifies
+\begin{equation}
+c_{sz} = -\frac{dl_{sz}}{ds_{sz}} = -\frac{d}{ds_{sz}}g\left(s_{sz}\right) > 0
+\end{equation}
+and 
+\begin{equation}
+\frac{dc_{sz}}{ds_{sz}} < 0
+\end{equation}
 
-<!-- While the above equation is mass conservative it is not momentum -->
-<!-- conservative. Specifically $r_{uz \rightarrow sz}$ is not perpendicular -->
-<!-- to the direction of $l_{sz}$ (which is parrallel to the surface slope). A -->
-<!-- control volume based assessment of the momentum change gives the condition -->
-<!-- \begin{equation} -->
-<!-- \frac{d}{dx}\left(l_{sz}u_{sz}\right) = \frac{r^2}{w}\sin\beta -->
-<!-- \end{equation} -->
-<!-- but use of this is not considered further. -->
+The later two conditions on the first and second differential fo $g$ imply
+that both the $l_{sz}$ and $c_{sz}$ increase with decreasing $s_{sz}$ taking
+there maximums $l_{szmax}$ and $c_{szmax}$ when $s_{sz}=0$.
 
-# Solution for the HSU hillslope
+# Numerical Solution for the hillslope HRU
 
-Given no analytical solution yet exists allowing for the evaluation of the
+No analytical solution yet exists allowing for the evaluation of the
 properties at every cross section within the hillslope a numerical
 approximation is required.
 
-To basic approaches could be used. One is to integrate over the length of the
+Two basic approaches could be used for deriving a numerical solution. The
+first is to integrate over the length of the
 hillslope. This allows for a fully mass conservative solution at the cost of
 loosing some properties relating to the length and shape of the hillslope. An
 alternative method utilised both here and in the original Dynamic TOPMODEL
@@ -245,33 +246,45 @@ hillslope. This solution maintains the length properties of the hillslope
 while providing adequate information for the transfer of water within the
 catchment.
 
-Evaluating the infinitesimal slab at the foot of
-the hillslope requires using approximations to the gradients of the lateral
-fluxes along the
-hillslope when only the total inflows are known.
+In the remainder of this section a fully implicit numerical scheme is presented. The
+inherent stability of this scheme comes at the cost of solving a single, well
+defined, zero crossing problem.
 
-For the surface zone the governing ODE can be rewritten in terms of the 
-cross section and finite difference gradient representation as
+The basis of the solution is that a gravity driven system will maximise
+the downward flow of water within each timestep of size $\Delta t$. To this
+end the solution is developed in four stages. First the implicit
+approximations to the partial differential equations are given. Following this
+the maximum downwards fluxes between the four layers are derived. The third
+stage develops the solution to the saturated zone while the final stage
+cascading any throttling of the downward flux back to the surface.
+
+## Implicit apporximations to the PDEs
+
+Evaluating the infinitesimal slab at the foot of the hillslope requires using
+approximations to the gradients  with repect to time but also with respect to the lateral
+fluxes along the hillslope. 
+
+When only the total inflows $q^{-}_{sf}$ and $q^{-}_{sz}$ to the hillsope are
+known we take the unit width inflows to be $l^{-}_{sf} = \frac{q^{-}_{sf}}{w}$
+and $l^{-}_{sz} = \frac{q^{-}_{sz}}{w}$. A finite difference gradient
+representation gives for the surface zone
+
 \begin{equation}
-\frac{w}{c_{sf}}\frac{dl_{sf}}{dt} = \frac{1}{\Delta x}\left(q_{sf}^{-} - wl_{sf}\right) - wr_{sf \rightarrow rz}
-\end{equation}
-or more conviently
-\begin{equation}
-\frac{1}{c_{sf}}\frac{dl_{sf}}{dt} = \frac{1}{\Delta x}\left(\frac{q_{sf}^{-}}{w} - l_{sf}\right) - r_{sf \rightarrow rz}
+\frac{1}{c_{sf}}\frac{dl_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} - l_{sf}\right) - r_{sf \rightarrow rz}
 \end{equation}
 
 A similar approach applied to the saturated zone yields
 \begin{equation}
 \frac{1}{c_{sz}}\frac{dl_{sz}}{dt} = \frac{1}{\Delta
-x}\left(\frac{q_{sz}^{-}}{w} - l_{sz}\right) + r_{uz \rightarrow sz}
+x}\left(l_{sz}^{-} - l_{sz}\right) + r_{uz \rightarrow sz}
 \end{equation}
 
 # Numerical Scheme
 
 In the following section an implicit numerical scheme is derived for a time step
 $\Delta t$. 
-The basis of the solution is that a gravity driven system will maximise
-the downward flow of water within each timestep.
+
+
 
 The implicit approximations to the four ODE defining the model using
 the unknown vertical fluxes $r_{* \rightarrow *}$ are

@@ -17,7 +17,3 @@ stop_profiler <- function() {
     .Call(`_dynatop_stop_profiler`)
 }
 
-single_hsu_cpp <- function(state_rec, ext_rec, flux_rec, properties, timestep, n_sub_step) {
-    invisible(.Call(`_dynatop_single_hsu_cpp`, state_rec, ext_rec, flux_rec, properties, timestep, n_sub_step))
-}
-
