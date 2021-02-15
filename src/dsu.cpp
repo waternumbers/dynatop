@@ -8,7 +8,8 @@ hsu::hsu(double& l_sf_, double& s_rz_, double& s_uz_, double& l_sz_,
 	 double& s_rzmax_,
 	 double& t_d_,
 	 double& m_, double& ln_t0_,
-	 double& Dt_, std::vector<flink>& links_):
+	 double& Dt_, std::vector<flink>& links_,
+	 double& q_sf_out_,double& q_sz_out_ ):
   l_sf(l_sf_), s_rz(s_rz_), s_uz(s_uz_), l_sz(l_sz_),
   q_sf_in(q_sf_in_), q_sz_in(q_sz_in_),p(p_), ep(ep_),
   w(w_), Dx(Dx_), beta(beta_), // properties of HSU [m m rad]
@@ -16,7 +17,8 @@ hsu::hsu(double& l_sf_, double& s_rz_, double& s_uz_, double& l_sz_,
   s_rzmax(s_rzmax_),  // properties of root zone
   t_d(t_d_),  // properties of unsat zone
   m(m_), ln_t0(ln_t0_),  // properties of sat zone
-  Dt(Dt_), links(links_)
+  Dt(Dt_), links(links_),
+  q_sf_out(q_sf_out_), q_sz_out(q_sz_out_)
 {
   l_szmax = std::exp(ln_t0)*std::sin(beta);
   log_l_szmax = ln_t0 + std::log( std::sin(beta) );
@@ -97,10 +99,10 @@ void hsu::step(){
   et = ep*(s_rz/s_rzmax);
 
   // tranfer on the outflow
-  double q_sf = w*l_sf;
-  double q_sz = w*l_sz;
+  q_sf_out = w*l_sf;
+  q_sz_out = w*l_sz;
   for(uint i =0; i<n_link; ++i){
-    links[i].eval(q_sf, q_sz );
+    links[i].eval(); //q_sf_out, q_sz_out );
   }
   //std::cout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
 }
@@ -159,10 +161,10 @@ void hsu::astep(){
   et = ep*(s_rz/s_rzmax);
 
   // tranfer on the outflow
-  double q_sf = w*l_sf;
-  double q_sz = w*l_sz;
+  q_sf_out = w*l_sf;
+  q_sz_out = w*l_sz;
   for(uint i =0; i<n_link; ++i){
-    links[i].eval(q_sf, q_sz );
+    links[i].eval();//q_sf, q_sz );
   }
   //std::cout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
 }
@@ -219,9 +221,9 @@ void hsu::init(double& s_rz_0, double& r_uz_sz_0){
   }
 
   // tranfer on the outflow
-  double q_sf = w*l_sf;
-  double q_sz = w*l_sz;
-  for(uint i =0; i<n_link; ++i){
-    links[i].eval(q_sf, q_sz );
-  }
+  q_sf_out = w*l_sf;
+  q_sz_out = w*l_sz;
+  //for(uint i =0; i<n_link; ++i){
+  //  links[i].eval(q_sf, q_sz );
+  //}
 }

@@ -7,6 +7,13 @@
 #include <boost/bind.hpp>
 #include "link.h"
 
+typedef struct flowlink {
+  double * frc;
+  double * q_sf_in;
+  double * q_sz_in;
+};
+
+
 class hsu {
 private:
 
@@ -15,19 +22,22 @@ private:
 
   // lateral flux values [m3/s]
   double &q_sf_in, &q_sz_in;
+  double &q_sf_out, &q_sz_out;
   double &p, &ep;
+  
 
   // outflow redistribution
   std::vector<flink> &links;
-  uint n_link; // numebr of links
-    
+  uint n_link; // number of links
+  
+  
   // //local property variables
   double &w, &Dx, &beta;
   double &c_sf, &k_sf;
   double &s_rzmax;
   double &t_d;
   double &m, &ln_t0;
-  const double &Dt;
+  double &Dt;
 
   // // other summaries of properties used internally across multiple functions
   double l_szmax=-99.0, log_l_szmax=-99.0, lambda_szmax=-99.0, lambda_sf=-99.0, cosbeta_m=-99.0;
@@ -58,7 +68,8 @@ public:
       double& s_rzmax_,
       double& t_d_,
       double& m_, double& ln_t0_,
-      double& timestep_, std::vector<flink>& links_);
+      double& timestep_, std::vector<flink>& links_,
+      double& q_sf_out_,double& q_sz_out_ );
   void step();
   void astep();
   std::vector<double> get_flux();

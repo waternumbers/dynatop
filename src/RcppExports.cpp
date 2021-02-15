@@ -65,28 +65,12 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// single_hsu_cpp
-void single_hsu_cpp(NumericMatrix state_rec, NumericMatrix ext_rec, NumericMatrix flux_rec, NumericVector properties, double timestep, int n_sub_step);
-RcppExport SEXP _dynatop_single_hsu_cpp(SEXP state_recSEXP, SEXP ext_recSEXP, SEXP flux_recSEXP, SEXP propertiesSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type state_rec(state_recSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type ext_rec(ext_recSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type flux_rec(flux_recSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type properties(propertiesSEXP);
-    Rcpp::traits::input_parameter< double >::type timestep(timestepSEXP);
-    Rcpp::traits::input_parameter< int >::type n_sub_step(n_sub_stepSEXP);
-    single_hsu_cpp(state_rec, ext_rec, flux_rec, properties, timestep, n_sub_step);
-    return R_NilValue;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dynatop_multi_hsu_cpp", (DL_FUNC) &_dynatop_multi_hsu_cpp, 15},
     {"_dynatop_multi_hsu_cpp_init", (DL_FUNC) &_dynatop_multi_hsu_cpp_init, 6},
     {"_dynatop_start_profiler", (DL_FUNC) &_dynatop_start_profiler, 1},
     {"_dynatop_stop_profiler", (DL_FUNC) &_dynatop_stop_profiler, 0},
-    {"_dynatop_single_hsu_cpp", (DL_FUNC) &_dynatop_single_hsu_cpp, 6},
     {NULL, NULL, 0}
 };
 
