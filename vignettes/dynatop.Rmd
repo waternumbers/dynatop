@@ -46,6 +46,22 @@ vignette](https://waternumbers.github.io/dynatop/articles/The_Model_Object.html)
 [dynatopGIS](https://waternumbers.github.io/dynatopGIS) package
 can be used for constructing models. 
 
+# Setting map locations
+
+While not required for simulations if the locations of the files containing
+the locations of the HSU's are provided the states can be visualed within
+dynatop.
+
+The locations of the files are set in the `map` element of the model. For this
+example the maps are located within the `extdata` directory of the package and
+can be set using commands
+
+```{r set_map}
+swindale_model$map$hillslope <- system.file("extdata","Swindale.tif",package="dynatop",mustWork=TRUE)
+swindale_model$map$channel <- system.file("extdata","channel.shp",package="dynatop",mustWork=TRUE)
+swindale_model$map$channel_id <- system.file("extdata","channel_id.tif",package="dynatop",mustWork=TRUE)
+```
+
 # Preparing input data
 
 The input to the model is expected to take the form of an ```xts``` object with
@@ -169,7 +185,6 @@ plot(out[,c('Flow','sim_1','sim_2')])
 
 ## Mass balance
 
-*TODO: Not yet implimented v0.2*
 It is possible to output the mass balance checks for each iteration of the
 simulation by running the `sim` or individual methods with the `mass_check`
 flag set to `TRUE`. The returned matrix gives the volumes in the states at the

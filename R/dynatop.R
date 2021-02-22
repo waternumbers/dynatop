@@ -15,11 +15,11 @@ dynatop <- R6::R6Class(
         #' @return invisible(self) suitable for chaining
         #'
         #' @details This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
-        initialize = function(model, use_states=FALSE, drop_map=FALSE, verbose=FALSE, delta = 1e-13){
+        initialize = function(model, use_states=FALSE, verbose=FALSE, delta = 1e-13){
             ## check model will fail if there is an error
             private$check_model(model,use_states,verbose,delta)
             ## convert model here
-            private$digest_model(model,use_states,drop_map)
+            private$digest_model(model,use_states)
             invisible(self)
         },
         #' @description Adds observed data to a dynatop object
@@ -64,23 +64,16 @@ dynatop <- R6::R6Class(
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
         #' @param mass_check Flag indicating is a record of mass balance errors shuld be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
+        #' @param approx_soln Logical indicating if the approximate solution should be used
         #'
         #' @details Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
         sim_hillslope = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL,approx_soln=FALSE){
-             if(mass_check){
-                ## TODO add a mass check
-                warning("Hillslope mass check not yet implimented")
-            }
+
             ## check presence of states
-            tmp <- private$model_description$hillslope
-            if( !all(is.finite(private$hillslope$states)) ){
+            if( !all(is.finite(private$states$hillslope)) ){
                 stop("Model states are either no initialised or have non-finite values")
             }
             
-            ## if( !all(tmp$name[tmp$role=="state"] %in% names(private$model$hillslope)) ){
-            ##     stop("Model states are not initialised")
-            ## }
-
             if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
                 stop("sub_step should be a single finite value")
             }
@@ -107,6 +100,11 @@ dynatop <- R6::R6Class(
         #' @param mass_check Flag indicating is a record of mass balance errors shuld be kept
         #' @return invisible(self) for chaining
         sim_channel=function(mass_check=FALSE){
+           
+            if(!private$info$can_solve_channel){
+                stop("Cannot simulate channel - check connectivity")
+            }
+            
             if(mass_check){
                 ## TODO add a mass check
                 warning("Channel mass check not yet implimented")
@@ -120,7 +118,7 @@ dynatop <- R6::R6Class(
                 stop("Insufficent data to perform a simulation")
             }
             ##TODO check initiaalised
-            
+           
             private$sim_ch()
 
             invisible(self)
@@ -159,7 +157,7 @@ dynatop <- R6::R6Class(
         },
         #' @description Return flow at the gauges as an xts series
         #' @param gauge names of gauges to return (default is all gauges)
-        get_gauge_flow = function(gauge=colnames(private$time_series$gauge_flow)){
+        get_gauge_flow = function(gauge=colnames(private$time_series$gauge_flow)){           
             gauge <- match.arg(gauge,colnames(private$time_series$gauge_flow),
                                several.ok=TRUE)
             xts::xts(private$time_series$gauge_flow[,gauge,drop=FALSE],
@@ -182,10 +180,10 @@ dynatop <- R6::R6Class(
         },
         #' @description Return the model
         get_mass_errors = function(){
-            if( !("mass_errors" %in% names(private$time_series)) ){
+            if( !("mass_balance" %in% names(private$time_series)) ){
                 stop("Mass errors are not available")
             }
-            xts::xts(private$time_series$mass_errors,
+            xts::xts(private$time_series$mass_balance,
                      order.by=private$time_series$index)
         },
         #' @description Return states
@@ -195,48 +193,47 @@ dynatop <- R6::R6Class(
                 return( setNames(private$time_series$state_record,
                                  private$time_series$index) )
             }else{
-                return( private$hillslope$states )
+                return( private$states$hillslope )
             }
        },
-        #' @description Plot a current state of the system
-        #' @param state the name of the state to be plotted
-        plot_state = function(state,add_channel=TRUE){
-            if( is.null(private$model$map) ){
-                stop("The model contains no map of HSU locations")
-            }
-            if( !file.exists(private$model$map) ){ stop("The model map file is missing") }
-            if( add_channel & !file.exists(private$model$channel) ){ warnings("File containing the channel network does not exist") }
-            
-            if(!(state%in%colnames(private$hillslope$states))){
-                stop("Model state does not exist")
-            }
-            
-            if( !("raster" %in% rownames(installed.packages())) ){
-                stop( "The raster package is required for plotting the maps of states - please install or add to libPath" )
-            }
-            
-            state <- match.arg(state,colnames(private$hillslope$states))
-
-            x <- private$hillslope$states[,state]
-            rst <- raster::raster(private$model$map)
-            rst <- raster::subs(rst, data.frame(as.integer(names(x)),x))
-
-            raster::plot( rst)
-            if( add_channel & file.exists(private$model$channel) ){
-                chn <- raster::shapefile(private$model$channel)
-                raster::plot(chn,add=TRUE)
-            }
-            
-        }
-        
+       #' @description Plot a current state of the system
+       #' @param state the name of the state to be plotted
+       #' @param add_channel Logical indicating if the channel should be added to the plot
+       plot_state = function(state,add_channel=TRUE){
+           
+           if( is.null(private$model$map$hillslope) ){
+               stop("The model contains no map of HSU locations")
+           }
+           if( !file.exists(private$model$map$hillslope) ){ stop("The model map file is missing") }
+           if( add_channel & !file.exists(private$model$map$channel) ){ warnings("File containing the channel network does not exist") }
+           
+           if(!(state%in%colnames(private$states$hillslope))){
+               stop("Model state does not exist")
+           }
+           
+           if( !("raster" %in% rownames(installed.packages())) ){
+               stop( "The raster package is required for plotting the maps of states - please install or add to libPath" )
+           }
+           
+           x <- private$states$hillslope[,state]
+           rst <- raster::raster(private$model$map$hillslope)
+           rst <- raster::subs(rst, data.frame(as.integer(names(x)),x))
+           
+           raster::plot( rst)
+           if( add_channel & file.exists(private$model$map$channel) ){
+               chn <- raster::shapefile(private$model$map$channel)
+               raster::plot(chn,add=TRUE)
+           }
+           
+       }
+       
     ),
     private = list(
         ## stores of data
-        version = "0.2.0.9001",
-        hillslope = list(), #storage for unpacked hillslope properties used in simulation
-        channel = list(), #storage for unpacked channel properties use in simulation
+        version = "0.2.0.9020",
+        states = list(), #storage for unpacked states used in simulation
         time_series = list(),
-        info = list(),
+        info = list(can_sim_channel=FALSE),
         model = NULL,
         ## decribes a model tables
         ## roles are either
@@ -246,29 +243,33 @@ dynatop <- R6::R6Class(
         ## - state
         ## - output_label
         model_description = list(
-            hillslope = data.frame(name = c("id","atb_bar","s_bar","area","delta_x","width","flow_dir", # attributes associated with catchment HSU
+            hillslope = data.frame(name = c("id","atb_bar","s_bar","area","delta_x", # attributes associated with catchment HSU
                                             "precip","pet", # names of input series
                                             "r_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","c_sf", # parameter names
                                             "l_sf","s_rz","s_uz","l_sz"), # states
-                                   role = c(rep("attribute",7),
+                                   role = c(rep("attribute",5),
                                             rep("data_series",2),
                                             rep("parameter",7),
                                             rep("state",4)),
-                                   type = c("integer",rep("numeric",5),rep("list",1),
+                                   type = c("integer",rep("numeric",4),
                                             rep("character",2),
                                             rep("character",7),
                                             rep("numeric",4)),
                                    stringsAsFactors=FALSE),
-            channel = data.frame(name= c("id","area","length","flow_dir", # states
+            channel = data.frame(name= c("id","area","length", # states
                                          "precip","pet", # inputs
                                          "v_ch"), # parameters
-                                 role = c(rep("attribute",4),
+                                 role = c(rep("attribute",3),
                                           rep("data_series",2),
                                           rep("parameter",1)),
-                                 type = c("integer",rep("numeric",2),"list",
+                                 type = c("integer",rep("numeric",2),
                                           rep("character",2),
                                           rep("character",1)),
                                  stringsAsFactors=FALSE),
+            flow_direction = data.frame(name= c("from","to","frc"),
+                                  role = rep("attribute",3),
+                                  type = c(rep("integer",2),"numeric"),
+                                  stringsAsFactors=FALSE),
             point_inflow = data.frame(name = c("name","id","fraction"),
                                       type=c("character","integer","numeric"),
                                       role = c("data_series",rep("attribute",2)),
@@ -284,60 +285,30 @@ dynatop <- R6::R6Class(
         ),
         ## convert the form of the model for internal storage
         ## we presume the model has been checked!!
-        digest_model = function(model,use_states,drop_map){
+        digest_model = function(model,use_states){
 
-            ## remove the map if required
-            if(drop_map){
-                model["map"] <- list(NULL)
-            }
-
-            ## order the channel and hillslope by band
+            ## order the channel and hillslope by id
             ## This is important since the C++ code just goes down the rows..
             model$hillslope <-
-                model$hillslope[order(model$hillslope$band,decreasing=TRUE),]
-            ##model$channel <- model$channel[order(model$channel$band),]
+                model$hillslope[order(model$hillslope$id,decreasing=TRUE),]
+            model$channel <- model$channel[order(model$channel$id,decreasing=TRUE),]
+            model$flow_direction <- model$flow_direction[order(model$flow_direction$from,decreasing=TRUE),]
             
-            ## Process Hillslope            
+            ## Process Hillslope states            
             ## process states from hillslope table
             ## must match column order in C++ code
             ## l_sf, s_rz, s_uz, l_sz
-            nm <- private$model_description$hillslope$name[private$model_description$hillslope$role=="state"]
-            
+            nm <- private$model_description$hillslope$name[private$model_description$hillslope$role=="state"] 
             if(use_states){
-                private$hillslope$states <- as.matrix(model$hillslope[,nm])
+                private$states$hillslope <- as.matrix(model$hillslope[,nm])
             }else{
-                private$hillslope$states<- matrix(as.numeric(NA),nrow(model$hillslope),length(nm))
+                private$states$hillslope <- matrix(as.numeric(NA),nrow(model$hillslope),length(nm))
             }
-            dimnames(private$hillslope$states) <- list(model$hillslope$id,nm)
+            dimnames(private$states$hillslope) <- list(model$hillslope$id,nm)
 
-            ## process properties from hillslope
-            ## must match column order in C++ code
-            ## width, delta_x, beta, c_sf, k_sf,s_rzmax,t_d, m,ln_t0
-            private$hillslope$properties <- matrix(as.numeric(NA),nrow(model$hillslope),9)
-            private$hillslope$properties[,1] <- as.numeric(model$hillslope$width)
-            private$hillslope$properties[,2] <- as.numeric(model$hillslope$delta_x)
-            private$hillslope$properties[,3] <- as.numeric(atan(model$hillslope$s_bar))
-            private$hillslope$properties[,4] <- as.numeric(model$param[model$hillslope$c_sf])
-            private$hillslope$properties[,5] <- as.numeric(model$param[model$hillslope$r_sfmax])
-            private$hillslope$properties[,6] <- as.numeric(model$param[model$hillslope$s_rzmax])
-            private$hillslope$properties[,7] <- as.numeric(model$param[model$hillslope$t_d])
-            private$hillslope$properties[,8] <- as.numeric(model$param[model$hillslope$m])
-            private$hillslope$properties[,9] <- as.numeric(model$param[model$hillslope$ln_t0])
-            dimnames(private$hillslope$properties) <- list(
-                model$hillslope$id,
-                c("width","delta_x","beta","c_sf","k_sf","s_rzmax","t_d","m","ln_t0"))
-            
-            ## Add flow direction
-            private$hillslope$flow_dir <- model$hillslope$flow_dir
-
-            ## Add index
-            private$hillslope$id <- as.integer(model$hillslope$id)
-            
             
             ## Process channel
             ## nothing to process - could add call to init_ch here
-            private$channel$id <- as.integer(model$channel$id)
-            private$channel$area <- as.numeric(model$channel$area)
             
             ## work out all the required input series
             data_series <- list()
@@ -362,11 +333,6 @@ dynatop <- R6::R6Class(
             ## include variables that don;t need transformation
             out <- private$model
             
-            ## add map if required
-            if(!drop_map){
-                out$map <- NULL
-            }
-
             ## add hillslope states
             out$hillslope[,colnames(private$hillslope$states)] <- private$hillslope$states
             
@@ -493,76 +459,72 @@ dynatop <- R6::R6Class(
                 }
             }
             
-            ## checks on hillslope redistribution
-            ## TODO ad check that going down band?
-            
-            ds_hsu <- do.call(c,lapply(model$hillslope$flow_dir,function(x){x$idx}))
-            ds_sum <- sapply(model$hillslope$flow_dir,function(x){sum(x$frc)})
-            ds_sum <- abs(ds_sum-1)<delta
-            if(!all(ds_hsu %in% all_hsu)){
-                stop("hillslope flow resistirbution is not valid: unexpected recieving HSUs")
+            ## checks on flow directions
+            if(!all( model$flow_direction$from %in% all_hsu )){
+                stop("Flow link for unspecified HSU")
             }
-            if(!all(ds_sum)){
-                stop(paste("Hillslope flow resistirbution is not valid: Fractions do not sum to one for HSUs",paste(model$hillslope$id[!ds_sum],collapse=", ")))
+            if(!all( model$flow_direction$to %in% all_hsu )){
+                stop("Flow link to unspecified HSU")
+            }
+            if(!all( model$flow_direction$to < model$flow_direction$from )){
+                stop("Flow link going to a HSU with higher id - out of order")
             }
             
-            ## specific checks on channel network connectivity - used in channel simulation
-            chn_con <- lapply(model$channel$flow_dir,function(x){x$idx})
+            tmp <- tapply(model$flow_direction$frc,model$flow_direction$from,sum)
+            if(!(all(abs(tmp-1)<delta))){
+                stop("Flow direction fractions in the flow of HSU id's do not sum to 1: ",
+                     paste(names(tmp[tmp!=1]),collapse=", "))
+            }
 
-            n_chn_con <- sapply(chn_con,length) # number of connections
-            is_outlet <- sapply(chn_con,is.null) # identify outlets
-            is_in_network <- sapply(chn_con,function(x,y){all(x%in%y)},y=model$channel$id)
-                                    
+            ## specific check on hillslope
+            if(!all(model$hillslope$id %in% model$flow_direction$from)){
+                stop("Hillslope HSU cannot be an outlet or a sink")
+            }
+            
+            ## specific checks on channel network connectivity
+            n_chn_con <- setNames(rep(0,length(model$channel$id)),
+                                  model$channel$id)
+            tmp <- table(model$flow_direction$from)
+            nm <- intersect(paste(model$channel$id),names(tmp))
+            n_chn_con[nm] <- tmp[nm]
+            
+
             if( any(n_chn_con>1) ){
-                stop("Only channel HSUs routing to single channel HSUs are supported",
-                     "\n",
-                     "Channels HSUs with multiple downstream connections are ids: ",
-                     paste(mdl$channel$id[n_chn_con>1],collapse=", "))
+                warning("Only channel HSUs routing to single channel HSUs are supported",
+                        "\n",
+                        "Channels HSUs with multiple downstream connections are ids: ",
+                        paste(names(n_chn_con[n_chn_con>1]),collapse=", "))
+                private$info$can_solve_channel <- FALSE
+            }else{
+                private$info$can_solve_channel <- TRUE
             }
-            if( !all(is_in_network) ){
-                ##do.call(c,chn_con) %in% model$channel$id) ){
-                stop("Channels routing to non channel HSUs are ",
-                     paste(mdl$channel$id[!is_in_network],collapse=", "),
-                     "\n",
-                     "Set next_id to NA to represent an outflow")
+
+            ## trim to just links from channels
+            cfd <- model$flow_direction[ model$flow_direction$from %in% model$channel$id,]
+            if(!all(cfd$to %in% model$channel$id)){
+                stop("Channel's must flow to channel's")
             }
-            
-            to_outlet <- is_outlet
-            ## loop channels at top of network
-            for(ii in setdiff(model$channel$id,do.call(c,chn_con))){
-                ## set up a record of place in search down tree
-                in_search <- rep(FALSE,length(model$channel$id))
-                jj <- which(model$channel$id==ii)
-                while( !in_search[jj] & # fails if loop
-                       !to_outlet[jj] ){ # fails at outlet
-                           in_search[jj] <- TRUE
-                           jj <- which(model$channel$id==chn_con[[jj]])
-                       }
-                if(to_outlet[jj]){
-                    to_outlet[in_search] <- TRUE
-                }
+
+            #browser()
+            is_outlet <- names(n_chn_con[n_chn_con==0]) # no flow from it so outlet
+            to_outlet <- rep(FALSE,nrow(cfd))
+            to_outlet[cfd$to %in% is_outlet] <- TRUE
+            chng <- TRUE
+            while(chng){
+                idx <- which( cfd$to %in% cfd$from[to_outlet] )
+                chng <- any(to_outlet[idx]==FALSE)
+                to_outlet[idx] <- TRUE
             }
-            if( any(!to_outlet) ){
-                stop(paste("The following channels do not drain to an outlet:",
-                           paste(model$channel$id[!to_outlet],collapse=" ")))
-            }
-            
-            ## verbose printing of head and tail channels
-            if(verbose){
-                ## print out head channels
-                message(paste("The head channels are:",
-                              paste(setdiff(model$channel$id,chn_con),
-                                    collapse=", "),
-                              sep="\n"))
-                ## print out tail channels
-                message(paste("The channels with outfalls:",
-                              paste(model$channel$id[is.na(chn_con)],
-                                    collapse=", "),
-                              sep="\n"))
+            if(!all(to_outlet)){
+                stop("Some channels do not reach an outlet")
             }
 
             ## TODO add checks to map
-            
+            tmp <- sapply(model$map,file.exists)
+            if(!all(tmp)){
+                warning("The following maps are missing:\n",
+                         paste(names(tmp[!tmp]),collapse="n"))
+            }
             
             ## if here we have passed all tests then return
             invisible( self )
@@ -597,22 +559,9 @@ dynatop <- R6::R6Class(
             ## Assumes all checks passed
             private$time_series$obs_data <- as.matrix(obs)
             private$time_series$index <- index(obs)
-
-            ## set the data series index for the hillslope
-            ## index is in C++ numbering starting from 0
-            idx <- setNames((1:ncol(obs))-1,names(obs))
-            private$hillslope$ext_idx <- matrix(as.integer(NA),nrow(private$model$hillslope),2)
-            private$hillslope$ext_idx[,1] <- idx[ private$model$hillslope$precip ]
-            private$hillslope$ext_idx[,2] <- idx[ private$model$hillslope$pet ]
-            private$channel$ext_idx <- as.integer( idx[ private$model$channel$precip ] )
-
         },
         ## compute the simulation timestep
         comp_ts = function(sub_step=NULL){
-
-            ## TODO move or replicate check in simulation call
-            if( (!is.null(sub_step) & !is.numeric(sub_step)) | length(sub_step)>1 ){ stop("sub_step should be a single numeric value or NULL") }
-            
             ## work out time steps for use in simulation
             ts <- list()
             ts$step <- diff(as.numeric(private$time_series$index[1:2])) # seconds
@@ -625,16 +574,25 @@ dynatop <- R6::R6Class(
         ## Initialise the states
         init_hs = function(initial_recharge){
             ## TODO check initial recharge
-
             frz <- pmin(1,pmax(0,private$model$param[private$model$hillslope$s_rz0]))
-            initial_recharge <- rep_len(initial_recharge,nrow(private$model$hillslope))
-            
-            multi_hsu_cpp_init(private$hillslope$id,
-                               private$hillslope$states,
-                               private$hillslope$properties,
-                               private$hillslope$flow_dir,
-                               frz,initial_recharge);
-            
+            q0 <- rep(as.numeric(initial_recharge),length(frz))
+            #browser()
+            dt_init(as.integer(private$model$hillslope$id-1),
+                    private$states$hillslope,
+                    as.numeric(private$model$hillslope$area),
+                    as.numeric(private$model$hillslope$delta_x),
+                    as.numeric(atan(private$model$hillslope$s_bar)),
+                    as.numeric( private$model$param[private$model$hillslope$c_sf] ),
+                    as.numeric( private$model$param[private$model$hillslope$s_rzmax] ),
+                    as.numeric( private$model$param[private$model$hillslope$t_d] ),
+                    as.numeric( private$model$param[private$model$hillslope$m] ),
+                    as.numeric( private$model$param[private$model$hillslope$ln_t0] ),
+                    as.integer(private$model$channel$id-1),
+                    as.integer( private$model$flow_direction[,"from"]-1 ),
+                    as.integer( private$model$flow_direction[,"to"]-1 ),
+                    as.numeric( private$model$flow_direction[,"frc"] ),
+                    as.numeric(frz),
+                    as.numeric(q0))
         },
         ## ###############################
         ## function to perform simulations
@@ -647,20 +605,36 @@ dynatop <- R6::R6Class(
             ts <- private$comp_ts(sub_step)
 
             ## check the Courant Numbers
-            courant_sf <- private$hillslope$properties[,"c_sf"]*ts$sub_step/private$hillslope$properties[,"delta_x"]
-            tmp <- (exp(private$hillslope$properties[,"ln_t0"])*sin(2*private$hillslope$properties[,"beta"]))/(2*private$hillslope$properties[,"m"]) ## maximum saturated zone velocity
-            courant_sz <- tmp*(ts$sub_step/private$hillslope$properties[,"delta_x"])
-            if( any(courant_sf>0.7) ){
+            csf <- as.numeric( private$model$param[private$model$hillslope$c_sf] )
+            td <- as.numeric( private$model$param[private$model$hillslope$t_d] )
+            m <- as.numeric( private$model$param[private$model$hillslope$m] )
+            ln_t0 <- as.numeric( private$model$param[private$model$hillslope$ln_t0] )
+            b <- atan(private$model$hillslope$s_bar)
+            Dx <- as.numeric(private$model$hillslope$delta_x)
+
+            ## check surface courant
+            tmp <- csf*ts$sub_step/Dx
+            if( any(tmp>0.7) ){
                 warning("Courant number for surface velocity is over 0.7\n",
-                        "Suggest maximum sub step is: ", floor( min( 0.7*private$hillslope$properties[,"delta_x"]/private$hillslope$properties[,"c_sf"]) ),"seconds")
+                        "Suggest maximum sub step is: ",
+                        floor( min( 0.7*Dx/csf )),"seconds")
             }
             
-            if( any(courant_sz>0.7) ){
-                warning("Courant number for saturated zone velocity is over 0.7\n",
-                        "Suggest maximum sub step is: ", floor( min( 0.7*private$hillslope$properties[,"delta_x"]/tmp) ),"seconds")
+            tmp <- (exp(ln_t0)*sin(2*b))/(2*m) ## maximum saturated zone velocity
+            if( any((tmp*(ts$sub_step/Dx))>0.7) ){
+                warning("Courant number for surface velocity is over 0.7\n",
+                        "Suggest maximum sub step is: ",
+                        floor( min( 0.7*Dx/tmp) ),"seconds")
             }
+            
             rm(tmp)
-            
+
+            ## set up the input locations - recall tables are sorted in reverse id order
+            pidx <- match(c(rev(private$model$channel$precip),rev(private$model$hillslope$precip)),
+                          colnames(private$time_series$obs))
+            epidx <- match(c(rev(private$model$channel$pet),rev(private$model$hillslope$pet)),
+                          colnames(private$time_series$obs))
+
             ## Logical if states to be kept and store
             keep_states <- private$time_series$index %in% keep_states
             if(any(keep_states)){
@@ -669,208 +643,315 @@ dynatop <- R6::R6Class(
                 private$time_series$state_record <- NULL
             }
 
-            ## ## Initialise the mass error store
-            ## if(mass_check){
-            ##     ## set to as.numeric(NA) so type picked up by Rcpp
-            ##     private$time_series$mass_errors <- matrix(as.numeric(NA),nrow(private$time_series$obs),6)
-            ##     colnames(private$time_series$mass_errors) <-
-            ##         c("initial_state","final_state","p","e_t",
-            ##           "channel_inflow","error")
-            ## }else{
-            ##     ## initialise so can pass correctly
-            ##     private$time_series$mass_errors <- matrix(-Inf,1,1)
-            ## }
-            
+            ## Initialise the mass error store
+            private$time_series$mass_balance <- matrix(as.numeric(NA),nrow(private$time_series$obs),4)
+            colnames(private$time_series$mass_balance) <-
+                c("initial_state","e_t","p","channel_inflow")
+
             ## make local copy of channel_inflow
             private$time_series$channel_inflow <- matrix(as.numeric(NA),
                                                          nrow(private$time_series$obs),
                                                          length(private$model$channel$id))
             colnames(private$time_series$channel_inflow) <- private$model$channel$id
-                        
-
             
-            ## use the Cpp version
-            multi_hsu_cpp(private$hillslope$id,
-                          private$hillslope$states,
-                          private$hillslope$properties,
-                          private$hillslope$flow_dir,
-                          private$hillslope$ext_idx,
-                          private$channel$id,
-                          private$channel$area,
-                          private$channel$ext_idx,
-                          private$time_series$obs,
+            s <- private$states$hillslope
+
+            if(approx_soln){
+                dt_approx(as.integer(private$model$hillslope$id)-1,
+                          private$states$hillslope,
+                          as.numeric(private$model$hillslope$area),
+                          as.numeric(private$model$hillslope$delta_x),
+                          b,csf,
+                          as.numeric( private$model$param[private$model$hillslope$r_sfmax] ),
+                          as.numeric( private$model$param[private$model$hillslope$s_rzmax] ),
+                          td,m,ln_t0,
+                          as.integer(private$model$channel$id - 1),
+                          as.numeric(private$model$channel$area),
+                          as.integer( pidx-1 ),
+                          as.integer( epidx-1 ),
+                          as.integer( private$model$flow_direction$from-1 ),
+                          as.integer( private$model$flow_direction$to-1 ),
+                          as.numeric( private$model$flow_direction$frc ),
+                          as.matrix(private$time_series$obs),
                           private$time_series$channel_inflow,
-                          keep_states,
+                          private$time_series$mass_balance,
+                          as.logical( keep_states ),
                           private$time_series$state_record,
-                          as.numeric(ts$step),
-                          as.integer(ts$n_sub_step),
-                          as.logical(approx_soln)
-                          )
-                                  
-            ## ## tidy up dummy input
-            ## if( !mass_check ){
-            ##     private$time_series$mass_errors <- NULL
-            ## }
+                          ts$step,
+                          ts$n_sub_step)
+            }else{
+                dt_implicit(as.integer(private$model$hillslope$id)-1,
+                            private$states$hillslope,
+                            as.numeric(private$model$hillslope$area),
+                            as.numeric(private$model$hillslope$delta_x),
+                            b,csf,
+                            as.numeric( private$model$param[private$model$hillslope$r_sfmax] ),
+                            as.numeric( private$model$param[private$model$hillslope$s_rzmax] ),
+                            td,m,ln_t0,
+                            as.integer(private$model$channel$id - 1),
+                            as.numeric(private$model$channel$area),
+                            as.integer( pidx-1 ),
+                            as.integer( epidx-1 ),
+                            as.integer( private$model$flow_direction$from-1 ),
+                            as.integer( private$model$flow_direction$to-1 ),
+                            as.numeric( private$model$flow_direction$frc ),
+                            as.matrix(private$time_series$obs),
+                            private$time_series$channel_inflow,
+                            private$time_series$mass_balance,
+                            as.logical( keep_states ),
+                            private$time_series$state_record,
+                            ts$step,
+                            ts$n_sub_step) 
+            }
+            
+            ## tidy up dummy input
+            if( !mass_check ){
+                private$time_series$mass_balance <- NULL
+            }
             
         },
-        ## ## convert a data frame to a storage list
-        ## extract_states = function(obj,type=names(private$model_description)){
-        ##     type <- match.arg(type)
-
-        ##     stt <- private$model_description[[type]]
-        ##     stt <- c("id",stt$name[stt$role=="state"])
-        ##     out <- as.data.frame( obj[stt], stringsAsFactors=FALSE )
-        ##     return(out)
-        ## },
         ## #############################
         init_ch = function(){
-            #browser()
             channel <- private$model$channel
             gauge <- private$model$gauge
             point_inflow <- private$model$point_inflow
             
-            ## check each channel has only one down stream neighbour
-            ## Done it check_model
-
-            ## check channel HSU id numbers are 1,2,3,....
-            
-            if( !all(channel$id %in% 1:length(channel$id)) ){
-                stop("Channel id should be numbered 1,2,.. with no gaps")
-            }
-            
             ## get the channels downstream of each id
-            chn_con <- sapply(channel$flow_dir,
-                              function(x){if(is.null(x)){-99}else{x$idx}})
-            chn_con[channel$id] <- unname(chn_con)
+            chn_con <- sapply(channel$id,
+                              function(x){
+                                  idx <- private$model$flow_direction$from==x
+                                  if(any(idx)){
+                                      return(private$model$flow_direction$to[idx])
+                                  }else{return(NA)
+                                  }
+                              })
+            chn_con <- paste(chn_con)
+            names(chn_con) <- paste(channel$id)
+
+            ##chn_con <- sapply(channel$flow_direction,
+            ##                  function(x){if(is.null(x)){-99}else{x$idx}})
+            ##chn_con[channel$id] <- unname(chn_con)
             
             ## compute the time to travel down each reach
             
-            reach_time <- unname( channel$length / private$model$param[channel$v_ch] )
-            reach_time[channel$id] <- unname(reach_time)
-
+            reach_time <- setNames( channel$length / private$model$param[channel$v_ch],
+                                   channel$id )
 
             linear_time <- setNames(rep(list(NULL),length(gauge$name)),
                                     gauge$name)
             
             ## Loop gauges
-            for(rw in 1:length(gauge$name)){
-                time_to_head <- rep(NA,length(channel$id))
-                ## add gaguge reach is in
-                ii <- gauge$id[rw]
-                time_to_head[ii] <- reach_time[ii]*gauge$fraction[rw]
-                ## get upstream reaches
-                idx <- which(chn_con==ii)
-                ## loop upstream
+            for(gnm in 1:length(gauge$name)){
+                ## initialise diffuse input matrix
+                df <- matrix(as.numeric(NA),nrow(channel),3)
+                colnames(df) <- c("min_time","max_time","frc")
+                rownames(df) <- channel$id
+                ## start with location of the gauge
+                ii <- paste(gauge$id[gnm])
+                df[ii,] <- c(0,reach_time[ii]*gauge$fraction[gnm],gauge$fraction[gnm])
+                idx <- names(chn_con[chn_con==ii]) ## the names of the reaches upstream
                 while(length(idx)>0){
-                    idx_list <- list()
-                    cnt <- 1
-                    for(ii in idx){
-                        time_to_head[ii] <- reach_time[ii] + time_to_head[ chn_con[ii] ]
-                        idx_list[[cnt]] <- which(chn_con==ii)
-                        cnt <- cnt+1
-                    }
-                    idx <- do.call(c,idx_list)
-                }
-                ## initialise gauge timeing object
-                tmp <- list(diffuse=list(),
-                            point=list())
-
-                ## work out for diffuse inputs
-                for(ii in which(is.finite(time_to_head))){
-                    tmp$diffuse[[paste(ii)]] <- list(head_to_gauge=time_to_head[ii],
-                                                     reach_time = reach_time[ii])
+                    ii <- idx[1]
+                    tmp <- df[chn_con[ii],"max_time"]
+                    df[ii,] <- c(tmp,tmp+reach_time[ii],1)
+                    idx <- c(idx[-1],names(chn_con[chn_con==ii]))
                 }
 
-                ## work out for points
-                if(length(point_inflow$name)>0){
-                    for(ii in 1:length(point_inflow$name)){
-                        jj <- point_inflow$id[ii]
-                        if( is.finite( time_to_head[ jj ] ) ){
-                            delta <- time_to_head[jj]* point_inflow$fraction[ii]
-                            tmp$point[[ point_inflow$name[ii] ]] <- list(
-                                head_to_gauge = time_to_head[jj] - delta,
-                                reach_time = 0)
-                        }
+                ## initialise the point inflow matrix
+                pnt <- matrix(as.numeric(NA),nrow(point_inflow),3)
+                colnames(pnt) <- c("min_time","max_time","frc")
+                rownames(pnt) <- point_inflow$name
+                for(pnm in rownames(pnt)){
+                    ii <- paste( point_inflow$id[point_inflow$name==pnm] )
+                    if(is.finite(df[ii,"frc"])){
+                        f <- point_inflow$fraction[point_inflow$name==pnm]
+                        delta <- df[ii,"max_time"] - (df[ii,"max_time"]-df[ii,"min_time"])*f
+                        pnt[pnm,] <- c(delta,delta,1)
                     }
                 }
-                linear_time[[gauge$name[rw]]] <- tmp
+
+                linear_time[[gnm]] <- list(diffuse=df,point=pnt)
             }
             
-            private$channel$linear_time <- linear_time
+            ##     colnames(pnt)
+                             
+            ##         ii <- as.integer(iis)
+                    
+            ##     time_to_head <- rep(NA,length(channel$id))
+            ##     ## add gaguge reach is in
+            ##     ii <- gauge$id[rw]
+            ##     time_to_head[ii] <- reach_time[ii]*gauge$fraction[rw]
+            ##     ## get upstream reaches
+            ##     idx <- which(chn_con==ii)
+            ##     ## loop upstream
+            ##     while(length(idx)>0){
+            ##         idx_list <- list()
+            ##         cnt <- 1
+            ##         for(ii in idx){
+            ##             time_to_head[ii] <- reach_time[ii] + time_to_head[ chn_con[ii] ]
+            ##             idx_list[[cnt]] <- which(chn_con==ii)
+            ##             cnt <- cnt+1
+            ##         }
+            ##         idx <- do.call(c,idx_list)
+            ##     }
+            ##     ## initialise gauge timeing object
+            ##     tmp <- list(diffuse=list(),
+            ##                 point=list())
+
+            ##     ## work out for diffuse inputs
+            ##     for(ii in which(is.finite(time_to_head))){
+            ##         tmp$diffuse[[paste(ii)]] <- list(head_to_gauge=time_to_head[ii],
+            ##                                          reach_time = reach_time[ii])
+            ##     }
+
+            ##     ## work out for points
+            ##     if(length(point_inflow$name)>0){
+            ##         for(ii in 1:length(point_inflow$name)){
+            ##             jj <- point_inflow$id[ii]
+            ##             if( is.finite( time_to_head[ jj ] ) ){
+            ##                 delta <- time_to_head[jj]* point_inflow$fraction[ii]
+            ##                 tmp$point[[ point_inflow$name[ii] ]] <- list(
+            ##                     head_to_gauge = time_to_head[jj] - delta,
+            ##                     reach_time = 0)
+            ##             }
+            ##         }
+            ##     }
+            ##     linear_time[[gauge$name[rw]]] <- tmp
+            ## }
+            
+            private$states$channel$linear_time <- linear_time
         },
         sim_ch = function(){
-            #browser()
+            
             ## initialise the output
             out <- matrix(NA,length(private$time_series$index),
-                          length(private$channel$linear_time))
-            colnames(out) <- names(private$channel$linear_time)
+                          length(private$states$channel$linear_time))
+            colnames(out) <- names(private$states$channel$linear_time)
+            
 
-
-            ## function to make polynonial representing tiem delay histogram
+            ## function to make polynonial representing time delay histogram
             fpoly <- function(x){
-                if( x$reach_time == 0 ){
+                if( x["min_time"] == x["max_time"] ){
                     ## point input
-                    ms <- floor(x$head_to_gauge/private$info$ts$step)+1
+                    ms <- floor(x["max_time"]/private$info$ts$step)+1
                     ply <- rep(0,ms)
                     ply[ms] <- 1
                 }else{
-                    ms <- ceiling(x$head_to_gauge/private$info$ts$step)
-                    ply <- (0:ms)*private$info$ts$step
-                    ply[ply<=x$head_to_gauge - x$reach_time] <- x$head_to_gauge - x$reach_time
-                    ply[ply>x$head_to_gauge] <- x$head_to_gauge
-                    ply <- diff(ply)
-                    ply <- ply/x$reach_time 
+                    ms <- ceiling(x["max_time"]/private$info$ts$step)
+                    #ply <- rep(NA,ms)
+                    fnsh <- (1:ms)*private$info$ts$step
+                    strt <- fnsh - private$info$ts$step
+                    strt <- pmax(strt,x["min_time"])
+                    fnsh <- pmin(fnsh,x["max_time"])
+                    ply <- pmax(0,fnsh-strt)
                 }
-                return(ply)
+                return(ply/sum(ply))
+            
             }
-    
+    ## fpoly <- function(x){
+    ##             if( x$reach_time == 0 ){
+    ##                 ## point input
+    ##                 ms <- floor(x$head_to_gauge/private$info$ts$step)+1
+    ##                 ply <- rep(0,ms)
+    ##                 ply[ms] <- 1
+    ##             }else{
+    ##                 ms <- ceiling(x$head_to_gauge/private$info$ts$step)
+    ##                 ply <- (0:ms)*private$info$ts$step
+    ##                 ply[ply<=x$head_to_gauge - x$reach_time] <- x$head_to_gauge - x$reach_time
+    ##                 ply[ply>x$head_to_gauge] <- x$head_to_gauge
+    ##                 ply <- diff(ply)
+    ##                 ply <- ply/x$reach_time 
+    ##             }
+    ##             return(ply)
+    ##         }
             ## Loop gauges
             
-            for(id in names(private$channel$linear_time)){
+            for(gnm in names(private$states$channel$linear_time)){
 
                 ## initialise the point - set to 0
-                out[,id] <- 0
-                
-                
-                ## loop channel+diffuse upstream
-                for(iid in names(private$channel$linear_time[[id]]$diffuse)){
-                    ## get time object
-                    tt <- private$channel$linear_time[[id]]$diffuse[[iid]]
-                    ## compute polynomial
-                    ply <- fpoly(tt)
-                    npad <- length(ply)-1
+                out[,gnm] <- 0
+
+                ## diffuse inputs
+                df <- private$states$channel$linear_time[[gnm]]$diffuse
+                df <- df[is.finite(df[,"frc"]),]
+
+                for(ii in rownames(df)){
+                    ply <- fpoly(df[ii,])
                     ## compute input
-                    x <- private$time_series$channel_inflow[,iid]
+                    x <- private$time_series$channel_inflow[,ii]
                     ## add diffuse inputs to x
-                    nm <- private$model$diffuse_inflow$name[private$model$diffuse_inflow$id==id]
+                    idx <- paste(private$model$diffuse_inflow$id)==ii
+                    nm <- private$model$diffuse_inflow$name[idx]
                     x <- x + rowSums(private$time_series$obs[,nm])
-
-                    ## add initial padding to input
-                    x <- c(rep(x[1],npad),x)
-                    ## apply polynomial
+                    ## pas and filter
+                    np <- length(ply)-1
+                    x <- c(rep(x[1],np),x)
                     q <- filter(x,ply,method="conv",sides=1)
-                    if(npad>0){q <- q[-(1:npad)]}
-                    out[,id] <- out[,id] + q
+                    if(np>0){q <- q[-(1:np)]}
+                    out[,gnm] <- out[,gnm] + q
                 }
-                
+
+                ## handle point inputs
+                pnt <- private$states$channel$linear_time[[gnm]]$point
+                pnt <- pnt[is.finite(pnt[,"frc"]),]
                 ## loop point inputs upstream
-                for(iid in names(private$channel$linear_time[[id]]$point)){
-                    ## get time object
-                    tt <- private$channel$linear_time[[id]]$diffuse[[iid]]
-                    ## compute polynomial
-                    ply <- fply(tt)
-                    npad <- length(ply)-1
+                for(ii in rownames(pnt)){
+                    ply <- fpoly(pnt[ii,])
+                    np <- length(ply)-1
                     ## compute input
-                    x <- private$time_series$obs[,iid]
-                    ##TODO add diffuse inputs to x
-                    x <- c(rep(x[1],npad),x)
+                    x <- private$time_series$obs[,ii]
+                    x <- c(rep(x[1],np),x)
                     ## apply polynomial
                     q <- filter(x,ply,method="conv",sides=1)
-                    if(npad>0){q <- q[-(1:npad)]}
-                    out[,id] <- out[,id] + q
+                    if(np>0){q <- q[-(1:np)]}
+                    out[,gnm] <- out[,gnm] + q
                 }
-
             }
+            ## for(id in names(private$states$channel$linear_time)){
+
+            ##     ## initialise the point - set to 0
+            ##     out[,id] <- 0
+                
+                
+            ##     ## loop channel+diffuse upstream
+            ##     for(iid in names(private$states$channel$linear_time[[id]]$diffuse)){
+            ##         ## get time object
+            ##         tt <- private$states$channel$linear_time[[id]]$diffuse[[iid]]
+            ##         ## compute polynomial
+            ##         ply <- fpoly(tt)
+            ##         npad <- length(ply)-1
+            ##         ## compute input
+            ##         x <- private$time_series$channel_inflow[,iid]
+            ##         ## add diffuse inputs to x
+            ##         nm <- private$model$diffuse_inflow$name[private$model$diffuse_inflow$id==id]
+            ##         x <- x + rowSums(private$time_series$obs[,nm])
+
+            ##         ## add initial padding to input
+            ##         x <- c(rep(x[1],npad),x)
+            ##         ## apply polynomial
+            ##         q <- filter(x,ply,method="conv",sides=1)
+            ##         if(npad>0){q <- q[-(1:npad)]}
+            ##         out[,id] <- out[,id] + q
+            ##     }
+                
+            ##     ## loop point inputs upstream
+            ##     for(iid in names(private$states$channel$linear_time[[id]]$point)){
+            ##         ## get time object
+            ##         tt <- private$channel$states$linear_time[[id]]$diffuse[[iid]]
+            ##         ## compute polynomial
+            ##         ply <- fply(tt)
+            ##         npad <- length(ply)-1
+            ##         ## compute input
+            ##         x <- private$time_series$obs[,iid]
+            ##         ##TODO add diffuse inputs to x
+            ##         x <- c(rep(x[1],npad),x)
+            ##         ## apply polynomial
+            ##         q <- filter(x,ply,method="conv",sides=1)
+            ##         if(npad>0){q <- q[-(1:npad)]}
+            ##         out[,id] <- out[,id] + q
+            ##     }
+
+            ## }
 
             private$time_series$gauge_flow <- out
         }

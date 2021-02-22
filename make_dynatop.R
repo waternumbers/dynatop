@@ -18,7 +18,7 @@ pkgdown::clean_site(pacPath)
 dratPath <- "~/Documents/Software/drat"
 tmp <- devtools::build(pacPath)
 install.packages(tmp)
-drat::insertPackage(tmp,dratPath,action="prune")
+drat::insertPackage(tmp,dratPath)#,action="prune")
 
 ## mac and windows
 rhub::validate_email() # for first time that session
@@ -56,12 +56,6 @@ obs <- as.xts(qr[,c("Flow","Rainfall")],order.by= as.POSIXct(qr[,'Date'],format=
 ## According to original notes and code Flow in cumecs and precip in mm/timestep
 obs$Rainfall <- obs$Rainfall/1000 # convert to m/timestep
 obs$PET <- evap_est(index(obs),0,5/1000) # in m
-
-## bodge to get c_sf until dynatopGIS fixed
-model$hillslope$c_sf <- "c_sf_default"
-model$hillslope$t_sf <- NULL
-model$param["c_sf_default"] <- 100/(60*60) #100 m/hr
-model$param <- model$param[!names(model$param)%in%"t_sf_default"]
 
 Swindale <- list(model=model,obs=obs)
 save("Swindale",file="./dynatop/data/Swindale.rda")
@@ -124,7 +118,7 @@ rm(list=ls())
 devtools::load_all("./dynatop"); data("Swindale"); 
 Swindale$model$param <- c(q_sfmax_default=Inf,
                  m_default=0.006, ## 0.05 - 0.6 m
-                 ln_t0_default=.0746, ## 0.1 - 8 m2/h
+                 ln_t0_default=0.746, ## 0.1 - 8 m2/h
                  s_rz0_default=0.98,
                  s_rzmax_default=0.1,
                  v_ch_default=0.4, ## 1000 -5000 m/h
