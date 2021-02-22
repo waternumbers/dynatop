@@ -5,72 +5,166 @@
 
 using namespace Rcpp;
 
-// multi_hsu_cpp
-void multi_hsu_cpp(IntegerVector id, NumericMatrix states, NumericMatrix properties, List flow_dir, IntegerMatrix ext_idx, IntegerVector channel_id, NumericVector channel_area, IntegerVector channel_ext_idx, NumericMatrix ext_rec, NumericMatrix channel_inflow, LogicalVector keep_states, List state_rec, double timestep, int n_sub_step, bool approx_soln);
-RcppExport SEXP _dynatop_multi_hsu_cpp(SEXP idSEXP, SEXP statesSEXP, SEXP propertiesSEXP, SEXP flow_dirSEXP, SEXP ext_idxSEXP, SEXP channel_idSEXP, SEXP channel_areaSEXP, SEXP channel_ext_idxSEXP, SEXP ext_recSEXP, SEXP channel_inflowSEXP, SEXP keep_statesSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP, SEXP approx_solnSEXP) {
+// dt_approx
+void dt_approx(std::vector<int> id, Rcpp::NumericMatrix states, std::vector<double> area, std::vector<double> Dx, std::vector<double> beta, std::vector<double> c_sf, std::vector<double> k_sf, std::vector<double> s_rzmax, std::vector<double> t_d, std::vector<double> m, std::vector<double> ln_t0, std::vector<int> channel_id, std::vector<double> channel_area, std::vector<int> p_idx, std::vector<int> ep_idx, std::vector<int> flow_from, std::vector<int> flow_to, std::vector<double> flow_frc, Rcpp::NumericMatrix obs, Rcpp::NumericMatrix channel_inflow, Rcpp::NumericMatrix mass_balance, std::vector<bool> keep_states, Rcpp::List state_rec, double timestep, int n_sub_step);
+RcppExport SEXP _dynatop_dt_approx(SEXP idSEXP, SEXP statesSEXP, SEXP areaSEXP, SEXP DxSEXP, SEXP betaSEXP, SEXP c_sfSEXP, SEXP k_sfSEXP, SEXP s_rzmaxSEXP, SEXP t_dSEXP, SEXP mSEXP, SEXP ln_t0SEXP, SEXP channel_idSEXP, SEXP channel_areaSEXP, SEXP p_idxSEXP, SEXP ep_idxSEXP, SEXP flow_fromSEXP, SEXP flow_toSEXP, SEXP flow_frcSEXP, SEXP obsSEXP, SEXP channel_inflowSEXP, SEXP mass_balanceSEXP, SEXP keep_statesSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type id(idSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type states(statesSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type properties(propertiesSEXP);
-    Rcpp::traits::input_parameter< List >::type flow_dir(flow_dirSEXP);
-    Rcpp::traits::input_parameter< IntegerMatrix >::type ext_idx(ext_idxSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type channel_id(channel_idSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type channel_area(channel_areaSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type channel_ext_idx(channel_ext_idxSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type ext_rec(ext_recSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type channel_inflow(channel_inflowSEXP);
-    Rcpp::traits::input_parameter< LogicalVector >::type keep_states(keep_statesSEXP);
-    Rcpp::traits::input_parameter< List >::type state_rec(state_recSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type id(idSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type states(statesSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type Dx(DxSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type c_sf(c_sfSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type k_sf(k_sfSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type s_rzmax(s_rzmaxSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type t_d(t_dSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type m(mSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type ln_t0(ln_t0SEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type channel_id(channel_idSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type channel_area(channel_areaSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type p_idx(p_idxSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type ep_idx(ep_idxSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type flow_from(flow_fromSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type flow_to(flow_toSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type flow_frc(flow_frcSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type obs(obsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type channel_inflow(channel_inflowSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type mass_balance(mass_balanceSEXP);
+    Rcpp::traits::input_parameter< std::vector<bool> >::type keep_states(keep_statesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type state_rec(state_recSEXP);
+    Rcpp::traits::input_parameter< double >::type timestep(timestepSEXP);
+    Rcpp::traits::input_parameter< int >::type n_sub_step(n_sub_stepSEXP);
+    dt_approx(id, states, area, Dx, beta, c_sf, k_sf, s_rzmax, t_d, m, ln_t0, channel_id, channel_area, p_idx, ep_idx, flow_from, flow_to, flow_frc, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step);
+    return R_NilValue;
+END_RCPP
+}
+// dt_cnst
+void dt_cnst(std::vector<int> id, Rcpp::NumericMatrix states, std::vector<double> area, std::vector<double> Dx, std::vector<double> beta, std::vector<double> c_sf, std::vector<double> k_sf, std::vector<double> s_rzmax, std::vector<double> t_d, std::vector<double> m, std::vector<double> ln_t0, std::vector<int> channel_id, std::vector<double> channel_area, std::vector<int> p_idx, std::vector<int> ep_idx, std::vector<int> flow_from, std::vector<int> flow_to, std::vector<double> flow_frc, Rcpp::NumericMatrix obs, Rcpp::NumericMatrix channel_inflow, Rcpp::NumericMatrix mass_balance, std::vector<bool> keep_states, Rcpp::List state_rec, double timestep, int n_sub_step, bool approx_soln);
+RcppExport SEXP _dynatop_dt_cnst(SEXP idSEXP, SEXP statesSEXP, SEXP areaSEXP, SEXP DxSEXP, SEXP betaSEXP, SEXP c_sfSEXP, SEXP k_sfSEXP, SEXP s_rzmaxSEXP, SEXP t_dSEXP, SEXP mSEXP, SEXP ln_t0SEXP, SEXP channel_idSEXP, SEXP channel_areaSEXP, SEXP p_idxSEXP, SEXP ep_idxSEXP, SEXP flow_fromSEXP, SEXP flow_toSEXP, SEXP flow_frcSEXP, SEXP obsSEXP, SEXP channel_inflowSEXP, SEXP mass_balanceSEXP, SEXP keep_statesSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP, SEXP approx_solnSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<int> >::type id(idSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type states(statesSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type Dx(DxSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type c_sf(c_sfSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type k_sf(k_sfSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type s_rzmax(s_rzmaxSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type t_d(t_dSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type m(mSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type ln_t0(ln_t0SEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type channel_id(channel_idSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type channel_area(channel_areaSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type p_idx(p_idxSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type ep_idx(ep_idxSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type flow_from(flow_fromSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type flow_to(flow_toSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type flow_frc(flow_frcSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type obs(obsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type channel_inflow(channel_inflowSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type mass_balance(mass_balanceSEXP);
+    Rcpp::traits::input_parameter< std::vector<bool> >::type keep_states(keep_statesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type state_rec(state_recSEXP);
     Rcpp::traits::input_parameter< double >::type timestep(timestepSEXP);
     Rcpp::traits::input_parameter< int >::type n_sub_step(n_sub_stepSEXP);
     Rcpp::traits::input_parameter< bool >::type approx_soln(approx_solnSEXP);
-    multi_hsu_cpp(id, states, properties, flow_dir, ext_idx, channel_id, channel_area, channel_ext_idx, ext_rec, channel_inflow, keep_states, state_rec, timestep, n_sub_step, approx_soln);
+    dt_cnst(id, states, area, Dx, beta, c_sf, k_sf, s_rzmax, t_d, m, ln_t0, channel_id, channel_area, p_idx, ep_idx, flow_from, flow_to, flow_frc, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step, approx_soln);
     return R_NilValue;
 END_RCPP
 }
-// multi_hsu_cpp_init
-void multi_hsu_cpp_init(IntegerVector id, NumericMatrix states, NumericMatrix properties, List flow_dir, NumericVector s_rz_0, NumericVector r_uz_sz_0);
-RcppExport SEXP _dynatop_multi_hsu_cpp_init(SEXP idSEXP, SEXP statesSEXP, SEXP propertiesSEXP, SEXP flow_dirSEXP, SEXP s_rz_0SEXP, SEXP r_uz_sz_0SEXP) {
+// dt_cnst_init
+void dt_cnst_init(std::vector<int> id, Rcpp::NumericMatrix states, std::vector<double> area, std::vector<double> Dx, std::vector<double> beta, std::vector<double> c_sf, std::vector<double> s_rzmax, std::vector<double> t_d, std::vector<double> m, std::vector<double> ln_t0, std::vector<int> channel_id, std::vector<int> flow_from, std::vector<int> flow_to, std::vector<double> flow_frc, std::vector<double> s_rz_0, std::vector<double> r_uz_sz_0);
+RcppExport SEXP _dynatop_dt_cnst_init(SEXP idSEXP, SEXP statesSEXP, SEXP areaSEXP, SEXP DxSEXP, SEXP betaSEXP, SEXP c_sfSEXP, SEXP s_rzmaxSEXP, SEXP t_dSEXP, SEXP mSEXP, SEXP ln_t0SEXP, SEXP channel_idSEXP, SEXP flow_fromSEXP, SEXP flow_toSEXP, SEXP flow_frcSEXP, SEXP s_rz_0SEXP, SEXP r_uz_sz_0SEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< IntegerVector >::type id(idSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type states(statesSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type properties(propertiesSEXP);
-    Rcpp::traits::input_parameter< List >::type flow_dir(flow_dirSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type s_rz_0(s_rz_0SEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type r_uz_sz_0(r_uz_sz_0SEXP);
-    multi_hsu_cpp_init(id, states, properties, flow_dir, s_rz_0, r_uz_sz_0);
+    Rcpp::traits::input_parameter< std::vector<int> >::type id(idSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type states(statesSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type Dx(DxSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type c_sf(c_sfSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type s_rzmax(s_rzmaxSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type t_d(t_dSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type m(mSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type ln_t0(ln_t0SEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type channel_id(channel_idSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type flow_from(flow_fromSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type flow_to(flow_toSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type flow_frc(flow_frcSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type s_rz_0(s_rz_0SEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type r_uz_sz_0(r_uz_sz_0SEXP);
+    dt_cnst_init(id, states, area, Dx, beta, c_sf, s_rzmax, t_d, m, ln_t0, channel_id, flow_from, flow_to, flow_frc, s_rz_0, r_uz_sz_0);
     return R_NilValue;
 END_RCPP
 }
-// start_profiler
-SEXP start_profiler(SEXP str);
-RcppExport SEXP _dynatop_start_profiler(SEXP strSEXP) {
+// dt_implicit
+void dt_implicit(std::vector<int> id, Rcpp::NumericMatrix states, std::vector<double> area, std::vector<double> Dx, std::vector<double> beta, std::vector<double> c_sf, std::vector<double> k_sf, std::vector<double> s_rzmax, std::vector<double> t_d, std::vector<double> m, std::vector<double> ln_t0, std::vector<int> channel_id, std::vector<double> channel_area, std::vector<int> p_idx, std::vector<int> ep_idx, std::vector<int> flow_from, std::vector<int> flow_to, std::vector<double> flow_frc, Rcpp::NumericMatrix obs, Rcpp::NumericMatrix channel_inflow, Rcpp::NumericMatrix mass_balance, std::vector<bool> keep_states, Rcpp::List state_rec, double timestep, int n_sub_step);
+RcppExport SEXP _dynatop_dt_implicit(SEXP idSEXP, SEXP statesSEXP, SEXP areaSEXP, SEXP DxSEXP, SEXP betaSEXP, SEXP c_sfSEXP, SEXP k_sfSEXP, SEXP s_rzmaxSEXP, SEXP t_dSEXP, SEXP mSEXP, SEXP ln_t0SEXP, SEXP channel_idSEXP, SEXP channel_areaSEXP, SEXP p_idxSEXP, SEXP ep_idxSEXP, SEXP flow_fromSEXP, SEXP flow_toSEXP, SEXP flow_frcSEXP, SEXP obsSEXP, SEXP channel_inflowSEXP, SEXP mass_balanceSEXP, SEXP keep_statesSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP) {
 BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type str(strSEXP);
-    rcpp_result_gen = Rcpp::wrap(start_profiler(str));
-    return rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<int> >::type id(idSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type states(statesSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type Dx(DxSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type c_sf(c_sfSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type k_sf(k_sfSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type s_rzmax(s_rzmaxSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type t_d(t_dSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type m(mSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type ln_t0(ln_t0SEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type channel_id(channel_idSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type channel_area(channel_areaSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type p_idx(p_idxSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type ep_idx(ep_idxSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type flow_from(flow_fromSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type flow_to(flow_toSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type flow_frc(flow_frcSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type obs(obsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type channel_inflow(channel_inflowSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type mass_balance(mass_balanceSEXP);
+    Rcpp::traits::input_parameter< std::vector<bool> >::type keep_states(keep_statesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type state_rec(state_recSEXP);
+    Rcpp::traits::input_parameter< double >::type timestep(timestepSEXP);
+    Rcpp::traits::input_parameter< int >::type n_sub_step(n_sub_stepSEXP);
+    dt_implicit(id, states, area, Dx, beta, c_sf, k_sf, s_rzmax, t_d, m, ln_t0, channel_id, channel_area, p_idx, ep_idx, flow_from, flow_to, flow_frc, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step);
+    return R_NilValue;
 END_RCPP
 }
-// stop_profiler
-SEXP stop_profiler();
-RcppExport SEXP _dynatop_stop_profiler() {
+// dt_init
+void dt_init(std::vector<int> id, Rcpp::NumericMatrix states, std::vector<double> area, std::vector<double> Dx, std::vector<double> beta, std::vector<double> c_sf, std::vector<double> s_rzmax, std::vector<double> t_d, std::vector<double> m, std::vector<double> ln_t0, std::vector<int> channel_id, std::vector<int> flow_from, std::vector<int> flow_to, std::vector<double> flow_frc, std::vector<double> s_rz_0, std::vector<double> r_uz_sz_0);
+RcppExport SEXP _dynatop_dt_init(SEXP idSEXP, SEXP statesSEXP, SEXP areaSEXP, SEXP DxSEXP, SEXP betaSEXP, SEXP c_sfSEXP, SEXP s_rzmaxSEXP, SEXP t_dSEXP, SEXP mSEXP, SEXP ln_t0SEXP, SEXP channel_idSEXP, SEXP flow_fromSEXP, SEXP flow_toSEXP, SEXP flow_frcSEXP, SEXP s_rz_0SEXP, SEXP r_uz_sz_0SEXP) {
 BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(stop_profiler());
-    return rcpp_result_gen;
+    Rcpp::traits::input_parameter< std::vector<int> >::type id(idSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type states(statesSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type area(areaSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type Dx(DxSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type beta(betaSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type c_sf(c_sfSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type s_rzmax(s_rzmaxSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type t_d(t_dSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type m(mSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type ln_t0(ln_t0SEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type channel_id(channel_idSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type flow_from(flow_fromSEXP);
+    Rcpp::traits::input_parameter< std::vector<int> >::type flow_to(flow_toSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type flow_frc(flow_frcSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type s_rz_0(s_rz_0SEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type r_uz_sz_0(r_uz_sz_0SEXP);
+    dt_init(id, states, area, Dx, beta, c_sf, s_rzmax, t_d, m, ln_t0, channel_id, flow_from, flow_to, flow_frc, s_rz_0, r_uz_sz_0);
+    return R_NilValue;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_dynatop_multi_hsu_cpp", (DL_FUNC) &_dynatop_multi_hsu_cpp, 15},
-    {"_dynatop_multi_hsu_cpp_init", (DL_FUNC) &_dynatop_multi_hsu_cpp_init, 6},
-    {"_dynatop_start_profiler", (DL_FUNC) &_dynatop_start_profiler, 1},
-    {"_dynatop_stop_profiler", (DL_FUNC) &_dynatop_stop_profiler, 0},
+    {"_dynatop_dt_approx", (DL_FUNC) &_dynatop_dt_approx, 25},
+    {"_dynatop_dt_cnst", (DL_FUNC) &_dynatop_dt_cnst, 26},
+    {"_dynatop_dt_cnst_init", (DL_FUNC) &_dynatop_dt_cnst_init, 16},
+    {"_dynatop_dt_implicit", (DL_FUNC) &_dynatop_dt_implicit, 25},
+    {"_dynatop_dt_init", (DL_FUNC) &_dynatop_dt_init, 16},
     {NULL, NULL, 0}
 };
 
