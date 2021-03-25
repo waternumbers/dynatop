@@ -1,6 +1,13 @@
 #' R6 Class for Dynamic TOPMODEL
 #' @export
 
+## START HERE:
+## (i) worked on check and digest - need to sort out private$model_description throughout code - seperate into function and variable?
+## (ii) Need to check rainfall and pet series names are added to those required
+## (iii) Need to adapt calls to hillslope C++ to include options and additional variables - simply add another vector and change internal labels
+## (iv) Impliment second channel routing?
+## (v) check warnings on Courant numbers - seem to get two with identical messages?
+
 dynatop <- R6::R6Class(
     "dynatop",
     public = list(
@@ -64,10 +71,9 @@ dynatop <- R6::R6Class(
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
         #' @param mass_check Flag indicating is a record of mass balance errors shuld be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
-        #' @param approx_soln Logical indicating if the approximate solution should be used
         #'
         #' @details Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
-        sim_hillslope = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL,approx_soln=FALSE){
+        sim_hillslope = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL){
 
             ## check presence of states
             if( !all(is.finite(private$states$hillslope)) ){
@@ -242,57 +248,101 @@ dynatop <- R6::R6Class(
         ## - data_series
         ## - state
         ## - output_label
-        model_description = list(
+        model_description = function(transmisivity_profile = c("exponential","bounded_exponential"),
+                                     channel_solver = c("histogram","constant_celerity")){
+            transmisivity_profile <- match.args(transmisivity_profile)
+            channel_solver <- match.args(channel_solver)
+            
+            ## contents of hillslope table - not states and parameters might vary with options
+            par_names <- switch(trns,
+                                "exponential" = c("r_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","c_sf"),
+                                "bounded_exponential" = c("r_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","c_sf","D"),
+                                "")
+            state_names <- c("s_sf","s_rz","s_uz","s_sz")
             hillslope = data.frame(name = c("id","atb_bar","s_bar","area","delta_x", # attributes associated with catchment HSU
                                             "precip","pet", # names of input series
-                                            "r_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","c_sf", # parameter names
-                                            "l_sf","s_rz","s_uz","l_sz"), # states
+                                            par_names, # parameter names
+                                            state_names), # states
                                    role = c(rep("attribute",5),
                                             rep("data_series",2),
-                                            rep("parameter",7),
-                                            rep("state",4)),
+                                            rep("parameter",length(par_names)),
+                                            rep("state",length(state_names))),
                                    type = c("integer",rep("numeric",4),
                                             rep("character",2),
-                                            rep("character",7),
-                                            rep("numeric",4)),
+                                            rep("character",length(par_names)),
+                                            rep("numeric",length(state_names))),
                                    stringsAsFactors=FALSE),
+            ## contents of channel table - note may change depending upon options
+            par_names <- switch(channel_solver,
+                                "histogram"="v_ch",
+                                "constant_celerity"="v_ch",
+                                NULL)
+            state_names <- switch(channel_solver,
+                                  "histogram"=NULL,
+                                  "constant_celerity"="s_ch",
+                                  NULL)
             channel = data.frame(name= c("id","area","length", # states
                                          "precip","pet", # inputs
-                                         "v_ch"), # parameters
+                                         par_names, # parameters
+                                         state_names),
                                  role = c(rep("attribute",3),
                                           rep("data_series",2),
-                                          rep("parameter",1)),
+                                          rep("parameter",length(par_names)),
+                                          rep("state",length(state_names))),
                                  type = c("integer",rep("numeric",2),
-                                          rep("character",2),
-                                          rep("character",1)),
+                                          rep("character",length(par_names)),
+                                          rep("character",length(state_names))),
                                  stringsAsFactors=FALSE),
+            ## linkages between HSUs
             flow_direction = data.frame(name= c("from","to","frc"),
                                   role = rep("attribute",3),
                                   type = c(rep("integer",2),"numeric"),
                                   stringsAsFactors=FALSE),
-            point_inflow = data.frame(name = c("name","id","fraction"),
-                                      type=c("character","integer","numeric"),
-                                      role = c("data_series",rep("attribute",2)),
+            ## rainfall inputs
+            rainfall_input = data.frame(name = c("name","id","fraction"),
+                                        type=c("character","integer","numeric"),
+                                        role = c("data_series",rep("attribute",2)),
+                                        stringsAsFactors=FALSE),
+            ## pet inputs
+            pet_input = data.frame(name = c("name","id","fraction"),
+                                   type=c("character","integer","numeric"),
+                                   role = c("data_series",rep("attribute",2)),
+                                   stringsAsFactors=FALSE),
+            ## point inflow to channels
+            point_inflow = data.frame(name = c("name","id"),
+                                      type=c("character","integer"),
+                                      role = c("data_series","attribute"),
                                       stringsAsFactors=FALSE),
+            ## point_inflow = data.frame(name = c("name","id","fraction"),
+            ##                           type=c("character","integer","numeric"),
+            ##                           role = c("data_series",rep("attribute",2)),
+            ##                           stringsAsFactors=FALSE),
+            ## diffuse inflow to channels
             diffuse_inflow = data.frame(name = c("name","id"),
                                         type=c("character","integer"),
                                         role = c("data_series","attribute"),
                                         stringsAsFactors=FALSE),
-            gauge = data.frame(name = c("name","id","fraction"),
-                               type=c("character","integer","numeric"),
-                               role = c("output_label",rep("attribute",2)),
+            ## location of gauges
+            gauge = data.frame(name = c("name","id"),
+                               type=c("character","integer"),
+                               role = c("output_label","attribute"),
                                stringsAsFactors=FALSE)
+            ## gauge = data.frame(name = c("name","id","fraction"),
+            ##                    type=c("character","integer","numeric"),
+            ##                    role = c("output_label",rep("attribute",2)),
+            ##                    stringsAsFactors=FALSE)
         ),
         ## convert the form of the model for internal storage
         ## we presume the model has been checked!!
         digest_model = function(model,use_states){
-
             ## order the channel and hillslope by id
             ## This is important since the C++ code just goes down the rows..
             model$hillslope <-
                 model$hillslope[order(model$hillslope$id,decreasing=TRUE),]
             model$channel <- model$channel[order(model$channel$id,decreasing=TRUE),]
             model$flow_direction <- model$flow_direction[order(model$flow_direction$from,decreasing=TRUE),]
+            model$rainfall_input <- model$rainfall_input[order(model$rainfall_input$id,decreasing=TRUE),]
+            model$pet_input <- model$pet_input[order(model$pet_input$id,decreasing=TRUE),]
             
             ## Process Hillslope states            
             ## process states from hillslope table
@@ -341,14 +391,27 @@ dynatop <- R6::R6Class(
         },
         ## this code checks the model
         check_model = function(model, use_states, verbose, delta=1e-13){
+            ## check options vector exists
+            if(!exists(model$options)){ stop("No options vector for the model") }
+            if(!all(c("transmisivity_profile","channel_solver") %in% names(model$options)){
+                stop(paste("Expect value of",
+                           setdiff(c("transmisivity_profile","channel_solver"),names(model$options)),
+                           "in options vector"))
+            }
+            
+            ## create an initial template without knowing the options
+            model_description <- private$model_description(
+                                             model$options["transmisivity_profile"],
+                                             model$options["channel_solver"])
             
             ## check all components of the model exist
-            components <- names(private$model_description)
+            components <- names(model_description)
             idx <- components %in% names(model)
             if( !all(idx) ){
                 stop(paste("Missing componets:",paste(components[!idx],collapse=",")))
             }
-            
+
+            ## generate again with options
             ## check components that should be data.frames of given structure
     
             ## check the HRU table properties
@@ -471,9 +534,26 @@ dynatop <- R6::R6Class(
             }
             
             tmp <- tapply(model$flow_direction$frc,model$flow_direction$from,sum)
-            if(!(all(abs(tmp-1)<delta))){
+            tmp_idx <- abs(tmp-1)<delta
+            if(!(all(tmp_idx))){
                 stop("Flow direction fractions in the flow of HSU id's do not sum to 1: ",
-                     paste(names(tmp[tmp!=1]),collapse=", "))
+                     paste(names(tmp[!idx]),collapse=", "))
+            }
+
+            ## check on rainfall and pet input
+            for(ii in c("rainfall","pet")){
+                str <- paste0(ii,"_input")
+                tmp <- tapply(model[[ii]]$frc,model[[ii]]$id,sum)
+                tmp_idx <- abs(tmp-1)<delta
+                if(!(all(tmp_idx))){
+                    stop(paste(ii,"fractions for the following HSU id's do not sum to 1: "),
+                         paste(names(tmp[!idx]),collapse=", "))
+                }
+                tmp_idx <- all_hsu %in% names(tmp)
+                if(!all(tmp_idx)){
+                    warning(paste0("The following HSUs do not receive ",ii,": "),
+                            paste(all_hsu[!idx],collapse=", "))
+                }
             }
 
             ## specific check on hillslope
@@ -488,7 +568,7 @@ dynatop <- R6::R6Class(
             nm <- intersect(paste(model$channel$id),names(tmp))
             n_chn_con[nm] <- tmp[nm]
             
-
+            ## TODO change this to reflect constant celerity solution!!!
             if( any(n_chn_con>1) ){
                 warning("Only channel HSUs routing to single channel HSUs are supported",
                         "\n",
