@@ -1,8 +1,16 @@
-# dynatop 0.2
+# dynatop 0.2.0.9030
 
 ## New features
 
-- Complete rewrite of the hillslope simulation code using a contour (cross
+- Complete rewrite of the hillslope simulation code using std C++ classes and
+  Boost libraries. 
+- Improved finite volume scheme for the hillslope allowing non-rectangular
+  hydrological response units
+- TODO: Finish
+
+# dynatop 0.2.0.9020
+
+- Adapted to allow for non-rectangualtMass conservative solutiona contour (cross
   section) solution. This brings brings the model into line with the original
   dynamic TOPMODEL concept.
 - TODO: Finish
@@ -20,8 +28,8 @@
 ## New features
 
 - Main hydrological simulation code implimented in C++ usign Rcpp for better performance. 
-    - The R version of the code can be used instead by setting the use_R input parameter to TRUE. This will be depreciated in a later version.
-    - Currently C++ code does not return intermediate states, use the R version if these are required
+- The R version of the code can be used instead by setting the use_R input parameter to TRUE. This will be depreciated in a later version.
+- Currently C++ code does not return intermediate states, use the R version if these are required
 
 
 # dynatop 0.11
