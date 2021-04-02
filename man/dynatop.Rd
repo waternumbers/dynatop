@@ -125,24 +125,15 @@ invisible(self) suitable for chaining
 \subsection{Method \code{sim_hillslope()}}{
 Simulate the hillslope output of a dynatop object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim_hillslope(
-  mass_check = FALSE,
-  keep_states = NULL,
-  sub_step = NULL,
-  approx_soln = FALSE
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim_hillslope(keep_states = NULL, sub_step = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{mass_check}}{Flag indicating is a record of mass balance errors shuld be kept}
-
 \item{\code{keep_states}}{a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept}
 
 \item{\code{sub_step}}{simulation timestep in seconds, default value of NULL results in data time step}
-
-\item{\code{approx_soln}}{Logical indicating if the approximate solution should be used}
 }
 \if{html}{\out{</div>}}
 }

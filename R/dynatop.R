@@ -2,11 +2,9 @@
 #' @export
 
 ## START HERE:
-## (i) worked on check and digest - need to sort out private$model_description throughout code - seperate into function and variable?
-## (ii) Need to check rainfall and pet series names are added to those required
-## (iii) Need to adapt calls to hillslope C++ to include options and additional variables - simply add another vector and change internal labels
+## (i) Need to check importing and exporting a model
+## (iii) Need to adapt calls to hillslope C++ to take in inputs as matrices then seperate out internally
 ## (iv) Impliment second channel routing?
-## (v) check warnings on Courant numbers - seem to get two with identical messages?
 
 dynatop <- R6::R6Class(
     "dynatop",
@@ -23,6 +21,8 @@ dynatop <- R6::R6Class(
         #'
         #' @details This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
         initialize = function(model, use_states=FALSE, verbose=FALSE, delta = 1e-13){
+            ## generate model description
+            private$generate_model_description(model)
             ## check model will fail if there is an error
             private$check_model(model,use_states,verbose,delta)
             ## convert model here
@@ -69,11 +69,10 @@ dynatop <- R6::R6Class(
         },
         #' @description Simulate the hillslope output of a dynatop object
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
-        #' @param mass_check Flag indicating is a record of mass balance errors shuld be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
         #'
         #' @details Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
-        sim_hillslope = function(mass_check=FALSE,keep_states=NULL,sub_step=NULL){
+        sim_hillslope = function(keep_states=NULL,sub_step=NULL){
 
             ## check presence of states
             if( !all(is.finite(private$states$hillslope)) ){
@@ -98,7 +97,7 @@ dynatop <- R6::R6Class(
             keep_states <- keep_states[keep_states %in% private$time_series$index]
                         
             ## simulate
-            private$sim_hs(mass_check,keep_states,sub_step[1],approx_soln)
+            private$sim_hs(keep_states,sub_step[1])
 
             invisible(self)
         },
@@ -180,9 +179,8 @@ dynatop <- R6::R6Class(
                      order.by=private$time_series$index)
         },
         #' @description Return the model
-        #' @param drop_map should the map be returned
-        get_model = function(drop_map=FALSE){
-            private$reform_model(as.logical(drop_map))
+        get_model = function(){
+            private$reform_model()
         },
         #' @description Return the model
         get_mass_errors = function(){
@@ -199,7 +197,7 @@ dynatop <- R6::R6Class(
                 return( setNames(private$time_series$state_record,
                                  private$time_series$index) )
             }else{
-                return( private$states$hillslope )
+                return( private$unpack$hillslope$states )
             }
        },
        #' @description Plot a current state of the system
@@ -237,10 +235,9 @@ dynatop <- R6::R6Class(
     private = list(
         ## stores of data
         version = "0.2.0.9020",
-        states = list(), #storage for unpacked states used in simulation
+        unpack = list(), #storage for unpacked states, properties and parameters used in simulation
         time_series = list(),
         info = list(can_sim_channel=FALSE),
-        model = NULL,
         ## decribes a model tables
         ## roles are either
         ## - attribute
@@ -248,118 +245,166 @@ dynatop <- R6::R6Class(
         ## - data_series
         ## - state
         ## - output_label
-        model_description = function(transmisivity_profile = c("exponential","bounded_exponential"),
-                                     channel_solver = c("histogram","constant_celerity")){
-            transmisivity_profile <- match.args(transmisivity_profile)
-            channel_solver <- match.args(channel_solver)
+        model_description = list(),
+        generate_model_description = function(model){
             
-            ## contents of hillslope table - not states and parameters might vary with options
-            par_names <- switch(trns,
-                                "exponential" = c("r_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","c_sf"),
-                                "bounded_exponential" = c("r_sfmax","s_rzmax","s_rz0","ln_t0","m","t_d","c_sf","D"),
-                                "")
-            state_names <- c("s_sf","s_rz","s_uz","s_sz")
-            hillslope = data.frame(name = c("id","atb_bar","s_bar","area","delta_x", # attributes associated with catchment HSU
-                                            "precip","pet", # names of input series
-                                            par_names, # parameter names
-                                            state_names), # states
-                                   role = c(rep("attribute",5),
-                                            rep("data_series",2),
-                                            rep("parameter",length(par_names)),
-                                            rep("state",length(state_names))),
-                                   type = c("integer",rep("numeric",4),
-                                            rep("character",2),
-                                            rep("character",length(par_names)),
-                                            rep("numeric",length(state_names))),
-                                   stringsAsFactors=FALSE),
+            ## check options vector exists
+            if(!("options" %in% names(model))){ stop("No options vector for the model") }
+            if(!all(c("transmisivity_profile","channel_solver") %in% names(model$options))){
+                stop(paste("Expect value of",
+                           setdiff(c("transmisivity_profile","channel_solver"),names(model$options)),
+                           "in options vector"))
+            }
+            
+            ## match options and check
+            transmisivity_profile <- match.arg(model$options["transmisivity_profile"],
+                                               c("exponential"))##,"constant","bounded_exponential"))
+            channel_solver <- match.arg(model$options["channel_solver"],
+                                        c("histogram"))
+            
+            ## contents of hillslope table - states and parameters might vary with options
+            pnms <- c("r_sfmax","s_rzmax","s_rz0","c_sf") # parameter names
+            pnms <- switch(transmisivity_profile,
+                           "exponential" = c(pnms,"ln_t0","m","t_d"),
+                           "bounded_exponential" = c(pnms,"ln_t0","m","t_d","D"))
+            snms <- c("s_sf","s_rz","s_uz","s_sz") # state names
+            private$model_description$hillslope = data.frame(
+                name = c("id","atb_bar","s_bar","area","width", # attributes associated with catchment HSU
+                         pnms, # parameter names
+                         snms), # states
+                role = c(rep("attribute",5),
+                         rep("parameter",length(pnms)),
+                         rep("state",length(snms))),
+                type = c("integer",rep("numeric",4),
+                         rep("character",length(pnms)),
+                         rep("numeric",length(snms))),
+                stringsAsFactors=FALSE)
             ## contents of channel table - note may change depending upon options
-            par_names <- switch(channel_solver,
-                                "histogram"="v_ch",
-                                "constant_celerity"="v_ch",
-                                NULL)
-            state_names <- switch(channel_solver,
-                                  "histogram"=NULL,
-                                  "constant_celerity"="s_ch",
-                                  NULL)
-            channel = data.frame(name= c("id","area","length", # states
-                                         "precip","pet", # inputs
-                                         par_names, # parameters
-                                         state_names),
-                                 role = c(rep("attribute",3),
-                                          rep("data_series",2),
-                                          rep("parameter",length(par_names)),
-                                          rep("state",length(state_names))),
-                                 type = c("integer",rep("numeric",2),
-                                          rep("character",length(par_names)),
-                                          rep("character",length(state_names))),
-                                 stringsAsFactors=FALSE),
+            pnms <- switch(channel_solver,
+                           "histogram"="v_ch")
+            snms <- switch(channel_solver,
+                           "histogram"=NULL)
+            private$model_description$channel = data.frame(
+                name= c("id","area","length", # states
+                        pnms, # parameters
+                        snms),
+                role = c(rep("attribute",3),
+                         rep("parameter",length(pnms)),
+                         rep("state",length(snms))),
+                type = c("integer",rep("numeric",2),
+                         rep("character",length(pnms)),
+                         rep("character",length(snms))),
+                stringsAsFactors=FALSE)
             ## linkages between HSUs
-            flow_direction = data.frame(name= c("from","to","frc"),
-                                  role = rep("attribute",3),
-                                  type = c(rep("integer",2),"numeric"),
-                                  stringsAsFactors=FALSE),
+            private$model_description$flow_direction = data.frame(
+                name= c("from","to","frc"),
+                role = rep("attribute",3),
+                type = c(rep("integer",2),"numeric"),
+                stringsAsFactors=FALSE)
             ## rainfall inputs
-            rainfall_input = data.frame(name = c("name","id","fraction"),
-                                        type=c("character","integer","numeric"),
-                                        role = c("data_series",rep("attribute",2)),
-                                        stringsAsFactors=FALSE),
+            private$model_description$rainfall_input = data.frame(
+                name = c("name","id","frc"),
+                type=c("character","integer","numeric"),
+                role = c("data_series",rep("attribute",2)),
+                stringsAsFactors=FALSE)
             ## pet inputs
-            pet_input = data.frame(name = c("name","id","fraction"),
-                                   type=c("character","integer","numeric"),
-                                   role = c("data_series",rep("attribute",2)),
-                                   stringsAsFactors=FALSE),
+            private$model_description$pet_input = data.frame(
+                name = c("name","id","frc"),
+                type=c("character","integer","numeric"),
+                role = c("data_series",rep("attribute",2)),
+                stringsAsFactors=FALSE)
             ## point inflow to channels
-            point_inflow = data.frame(name = c("name","id"),
-                                      type=c("character","integer"),
-                                      role = c("data_series","attribute"),
-                                      stringsAsFactors=FALSE),
+            private$model_description$point_inflow = data.frame(
+                name = c("name","id"),
+                type=c("character","integer"),
+                role = c("data_series","attribute"),
+                stringsAsFactors=FALSE)
             ## point_inflow = data.frame(name = c("name","id","fraction"),
             ##                           type=c("character","integer","numeric"),
             ##                           role = c("data_series",rep("attribute",2)),
             ##                           stringsAsFactors=FALSE),
             ## diffuse inflow to channels
-            diffuse_inflow = data.frame(name = c("name","id"),
-                                        type=c("character","integer"),
-                                        role = c("data_series","attribute"),
-                                        stringsAsFactors=FALSE),
+            private$model_description$diffuse_inflow = data.frame(
+                name = c("name","id"),
+                type=c("character","integer"),
+                role = c("data_series","attribute"),
+                stringsAsFactors=FALSE)
             ## location of gauges
-            gauge = data.frame(name = c("name","id"),
-                               type=c("character","integer"),
-                               role = c("output_label","attribute"),
-                               stringsAsFactors=FALSE)
+            private$model_description$gauge = data.frame(
+                name = c("name","id"),
+                type=c("character","integer"),
+                role = c("output_label","attribute"),
+                stringsAsFactors=FALSE)
             ## gauge = data.frame(name = c("name","id","fraction"),
             ##                    type=c("character","integer","numeric"),
             ##                    role = c("output_label",rep("attribute",2)),
             ##                    stringsAsFactors=FALSE)
-        ),
+        },
         ## convert the form of the model for internal storage
         ## we presume the model has been checked!!
         digest_model = function(model,use_states){
-            ## order the channel and hillslope by id
-            ## This is important since the C++ code just goes down the rows..
-            model$hillslope <-
-                model$hillslope[order(model$hillslope$id,decreasing=TRUE),]
-            model$channel <- model$channel[order(model$channel$id,decreasing=TRUE),]
-            model$flow_direction <- model$flow_direction[order(model$flow_direction$from,decreasing=TRUE),]
-            model$rainfall_input <- model$rainfall_input[order(model$rainfall_input$id,decreasing=TRUE),]
-            model$pet_input <- model$pet_input[order(model$pet_input$id,decreasing=TRUE),]
-            
-            ## Process Hillslope states            
-            ## process states from hillslope table
-            ## must match column order in C++ code
-            ## l_sf, s_rz, s_uz, l_sz
-            nm <- private$model_description$hillslope$name[private$model_description$hillslope$role=="state"] 
-            if(use_states){
-                private$states$hillslope <- as.matrix(model$hillslope[,nm])
-            }else{
-                private$states$hillslope <- matrix(as.numeric(NA),nrow(model$hillslope),length(nm))
-            }
-            dimnames(private$states$hillslope) <- list(model$hillslope$id,nm)
+            ## It is important that variables are sorted by decreasing id
+            ## No check is made for this in the C++ code!!
+            ## variables appear in the matrices in the order of model_description
+            ## it is important the C++ code matches this
 
-            
-            ## Process channel
-            ## nothing to process - could add call to init_ch here
-            
+            ## Assume everthing is numeric except for id's which are integer
+
+            ## unpack hillslope and channel
+            for(ii in c("hillslope","channel")){
+                model[[ii]] <-
+                    model[[ii]][order(model[[ii]]$id,decreasing=TRUE),] ## sorting
+                private$unpack[[ii]] <- list() ## initialise output
+                ## attributes & id
+                nm <- private$model_description[[ii]]$name[private$model_description[[ii]]$role=="attribute"]
+                nm <- setdiff(nm,"id")
+                private$unpack[[ii]]$attribute <- data.matrix(model[[ii]][,nm])
+                private$unpack[[ii]]$id <- as.integer(model[[ii]]$id)
+                ## unpack states
+                nm <- private$model_description[[ii]]$name[private$model_description[[ii]]$role=="state"]
+                if(use_states){
+                    private$unpack[[ii]]$states <- data.matrix(model[[ii]][,nm])
+                }else{
+                    private$unpack[[ii]]$states <- matrix(as.numeric(NA),nrow(model[[ii]]),length(nm))
+                    ## cludge to get them named
+                    if(ii=="hillslope"){
+                        colnames(private$unpack[[ii]]$states) <- c("s_sf","s_rz","s_uz","s_sz")
+                    }
+                }
+                ## unpack parameters
+                nm <- private$model_description[[ii]]$name[private$model_description[[ii]]$role=="parameter"]
+                tmp <- matrix(as.numeric(NA),nrow(model[[ii]]),length(nm))
+                dimnames(tmp) <- list(model$hillslope$id,nm)
+                for(jj in nm){
+                    tmp[,jj] <- as.numeric(model$param[ model[[ii]][,jj] ] )
+                }
+                private$unpack[[ii]]$param <- tmp
+                private$unpack[[ii]]$param_str <- model[[ii]][,nm,drop=FALSE]
+            }
+
+            ## unpack flow direction
+            model$flow_direction <-
+                model$flow_direction[order(model$flow_direction$from,decreasing=TRUE),] ## sort
+            private$unpack$flow_direction <- list(
+                from = as.integer(model$flow_direction$from),
+                to = as.integer(model$flow_direction$to),
+                frc = as.numeric(model$flow_direction$frc) )
+
+            ## rainfall and pet fractions
+            for(ii in c("rainfall_input","pet_input")){
+                model[[ii]] <-
+                    model[[ii]][order(model[[ii]]$id,decreasing=TRUE),]
+                private$unpack[[ii]] <- list(
+                    name = as.character(model[[ii]]$name),
+                    id = as.integer(model[[ii]]$id ),
+                    frc = as.numeric(model[[ii]]$frc) )
+            }
+
+            ## channel inflows, gauge locastionsm, parameters etc - just copy..
+            for(ii in c("options","diffuse_inflow","point_inflow","gauge","param","map")){
+                private$unpack[[ii]] <- model[[ii]]
+            }
+
             ## work out all the required input series
             data_series <- list()
             for(tbl in names(private$model_description)){
@@ -369,53 +414,46 @@ dynatop <- R6::R6Class(
             }
             
             private$info$data_series <- unique( do.call(c,data_series) )
-
-            ## copy model to private
-            private$model <- model
           
             invisible( self )
         },
         ## convert the form the internal storage to that input
         ## we presume the model has been checked!!
-        reform_model = function(drop_map){
+        reform_model = function(){
             
             ## initialise output model format as a list
             ## include variables that don;t need transformation
-            out <- private$model
+            out <- list()
+            nm <- names(private$unpack) ## names of all parts of unpacked
+            cnm <- c("options","diffuse_inflow","point_inflow","gauge","param","map") ## names of bits that can just be copied
+            for(ii in cnm){
+                out[[ii]] <- private$unpack[[ii]]
+            }
             
-            ## add hillslope states
-            out$hillslope[,colnames(private$hillslope$states)] <- private$hillslope$states
+            for(ii in setdiff(nm,cnm)){
+                #print(ii)
+                #if(ii=="channel"){browser()}
+                jj <- setdiff(names(private$unpack[[ii]]),c("param","linear_time")) ## trim out matrix of numeric parameter values and other bits that aren't part of the model
+                out[[ii]] <- do.call(data.frame,private$unpack[[ii]][jj])
+                names(out[[ii]]) <- sapply(strsplit(names(out[[ii]]),"[.]"),
+                                           function(x){tail(x,1)})
+            }
             
-            ## TODO inc in description
+            ## TODO - add description...
             return(out)
         },
         ## this code checks the model
         check_model = function(model, use_states, verbose, delta=1e-13){
-            ## check options vector exists
-            if(!exists(model$options)){ stop("No options vector for the model") }
-            if(!all(c("transmisivity_profile","channel_solver") %in% names(model$options)){
-                stop(paste("Expect value of",
-                           setdiff(c("transmisivity_profile","channel_solver"),names(model$options)),
-                           "in options vector"))
-            }
-            
-            ## create an initial template without knowing the options
-            model_description <- private$model_description(
-                                             model$options["transmisivity_profile"],
-                                             model$options["channel_solver"])
             
             ## check all components of the model exist
-            components <- names(model_description)
+            components <- names(private$model_description)
             idx <- components %in% names(model)
             if( !all(idx) ){
                 stop(paste("Missing componets:",paste(components[!idx],collapse=",")))
             }
 
-            ## generate again with options
-            ## check components that should be data.frames of given structure
-    
             ## check the HRU table properties
-            req_names <- list(output_names = list(),
+            req_names <- list(output_label = list(),
                               parameter = list(),
                               data_series = list())
             for(ii in setdiff(components,"param")){
@@ -476,6 +514,7 @@ dynatop <- R6::R6Class(
             if( length(unique(names(model$param))) != length(model$param) ){
                 stop("All values in param should have a unique name")
             }
+            
             idx  <- req_names$parameter %in% names(model$param)
             if(!all(idx)){
                 stop(paste("The following parameters are not specified:",
@@ -541,8 +580,7 @@ dynatop <- R6::R6Class(
             }
 
             ## check on rainfall and pet input
-            for(ii in c("rainfall","pet")){
-                str <- paste0(ii,"_input")
+            for(ii in c("rainfall_input","pet_input")){
                 tmp <- tapply(model[[ii]]$frc,model[[ii]]$id,sum)
                 tmp_idx <- abs(tmp-1)<delta
                 if(!(all(tmp_idx))){
@@ -553,6 +591,9 @@ dynatop <- R6::R6Class(
                 if(!all(tmp_idx)){
                     warning(paste0("The following HSUs do not receive ",ii,": "),
                             paste(all_hsu[!idx],collapse=", "))
+                }
+                if(!all( model[[ii]]$id %in% all_hsu )){
+                    stop(paste(ii,"contains id not in HSU tables"))
                 }
             }
 
@@ -639,6 +680,12 @@ dynatop <- R6::R6Class(
             ## Assumes all checks passed
             private$time_series$obs_data <- as.matrix(obs)
             private$time_series$index <- index(obs)
+
+            ## set up the column vectors for the rainfall and pet
+            private$unpack$rainfall_input$col_idx <- as.integer(
+                match(private$unpack$rainfall_input$name, colnames(private$time_series$obs)) )
+            private$unpack$pet_input$col_idx <- as.integer(
+                match(private$unpack$pet_input$name, colnames(private$time_series$obs)) )
         },
         ## compute the simulation timestep
         comp_ts = function(sub_step=NULL){
@@ -654,29 +701,21 @@ dynatop <- R6::R6Class(
         ## Initialise the states
         init_hs = function(initial_recharge){
             ## TODO check initial recharge
-            frz <- pmin(1,pmax(0,private$model$param[private$model$hillslope$s_rz0]))
-            q0 <- rep(as.numeric(initial_recharge),length(frz))
-            #browser()
-            dt_init(as.integer(private$model$hillslope$id-1),
-                    private$states$hillslope,
-                    as.numeric(private$model$hillslope$area),
-                    as.numeric(private$model$hillslope$delta_x),
-                    as.numeric(atan(private$model$hillslope$s_bar)),
-                    as.numeric( private$model$param[private$model$hillslope$c_sf] ),
-                    as.numeric( private$model$param[private$model$hillslope$s_rzmax] ),
-                    as.numeric( private$model$param[private$model$hillslope$t_d] ),
-                    as.numeric( private$model$param[private$model$hillslope$m] ),
-                    as.numeric( private$model$param[private$model$hillslope$ln_t0] ),
-                    as.integer(private$model$channel$id-1),
-                    as.integer( private$model$flow_direction[,"from"]-1 ),
-                    as.integer( private$model$flow_direction[,"to"]-1 ),
-                    as.numeric( private$model$flow_direction[,"frc"] ),
-                    as.numeric(frz),
-                    as.numeric(q0))
+            q0 <- rep(as.numeric(initial_recharge),length(private$unpack$hillslope$id))
+            dt_exp_init(as.integer(private$unpack$hillslope$id-1),
+                        private$unpack$hillslope$states,
+                        private$unpack$hillslope$attr,
+                        private$unpack$hillslope$param,
+                        private$unpack$channel$id - 1,
+                        private$unpack$flow_direction$from - 1,
+                        private$unpack$flow_direction$to - 1,
+                        private$unpack$flow_direction$frc,
+                        q0 )
+
         },
         ## ###############################
         ## function to perform simulations
-        sim_hs = function(mass_check,keep_states,sub_step,approx_soln){
+        sim_hs = function(keep_states,sub_step){
             
             ## compute time substep
             if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
@@ -685,42 +724,32 @@ dynatop <- R6::R6Class(
             ts <- private$comp_ts(sub_step)
 
             ## check the Courant Numbers
-            csf <- as.numeric( private$model$param[private$model$hillslope$c_sf] )
-            td <- as.numeric( private$model$param[private$model$hillslope$t_d] )
-            m <- as.numeric( private$model$param[private$model$hillslope$m] )
-            ln_t0 <- as.numeric( private$model$param[private$model$hillslope$ln_t0] )
-            b <- atan(private$model$hillslope$s_bar)
-            Dx <- as.numeric(private$model$hillslope$delta_x)
-
+            Dx <- private$unpack$hillslope$attribute[,"width"] / private$unpack$hillslope$attribute[,"area"]
             ## check surface courant
-            tmp <- csf*ts$sub_step/Dx
+            Dx <- private$unpack$hillslope$attribute[,"width"] / private$unpack$hillslope$attribute[,"area"]
+            tmp <- private$unpack$hillslope$param[,"c_sf"]*ts$sub_step/Dx
             if( any(tmp>0.7) ){
-                warning("Courant number for surface velocity is over 0.7\n",
+                warning("Courant number for surface celocity is over 0.7\n",
                         "Suggest maximum sub step is: ",
-                        floor( min( 0.7*Dx/csf )),"seconds")
+                        floor( min( 0.7*Dx/private$unpack$hillslope$param[,"c_sf"] )),"seconds")
             }
-            
-            tmp <- (exp(ln_t0)*sin(2*b))/(2*m) ## maximum saturated zone velocity
+            ## check saturated zone courant
+            tmp <- (exp(private$unpack$hillslope$param[,"ln_t0"])*
+                    sin(2*atan(private$unpack$hillslope$attribute[,"s_bar"]))) /
+                (2*private$unpack$hillslope$param[,"m"]) ## maximum saturated zone velocity
             if( any((tmp*(ts$sub_step/Dx))>0.7) ){
-                warning("Courant number for surface velocity is over 0.7\n",
+                warning("Courant number for saturated zone celocity is over 0.7\n",
                         "Suggest maximum sub step is: ",
                         floor( min( 0.7*Dx/tmp) ),"seconds")
             }
-            
-            rm(tmp)
-
-            ## set up the input locations - recall tables are sorted in reverse id order
-            pidx <- match(c(rev(private$model$channel$precip),rev(private$model$hillslope$precip)),
-                          colnames(private$time_series$obs))
-            epidx <- match(c(rev(private$model$channel$pet),rev(private$model$hillslope$pet)),
-                          colnames(private$time_series$obs))
+            rm(tmp,Dx)
 
             ## Logical if states to be kept and store
             keep_states <- private$time_series$index %in% keep_states
             if(any(keep_states)){
                 private$time_series$state_record <- rep(list(as.data.frame(NULL)),length(private$time_series$index))
             }else{
-                private$time_series$state_record <- NULL
+                private$time_series$state_record <- list()
             }
 
             ## Initialise the mass error store
@@ -731,124 +760,85 @@ dynatop <- R6::R6Class(
             ## make local copy of channel_inflow
             private$time_series$channel_inflow <- matrix(as.numeric(NA),
                                                          nrow(private$time_series$obs),
-                                                         length(private$model$channel$id))
-            colnames(private$time_series$channel_inflow) <- private$model$channel$id
+                                                         length(private$unpack$channel$id))
+            colnames(private$time_series$channel_inflow) <- private$unpack$channel$id
             
-            s <- private$states$hillslope
-
-            if(approx_soln){
-                dt_approx(as.integer(private$model$hillslope$id)-1,
-                          private$states$hillslope,
-                          as.numeric(private$model$hillslope$area),
-                          as.numeric(private$model$hillslope$delta_x),
-                          b,csf,
-                          as.numeric( private$model$param[private$model$hillslope$r_sfmax] ),
-                          as.numeric( private$model$param[private$model$hillslope$s_rzmax] ),
-                          td,m,ln_t0,
-                          as.integer(private$model$channel$id - 1),
-                          as.numeric(private$model$channel$area),
-                          as.integer( pidx-1 ),
-                          as.integer( epidx-1 ),
-                          as.integer( private$model$flow_direction$from-1 ),
-                          as.integer( private$model$flow_direction$to-1 ),
-                          as.numeric( private$model$flow_direction$frc ),
-                          as.matrix(private$time_series$obs),
-                          private$time_series$channel_inflow,
-                          private$time_series$mass_balance,
-                          as.logical( keep_states ),
-                          private$time_series$state_record,
-                          ts$step,
-                          ts$n_sub_step)
-            }else{
-                dt_implicit(as.integer(private$model$hillslope$id)-1,
-                            private$states$hillslope,
-                            as.numeric(private$model$hillslope$area),
-                            as.numeric(private$model$hillslope$delta_x),
-                            b,csf,
-                            as.numeric( private$model$param[private$model$hillslope$r_sfmax] ),
-                            as.numeric( private$model$param[private$model$hillslope$s_rzmax] ),
-                            td,m,ln_t0,
-                            as.integer(private$model$channel$id - 1),
-                            as.numeric(private$model$channel$area),
-                            as.integer( pidx-1 ),
-                            as.integer( epidx-1 ),
-                            as.integer( private$model$flow_direction$from-1 ),
-                            as.integer( private$model$flow_direction$to-1 ),
-                            as.numeric( private$model$flow_direction$frc ),
-                            as.matrix(private$time_series$obs),
-                            private$time_series$channel_inflow,
-                            private$time_series$mass_balance,
-                            as.logical( keep_states ),
-                            private$time_series$state_record,
-                            ts$step,
-                            ts$n_sub_step) 
-            }
-            
-            ## tidy up dummy input
-            if( !mass_check ){
-                private$time_series$mass_balance <- NULL
-            }
+            dt_exp_implicit(
+                private$unpack$hillslope$id-1,
+                private$unpack$hillslope$states,
+                private$unpack$hillslope$attribute,
+                private$unpack$hillslope$param,
+                private$unpack$channel$id-1,
+                private$unpack$channel$attribute,
+                private$unpack$flow_direction$from -1 ,
+                private$unpack$flow_direction$to -1 ,
+                private$unpack$flow_direction$frc,
+                private$unpack$rainfall_input$col_idx - 1,
+                private$unpack$rainfall_input$id - 1,
+                private$unpack$rainfall_input$frc,
+                private$unpack$pet_input$col_idx - 1,
+                private$unpack$pet_input$id - 1,
+                private$unpack$pet_input$frc,
+                private$time_series$obs,
+                private$time_series$channel_inflow,
+                private$time_series$mass_balance,
+                as.logical( keep_states ),
+                private$time_series$state_record,
+                ts$step,
+                ts$n_sub_step
+            )
             
         },
         ## #############################
         init_ch = function(){
-            channel <- private$model$channel
-            gauge <- private$model$gauge
-            point_inflow <- private$model$point_inflow
+            #browser()
+            channel <- private$unpack$channel
+            gauge <- private$unpack$gauge
+            point_inflow <- private$unpack$point_inflow
             
-            ## get the channels downstream of each id
-            chn_con <- sapply(channel$id,
+            ## get the channels upstream of each id
+            chn_con <- lapply(channel$id,
                               function(x){
-                                  idx <- private$model$flow_direction$from==x
-                                  if(any(idx)){
-                                      return(private$model$flow_direction$to[idx])
-                                  }else{return(NA)
-                                  }
-                              })
-            chn_con <- paste(chn_con)
+                                  ## work out links going to reach from channels
+                                  idx <- (private$unpack$flow_direction$to==x) &
+                                      (private$unpack$flow_direction$from %in% channel$id)
+                                  ## limit to only channels
+                                  return( paste(private$unpack$flow_direction$from[idx]) )
+                              }
+                              )
             names(chn_con) <- paste(channel$id)
-
-            ##chn_con <- sapply(channel$flow_direction,
-            ##                  function(x){if(is.null(x)){-99}else{x$idx}})
-            ##chn_con[channel$id] <- unname(chn_con)
+            
             
             ## compute the time to travel down each reach
-            
-            reach_time <- setNames( channel$length / private$model$param[channel$v_ch],
+            reach_time <- setNames( channel$attribute[,"length"] / channel$param[,"v_ch"], #private$model$param[channel$v_ch],
                                    channel$id )
 
+            ## storage for output
             linear_time <- setNames(rep(list(NULL),length(gauge$name)),
                                     gauge$name)
             
             ## Loop gauges
             for(gnm in 1:length(gauge$name)){
                 ## initialise diffuse input matrix
-                df <- matrix(as.numeric(NA),nrow(channel),3)
-                colnames(df) <- c("min_time","max_time","frc")
+                df <- matrix(as.numeric(NA),length(channel$id),2)
+                colnames(df) <- c("min_time","max_time")
                 rownames(df) <- channel$id
                 ## start with location of the gauge
-                ii <- paste(gauge$id[gnm])
-                df[ii,] <- c(0,reach_time[ii]*gauge$fraction[gnm],gauge$fraction[gnm])
-                idx <- names(chn_con[chn_con==ii]) ## the names of the reaches upstream
+                idx <- paste(gauge$id[gnm])
+                df[idx,"min_time"] <- 0
                 while(length(idx)>0){
-                    ii <- idx[1]
-                    tmp <- df[chn_con[ii],"max_time"]
-                    df[ii,] <- c(tmp,tmp+reach_time[ii],1)
-                    idx <- c(idx[-1],names(chn_con[chn_con==ii]))
+                    ii <- idx[1] ## current reach
+                    df[ii,"max_time"] <- df[ii,"min_time"] + reach_time[ii] ## work out max time
+                    jdx <- chn_con[[ii]] ## get upstream reaches
+                    df[jdx,"min_time"] <- df[ii,"max_time"] ## set min time to max time of downstream
+                    idx <- c(idx[-1],jdx)
                 }
 
                 ## initialise the point inflow matrix
-                pnt <- matrix(as.numeric(NA),nrow(point_inflow),3)
-                colnames(pnt) <- c("min_time","max_time","frc")
-                rownames(pnt) <- point_inflow$name
-                for(pnm in rownames(pnt)){
-                    ii <- paste( point_inflow$id[point_inflow$name==pnm] )
-                    if(is.finite(df[ii,"frc"])){
-                        f <- point_inflow$fraction[point_inflow$name==pnm]
-                        delta <- df[ii,"max_time"] - (df[ii,"max_time"]-df[ii,"min_time"])*f
-                        pnt[pnm,] <- c(delta,delta,1)
-                    }
-                }
+                ii <- paste(point_inflow$id) ## find id of reach
+                pnt <- df[ii,] ## copy rows of df table
+                pnt[,"min_time"] <- pnt[,"max_time"] # since point inflow at head of reach
+                rownames(pnt) <- point_inflow$name ## rename
 
                 linear_time[[gnm]] <- list(diffuse=df,point=pnt)
             }
@@ -899,7 +889,7 @@ dynatop <- R6::R6Class(
             ##     linear_time[[gauge$name[rw]]] <- tmp
             ## }
             
-            private$states$channel$linear_time <- linear_time
+            private$unpack$channel$linear_time <- linear_time
         },
         sim_ch = function(){
             

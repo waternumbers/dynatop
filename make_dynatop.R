@@ -45,11 +45,8 @@ drat::pruneRepo(dratPath,pkg=pkgName,remove="git")## this only does source files
 ## This converts the exdata for Swindale into the data object used in the examples.
 devtools::load_all(pacPath)
 model <- readRDS( system.file("extdata","Swindale.rds",package="dynatop") )
-for(ii in c("precip","pet")){
-    for(jj in c("hillslope","channel")){
-        model[[jj]][[ii]] <- switch(ii,precip="Rainfall",pet="PET")
-    }
-}
+model$rainfall_input$name <- "Rainfall"
+model$pet_input$name <- "PET"
 
 qr <- read.csv( system.file("extdata","start=2009-11-18_end=2009-11_4_int=0.25-hours_units=mm.hr-1.tsv",package="dynatop") ,sep="\t")
 obs <- as.xts(qr[,c("Flow","Rainfall")],order.by= as.POSIXct(qr[,'Date'],format="%d/%m/%Y %H:%M",tz='GMT'))
@@ -116,16 +113,24 @@ range(s2[[67]] - s1[[67]])
 ## This hits more of the models compoents for testing
 rm(list=ls())
 devtools::load_all("./dynatop"); data("Swindale"); 
-Swindale$model$param <- c(q_sfmax_default=Inf,
-                 m_default=0.006, ## 0.05 - 0.6 m
-                 ln_t0_default=0.746, ## 0.1 - 8 m2/h
-                 s_rz0_default=0.98,
-                 s_rzmax_default=0.1,
-                 v_ch_default=0.4, ## 1000 -5000 m/h
-                 t_d_default=80*60*60, ## 0.1-120 m/h - are these units correct - or is cobceptualisation other way round?
-                 t_sf_default=Inf #7*60*60
-                 )
-m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel(mass_check=TRUE)
+Swindale$model$param <- c(r_sfmax_default=Inf,
+                          m_default=0.006, ## 0.05 - 0.6 m
+                          ln_t0_default=0.746, ## 0.1 - 8 m2/h
+                          s_rz0_default=0.98,
+                          s_rzmax_default=0.1,
+                          v_ch_default=0.4, ## 1000 -5000 m/h
+                          t_d_default=80*60*60, ## 0.1-120 m/h - are these units correct - or is cobceptualisation other way round?
+                          c_sf_default=0.4
+                          )
+## bits that I shouldn't have to do...
+Swindale$model$options=c("transmisivity_profile"="exponential","channel_solver"="histogram")
+
+m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)
+
+m1$sim_hillslope()
+
+$sim_channel(mass_check=TRUE)
+## $add_data(Swindale$obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel(mass_check=TRUE)
 m1$plot_gauge_flow()
 m1$sim()$plot_gauge_flow()
 
