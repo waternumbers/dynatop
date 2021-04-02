@@ -32,7 +32,11 @@ private:
   double lmax, cbm, dt, td, rc, lin, uz, sz, dx; // values to use in calc
 };
 
-
+struct TerminationCondition  {
+  bool operator() (double min, double max)  {
+    return abs(min - max) <= 1e-32;
+  }
+};
 
 //* ======================================================================================= *//
 //* ======================================================================================= *//
@@ -256,7 +260,11 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
   // boost optimisation parameters
   const boost::uintmax_t opt_maxit = 1000;
   int digits = std::numeric_limits<double>::digits;
-  int get_digits = (digits * 3) /4;
+  int get_digits = digits-1;
+  // get_digits - highest tolerence (most accurate) is digits-1,
+  // but this can be problematic with numeric rounding in
+  // the functions being optimised
+  // To low a tolerence, for example (digits-3)/4. produces significant mass balance errors
   boost::math::tools::eps_tolerance<double> tol(get_digits);
   boost::uintmax_t opt_it = opt_maxit;
   std::pair<double, double> opt_res; // solution for output
@@ -271,6 +279,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
   double q_sf_out,q_sz_out; // out flow fluxes
   double chn_in; // flow volume to channel
   std::vector<double> mbv(4,0.0); // mass balance vector
+  Rcpp::Rcout << "nchannel " << nchannel << std::endl;
   std::vector<double> ch_in(nchannel,0.0); // channel inflow vector
 
   // variables for handling links
@@ -295,6 +304,11 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
       int& i = precip_id[ii];
       int& c = precip_col[ii];
       double& f = precip_frc[ii];
+      Rcpp::Rcout << i << std::endl;
+      Rcpp::Rcout << c << std::endl;
+      Rcpp::Rcout << f << std::endl;
+      Rcpp::Rcout << obs(it,c) << std::endl;
+      Rcpp::Rcout << timestep << std::endl;
       precip[i] += f*obs(it,c)/timestep;
     }
 
@@ -307,7 +321,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
       pet[i] += f*obs(it,c)/timestep;
     }
    
-    Rcpp::Rcout << "Computed precip + pet" << std::endl;
+    //Rcpp::Rcout << "Computed precip + pet" << std::endl;
     
     // start loop of substeps
     for(int nn = 0; nn < n_sub_step; ++nn){
@@ -323,7 +337,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
       // loop HSUs
       for(int ii=0; ii<nhillslope; ++ii){
 
-    	Rcpp::Rcout << it << " " << nn << " " << ii << std::endl;
+    	//Rcpp::Rcout << it << " " << nn << " " << ii << std::endl;
     	// current id used to reference longer vectors
     	cid = id[ii];
 
@@ -334,7 +348,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
 
     	// compute first downward flux estimate from surface ans root zone
     	// these are given as \check{r} in documentation	
-    	r_sf_rz = std::min( r_sf_max[ii] , s_sf[ii] + Dt*q_sf_in[cid]/area[ii]);
+    	r_sf_rz = std::min( r_sf_max[ii] , (s_sf[ii] + Dt*q_sf_in[cid]/area[ii])/Dt );
     	r_rz_uz = std::max( 0.0 ,
     			    (s_rz[ii] + Dt*(precip[cid] + r_sf_rz - pet[cid]) - s_rz_max[ii])/Dt);
 
@@ -352,12 +366,11 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
     	fsz_exp<double> fnc(s_uz[ii], s_sz[ii],
     			    l_sz_max[ii], cosbeta_m[ii],
     			    t_d[ii], Dt,Dx[ii],  l_sz_in, r_rz_uz);
-
 	
     	//Rcpp::Rcout << "Set template funcion" << std::endl;
-
-    	double tmp = 0.0;
-    	tmp = fnc(0.0);
+	
+    	//double tmp = 0.0;
+    	//tmp = fnc(0.0);
     	//Rcpp::Rcout << tmp << std::endl;
 	
     	// test for saturation
@@ -371,30 +384,33 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
 	  //Rcpp::Rcout << "unsaturated" << std::endl;
 	  
 	  
-    	  tmp = fnc(s_sz[ii]);
+    	  //tmp = fnc(s_sz[ii]);
     	  //Rcpp::Rcout << "s_sz[ii] " << s_sz[ii] << " fnc(s_sz[ii]) " << tmp << std::endl;
     	  // not saturated need to solve
     	  if( fnc(s_sz[ii]) >= 0.0 ){
-    	    //Rcpp::Rcout << "wetting" << std::endl;
+    	    Rcpp::Rcout << "wetting" << std::endl;
     	    // then wetting - solution between current s_sz and 0
-    	    opt_res = boost::math::tools::toms748_solve(fnc, 0.0, s_sz[ii], tol,opt_it);
+	    opt_res = boost::math::tools::bisect(fnc, 0.0, s_sz[ii], TerminationCondition(),opt_it);
+    	    //opt_res = boost::math::tools::toms748_solve(fnc, 0.0, s_sz[ii], TerminationCondition(),opt_it);
+	    
     	  }else{
-    	    //Rcpp::Rcout << "drying" << std::endl;
+    	    Rcpp::Rcout << "drying" << std::endl;
     	    // drying s_sz getting bigger
     	    double upr = 10.0; //2.0*s_sz[ii];
-	    tmp = fnc(upr);
+	    //tmp = fnc(upr);
 	    //Rcpp::Rcout << "upper: " << upr << " fnc(upr) "<< tmp << std::endl;
     	    //while( fnc(upr) <= 0.0 ){
     	    //  upr += upr;
     	    //}
-    	    opt_res = boost::math::tools::toms748_solve(fnc, s_sz[ii], upr, tol,opt_it);
+	    opt_res = boost::math::tools::bisect(fnc, s_sz[ii],upr, TerminationCondition(),opt_it);
+    	    //opt_res = boost::math::tools::toms748_solve(fnc, s_sz[ii], upr, TerminationCondition(),opt_it);
     	  }
     	  if(opt_it >= opt_maxit){
     	    Rcpp::Rcout << "Unable to locate solution in chosen iterations:" <<
     	      " Current best guess is between " << opt_res.first << " and " <<
     	      opt_res.second << std::endl;
     	  }
-
+	  
 	  // l_sz = l_sz_max[ii];
 	  // r_rz_uz = ( s_sz[ii] + (Dt/Dx[ii])*(l_sz - l_sz_in) - s_uz[ii] )/Dt;
 	  // s_sz[ii] = 0.0;
@@ -402,7 +418,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
     	  r_rz_uz = std::min( r_rz_uz, (s_sz[ii] + Dt/t_d[ii] - s_uz[ii])/Dt );
     	  l_sz = l_sz_max[ii]*exp(-s_sz[ii]*cosbeta_m[ii]);
     	}
-
+	
     	//Rcpp::Rcout << "computed optimisation" << std::endl;
 	
     	// solve unsaturated zone
@@ -411,10 +427,19 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
     	r_sf_rz = std::min( r_sf_rz,
     			    (s_rz_max[ii] - s_rz[ii] - Dt*(precip[cid]-pet[cid]-r_rz_uz))/Dt
     			    );
-    	// solve for root zone
-    	s_rz[ii] = ( s_rz[ii] + Dt*(precip[cid] + r_sf_rz - r_rz_uz) ) / ( s_rz_max[ii] / (s_rz_max[ii] + Dt*pet[ii]) );
+
+	Rcpp::Rcout << "step HRU " << it << " " << ii << std::endl;
+	Rcpp::Rcout << "r_rz_uz " << r_rz_uz << std::endl;
+	Rcpp::Rcout << "r_sf_rz " << r_sf_rz << std::endl;
+	Rcpp::Rcout << "l_sz_in " << l_sz_in << std::endl;
+	Rcpp::Rcout << "l_sz " << l_sz << std::endl;
+	double tmp = fnc(s_sz[ii]);
+	Rcpp::Rcout << "fnc " << tmp << std::endl;
+	Rcpp::Rcout << "iterations " << opt_it << std::endl;
+	// solve for root zone
+	s_rz[ii] = ( s_rz[ii] + Dt*(precip[cid] + r_sf_rz - r_rz_uz) ) * ( s_rz_max[ii] / (s_rz_max[ii] + Dt*pet[ii]) );
     	// solve for surface
-    	s_sf[ii] = ( Dx[ii] / (Dx[ii] + c_sf[ii]) ) * ( s_sf[ii] + Dt*( (q_sf_in[cid]/area[ii]) - r_sf_rz ));
+    	s_sf[ii] = ( Dx[ii] / (Dx[ii] + Dt*c_sf[ii]) ) * ( s_sf[ii] + Dt*( (q_sf_in[cid]/area[ii]) - r_sf_rz ));
 	
     	//Rcpp::Rcout << "Solved for stores" << std::endl;
 	
@@ -453,7 +478,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
       }
       // end of substep loop
     }
-    Rcpp::Rcout << "after substep" << std::endl;
+    //Rcpp::Rcout << "after substep" << std::endl;
     // copy mass balance to record
     for(int ii=0; ii < 4; ++ii){
       mass_balance(it,ii) = mbv[ii];
