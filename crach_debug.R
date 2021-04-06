@@ -1,5 +1,5 @@
 rm(list=ls())
-.libPaths(c("/home/paul/R/x86_64-suse-linux-gnu-library/4.0/",.libPaths()))
+##.libPaths(c("/home/paul/R/x86_64-suse-linux-gnu-library/4.0/",.libPaths()))
 devtools::load_all("./dynatop"); data("Swindale");
 
 mdl <- Swindale$model
@@ -16,17 +16,15 @@ mdl <- Swindale$model
 ## mdl$pet_input <- mdl$pet_input[1:2,,drop=FALSE]
 ## mdl$pet_input$id <- as.integer(c(1,2))
 
-mdl$param <- c(r_sfmax_default=Inf,
-               m_default=0.16, ## 0.05 - 0.6 m
-               ln_t0_default=0.746, ## 0.1 - 8 m2/h
-               s_rz0_default=0.98,
-               s_rzmax_default=0.1,
-               v_ch_default=0.4, ## 1000 -5000 m/h
-               t_d_default=80*60*60, ## 0.1-120 m/h - are these units correct - or is cobceptualisation other way round?
-               c_sf_default=0.4
-               )
-## bits that I shouldn't have to do...
-mdl$options=c("transmisivity_profile"="exponential","channel_solver"="histogram")
+## mdl$param <- c(r_sfmax_default=Inf,
+##                m_default=0.16, ## 0.05 - 0.6 m
+##                ln_t0_default=0.746, ## 0.1 - 8 m2/h
+##                s_rz0_default=0.98,
+##                s_rzmax_default=0.1,
+##                v_ch_default=0.4, ## 1000 -5000 m/h
+##                t_d_default=80*60*60, ## 0.1-120 m/h - are these units correct - or is cobceptualisation other way round?
+##                c_sf_default=0.4
+##                )
 
 m1 <- dynatop$new(mdl)
 ##Swindale$obs[,c("Rainfall","PET")] <- 0
@@ -38,9 +36,6 @@ v = sapply(tmp,colMeans)
 #matplot(t(v))
 
 mb <- m1$get_mass_errors()
-mb <- cbind(mb,"final"=NA)
-idx <- 2:nrow(mb)
-mb[idx-1,"final"] <- -mb[idx,"initial_state"]
 plot(rowSums(mb))
 
 

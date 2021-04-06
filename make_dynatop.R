@@ -43,6 +43,8 @@ drat::pruneRepo(dratPath,pkg=pkgName,remove="git")## this only does source files
 
 ###########################################################################
 ## This converts the exdata for Swindale into the data object used in the examples.
+rm(list=ls())
+pacPath <- './dynatop'
 devtools::load_all(pacPath)
 model <- readRDS( system.file("extdata","Swindale.rds",package="dynatop") )
 model$rainfall_input$name <- "Rainfall"
@@ -56,6 +58,12 @@ obs$PET <- evap_est(index(obs),0,5/1000) # in m
 
 Swindale <- list(model=model,obs=obs)
 save("Swindale",file="./dynatop/data/Swindale.rda")
+
+
+
+
+
+
 
 ## ########################################
 ## This code uses Swindale and fits nearly all the input and output calls
