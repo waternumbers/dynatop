@@ -83,9 +83,10 @@ void dt_exp_init(std::vector<int> id, // hillslope id
   Rcpp::NumericMatrix::Column s_rz_max = param.column(1); // max soil moisture depth
   Rcpp::NumericMatrix::Column s_rz_0 = param.column(2); // initial root zone depth as fraction
   Rcpp::NumericMatrix::Column c_sf = param.column(3); // surface flow celerity
-  Rcpp::NumericMatrix::Column ln_t0 = param.column(4); // log of saturated transmissivity
-  Rcpp::NumericMatrix::Column m = param.column(5); // transmissivity decay parameter
-  Rcpp::NumericMatrix::Column t_d = param.column(6); // unsaturated zone time constant
+  Rcpp::NumericMatrix::Column t_d = param.column(4); // unsaturated zone time constant
+  Rcpp::NumericMatrix::Column ln_t0 = param.column(5); // log of saturated transmissivity
+  Rcpp::NumericMatrix::Column m = param.column(6); // transmissivity decay parameter
+  
 
   // compute the property summaries for the hillslope required
   std::vector<double> l_sz_max(nhillslope,-999.0); // max saturated zone flux
@@ -221,9 +222,10 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
   Rcpp::NumericMatrix::Column s_rz_max = param.column(1); // max soil moisture depth
   Rcpp::NumericMatrix::Column s_rz_0 = param.column(2); // initial root zone depth as fraction
   Rcpp::NumericMatrix::Column c_sf = param.column(3); // surface flow celerity
-  Rcpp::NumericMatrix::Column ln_t0 = param.column(4); // log of saturated transmissivity
-  Rcpp::NumericMatrix::Column m = param.column(5); // transmissivity decay parameter
-  Rcpp::NumericMatrix::Column t_d = param.column(6); // unsaturated zone time constant
+  Rcpp::NumericMatrix::Column t_d = param.column(4); // unsaturated zone time constant
+  Rcpp::NumericMatrix::Column ln_t0 = param.column(5); // log of saturated transmissivity
+  Rcpp::NumericMatrix::Column m = param.column(6); // transmissivity decay parameter
+ 
 
   //Rcpp::Rcout << r_sf_max[1] << std::endl;
   //Rcpp::Rcout << s_rz_max[1] << std::endl;
@@ -278,7 +280,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
   double l_sz; // outflow per unit width
   double q_sf_out,q_sz_out; // out flow fluxes
   double chn_in; // flow volume to channel
-  std::vector<double> mbv(4,0.0); // mass balance vector
+  std::vector<double> mbv(5,0.0); // mass balance vector
   Rcpp::Rcout << "nchannel " << nchannel << std::endl;
   std::vector<double> ch_in(nchannel,0.0); // channel inflow vector
 
@@ -479,8 +481,14 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
       // end of substep loop
     }
     //Rcpp::Rcout << "after substep" << std::endl;
+    // final mass balance states
+    for(int ii=0; ii<nhillslope; ++ii){
+      mbv[4] -= area[ii]*(s_sf[ii] + s_rz[ii] + s_uz[ii] - s_sz[ii]);
+    }
+
+    
     // copy mass balance to record
-    for(int ii=0; ii < 4; ++ii){
+    for(int ii=0; ii < 5; ++ii){
       mass_balance(it,ii) = mbv[ii];
     }
     //Rcpp::Rcout << "Copied MB record" << std::endl;

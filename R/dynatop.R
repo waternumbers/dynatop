@@ -250,23 +250,25 @@ dynatop <- R6::R6Class(
             
             ## check options vector exists
             if(!("options" %in% names(model))){ stop("No options vector for the model") }
-            if(!all(c("transmisivity_profile","channel_solver") %in% names(model$options))){
+            if(!all(c("transmissivity_profile","channel_solver") %in% names(model$options))){
                 stop(paste("Expect value of",
-                           setdiff(c("transmisivity_profile","channel_solver"),names(model$options)),
+                           setdiff(c("transmissivity_profile","channel_solver"),names(model$options)),
                            "in options vector"))
             }
             
             ## match options and check
-            transmisivity_profile <- match.arg(model$options["transmisivity_profile"],
-                                               c("exponential"))##,"constant","bounded_exponential"))
+            transmissivity_profile <- match.arg(model$options["transmissivity_profile"],
+                                               c("exponential","constant","bounded_exponential"))
             channel_solver <- match.arg(model$options["channel_solver"],
                                         c("histogram"))
             
             ## contents of hillslope table - states and parameters might vary with options
-            pnms <- c("r_sfmax","s_rzmax","s_rz0","c_sf") # parameter names
-            pnms <- switch(transmisivity_profile,
-                           "exponential" = c(pnms,"ln_t0","m","t_d"),
-                           "bounded_exponential" = c(pnms,"ln_t0","m","t_d","D"))
+            pnms <- c("r_sfmax","s_rzmax","s_rz0","c_sf","t_d") # parameter names
+            pnms <- switch(transmissivity_profile,
+                           "exponential" = c(pnms,"ln_t0","m"),
+                           "bounded_exponential" = c(pnms,"ln_t0","m","D"),
+                           "constant" = c(pnms,"c_sz","D"))
+            
             snms <- c("s_sf","s_rz","s_uz","s_sz") # state names
             private$model_description$hillslope = data.frame(
                 name = c("id","atb_bar","s_bar","area","width", # attributes associated with catchment HSU
@@ -276,7 +278,8 @@ dynatop <- R6::R6Class(
                          rep("parameter",length(pnms)),
                          rep("state",length(snms))),
                 type = c("integer",rep("numeric",4),
-                         rep("character",length(pnms)),
+                         rep("numeric",length(pnms)),
+                         ## rep("character",length(pnms)),
                          rep("numeric",length(snms))),
                 stringsAsFactors=FALSE)
             ## contents of channel table - note may change depending upon options
@@ -292,8 +295,9 @@ dynatop <- R6::R6Class(
                          rep("parameter",length(pnms)),
                          rep("state",length(snms))),
                 type = c("integer",rep("numeric",2),
-                         rep("character",length(pnms)),
-                         rep("character",length(snms))),
+                         rep("numeric",length(pnms)),
+                         ## rep("character",length(pnms)),
+                         rep("numeric",length(snms))),
                 stringsAsFactors=FALSE)
             ## linkages between HSUs
             private$model_description$flow_direction = data.frame(
@@ -319,11 +323,7 @@ dynatop <- R6::R6Class(
                 type=c("character","integer"),
                 role = c("data_series","attribute"),
                 stringsAsFactors=FALSE)
-            ## point_inflow = data.frame(name = c("name","id","fraction"),
-            ##                           type=c("character","integer","numeric"),
-            ##                           role = c("data_series",rep("attribute",2)),
-            ##                           stringsAsFactors=FALSE),
-            ## diffuse inflow to channels
+           ## diffuse inflow to channels
             private$model_description$diffuse_inflow = data.frame(
                 name = c("name","id"),
                 type=c("character","integer"),
@@ -335,10 +335,6 @@ dynatop <- R6::R6Class(
                 type=c("character","integer"),
                 role = c("output_label","attribute"),
                 stringsAsFactors=FALSE)
-            ## gauge = data.frame(name = c("name","id","fraction"),
-            ##                    type=c("character","integer","numeric"),
-            ##                    role = c("output_label",rep("attribute",2)),
-            ##                    stringsAsFactors=FALSE)
         },
         ## convert the form of the model for internal storage
         ## we presume the model has been checked!!
@@ -373,13 +369,15 @@ dynatop <- R6::R6Class(
                 }
                 ## unpack parameters
                 nm <- private$model_description[[ii]]$name[private$model_description[[ii]]$role=="parameter"]
-                tmp <- matrix(as.numeric(NA),nrow(model[[ii]]),length(nm))
-                dimnames(tmp) <- list(model$hillslope$id,nm)
-                for(jj in nm){
-                    tmp[,jj] <- as.numeric(model$param[ model[[ii]][,jj] ] )
-                }
-                private$unpack[[ii]]$param <- tmp
-                private$unpack[[ii]]$param_str <- model[[ii]][,nm,drop=FALSE]
+                ## tmp <- matrix(as.numeric(NA),nrow(model[[ii]]),length(nm))
+                ## dimnames(tmp) <- list(model$hillslope$id,nm)
+                ## for(jj in nm){
+                ##     tmp[,jj] <- as.numeric(model$param[ model[[ii]][,jj] ] )
+                ## }
+                ## private$unpack[[ii]]$param_str <- model[[ii]][,nm,drop=FALSE]
+                private$unpack[[ii]]$param <- data.matrix(model[[ii]][,nm,drop=FALSE])
+                
+
             }
 
             ## unpack flow direction
@@ -401,7 +399,7 @@ dynatop <- R6::R6Class(
             }
 
             ## channel inflows, gauge locastionsm, parameters etc - just copy..
-            for(ii in c("options","diffuse_inflow","point_inflow","gauge","param","map")){
+            for(ii in c("options","diffuse_inflow","point_inflow","gauge","map")){ ##"param",)){
                 private$unpack[[ii]] <- model[[ii]]
             }
 
@@ -425,7 +423,7 @@ dynatop <- R6::R6Class(
             ## include variables that don;t need transformation
             out <- list()
             nm <- names(private$unpack) ## names of all parts of unpacked
-            cnm <- c("options","diffuse_inflow","point_inflow","gauge","param","map") ## names of bits that can just be copied
+            cnm <- c("options","diffuse_inflow","point_inflow","gauge","map") #"param","map") ## names of bits that can just be copied
             for(ii in cnm){
                 out[[ii]] <- private$unpack[[ii]]
             }
@@ -433,7 +431,7 @@ dynatop <- R6::R6Class(
             for(ii in setdiff(nm,cnm)){
                 #print(ii)
                 #if(ii=="channel"){browser()}
-                jj <- setdiff(names(private$unpack[[ii]]),c("param","linear_time")) ## trim out matrix of numeric parameter values and other bits that aren't part of the model
+                jj <- setdiff(names(private$unpack[[ii]]),"linear_time") #c("param","linear_time")) ## trim out matrix of numeric parameter values and other bits that aren't part of the model
                 out[[ii]] <- do.call(data.frame,private$unpack[[ii]][jj])
                 names(out[[ii]]) <- sapply(strsplit(names(out[[ii]]),"[.]"),
                                            function(x){tail(x,1)})
@@ -454,9 +452,9 @@ dynatop <- R6::R6Class(
 
             ## check the HRU table properties
             req_names <- list(output_label = list(),
-                              parameter = list(),
+                              ## parameter = list(),
                               data_series = list())
-            for(ii in setdiff(components,"param")){
+            for(ii in components){ #setdiff(components,"param")){
                 ## what should the properties of each column be
                 prop <- private$model_description[[ii]]
                 if(!use_states){
@@ -484,7 +482,7 @@ dynatop <- R6::R6Class(
 
                 ## check all numeric values are finite and positive
                 idx <- setNames(rep(FALSE,length(prop$name)),prop$name)
-                for(jj in prop$name[prop$type=="numeric"]){
+                for(jj in prop$name[prop$type=="numeric" & !(prop$role=="parameter")]){
                     if(any(!is.finite(model[[ii]][[jj]])) | !all(model[[ii]][[jj]]>=0)){
                         idx[jj] <- TRUE
                     }
@@ -508,23 +506,23 @@ dynatop <- R6::R6Class(
             
             
             ## parameter vector should be named numeric vector and contain all required names
-            if( !all(is.vector(model$param), is.numeric(model$param)) ){
-                stop("param should be a numeric vector")
-            }
-            if( length(unique(names(model$param))) != length(model$param) ){
-                stop("All values in param should have a unique name")
-            }
+            ## if( !all(is.vector(model$param), is.numeric(model$param)) ){
+            ##     stop("param should be a numeric vector")
+            ## }
+            ## if( length(unique(names(model$param))) != length(model$param) ){
+            ##     stop("All values in param should have a unique name")
+            ## }
             
-            idx  <- req_names$parameter %in% names(model$param)
-            if(!all(idx)){
-                stop(paste("The following parameters are not specified:",
-                           paste(req_names[!idx],collapse=",")))
-            }
-            idx  <- names(model$param) %in% req_names$parameter
-            if(!all(idx)){
-                stop(paste("The following parameters are not used:",
-                           paste(names(model$param)[!idx],collapse=",")))
-            }
+            ## idx  <- req_names$parameter %in% names(model$param)
+            ## if(!all(idx)){
+            ##     stop(paste("The following parameters are not specified:",
+            ##                paste(req_names[!idx],collapse=",")))
+            ## }
+            ## idx  <- names(model$param) %in% req_names$parameter
+            ## if(!all(idx)){
+            ##     stop(paste("The following parameters are not used:",
+            ##                paste(names(model$param)[!idx],collapse=",")))
+            ## }
             
             ## check all output series have unique names
             if( length(req_names$output_names) != length(unique(req_names$output_names)) ){
@@ -701,6 +699,7 @@ dynatop <- R6::R6Class(
         ## Initialise the states
         init_hs = function(initial_recharge){
             ## TODO check initial recharge
+            browser()
             q0 <- rep(as.numeric(initial_recharge),length(private$unpack$hillslope$id))
             dt_exp_init(as.integer(private$unpack$hillslope$id-1),
                         private$unpack$hillslope$states,
@@ -753,9 +752,9 @@ dynatop <- R6::R6Class(
             }
 
             ## Initialise the mass error store
-            private$time_series$mass_balance <- matrix(as.numeric(NA),nrow(private$time_series$obs),4)
+            private$time_series$mass_balance <- matrix(as.numeric(NA),nrow(private$time_series$obs),5)
             colnames(private$time_series$mass_balance) <-
-                c("initial_state","e_t","p","channel_inflow")
+                c("initial_state","e_t","p","channel_inflow","final_state")
 
             ## make local copy of channel_inflow
             private$time_series$channel_inflow <- matrix(as.numeric(NA),
@@ -791,7 +790,7 @@ dynatop <- R6::R6Class(
         },
         ## #############################
         init_ch = function(){
-            #browser()
+            
             channel <- private$unpack$channel
             gauge <- private$unpack$gauge
             point_inflow <- private$unpack$point_inflow
@@ -810,6 +809,7 @@ dynatop <- R6::R6Class(
             
             
             ## compute the time to travel down each reach
+            browser()
             reach_time <- setNames( channel$attribute[,"length"] / channel$param[,"v_ch"], #private$model$param[channel$v_ch],
                                    channel$id )
 
