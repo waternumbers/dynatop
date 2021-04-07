@@ -19,7 +19,8 @@ Imports:
 	zoo,
 	xts,
 	Rcpp,
-	raster
+	raster,
+	rgdal
 LinkingTo:
 	Rcpp,
 	BH
