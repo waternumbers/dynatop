@@ -351,7 +351,7 @@ void dt_bexp_implicit(std::vector<int> id, // hillslope id
 
     // compute the precipitation input
     std::fill(precip.begin(), precip.end(),0.0);
-    for(uint ii=0; ii<precip_id.size(); ++ii){
+    for(unsigned int ii=0; ii<precip_id.size(); ++ii){
       int& i = precip_id[ii];
       int& c = precip_col[ii];
       double& f = precip_frc[ii];
@@ -365,7 +365,21 @@ void dt_bexp_implicit(std::vector<int> id, // hillslope id
 
     // compute the pet input
     std::fill(pet.begin(), pet.end(),0.0);
-    for(uint ii=0; ii<pet_id.size(); ++ii){
+    for(unsigned int ii=0; ii<precip_id.size(); ++ii){
+      int& i = precip_id[ii];
+      int& c = precip_col[ii];
+      double& f = precip_frc[ii];
+      // Rcpp::Rcout << i << std::endl;
+      // Rcpp::Rcout << c << std::endl;
+      // Rcpp::Rcout << f << std::endl;
+      // Rcpp::Rcout << obs(it,c) << std::endl;
+      // Rcpp::Rcout << timestep << std::endl;
+      precip[i] += f*obs(it,c)/timestep;
+    }
+
+    // compute the pet input
+    std::fill(pet.begin(), pet.end(),0.0);
+    for(unsigned int ii=0; ii<pet_id.size(); ++ii){
       int& i = pet_id[ii];
       int& c = pet_col[ii];
       double& f = pet_frc[ii];
