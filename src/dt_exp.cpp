@@ -344,7 +344,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
 
     // compute the precipitation input
     std::fill(precip.begin(), precip.end(),0.0);
-    for(uint ii=0; ii<precip_id.size(); ++ii){
+    for(unsigned int ii=0; ii<precip_id.size(); ++ii){
       int& i = precip_id[ii];
       int& c = precip_col[ii];
       double& f = precip_frc[ii];
@@ -358,7 +358,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
 
     // compute the pet input
     std::fill(pet.begin(), pet.end(),0.0);
-    for(uint ii=0; ii<pet_id.size(); ++ii){
+    for(unsigned int ii=0; ii<pet_id.size(); ++ii){
       int& i = pet_id[ii];
       int& c = pet_col[ii];
       double& f = pet_frc[ii];
