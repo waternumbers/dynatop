@@ -1,0 +1,118 @@
+---
+title: "Notes on the implementation of Dynamic TOPMODEL"
+output: 
+  bookdown::html_document2:
+    base_format: rmarkdown::html_vignette
+    number_sections: false
+    toc: true
+    toc_depth: 2
+pkgdown:
+  as_is: true
+vignette: >
+  %\VignetteIndexEntry{Notes on the implementation of Dynamic TOPMODEL}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+#output: rmarkdown::html_vignette
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+The `dynatop` package represents an implementation of the concepts behind a dynamic TOPMODEL.
+One of the underlying principles of dynamic TOPMODEL is that the landscape can be broken up into
+hydrologically similar regions, or Hydrological Response Units (HRUs), where
+all the area within a HRU behaves in a hydrologically similar fashion.
+
+While a Hydrological Response Unit (HRU) has typically been thought of as an
+area of hill slope with, for example, similar topographic, soil and upslope area
+characteristics the idea may be generalised. In doing this a catchments is
+conceptualised as a collection of HRUs of different type (e.g. hill slope,
+channel, lake) which exchange fluxes at specified levels (e.g. saturated zone,
+surface)
+
+As well as the exchange of fluxes this documents considers two types of HRU. The first termed
+"hillslope" solves the surface, root, unsaturated and saturated zones
+for 'similar' areas of hill slope the catchment a each time step.
+The second termed "channel" represents a length of river channel in a
+simplified manner allowing the extraction of the inflow from the
+hill slope. The solutions for each of these HRU types are presented in the
+[hillslope](hillslope_hru) and [channel](channel) vignettes.
+
+The aim of this document is to outline
+
+- the computational sequence and linking the HRUs
+- conventions for the input data
+- other miscellaneous information that may help developers
+
+
+# The solution order of HRUs and exchange of fluxes
+
+Each HRU has a unique reference number in the `id` variable. In principle the HRUs are
+solved in reverse order of `id`; that is from the largest `id` value to the
+smallest. Currently this not strictly enforced since the C++ code used for the
+computation first solves the hillslope HRUs then the channel HRUs, but this
+should not be relied upon and may change in future releases.
+
+Fluxes between the HRUs are represented as occurring at two levels, the surface and the
+saturated zones. For the $i$th HRU the outflow in $m^3/s$ at time $t+\Delta t$ is
+$\left.q_{sf}^{\left[i\right]}\right\rvert_{t+\Delta t}$ at the surface and
+$\left.q_{sz}^{\left[i\right]}\right\rvert_{t+\Delta t}$ in the saturated
+zone.
+
+The fraction of outflow going from the $i$ th to the $j$ th HRU is $f_{i,j}$. 
+The redistribution is conservative as does not vary in time so
+\[
+\sum\limits_{j} f_{i,j} = 1
+\]
+Since there is no exchange between the surface and saturated zones during
+redistribution the inflows at time $t+\Delta t$ to the $k$th HRU can be computed as
+\[
+\sum\limits_{i>k} f_{i,k}\left.q_{sf}^{\left[i\right]}\right\rvert_{t+\Delta t}
+\]
+and
+\[
+\sum\limits_{i>k} f_{i,k}\left.q_{sz}^{\left[i\right]}\right\rvert_{t+\Delta t}
+\]
+
+The values of $f_{i,j}$ are specified in the `flow_direction` data.frame of
+the model.
+
+# Input Series
+
+It is expected that the precipitation and potential evapotranspiration inputs series are
+given in $m$ accrued over the proceeding time step. So if the data has a time
+step $\Delta t$ the value given at $t+\Delta t$ is accrued in the interval between time $t$
+and time $t+\Delta t$.
+
+The data series for the diffuse and point inputs used in the channel routing
+should be in $m^3/s$. In the channel HRU solution the value given at time
+$t+\Delta t$ is presumed to be constant over the interval $t$ to $t+\Delta t$.
+
+# Miscellaneous Coding comments
+
+## Relating the vignette notation and code variables
+
+To aid the readability of the code the variables are labelled consistently
+with regards to the vignettes. For example:
+
+- Single subscript: $l_{sz}$ becomes `l_sz`, $s_{uz}$ becomes `s_uz` etc
+- Directional variables: $q_{rz \rightarrow uz}$ becomes `q_rz_uz`, etc.
+- Greek letters are spelt: $\lambda$ becomes `lambda`
+
+However the notation used in the vignettes for intermediate values of fluxes
+or states (e.g. \hat{r}) is dropped from the code where it can be inferred from
+the computational sequence (or comments)
+
+## Numerical solutions
+
+Currently the code uses a purely implicit scheme for the solution of the
+hillslope HRUs. This requires a solving a *zero finding* problem for each HRU
+at each (sub)time step. Currently a simple bisection algorithm from the Boost
+math library is used. Notionally faster algorithms (such as the TOMS-748
+algorithm) could be used, but initial experiments suggest that these sometimes
+fail to converge well enough to achieve a reasonable mass balance. This is
+probably due to poor specification of the starting interval.

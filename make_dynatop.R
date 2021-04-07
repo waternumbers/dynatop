@@ -47,7 +47,7 @@ rm(list=ls())
 pacPath <- './dynatop'
 devtools::load_all(pacPath)
 model <- readRDS( system.file("extdata","Swindale.rds",package="dynatop") )
-model$rainfall_input$name <- "Rainfall"
+model$precip_input$name <- "Rainfall"
 model$pet_input$name <- "PET"
 
 qr <- read.csv( system.file("extdata","start=2009-11-18_end=2009-11_4_int=0.25-hours_units=mm.hr-1.tsv",package="dynatop") ,sep="\t")
@@ -143,5 +143,4 @@ m1$plot_gauge_flow()
 m1$sim()$plot_gauge_flow()
 
 head(m1$get_mass_errors())
-head(goog)
 

@@ -1,19 +1,30 @@
 # dynatop 0.2.0.9030
 
+- Adapted hillslope solution to Finite Volume to address mass balance issues in v0.2.0.9020
+- Improved mass balance checkign and output
+
 ## New features
 
-- Complete rewrite of the hillslope simulation code using std C++ classes and
-  Boost libraries. 
-- Improved finite volume scheme for the hillslope allowing non-rectangular
-  hydrological response units
-- TODO: Finish
+- Addition of two further transmissivity profiles - these implimnetations should be considered **experimental**
+
+## Breaking Changes
+
+- Alterations to model sturcture
+    - Two new data.frames added for defining Precipitation and PET inputs. These can now be specified as weighted sums of observed series.
+    - The parameter vector `$param` is dropped. Numeric parameters are now stored in the `$hillslope` and `$channel` data.frames. This is to allow for cleaner code and future development of different model stroage less dependent of `*.rds` files.
+
 
 # dynatop 0.2.0.9020
 
-- Adapted to allow for non-rectangualtMass conservative solutiona contour (cross
-  section) solution. This brings brings the model into line with the original
+- Adapted to use a contour (cross section) solution. This brings brings the model into line with the original
   dynamic TOPMODEL concept.
-- TODO: Finish
+- Complete rewrite of the hillslope simulation code making better use of std C++ classes and
+  Boost libraries.
+
+## Breaking Changes
+
+- Model structure altered to contain a further data frame containing all the HRU linkages
+
 
 # dynatop 0.13
 
