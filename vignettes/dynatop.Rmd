@@ -88,36 +88,25 @@ swindale_model$hillslope[,'pet'] <- swindale_model$channel[,'pet'] <- "PET"
 
 # Altering parameters
 
-The parameter values are stored in the parameter vector ```swindale_model$parameters```. Each parameter
-value has a unique name. In the current model the parameters are all set to
-their default values:
-```{r, default_param}
-print(swindale_model$param)
-```
-The relationship between the parameters and the HRUs are given in the columns of
-the HRU tables e.g.
-```{r, hru_param}
-## unsaturated zone time constant
-head( swindale_model$hillslope[,c('id','t_d')])
-```
+The parameter values are stored within the table describing the hillslope and
+channel HRUs. Which parameters are present depend upon the options selected
+for the transmissivity and channel solution. Details can be found in the
+Hillslope and Channel Vignettes.
 
-Altering parameter values requires changing there values in the parameter
-vector. For this catchment all HRU have the same parameter values. This
-could be altered by changing parameter names in the HRU table and adding these
-parameters to the parameter vector.
-
-In this case we change the parameter vectors to me more representative of the
+Altering parameter values requires changing there values in the HRY tables. 
+For this catchment all HRU have the same parameter values. For this simulation 
+we change the parameter vectors to me more representative of the
 catchment
 ```{r, change_param}
-swindale_model$param <- c(r_sfmax_default=Inf,
-                 m_default=0.0063,
-                 ln_t0_default=7.46,
-                 s_rz0_default=0.98,
-                 s_rzmax_default=0.1,
-                 v_ch_default=0.8,
-                 t_d_default=8*60*60,
-                 c_sf_default=1/3.6e+05
-                 )
+swindale_model$hillslope$r_sfmax <- Inf
+swindale_model$hillslope$m <- 0.0063
+swindale_model$hillslope$ln_t0 <- 7.46
+swindale_model$hillslope$s_rz0 <- 0.98
+swindale_model$hillslope$s_rzmax <- 0.1
+swindale_model$hillslope$t_d <- 8*60*60
+swindale_model$hillslope$c_sf <- 0.4
+
+swindale_model$channel$v_ch <- 0.8
 ```
 
 # Creating the dynatop Object
@@ -156,7 +145,7 @@ an initial recharge rate. In the following we initialse the states and plot
 the initial saturates zone storage, using the chaining of commands.
 
 ```{r initialise}
-ctch_mdl$initialise(1e-6)$plot_state("l_sz")
+ctch_mdl$initialise(1e-6)$plot_state("s_sz")
 ```
 
 The simulation can now be performed and the flow at the gauge extracted with
@@ -169,7 +158,7 @@ Note that the states of the system are now those at the end of the simulation
 for example:
 
 ```{r new_states}
-ctch_mdl$plot_state("l_sz")
+ctch_mdl$plot_state("s_sz")
 ```
 
 Rerunning the simulation with the new initial states will of course produce
@@ -185,12 +174,13 @@ plot(out[,c('Flow','sim_1','sim_2')])
 
 ## Mass balance
 
-It is possible to output the mass balance checks for each iteration of the
-simulation by running the `sim` or individual methods with the `mass_check`
-flag set to `TRUE`. The returned matrix gives the volumes in the states at the
-start and end of the timestep along with the other fluxes as volumes.
+It is possible to output the mass balance check for each time step of the
+simulation using the `get_mass_errors` method. The returned matrix gives 
+the volumes in the states at the start and end of the timestep along with the
+other fluxes as volumes. This can easily be used to plot the errors as shown below.
 
 ```{r mass_check}
-##plot( ctch_mdl$initialise(1e-6)$sim(mass_check=TRUE)$get_mass_errors()[,'error'] )
+mb <- ctch_mdl$get_mass_errors()
+plot( xts::xts(rowSums(mb),zoo::index(mb)) , main="Mass Error [m^3]")
 ```
 

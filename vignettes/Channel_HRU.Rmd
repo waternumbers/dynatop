@@ -1,5 +1,5 @@
 ---
-title: "Time Delay Channel Routing"
+title: "Channel HRU"
 output: 
   bookdown::html_document2:
     base_format: rmarkdown::html_vignette
@@ -9,10 +9,12 @@ output:
 pkgdown:
   as_is: true
 vignette: >
-  %\VignetteIndexEntry{Time Delay Channel Routing}
+  %\VignetteIndexEntry{Channel HRU}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+**WHILE CORRECT THIS USES A NOTATION DIFFERENT TO THE REMAINDER OF THE VIGNETTES**
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(

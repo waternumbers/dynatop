@@ -9,23 +9,23 @@
 
 // template class for solving the saturated zone - must have unique name
 template <class T>
-struct fsz_exp {
-  fsz_exp(double const& uz_, double const& sz_,
-	  double const& lmax_, double const& cbm_,
-	  double const& td_,
-	  double const& dt_, double const& dx_,
-	  double const& lin_, double const& rc_):
-    lmax(lmax_), cbm(cbm_),
+struct fsz_cnst {
+  fsz_cnst(double const& uz_, double const& sz_,
+	   double const& D_, double const& csz_,
+	   double const& td_,
+	   double const& dt_, double const& dx_,
+	   double const& lin_, double const& rc_):
+    D(D_), csz(csz_),
     td(td_), dt(dt_), dx(dx_),
     rc(rc_), lin(lin_), uz(uz_), sz(sz_)
   { /* Constructor just stores values to use in solution */ }
   double operator()(double const& x){
-    double l = lmax*std::exp(-x*cbm);
+    double l = std::max( csz*(D-x), 0.0);
     double r = std::min( 1.0/td , (uz + dt*rc)/(td*x + dt) );
     return x - sz - dt*(l/dx - lin/dx - r);
   }
 private:
-  double lmax, cbm, td, dt, dx, rc, lin, uz, sz; // values to use in calc
+  double D, csz, td, dt, dx, rc, lin, uz, sz; // values to use in calc
 };
 
 struct TerminationCondition  {
@@ -40,20 +40,20 @@ struct TerminationCondition  {
 
 // Function ofr computing the courant numbers for the surface and unsaturated zones
 // [[Rcpp::export]]
-void dt_exp_courant(std::vector<int> id, // hillslope id
-		    Rcpp::NumericMatrix attr, // hillslope attributes
-		    Rcpp::NumericMatrix param, // hillslope parameters
-		    Rcpp::NumericMatrix courant, // courant numbers
-		    double timestep, // time step
-		    int n_sub_step // number of sub steps
-		    ){
+void dt_cnst_courant(std::vector<int> id, // hillslope id
+		     Rcpp::NumericMatrix attr, // hillslope attributes
+		     Rcpp::NumericMatrix param, // hillslope parameters
+		     Rcpp::NumericMatrix courant, // courant numbers
+		     double timestep, // time step
+		     int n_sub_step // number of sub steps
+		     ){
   // work out some dimensions
   int nhillslope = attr.nrow();
-
+  
   // seperate out attributes of the hillslope - transmissivity dependent?
   // Must match model description in R code
   // Rcpp::NumericMatrix::Column atb_bar = attr.column(0); // average topographic index
-  Rcpp::NumericMatrix::Column s_bar = attr.column(1); // average gradient
+  // Rcpp::NumericMatrix::Column s_bar = attr.column(1); // average gradient
   Rcpp::NumericMatrix::Column area = attr.column(2); // surface area (plan)
   Rcpp::NumericMatrix::Column width = attr.column(3); // contour length of outflow
 
@@ -64,20 +64,16 @@ void dt_exp_courant(std::vector<int> id, // hillslope id
   // Rcpp::NumericMatrix::Column s_rz_0 = param.column(2); // initial root zone depth as fraction
   Rcpp::NumericMatrix::Column c_sf = param.column(3); // surface flow celerity
   // Rcpp::NumericMatrix::Column t_d = param.column(4); // unsaturated zone time constant
-  Rcpp::NumericMatrix::Column ln_t0 = param.column(5); // log of saturated transmissivity
-  Rcpp::NumericMatrix::Column m = param.column(6); // transmissivity decay parameter
+  Rcpp::NumericMatrix::Column c_sz = param.column(5); // saturated zone celerity
+  // Rcpp::NumericMatrix::Column D = param.column(6); // maximum saturated zone depth
 
   // work out computational timestep - explicit casting of n_sub_step to double
   double Dt = timestep / (double)n_sub_step;
-
-  double c_sz_max(0.0), beta(0.0);
   
   for(int i=0;i<nhillslope;++i){
     // surface number
     courant(i,0) = c_sf[i]*Dt*width[i]/area[i];
-    beta = std::atan(s_bar[i]);
-    c_sz_max = std::exp(ln_t0[i])*std::sin(2.0*beta)/(2.0*m[i]);
-    courant(i,1) = c_sz_max*Dt*width[i]/area[i];
+    courant(i,1) = c_sz[i]*Dt*width[i]/area[i];
   }
 }
   
@@ -87,16 +83,16 @@ void dt_exp_courant(std::vector<int> id, // hillslope id
 
 // Function for initialising
 // [[Rcpp::export]]
-void dt_exp_init(std::vector<int> id, // hillslope id
-		 Rcpp::NumericMatrix states, // hillslope states
-		 Rcpp::NumericMatrix attr, // hillslope attributes
-		 Rcpp::NumericMatrix param, // hillslope parameters
-		 std::vector<int> channel_id, // need to allow full passing
-		 std::vector<int> flow_from,
-		 std::vector<int> flow_to,
-		 std::vector<double> flow_frc,
-		 std::vector<double> r_uz_sz_0 // initial recharge as flux per unit area
-		 ){
+void dt_cnst_init(std::vector<int> id, // hillslope id
+		  Rcpp::NumericMatrix states, // hillslope states
+		  Rcpp::NumericMatrix attr, // hillslope attributes
+		  Rcpp::NumericMatrix param, // hillslope parameters
+		  std::vector<int> channel_id, // need to allow full passing
+		  std::vector<int> flow_from,
+		  std::vector<int> flow_to,
+		  std::vector<double> flow_frc,
+		  std::vector<double> r_uz_sz_0 // initial recharge as flux per unit area
+		  ){
   // work out some dimensions
   int nhillslope = states.nrow();
   int nlink = flow_from.size();
@@ -116,7 +112,7 @@ void dt_exp_init(std::vector<int> id, // hillslope id
   // seperate out attributes of the hillslope - transmissivity dependent?
   // Must match model description in R code
   // Rcpp::NumericMatrix::Column atb_bar = attr.column(0); // average topographic index
-  Rcpp::NumericMatrix::Column s_bar = attr.column(1); // average gradient
+  // Rcpp::NumericMatrix::Column s_bar = attr.column(1); // average gradient
   Rcpp::NumericMatrix::Column area = attr.column(2); // surface area (plan)
   Rcpp::NumericMatrix::Column width = attr.column(3); // contour length of outflow
 
@@ -127,21 +123,14 @@ void dt_exp_init(std::vector<int> id, // hillslope id
   Rcpp::NumericMatrix::Column s_rz_0 = param.column(2); // initial root zone depth as fraction
   Rcpp::NumericMatrix::Column c_sf = param.column(3); // surface flow celerity
   Rcpp::NumericMatrix::Column t_d = param.column(4); // unsaturated zone time constant
-  Rcpp::NumericMatrix::Column ln_t0 = param.column(5); // log of saturated transmissivity
-  Rcpp::NumericMatrix::Column m = param.column(6); // transmissivity decay parameter
-  
+  Rcpp::NumericMatrix::Column c_sz = param.column(5); // saturated zone celerity
+  Rcpp::NumericMatrix::Column D = param.column(6); // maximum saturated zone depth
 
   // compute the property summaries for the hillslope required
   std::vector<double> l_sz_max(nhillslope,-999.0); // max saturated zone flux
-  std::vector<double> log_l_sz_max(nhillslope,-999.0); // log of max saturated zone flux
-  std::vector<double> beta (nhillslope,-999.0); // slope angle
-  std::vector<double> cosbeta_m (nhillslope,-999.0); // cos(beta)/m
 
   for(int i=0;i<nhillslope;++i){
-    beta[i] = std::atan(s_bar[i]);
-    l_sz_max[i] = std::exp(ln_t0[i])*std::sin(beta[i]);
-    log_l_sz_max[i] = ln_t0[i] + std::log( std::sin(beta[i]) );
-    cosbeta_m[i] = std::cos(beta[i]) /m[i];
+    l_sz_max[i] = D[i]*c_sz[i];
   }
 
 
@@ -169,7 +158,7 @@ void dt_exp_init(std::vector<int> id, // hillslope id
     l_sz = std::min(l_sz_max[ii], l_sz_in + Dx*r_uz_sz_0[ii]); // outflow flux under steady state
     r_uz_sz = (l_sz - l_sz_in)/Dx; // solve to find actual r_uz_sz
     // compute saturated zone storeage deficit
-    s_sz[ii] = std::max(0.0, (log_l_sz_max[ii] - std::log(l_sz))/cosbeta_m[ii]);
+    s_sz[ii] = std::max(0.0, D[ii] - (l_sz/c_sz[ii]));
     s_uz[ii] = std::min( s_sz[ii], r_uz_sz*t_d[ii]*s_sz[ii] ); // compute unsaturated zone storage
 
     // tranfer on the outflow
@@ -195,30 +184,30 @@ void dt_exp_init(std::vector<int> id, // hillslope id
 
 // Function for initialising
 // [[Rcpp::export]]
-void dt_exp_implicit(std::vector<int> id, // hillslope id
-		     Rcpp::NumericMatrix states, // hillslope states
-		     Rcpp::NumericMatrix attr, // hillslope attributes
-		     Rcpp::NumericMatrix param, // hillslope parameters
-		     std::vector<int> channel_id, // need to allow full passing
-		     Rcpp::NumericMatrix channel_attr, // attributes of the channel
-		     std::vector<int> flow_from, // from part of linkages
-		     std::vector<int> flow_to, // to part of linkages
-		     std::vector<double> flow_frc, // fraction part of linkages
-		     std::vector<int> precip_col, // column number of precipitation series to use
-		     std::vector<int> precip_id, // HRU id of precipitation input
-		     std::vector<double> precip_frc, // fraction of precip to add
-		     std::vector<int> pet_col, // column number of pet series to use
-		     std::vector<int> pet_id, // HRU id of pet input
-		     std::vector<double> pet_frc, // fraction of pet to add to input
-		     Rcpp::NumericMatrix obs, // hillslope statesexternal series
-		     Rcpp::NumericMatrix channel_inflow, // channel_inflow
-		     Rcpp::NumericMatrix mass_balance, // mass balance for each timestep
-		     std::vector<bool> keep_states,
-		     Rcpp::List state_rec,
-		     double timestep,
-		     int n_sub_step
-		     ){
-
+void dt_cnst_implicit(std::vector<int> id, // hillslope id
+		      Rcpp::NumericMatrix states, // hillslope states
+		      Rcpp::NumericMatrix attr, // hillslope attributes
+		      Rcpp::NumericMatrix param, // hillslope parameters
+		      std::vector<int> channel_id, // need to allow full passing
+		      Rcpp::NumericMatrix channel_attr, // attributes of the channel
+		      std::vector<int> flow_from, // from part of linkages
+		      std::vector<int> flow_to, // to part of linkages
+		      std::vector<double> flow_frc, // fraction part of linkages
+		      std::vector<int> precip_col, // column number of precipitation series to use
+		      std::vector<int> precip_id, // HRU id of precipitation input
+		      std::vector<double> precip_frc, // fraction of precip to add
+		      std::vector<int> pet_col, // column number of pet series to use
+		      std::vector<int> pet_id, // HRU id of pet input
+		      std::vector<double> pet_frc, // fraction of pet to add to input
+		      Rcpp::NumericMatrix obs, // hillslope statesexternal series
+		      Rcpp::NumericMatrix channel_inflow, // channel_inflow
+		      Rcpp::NumericMatrix mass_balance, // mass balance for each timestep
+		      std::vector<bool> keep_states,
+		      Rcpp::List state_rec,
+		      double timestep,
+		      int n_sub_step
+		      ){
+  
   //Rcpp::Rcout << "Arrived in function...." << std::endl;
   // work out some dimensions
   int nhillslope = id.size();
@@ -253,7 +242,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
   // seperate out attributes of the hillslope - transmissivity dependent?
   // Must match model description in R code
   // Rcpp::NumericMatrix::Column atb_bar = attr.column(0); // average topographic index
-  Rcpp::NumericMatrix::Column s_bar = attr.column(1); // average gradient
+  // Rcpp::NumericMatrix::Column s_bar = attr.column(1); // average gradient
   Rcpp::NumericMatrix::Column area = attr.column(2); // surface area (plan)
   Rcpp::NumericMatrix::Column width = attr.column(3); // contour length of outflow
 
@@ -266,19 +255,8 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
   // Rcpp::NumericMatrix::Column s_rz_0 = param.column(2); // initial root zone depth as fraction
   Rcpp::NumericMatrix::Column c_sf = param.column(3); // surface flow celerity
   Rcpp::NumericMatrix::Column t_d = param.column(4); // unsaturated zone time constant
-  Rcpp::NumericMatrix::Column ln_t0 = param.column(5); // log of saturated transmissivity
-  Rcpp::NumericMatrix::Column m = param.column(6); // transmissivity decay parameter
- 
-
-  //Rcpp::Rcout << r_sf_max[1] << std::endl;
-  //Rcpp::Rcout << s_rz_max[1] << std::endl;
-  //Rcpp::Rcout << s_rz_0[1] << std::endl;
-  //Rcpp::Rcout << c_sf[1] << std::endl;
-  //Rcpp::Rcout << ln_t0[1] << std::endl;
-  //Rcpp::Rcout << m[1] << std::endl;
-  //Rcpp::Rcout << t_d[1] << std::endl;
-  
-  //Rcpp::Rcout << "Seperated hillslope param" << std::endl;
+    Rcpp::NumericMatrix::Column c_sz = param.column(5); // saturated zone celerity
+  Rcpp::NumericMatrix::Column D = param.column(6); // maximum saturated zone depth
   
   // seperate out the attributes of the channel
   Rcpp::NumericMatrix::Column channel_area = channel_attr.column(0); // channel surface area
@@ -289,14 +267,10 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
   
   // compute the property summaries for the hillslope required
   std::vector<double> l_sz_max(nhillslope,-999.0); // max saturated zone flux
-  std::vector<double> beta (nhillslope,-999.0); // slope angle
-  std::vector<double> cosbeta_m (nhillslope,-999.0); // cos(beta)/m
   std::vector<double> Dx (nhillslope,-999.0); // Effective length
 
   for(int i=0;i<nhillslope;++i){
-    beta[i] = std::atan(s_bar[i]);
-    l_sz_max[i] = std::exp(ln_t0[i])*std::sin(beta[i]);
-    cosbeta_m[i] = std::cos(beta[i]) /m[i];
+    l_sz_max[i] = D[i]*c_sz[i];
     Dx[i] = area[i]/width[i];
   }
 
@@ -336,7 +310,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
     // initialise mass balance for the timestep
     std::fill(mbv.begin(), mbv.end(), 0.0);
     for(int ii=0; ii<nhillslope; ++ii){
-      mbv[0] += area[ii]*(s_sf[ii] + s_rz[ii] + s_uz[ii] - s_sz[ii]);
+      mbv[0] += area[ii]*(s_sf[ii] + s_rz[ii] + s_uz[ii] + D[ii] - s_sz[ii]);
     }
 
     // initialise channel inflow
@@ -407,9 +381,9 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
 	//Rcpp::Rcout << "Dx " << Dx[ii] << std::endl;
 	//Rcpp::Rcout << "l_sz_in " << l_sz_in << std::endl;
 	//Rcpp::Rcout << "r_rz_uz " << r_rz_uz << std::endl;
-    	fsz_exp<double> fnc(s_uz[ii], s_sz[ii],
-    			    l_sz_max[ii], cosbeta_m[ii],
-    			    t_d[ii], Dt,Dx[ii],  l_sz_in, r_rz_uz);
+    	fsz_cnst<double> fnc(s_uz[ii], s_sz[ii],
+			     D[ii], c_sz[ii],
+			     t_d[ii], Dt,Dx[ii],  l_sz_in, r_rz_uz);
 	
     	//Rcpp::Rcout << "Set template funcion" << std::endl;
 	
@@ -440,7 +414,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
     	  }else{
     	    //Rcpp::Rcout << "drying" << std::endl;
     	    // drying s_sz getting bigger
-    	    double upr = 10.0; //2.0*s_sz[ii];
+    	    double upr = D[ii]; //2.0*s_sz[ii];
 	    //tmp = fnc(upr);
 	    //Rcpp::Rcout << "upper: " << upr << " fnc(upr) "<< tmp << std::endl;
     	    //while( fnc(upr) <= 0.0 ){
@@ -460,7 +434,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
 	  // s_sz[ii] = 0.0;
     	  s_sz[ii] = (opt_res.second + opt_res.first)/2.0;
     	  r_rz_uz = std::min( r_rz_uz, (s_sz[ii] + Dt/t_d[ii] - s_uz[ii])/Dt );
-    	  l_sz = l_sz_max[ii]*exp(-s_sz[ii]*cosbeta_m[ii]);
+    	  l_sz = c_sz[ii]*(D[ii]-s_sz[ii]);
     	}
 	
     	//Rcpp::Rcout << "computed optimisation" << std::endl;
@@ -525,7 +499,7 @@ void dt_exp_implicit(std::vector<int> id, // hillslope id
     //Rcpp::Rcout << "after substep" << std::endl;
     // final mass balance states
     for(int ii=0; ii<nhillslope; ++ii){
-      mbv[4] -= area[ii]*(s_sf[ii] + s_rz[ii] + s_uz[ii] - s_sz[ii]);
+      mbv[4] -= area[ii]*(s_sf[ii] + s_rz[ii] + s_uz[ii] + D[ii] - s_sz[ii]);
     }
 
     
