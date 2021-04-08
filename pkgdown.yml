@@ -2,11 +2,11 @@ pandoc: '2.2'
 pkgdown: 1.6.1
 pkgdown_sha: ~
 articles:
-  Notes_on_the_implimentation: Notes_on_the_implimentation.html
+  Channel_HRU: Channel_HRU.html
+  Hillslope_HRU: Hillslope_HRU.html
+  Notes_on_the_implementation_of_Dynamic_TOPMODEL: Notes_on_the_implementation_of_Dynamic_TOPMODEL.html
   Selected_References: Selected_References.html
   The_Model_Object: The_Model_Object.html
-  The_solution_of_Dynamic_TOPMODEL: The_solution_of_Dynamic_TOPMODEL.html
-  Time_Delay_Channel_Routing: Time_Delay_Channel_Routing.html
   dynatop: dynatop.html
-last_built: 2020-11-30T12:21Z
+last_built: 2021-04-08T11:25Z
 

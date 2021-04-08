@@ -71,7 +71,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9030</span>
       </span>
     </div>
 
@@ -79,7 +79,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -97,19 +97,19 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/Notes_on_the_implimentation.html">Notes on the Implimentation</a>
+      <a href="../articles/Channel_HRU.html">Channel HRU</a>
+    </li>
+    <li>
+      <a href="../articles/Hillslope_HRU.html">The Hillslope HRU</a>
+    </li>
+    <li>
+      <a href="../articles/Notes_on_the_implementation_of_Dynamic_TOPMODEL.html">Notes on the implementation of Dynamic TOPMODEL</a>
     </li>
     <li>
       <a href="../articles/Selected_References.html">Selected References</a>
     </li>
     <li>
       <a href="../articles/The_Model_Object.html">The Model Object</a>
-    </li>
-    <li>
-      <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Dynamic TOPMODEL equations</a>
-    </li>
-    <li>
-      <a href="../articles/Time_Delay_Channel_Routing.html">Time Delay Channel Routing</a>
     </li>
   </ul>
 </li>
@@ -120,7 +120,7 @@
       <ul class="nav navbar-nav navbar-right">
         <li>
   <a href="https://github.com/waternumbers/dynatop/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -141,15 +141,46 @@
       <small>Source: <a href='https://github.com/waternumbers/dynatop/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="dynatop-0-2" class="section level1">
-<h1 class="page-header" data-toc-text="0.2">
-<a href="#dynatop-0-2" class="anchor"></a>dynatop 0.2</h1>
+    <div id="dynatop-0-2-0-9030" class="section level1">
+<h1 class="page-header" data-toc-text="0.2.0.9030">
+<a href="#dynatop-0-2-0-9030" class="anchor"></a>dynatop 0.2.0.9030</h1>
+<ul>
+<li>Adapted hillslope solution to Finite Volume to address mass balance issues in v0.2.0.9020</li>
+<li>Improved mass balance checkign and output</li>
+</ul>
 <div id="new-features" class="section level2">
 <h2 class="hasAnchor">
 <a href="#new-features" class="anchor"></a>New features</h2>
 <ul>
-<li>Complete rewrite of the hillslope simulation code using a contour (cross section) solution. This brings brings the model into line with the original dynamic TOPMODEL concept.</li>
-<li>TODO: Finish</li>
+<li>Addition of two further transmissivity profiles - these implimnetations should be considered <strong>experimental</strong>
+</li>
+</ul>
+</div>
+<div id="breaking-changes" class="section level2">
+<h2 class="hasAnchor">
+<a href="#breaking-changes" class="anchor"></a>Breaking Changes</h2>
+<ul>
+<li>Alterations to model sturcture
+<ul>
+<li>Two new data.frames added for defining Precipitation and PET inputs. These can now be specified as weighted sums of observed series.</li>
+<li>The parameter vector <code>$param</code> is dropped. Numeric parameters are now stored in the <code>$hillslope</code> and <code>$channel</code> data.frames. This is to allow for cleaner code and future development of different model stroage less dependent of <code>*.rds</code> files.</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+    <div id="dynatop-0-2-0-9020" class="section level1">
+<h1 class="page-header" data-toc-text="0.2.0.9020">
+<a href="#dynatop-0-2-0-9020" class="anchor"></a>dynatop 0.2.0.9020</h1>
+<ul>
+<li>Adapted to use a contour (cross section) solution. This brings brings the model into line with the original dynamic TOPMODEL concept.</li>
+<li>Complete rewrite of the hillslope simulation code making better use of std C++ classes and Boost libraries.</li>
+</ul>
+<div id="breaking-changes-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#breaking-changes-1" class="anchor"></a>Breaking Changes</h2>
+<ul>
+<li>Model structure altered to contain a further data frame containing all the HRU linkages</li>
 </ul>
 </div>
 </div>
@@ -172,12 +203,9 @@
 <h2 class="hasAnchor">
 <a href="#new-features-2" class="anchor"></a>New features</h2>
 <ul>
-<li>Main hydrological simulation code implimented in C++ usign Rcpp for better performance.
-<ul>
+<li>Main hydrological simulation code implimented in C++ usign Rcpp for better performance.</li>
 <li>The R version of the code can be used instead by setting the use_R input parameter to TRUE. This will be depreciated in a later version.</li>
 <li>Currently C++ code does not return intermediate states, use the R version if these are required</li>
-</ul>
-</li>
 </ul>
 </div>
 </div>
@@ -197,9 +225,9 @@
     <div id="dynatop-0-1" class="section level1">
 <h1 class="page-header" data-toc-text="0.1">
 <a href="#dynatop-0-1" class="anchor"></a>dynatop 0.1</h1>
-<div id="breaking-changes" class="section level2">
+<div id="breaking-changes-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#breaking-changes" class="anchor"></a>Breaking Changes</h2>
+<a href="#breaking-changes-2" class="anchor"></a>Breaking Changes</h2>
 <ul>
 <li>Code base reformulated in an Object orientated form using the <code>R6</code> package. Except for change below algorithms as for v0.0.4</li>
 <li>Input format of model changed to reflect <code>dynatopGIS</code> v0.1</li>
@@ -220,9 +248,9 @@
     <div id="dynatop-0-0-4" class="section level1">
 <h1 class="page-header" data-toc-text="0.0.4">
 <a href="#dynatop-0-0-4" class="anchor"></a>dynatop 0.0.4</h1>
-<div id="breaking-changes-1" class="section level2">
+<div id="breaking-changes-3" class="section level2">
 <h2 class="hasAnchor">
-<a href="#breaking-changes-1" class="anchor"></a>Breaking changes</h2>
+<a href="#breaking-changes-3" class="anchor"></a>Breaking changes</h2>
 <ul>
 <li>New solutions to the surface and saturated zone means models for previous versions of dynatop will not work. See the model description and the <code>dynatopGIS</code> package (0.0.4) for a method of generating models int he revised format</li>
 </ul>
@@ -257,9 +285,9 @@
 <li>Improved handling of case of infinite saturated zone deficit</li>
 </ul>
 </div>
-<div id="breaking-changes-2" class="section level2">
+<div id="breaking-changes-4" class="section level2">
 <h2 class="hasAnchor">
-<a href="#breaking-changes-2" class="anchor"></a>Breaking changes</h2>
+<a href="#breaking-changes-4" class="anchor"></a>Breaking changes</h2>
 <ul>
 <li>The model structure has been adapted to allow for the channel connectivity and specification of gauges and inputs on the channel network. See the model object vignette. If using dynatopGIS then rerun create_model.</li>
 </ul>

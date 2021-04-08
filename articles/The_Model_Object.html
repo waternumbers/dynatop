@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9030</span>
       </span>
     </div>
 
@@ -39,7 +39,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -57,19 +57,19 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
-      <a href="../articles/Notes_on_the_implimentation.html">Notes on the Implimentation</a>
+      <a href="../articles/Channel_HRU.html">Channel HRU</a>
+    </li>
+    <li>
+      <a href="../articles/Hillslope_HRU.html">The Hillslope HRU</a>
+    </li>
+    <li>
+      <a href="../articles/Notes_on_the_implementation_of_Dynamic_TOPMODEL.html">Notes on the implementation of Dynamic TOPMODEL</a>
     </li>
     <li>
       <a href="../articles/Selected_References.html">Selected References</a>
     </li>
     <li>
       <a href="../articles/The_Model_Object.html">The Model Object</a>
-    </li>
-    <li>
-      <a href="../articles/The_solution_of_Dynamic_TOPMODEL.html">The Dynamic TOPMODEL equations</a>
-    </li>
-    <li>
-      <a href="../articles/Time_Delay_Channel_Routing.html">Time Delay Channel Routing</a>
     </li>
   </ul>
 </li>
@@ -80,7 +80,7 @@
 <ul class="nav navbar-nav navbar-right">
 <li>
   <a href="https://github.com/waternumbers/dynatop/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -94,10 +94,7 @@
 
       
 
-      </header><script src="The_Model_Object_files/jquery-1.11.3/jquery.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="The_Model_Object_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet">
-<script src="The_Model_Object_files/bootstrap-3.3.5/js/bootstrap.min.js"></script><script src="The_Model_Object_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script><script src="The_Model_Object_files/bootstrap-3.3.5/shim/respond.min.js"></script><script src="The_Model_Object_files/navigation-1.1/tabsets.js"></script><link href="The_Model_Object_files/anchor-sections-1.0/anchor-sections.css" rel="stylesheet">
-<script src="The_Model_Object_files/anchor-sections-1.0/anchor-sections.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>The Model Object</h1>
@@ -111,15 +108,14 @@
     
     
 <p>The purpose of this vignette is to document the structure of a Dynamic
-Topmodel ‘object’; that is the structure of the model that can be generated in
+TOPMODEL model ‘object’; that is the structure of the model that can be generated in
 the <a href="https://waternumbers.github.io/dynatopGIS">dynatopGIS</a> package and is
 used in calls to the <code>dynatop</code> function in the current package. Currently
-the model is stored as an R variable of the list class. In the future it is
-indended to create an S3 (or similar) class for the model to formalise the
-object oriented style adopted in the a package.</p>
-<p>This should be read alongside the <a href="https://waternumbers.github.io/dynatop/articles/dynatop.html">“Getting
-Started”</a> vignette.</p>
-<p>The model strucutre will be documented with reference to the model in the test
+the model is stored as an R variable of the list class.</p>
+<p>This should be read alongside the <a href="dynatop.html">“Getting
+Started”</a> vignette which demonstrates the manipulation and use
+of a model object.</p>
+<p>The model structure will be documented with reference to the model in the test
 catchment data supplied with the package. This can be loaded with</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://waternumbers.github.io/dynatop/">dynatop</a></span><span class="op">)</span>
@@ -128,259 +124,212 @@ catchment data supplied with the package. This can be loaded with</p>
 <p>The top level of the model contains the following elements:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span>
-<span class="co">#&gt; [1] "map"            "channel"        "hillslope"      "param"         </span>
-<span class="co">#&gt; [5] "gauge"          "point_inflow"   "diffuse_inflow"</span></code></pre></div>
-<p>These are oulined in Table <a href="#tab:model-table">1</a> and described in more detail in the sections
+<span class="co">#&gt;  [1] "options"        "map"            "channel"        "hillslope"     </span>
+<span class="co">#&gt;  [5] "flow_direction" "gauge"          "point_inflow"   "diffuse_inflow"</span>
+<span class="co">#&gt;  [9] "precip_input"   "pet_input"</span></code></pre></div>
+<p>These are outlined in Table <a href="#tab:model-table">1</a> and described in more detail in the sections
 below.</p>
 <table class="table">
 <caption>
-<span id="tab:model-table">Table 1: </span>Decription of top level model components</caption>
+<span id="tab:model-table">Table 1: </span> Description of top level model components</caption>
 <colgroup>
-<col width="13%">
-<col width="11%">
-<col width="74%">
+<col width="25%">
+<col width="25%">
+<col width="50%">
 </colgroup>
 <thead><tr class="header">
-<th align="left">Name</th>
-<th align="left">Class</th>
-<th align="left">Description</th>
+<th>Name</th>
+<th>Class</th>
+<th>Description</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">hillslope</td>
-<td align="left">data frame</td>
-<td align="left">Description of the hill slope HRU units</td>
+<td>options</td>
+<td>character vector</td>
+<td>Options defining the model</td>
 </tr>
 <tr class="even">
-<td align="left">channel</td>
-<td align="left">data frame</td>
-<td align="left">Description of the channel HRU units</td>
+<td>hillslope</td>
+<td>data.frame</td>
+<td>Description of the hill slope HRU units</td>
 </tr>
 <tr class="odd">
-<td align="left">param</td>
-<td align="left">numeric</td>
-<td align="left">Named vector of paramter values</td>
+<td>channel</td>
+<td>data.frame</td>
+<td>Description of the channel HRU units</td>
 </tr>
 <tr class="even">
-<td align="left">gauge</td>
-<td align="left">data frame</td>
-<td align="left">Description of the gauge locations on the channel network</td>
+<td>gauge</td>
+<td>data.frame</td>
+<td>Description of the gauge locations on the channel network</td>
 </tr>
 <tr class="odd">
-<td align="left">point_inflow</td>
-<td align="left">data frame</td>
-<td align="left">Description of the locations of point inflows to the channel network</td>
+<td>point_inflow</td>
+<td>$data.frame</td>
+<td>Description of the point inflows to the channel network</td>
 </tr>
 <tr class="even">
-<td align="left">point_inflow</td>
-<td align="left">data frame</td>
-<td align="left">Description of the locations of point inflows to the channel network</td>
+<td>diffuse_inflow</td>
+<td>data.frame</td>
+<td>Description of the diffuse inflows to the channel network</td>
 </tr>
 <tr class="odd">
-<td align="left">map</td>
-<td align="left">list</td>
-<td align="left">Data for creating maps of the HSUs</td>
+<td>flow_direction</td>
+<td>data.frame</td>
+<td>Description of the flow linkages between HRUs</td>
+</tr>
+<tr class="even">
+<td>precip_input</td>
+<td>data.frame</td>
+<td>Description of the precipitation input to the HRUs</td>
+</tr>
+<tr class="odd">
+<td>pet_input</td>
+<td>data.frame</td>
+<td>Description of the PET input to the HRUs</td>
+</tr>
+<tr class="even">
+<td>map</td>
+<td>list</td>
+<td>Location of files for for creating maps of the HRUs</td>
 </tr>
 </tbody>
 </table>
+<div id="options" class="section level2">
+<h2 class="hasAnchor">
+<a href="#options" class="anchor"></a>Options</h2>
+<p>The options vector is a named character vector. Two names variables are used:</p>
+<ul>
+<li>
+<code>transmissivity_profile</code> which defines the transmissivity function used
+for the hillslope HRUs</li>
+<li>
+<code>channel_solver</code> which defines the channel solution to be used</li>
+</ul>
+<p>The columns present in the hillslope and channel data.frames will depend upon
+the value taken by these options. See the
+<a href="https://waternumbers.github.io/dynatop/articles/hillslope_hru.html">hillslope</a>
+and
+<a href="https://waternumbers.github.io/dynatop/articles/channel_hru.html">channel</a>
+vignettes for further details.</p>
+</div>
 <div id="hillslope-hru-table" class="section level2">
 <h2 class="hasAnchor">
 <a href="#hillslope-hru-table" class="anchor"></a>Hillslope HRU table</h2>
-<p>Each row of the hillslope HRU table describes a single hillslope HRU, the
-input series in expects and parameters. In this example it looks like:</p>
+<p>Each row of the hillslope HRU table describes a single hillslope HRU. In this example it looks like:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">hillslope</span><span class="op">)</span>
-<span class="co">#&gt;   id    area  atb_bar      s_bar delta_x  width class band   precip pet</span>
-<span class="co">#&gt; 1 20 1736608 6.015636 0.11970075    2200 1098.8    20  550 Rainfall PET</span>
-<span class="co">#&gt; 2 21  720800 4.940441 0.15635634    2200  293.8    21  550 Rainfall PET</span>
-<span class="co">#&gt; 3 22  194272 3.849261 0.18068136    2200  151.0    22  550 Rainfall PET</span>
-<span class="co">#&gt; 4 23  594080 8.027596 0.06986694    2188  967.4    23  550 Rainfall PET</span>
-<span class="co">#&gt; 5 24 2040080 7.001120 0.09836791    2200 2043.4    24  550 Rainfall PET</span>
-<span class="co">#&gt; 6 25  119472 9.158393 0.04422105    2200  151.6    25  550 Rainfall PET</span>
-<span class="co">#&gt;           r_sfmax         s_rzmax         s_rz0         ln_t0         m</span>
-<span class="co">#&gt; 1 r_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span>
-<span class="co">#&gt; 2 r_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span>
-<span class="co">#&gt; 3 r_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span>
-<span class="co">#&gt; 4 r_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span>
-<span class="co">#&gt; 5 r_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span>
-<span class="co">#&gt; 6 r_sfmax_default s_rzmax_default s_rz0_default ln_t0_default m_default</span>
-<span class="co">#&gt;           t_d         t_sf atanb_class</span>
-<span class="co">#&gt; 1 t_d_default t_sf_default           6</span>
-<span class="co">#&gt; 2 t_d_default t_sf_default           5</span>
-<span class="co">#&gt; 3 t_d_default t_sf_default           4</span>
-<span class="co">#&gt; 4 t_d_default t_sf_default           8</span>
-<span class="co">#&gt; 5 t_d_default t_sf_default           7</span>
-<span class="co">#&gt; 6 t_d_default t_sf_default           9</span>
-<span class="co">#&gt;                                                                                                                                                                                                                         flow_dir</span>
-<span class="co">#&gt; 1                                                         2.700000e+01, 2.800000e+01, 3.000000e+01, 3.400000e+01, 3.600000e+01, 5.100000e+01, 8.972171e-01, 6.515245e-02, 2.895558e-04, 1.279222e-03, 2.892750e-02, 7.134151e-03</span>
-<span class="co">#&gt; 2                                                                                                                                                      27.00000000, 36.00000000, 37.00000000, 0.12401219, 0.85459673, 0.02139108</span>
-<span class="co">#&gt; 3                                                                                                                                                36.000000000, 37.000000000, 48.000000000, 0.036960939, 0.959769245, 0.003269817</span>
-<span class="co">#&gt; 4                                                                                     2.800000e+01, 3.000000e+01, 3.400000e+01, 4.600000e+01, 5.300000e+01, 4.004683e-02, 9.223486e-01, 3.112931e-02, 2.390244e-04, 6.236243e-03</span>
-<span class="co">#&gt; 5 2.700000e+01, 2.800000e+01, 3.000000e+01, 3.400000e+01, 4.000000e+01, 4.100000e+01, 4.200000e+01, 5.400000e+01, 2.186072e-02, 9.163832e-01, 4.302432e-02, 1.315837e-02, 2.259580e-05, 1.066134e-05, 2.842881e-05, 5.511674e-03</span>
-<span class="co">#&gt; 6                                                                                                                             30.00000000, 34.00000000, 40.00000000, 41.00000000, 0.18625757, 0.67926428, 0.05667835, 0.07779980</span></code></pre></div>
-<p>The individual columns are documented in Table <a href="#tab:hillslope-table">2</a>. With the exception of the
-id, area, atb_bar and s_bar columns the table does not contain numeric values
-but the names of either time series to find in the forecing data or parameters
-in <code>model$param</code>.</p>
+<span class="co">#&gt;   id      area   atb_bar      s_bar min_dst width class r_sfmax s_rzmax s_rz0</span>
+<span class="co">#&gt; 1 20  1451.820  9.121463 0.28916356       1    40     1     Inf    0.05  0.75</span>
+<span class="co">#&gt; 2 21  5911.932  9.598746 0.36701868       1   160     2     Inf    0.05  0.75</span>
+<span class="co">#&gt; 3 22 16356.278 10.264301 0.26385821       1   440     3     Inf    0.05  0.75</span>
+<span class="co">#&gt; 4 23 23625.880 10.824251 0.18010123       1   640     4     Inf    0.05  0.75</span>
+<span class="co">#&gt; 5 24 48632.930 11.497418 0.15906415       1  1320     5     Inf    0.05  0.75</span>
+<span class="co">#&gt; 6 25 75373.071 12.106720 0.09886103       1  2040     8     Inf    0.05  0.75</span>
+<span class="co">#&gt;   ln_t0    m  t_d c_sf</span>
+<span class="co">#&gt; 1    -2 0.04 7200  0.1</span>
+<span class="co">#&gt; 2    -2 0.04 7200  0.1</span>
+<span class="co">#&gt; 3    -2 0.04 7200  0.1</span>
+<span class="co">#&gt; 4    -2 0.04 7200  0.1</span>
+<span class="co">#&gt; 5    -2 0.04 7200  0.1</span>
+<span class="co">#&gt; 6    -2 0.04 7200  0.1</span></code></pre></div>
+<p>The individual columns are documented in Table
+<a href="#tab:hillslope-table">2</a>. In this example the parameter columns relate to the exponential
+transmissivity profile. The parameters in the table will with the
+transmissivity options selected.</p>
 <table class="table">
 <caption>
-<span id="tab:hillslope-table">Table 2: </span>Description of hillslope data frame columns</caption>
+<span id="tab:hillslope-table">Table 2: </span> Description of hillslope data frame columns</caption>
 <colgroup>
-<col width="4%">
-<col width="6%">
-<col width="3%">
-<col width="85%">
+<col width="21%">
+<col width="21%">
+<col width="21%">
+<col width="35%">
 </colgroup>
 <thead><tr class="header">
-<th align="left">Name</th>
-<th align="left">Class</th>
-<th align="left">Unit</th>
-<th align="left">Description</th>
+<th>Name</th>
+<th>Class</th>
+<th>Unit</th>
+<th>Description</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">id</td>
-<td align="left">integer</td>
-<td align="left">-</td>
-<td align="left">Unique identifying number of the HSU. These combined with the HSU numbers in the channel table should be unique and take values 1,2,3… gaps</td>
+<td>id</td>
+<td>integer</td>
+<td>:-:</td>
+<td>Unique identifying number of the HRU. These combined with the HRU numbers in the channel table should be unique and take values 1,2,3…</td>
 </tr>
 <tr class="even">
-<td align="left">area</td>
-<td align="left">numeric</td>
-<td align="left"><span class="math inline">\(m^2\)</span></td>
-<td align="left">Surface area of the HSU</td>
+<td>area</td>
+<td>numeric</td>
+<td><span class="math inline">\(m^2\)</span></td>
+<td>Surface area of the HRU</td>
 </tr>
 <tr class="odd">
-<td align="left">atb_bar</td>
-<td align="left">numeric</td>
-<td align="left">??</td>
-<td align="left">Topographic index, log if the upslope area divided by tangent of gradient</td>
+<td>atb_bar</td>
+<td>numeric</td>
+<td>??</td>
+<td>Topographic index, log if the upslope area divided by tangent of gradient</td>
 </tr>
 <tr class="even">
-<td align="left">s_bar</td>
-<td align="left">numeric</td>
-<td align="left">-</td>
-<td align="left">Average gradient</td>
+<td>s_bar</td>
+<td>numeric</td>
+<td>:-:</td>
+<td>Average gradient</td>
 </tr>
 <tr class="odd">
-<td align="left">delta_x</td>
-<td align="left">numeric</td>
-<td align="left">m</td>
-<td align="left">Notional length of the HSU</td>
+<td>width</td>
+<td>numeric</td>
+<td>m</td>
+<td>Contour length of downslope end of HRU</td>
 </tr>
 <tr class="even">
-<td align="left">class</td>
-<td align="left">integer</td>
-<td align="left">-</td>
-<td align="left">Classification of HSU e.g. by a combination of topographic index and rainfall input</td>
+<td>class</td>
+<td>integer</td>
+<td>:-:</td>
+<td>Classification of HRU e.g. by a combination of topographic index and rainfall input</td>
 </tr>
 <tr class="odd">
-<td align="left">*_class</td>
-<td align="left">integer</td>
-<td align="left">-</td>
-<td align="left">Parital classification of HSU by the * property e.g. atb_bar for topographic index</td>
+<td>r_sfmax</td>
+<td>numeric</td>
+<td><span class="math inline">\(m/s\)</span></td>
+<td>Maximum flow rate from surface to root zone (parameter)</td>
 </tr>
 <tr class="even">
-<td align="left">precip</td>
-<td align="left">character</td>
-<td align="left">-</td>
-<td align="left">Name of the input series to use for precipitation</td>
+<td>c_sf</td>
+<td>numeric</td>
+<td><span class="math inline">\(m/s\)</span></td>
+<td>Celerity of the surface excess storage (parameter)</td>
 </tr>
 <tr class="odd">
-<td align="left">pet</td>
-<td align="left">character</td>
-<td align="left">-</td>
-<td align="left">Name of the input series to use for potential evapotranspiration</td>
+<td>s_rzmax</td>
+<td>numeric</td>
+<td><span class="math inline">\(m\)</span></td>
+<td>Maximum root zone depth (parameter)</td>
 </tr>
 <tr class="even">
-<td align="left">q_sfmax</td>
-<td align="left">character</td>
-<td align="left"><span class="math inline">\(m/s\)</span></td>
-<td align="left">Maximum flow rate from surface to root zone</td>
+<td>s_rz0</td>
+<td>numeric</td>
+<td><span class="math inline">\(0-1\)</span></td>
+<td>Initial root zone depth expressed as fraction of maximum depth (parameter)</td>
 </tr>
 <tr class="odd">
-<td align="left">s_rzmax</td>
-<td align="left">character</td>
-<td align="left"><span class="math inline">\(m\)</span></td>
-<td align="left">Name of the maximum root zone depth parameter</td>
+<td>t_d</td>
+<td>numeric</td>
+<td><span class="math inline">\(s/m\)</span></td>
+<td>Unsaturated zone time constant given per <span class="math inline">\(m\)</span> of saturated storage deficit (parameter)</td>
 </tr>
 <tr class="even">
-<td align="left">s_rz0</td>
-<td align="left">character</td>
-<td align="left"><span class="math inline">\(0-1\)</span></td>
-<td align="left">Name of the intial root zone depth parameter. Expressed as fraction of maximum depth</td>
+<td>ln_t0</td>
+<td>numeric</td>
+<td><span class="math inline">\(m/s\)</span></td>
+<td>Log of the soil saturated conductivity (parameter)</td>
 </tr>
 <tr class="odd">
-<td align="left">ln_t0</td>
-<td align="left">character</td>
-<td align="left">-</td>
-<td align="left">Name of the saturated conductivity parameter</td>
-</tr>
-<tr class="even">
-<td align="left">m</td>
-<td align="left">character</td>
-<td align="left">-</td>
-<td align="left">Name of the exponential transmissivity constant parameter</td>
-</tr>
-<tr class="odd">
-<td align="left">t_d</td>
-<td align="left">character</td>
-<td align="left"><span class="math inline">\(s/m\)</span></td>
-<td align="left">Name of the unsaturated zone time constant per m of saturated storage deficit parameter.</td>
-</tr>
-<tr class="even">
-<td align="left">t_sf</td>
-<td align="left">character</td>
-<td align="left"><span class="math inline">\(s\)</span></td>
-<td align="left">Name of the Surface excess storage time constant parameter</td>
-</tr>
-<tr class="odd">
-<td align="left">sf_dir</td>
-<td align="left">list</td>
-<td align="left">-</td>
-<td align="left">Description of the surface lateral flow connections - see below</td>
-</tr>
-<tr class="even">
-<td align="left">sz_dir</td>
-<td align="left">list</td>
-<td align="left">-</td>
-<td align="left">Description of the surface lateral flow connections - see below</td>
-</tr>
-</tbody>
-</table>
-<p>The list structures of <code>sf_dir</code> and <code>sz_dir</code> are identical. They contain three
-elements and listed in Table @ref{tab:sf-dir-table}, for example:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">model</span><span class="op">$</span><span class="va">hillslope</span><span class="op">$</span><span class="va">sf_dir</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span>
-<span class="co">#&gt; NULL</span></code></pre></div>
-<table class="table">
-<caption>
-<span id="tab:sf-dir-table">Table 3: </span>Description of sf_dir and sz_dir list structures</caption>
-<colgroup>
-<col width="3%">
-<col width="5%">
-<col width="90%">
-</colgroup>
-<thead><tr class="header">
-<th align="left">Name</th>
-<th align="left">Class</th>
-<th align="left">Description</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td align="left">band</td>
-<td align="left">integer</td>
-<td align="left">Indication of computational sequence. HSUs in band <span class="math inline">\(n\)</span> presume that those in bands <span class="math inline">\(1,\ldots,n-1\)</span> have been solved first.</td>
-</tr>
-<tr class="even">
-<td align="left">idx</td>
-<td align="left">integer</td>
-<td align="left">id values of the HSUs receiving lateral fluxes</td>
-</tr>
-<tr class="odd">
-<td align="left">frc</td>
-<td align="left">numeric</td>
-<td align="left">fraction of lateral flux that the corresponding HSUs in idx receive</td>
+<td>m</td>
+<td>numeric</td>
+<td>:-:</td>
+<td>Exponential transmissivity decay parameter (parameter)</td>
 </tr>
 </tbody>
 </table>
@@ -388,210 +337,352 @@ elements and listed in Table @ref{tab:sf-dir-table}, for example:</p>
 <div id="channel-hru-table" class="section level2">
 <h2 class="hasAnchor">
 <a href="#channel-hru-table" class="anchor"></a>Channel HRU table</h2>
-<p>Each row of the channel HRU table describes a single hillslope HRU, the
-input series in expects and parameters. In this example it looks like:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<p>Each row of the channel HRU table describes a single channel HRU. In this example it looks like:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">channel</span><span class="op">)</span>
-<span class="co">#&gt;   id      area length   precip pet         v_ch flow_dir</span>
-<span class="co">#&gt; 1  1 1734.0875    431 Rainfall PET v_ch_default    18, 1</span>
-<span class="co">#&gt; 2  2 2052.9979    513 Rainfall PET v_ch_default    15, 1</span>
-<span class="co">#&gt; 3  3 2957.4277    740 Rainfall PET v_ch_default    19, 1</span>
-<span class="co">#&gt; 4  4 2298.0998    573 Rainfall PET v_ch_default     5, 1</span>
-<span class="co">#&gt; 5  5  116.1749     29 Rainfall PET v_ch_default    17, 1</span>
-<span class="co">#&gt; 6  6 1652.2072    413 Rainfall PET v_ch_default    16, 1</span></code></pre></div>
-<p>The individual columns are documented in Table <a href="#tab:channel-table">4</a>.</p>
-<pre><code>#&gt; Warning in matrix(value, n, p): data length [5] is not a sub-multiple or
-#&gt; multiple of the number of columns [4]</code></pre>
+<span class="co">#&gt;                  name1                           identifier</span>
+<span class="co">#&gt; 0        Hawthorn Gill 16D0AC09-E0B6-4727-83B8-567E8DE9C533</span>
+<span class="co">#&gt; 1 Little Mosedale Beck 643017BB-01BC-4738-898F-1C62B84164BF</span>
+<span class="co">#&gt; 2        Mosedale Beck D2C2703E-A32F-4D88-A022-4E27EA52FC5C</span>
+<span class="co">#&gt; 3                 &lt;NA&gt; 991D9896-CA0C-492F-A6EE-8BA3972DDA3C</span>
+<span class="co">#&gt; 4                 &lt;NA&gt; CC8639D7-00D2-4C26-9252-350E5A748D51</span>
+<span class="co">#&gt; 5                 &lt;NA&gt; ED03FEDD-0F4B-40C7-86E8-6F0EA8BAC182</span>
+<span class="co">#&gt;                              startNode                              endNode</span>
+<span class="co">#&gt; 0 730F01D2-0F4F-4E27-AF55-B1782F0F844B 72B1A40B-E106-42A9-A261-4B7720037ADB</span>
+<span class="co">#&gt; 1 9B06188C-F4C7-436C-8108-3956D5FFD5CD A19E0D3A-2FA1-4E6D-AEA4-472F91ABC2AC</span>
+<span class="co">#&gt; 2 B03DB3BD-0E33-4E10-A935-997832752609 D649B60C-E631-47FA-971E-CA388DBDDE63</span>
+<span class="co">#&gt; 3 D968F174-FB80-404A-A4A7-2862CC722482 1FDBFCFF-799C-41CF-A2CB-8A56368BD438</span>
+<span class="co">#&gt; 4 1FDBFCFF-799C-41CF-A2CB-8A56368BD438 7C251581-3764-4DEE-8031-EC98FABC1F87</span>
+<span class="co">#&gt; 5 D3A1AEA9-93A6-4ACF-9A11-363F9517723F 673269DF-9E48-4EA0-B439-3D565A023DD2</span>
+<span class="co">#&gt;          form         flow fictitious length name2 sinkdepth Shape_Leng width</span>
+<span class="co">#&gt; 0 inlandRiver in direction      false    431  &lt;NA&gt;        -1  431.30438     2</span>
+<span class="co">#&gt; 1 inlandRiver in direction      false    513  &lt;NA&gt;        -1  513.12806     2</span>
+<span class="co">#&gt; 2 inlandRiver in direction      false    740  &lt;NA&gt;        -1  739.76378     2</span>
+<span class="co">#&gt; 3 inlandRiver in direction      false    573  &lt;NA&gt;        -1  573.48312     2</span>
+<span class="co">#&gt; 4 inlandRiver in direction      false     29  &lt;NA&gt;        -1   29.18951     2</span>
+<span class="co">#&gt; 5 inlandRiver in direction      false    413  &lt;NA&gt;        -1  413.14877     2</span>
+<span class="co">#&gt;                             channel_id id area v_ch</span>
+<span class="co">#&gt; 0 16D0AC09-E0B6-4727-83B8-567E8DE9C533  2   24    1</span>
+<span class="co">#&gt; 1 643017BB-01BC-4738-898F-1C62B84164BF 17  255    1</span>
+<span class="co">#&gt; 2 D2C2703E-A32F-4D88-A022-4E27EA52FC5C 11  242    1</span>
+<span class="co">#&gt; 3 991D9896-CA0C-492F-A6EE-8BA3972DDA3C  7  126    1</span>
+<span class="co">#&gt; 4 CC8639D7-00D2-4C26-9252-350E5A748D51  6    6    1</span>
+<span class="co">#&gt; 5 ED03FEDD-0F4B-40C7-86E8-6F0EA8BAC182 12  168    1</span></code></pre></div>
+<p>Many of the columns are not needed and are passed through from the original
+data. The columns required are documented in Table <a href="#tab:channel-table">3</a>.</p>
 <table class="table">
 <caption>
-<span id="tab:channel-table">Table 4: </span>Description of channel data frame columns</caption>
+<span id="tab:channel-table">Table 3: </span> Description of channel data frame columns</caption>
 <colgroup>
-<col width="5%">
-<col width="5%">
-<col width="3%">
-<col width="85%">
+<col width="21%">
+<col width="21%">
+<col width="21%">
+<col width="35%">
 </colgroup>
 <thead><tr class="header">
-<th align="left">Column</th>
-<th align="left">Class</th>
-<th align="left">Unit</th>
-<th align="left">Description</th>
+<th>Name</th>
+<th>Class</th>
+<th>Unit</th>
+<th>Description</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">id</td>
-<td align="left">integer</td>
-<td align="left">-</td>
-<td align="left">Unique identifying number of the hillslope HRU. These, combined with the id from the hillslope table should for consecuative integers increasing from 1.</td>
+<td>id</td>
+<td>integer</td>
+<td>:-:</td>
+<td>Unique identifying number of the hillslope HRU. These, combined with the id from the hillslope table should for consecutive integers increasing from 1.</td>
 </tr>
 <tr class="even">
-<td align="left">area</td>
-<td align="left">numeric</td>
-<td align="left"><span class="math inline">\(m^2\)</span></td>
-<td align="left">Surface area of the HSU in m<span class="math inline">\(^2\)</span>
+<td>area</td>
+<td>numeric</td>
+<td><span class="math inline">\(m^2\)</span></td>
+<td>Surface area of the HRU in m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
 <tr class="odd">
-<td align="left">length</td>
-<td align="left">numeric</td>
-<td align="left"><span class="math inline">\(m\)</span></td>
-<td align="left">Length of the channel in metres</td>
+<td>length</td>
+<td>numeric</td>
+<td><span class="math inline">\(m\)</span></td>
+<td>Length of the channel in metres</td>
 </tr>
 <tr class="even">
-<td align="left">precip</td>
-<td align="left">character</td>
-<td align="left">-</td>
-<td align="left">Name of the input series to use for precipitation</td>
-</tr>
-<tr class="odd">
-<td align="left">pet</td>
-<td align="left">character</td>
-<td align="left">-</td>
-<td align="left">Description</td>
-</tr>
-<tr class="even">
-<td align="left">v_ch</td>
-<td align="left">character</td>
-<td align="left">-</td>
-<td align="left">Name of the channel velocity parameter</td>
-</tr>
-<tr class="odd">
-<td align="left">flow_dir</td>
-<td align="left">list</td>
-<td align="left">-</td>
-<td align="left">As for sf_sir and sz_dir in the hillslope table with the exclusion of the band</td>
+<td>v_ch</td>
+<td>numeric</td>
+<td><span class="math inline">\(m/s\)</span></td>
+<td>Channel velocity parameter</td>
 </tr>
 </tbody>
 </table>
-</div>
-<div id="parameter-vector" class="section level2">
-<h2 class="hasAnchor">
-<a href="#parameter-vector" class="anchor"></a>Parameter vector</h2>
-<p>The paraemter vector is a named numneric vector of parameter values. The names
-should correspond to those specified in the hillslope and channel tables. In
-this case:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">model</span><span class="op">$</span><span class="va">param</span>
-<span class="co">#&gt; r_sfmax_default s_rzmax_default   s_rz0_default   ln_t0_default       m_default </span>
-<span class="co">#&gt;             Inf           0.050           0.990          19.000           0.004 </span>
-<span class="co">#&gt;     t_d_default    t_sf_default    v_ch_default </span>
-<span class="co">#&gt;          20.000         100.000         100.000</span></code></pre></div>
 </div>
 <div id="gauge-locations" class="section level2">
 <h2 class="hasAnchor">
 <a href="#gauge-locations" class="anchor"></a>Gauge locations</h2>
-<p>Gauge locations can be specified on the channel HSUs as outlined in Table
-<a href="#tab:gauge-table">5</a>.</p>
+<p>Gauge locations can be specified on the channel HRUs as outlined in Table
+<a href="#tab:gauge-table">4</a>. Gauges are taken to be at the outlet of the channel length.</p>
 <table class="table">
 <caption>
-<span id="tab:gauge-table">Table 5: </span>Description of gauge data frame columns</caption>
+<span id="tab:gauge-table">Table 4: </span> Description of gauge data frame columns</caption>
 <colgroup>
-<col width="5%">
-<col width="5%">
-<col width="89%">
+<col width="21%">
+<col width="21%">
+<col width="21%">
+<col width="35%">
 </colgroup>
 <thead><tr class="header">
-<th align="left">Column</th>
-<th align="left">Class</th>
-<th align="left">Description</th>
+<th>Name</th>
+<th>Class</th>
+<th>Unit</th>
+<th>Description</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">name</td>
-<td align="left">character</td>
-<td align="left">Unique name to idenfy the gauge. used in the channel routing to name the output.</td>
+<td>name</td>
+<td>character</td>
+<td>:-:</td>
+<td>Unique name to identify the gauge. Used to name the output series</td>
 </tr>
 <tr class="even">
-<td align="left">id</td>
-<td align="left">integer</td>
-<td align="left">The id of the channel HSU on which the gauge is sited</td>
-</tr>
-<tr class="odd">
-<td align="left">fraction</td>
-<td align="left">numeric</td>
-<td align="left">Fraction of the length of the channel HSU from the head where the gauge is located. A value of 1 corresponds to the foot on the channel HSU and 0 the head.</td>
+<td>id</td>
+<td>integer</td>
+<td>:-:</td>
+<td>The id of the channel HRU on which the gauge is sited</td>
 </tr>
 </tbody>
 </table>
-<p>The current example has one gauges:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<p>In this case there is a single gauge at the outlet:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">model</span><span class="op">$</span><span class="va">gauge</span>
-<span class="co">#&gt;         name id fraction</span>
-<span class="co">#&gt; 1 channel_18 18        1</span></code></pre></div>
+<span class="co">#&gt;        name id</span>
+<span class="co">#&gt; 1 channel_1  1</span></code></pre></div>
 </div>
 <div id="point-inflows" class="section level2">
 <h2 class="hasAnchor">
 <a href="#point-inflows" class="anchor"></a>Point Inflows</h2>
-<p>The point_inflow data frame allows the specification of locations on the river
-network at which inflows can occur.</p>
+<p>The point_inflow data frame allows the specification for point inflow which
+are added to the inflow at the head of the channel length.</p>
 <table class="table">
 <caption>
-<span id="tab:point-table">Table 6: </span>Description of point inflow data frame columns</caption>
-<colgroup>
-<col width="5%">
-<col width="5%">
-<col width="89%">
-</colgroup>
+<span id="tab:point-inflow-table">Table 5: </span> Description of point_inflow data frame columns</caption>
 <thead><tr class="header">
-<th align="left">Column</th>
-<th align="left">Class</th>
-<th align="left">Description</th>
+<th>Name</th>
+<th>Class</th>
+<th>Unit</th>
+<th>Description</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">name</td>
-<td align="left">character</td>
-<td align="left">Name of the input series to use.</td>
+<td>name</td>
+<td>character</td>
+<td>:-:</td>
+<td>Name of the input series to use.</td>
 </tr>
 <tr class="even">
-<td align="left">id</td>
-<td align="left">integer</td>
-<td align="left">The id of the channel HSU on which the gauge is sited</td>
-</tr>
-<tr class="odd">
-<td align="left">fraction</td>
-<td align="left">numeric</td>
-<td align="left">Fraction of the length of the channel HSU from the head where the gauge is located. A value of 1 corresponds to the foot on the channel HSU and 0 the head.</td>
+<td>id</td>
+<td>integer</td>
+<td>:-:</td>
+<td>The id of the channel HRU to which the inflow is added</td>
 </tr>
 </tbody>
 </table>
 <p>In the current catchment there are no inflows so the table is left blank:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">model</span><span class="op">$</span><span class="va">point_inflow</span>
-<span class="co">#&gt; [1] name     id       fraction</span>
+<span class="co">#&gt; [1] name id  </span>
 <span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></code></pre></div>
 </div>
 <div id="diffuse-inflows" class="section level2">
 <h2 class="hasAnchor">
 <a href="#diffuse-inflows" class="anchor"></a>Diffuse Inflows</h2>
 <p>The diffuse_inflow data frame allows the specification of diffuse inputs to
-the channel. These are presemed to occure uniformly along the channel length.</p>
+the channel. These are presumed to occur uniformly along the channel length.</p>
 <table class="table">
 <caption>
-<span id="tab:diffuse-table">Table 7: </span>Description of point inflow data frame columns</caption>
+<span id="tab:diffuse-inflow-table">Table 6: </span> Description of diffuse_inflow data frame columns</caption>
 <thead><tr class="header">
-<th align="left">Column</th>
-<th align="left">Class</th>
-<th align="left">Description</th>
+<th>Name</th>
+<th>Class</th>
+<th>Unit</th>
+<th>Description</th>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">name</td>
-<td align="left">character</td>
-<td align="left">Name of the input series to use.</td>
+<td>name</td>
+<td>character</td>
+<td>:-:</td>
+<td>Name of the input series to use.</td>
 </tr>
 <tr class="even">
-<td align="left">id</td>
-<td align="left">integer</td>
-<td align="left">The id of the channel HSU on which the gauge is sited</td>
+<td>id</td>
+<td>integer</td>
+<td>:-:</td>
+<td>The id of the channel HRU to which the inflow is added</td>
 </tr>
 </tbody>
 </table>
 <p>In the current catchment there are no inflows so the table is left blank:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">model</span><span class="op">$</span><span class="va">diffuse_inflow</span>
 <span class="co">#&gt; [1] name id  </span>
 <span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></code></pre></div>
+</div>
+<div id="flow-direction" class="section level2">
+<h2 class="hasAnchor">
+<a href="#flow-direction" class="anchor"></a>Flow direction</h2>
+<p>The flow_direction data frame described the connections between the HRUs.</p>
+<table class="table">
+<caption>
+<span id="tab:flow-direction-table">Table 7: </span> Description of flow_direction data frame columns</caption>
+<colgroup>
+<col width="21%">
+<col width="21%">
+<col width="21%">
+<col width="35%">
+</colgroup>
+<thead><tr class="header">
+<th>Name</th>
+<th>Class</th>
+<th>Unit</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>from</td>
+<td>integer</td>
+<td>:-:</td>
+<td>id of the HRU which the flow comes from</td>
+</tr>
+<tr class="even">
+<td>to</td>
+<td>integer</td>
+<td>:-:</td>
+<td>id of the HRU to which the flow is going</td>
+</tr>
+<tr class="odd">
+<td>frc</td>
+<td>numeric</td>
+<td>0-1</td>
+<td>Fraction of the flow which goes from the <code>from</code> id to the <code>to</code> id</td>
+</tr>
+</tbody>
+</table>
+<p>The start of the data frame in the current example is:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">flow_direction</span><span class="op">)</span>
+<span class="co">#&gt;        from   to       frc</span>
+<span class="co">#&gt; 18502  1853 1850 0.3033095</span>
+<span class="co">#&gt; 185110 1853 1851 0.4704486</span>
+<span class="co">#&gt; 1852   1853 1852 0.2262419</span>
+<span class="co">#&gt; 18492  1852 1849 0.3781666</span>
+<span class="co">#&gt; 18501  1852 1850 0.4736997</span>
+<span class="co">#&gt; 1851   1852 1851 0.1481338</span></code></pre></div>
+</div>
+<div id="precipitation-input" class="section level2">
+<h2 class="hasAnchor">
+<a href="#precipitation-input" class="anchor"></a>Precipitation input</h2>
+<p>The precip_input data frame describes the precipitation series to use for each
+HRU. Each row contains a HRU id, the series to use and the fraction of the HRU
+are to which this series should be applied. From this an average precipitation
+for each HRU is derived.</p>
+<table class="table">
+<caption>
+<span id="tab:precip-input-table">Table 8: </span> Description of precip_input data frame columns</caption>
+<colgroup>
+<col width="21%">
+<col width="21%">
+<col width="21%">
+<col width="35%">
+</colgroup>
+<thead><tr class="header">
+<th>Name</th>
+<th>Class</th>
+<th>Unit</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>id</td>
+<td>integer</td>
+<td>:-:</td>
+<td>The id of the channel HRU to which the input is applied</td>
+</tr>
+<tr class="even">
+<td>name</td>
+<td>character</td>
+<td>:-:</td>
+<td>Name of the input series to use.</td>
+</tr>
+<tr class="odd">
+<td>frc</td>
+<td>numeric</td>
+<td>0-1</td>
+<td>The fraction of the HRU area for which the input series is valid</td>
+</tr>
+</tbody>
+</table>
+<p>In the current example there is a single precipitation series being used:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">precip_input</span><span class="op">)</span>
+<span class="co">#&gt;       name id frc</span>
+<span class="co">#&gt; 1 Rainfall  2   1</span>
+<span class="co">#&gt; 2 Rainfall 17   1</span>
+<span class="co">#&gt; 3 Rainfall 11   1</span>
+<span class="co">#&gt; 4 Rainfall  7   1</span>
+<span class="co">#&gt; 5 Rainfall  6   1</span>
+<span class="co">#&gt; 6 Rainfall 12   1</span></code></pre></div>
+</div>
+<div id="pet-input" class="section level2">
+<h2 class="hasAnchor">
+<a href="#pet-input" class="anchor"></a>PET input</h2>
+<p>The pet_input data frame describes the potential evapotranspiration series to use for each
+HRU. Each row contains a HRU id, the series to use and the fraction of the HRU
+are to which this series should be applied. From this an average PET value
+for each HRU is derived.</p>
+<table class="table">
+<caption>
+<span id="tab:pet-input-table">Table 9: </span> Description of pet_input data frame columns</caption>
+<colgroup>
+<col width="21%">
+<col width="21%">
+<col width="21%">
+<col width="35%">
+</colgroup>
+<thead><tr class="header">
+<th>Name</th>
+<th>Class</th>
+<th>Unit</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>id</td>
+<td>integer</td>
+<td>:-:</td>
+<td>The id of the channel HRU to which the input is applied</td>
+</tr>
+<tr class="even">
+<td>name</td>
+<td>character</td>
+<td>:-:</td>
+<td>Name of the input series to use.</td>
+</tr>
+<tr class="odd">
+<td>frc</td>
+<td>numeric</td>
+<td>0-1</td>
+<td>The fraction of the HRU area for which the input series is valid</td>
+</tr>
+</tbody>
+</table>
+<p>In the current example there is a single PET series being used:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">pet_input</span><span class="op">)</span>
+<span class="co">#&gt;   name id frc</span>
+<span class="co">#&gt; 1  PET  2   1</span>
+<span class="co">#&gt; 2  PET 17   1</span>
+<span class="co">#&gt; 3  PET 11   1</span>
+<span class="co">#&gt; 4  PET  7   1</span>
+<span class="co">#&gt; 5  PET  6   1</span>
+<span class="co">#&gt; 6  PET 12   1</span></code></pre></div>
 </div>
   </div>
 
