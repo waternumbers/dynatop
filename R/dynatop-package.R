@@ -5,7 +5,6 @@
 #' @name dynatop-package
 #' @docType package
 #' @import xts
-#' @import raster
 #' @importFrom zoo index
 #' @importFrom stats start end aggregate
 #' @importFrom Rcpp evalCpp

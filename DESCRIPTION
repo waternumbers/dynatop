@@ -18,9 +18,7 @@ Imports:
 	R6,	
 	zoo,
 	xts,
-	Rcpp,
-	raster,
-	rgdal
+	Rcpp
 LinkingTo:
 	Rcpp,
 	BH
@@ -30,6 +28,8 @@ BugReports: https://github.com/waternumbers/dynatop/issues
 URL: https://waternumbers.github.io/dynatop/, https://github.com/waternumbers/dynatop
 RoxygenNote: 7.1.1
 Suggests:
+    raster,
+    rgdal,
     knitr,
     rmarkdown,
     covr,
