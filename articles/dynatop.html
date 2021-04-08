@@ -148,7 +148,7 @@
 <p>The discharge, precipitation and potential evapotranspiration (PET) inputs for Swindale and contained with <code>swindale_obs</code> on a 15 minute time step.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">swindale_obs</span><span class="op">)</span>
-<span class="co">#&gt; Warning: timezone of object (GMT) is different than current timezone (UTC).</span>
+<span class="co">#&gt; Warning: timezone of object (GMT) is different than current timezone ().</span>
 <span class="co">#&gt;                     Flow Rainfall          PET</span>
 <span class="co">#&gt; 2009-11-18 16:00:00 2.78    4e-04 8.878467e-06</span>
 <span class="co">#&gt; 2009-11-18 16:15:00 2.80    2e-04 4.762229e-06</span>
@@ -198,7 +198,13 @@
 <span class="co">#&gt; Error in private$sim_hs(keep_states, sub_step[1]): States have a non-finite value - may need initialising</span></code></pre></div>
 <p>The states need to be initialised using the <code>initialise</code> method which requires an initial recharge rate. In the following we initialse the states and plot the initial saturates zone storage, using the chaining of commands.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">initialise</span><span class="op">(</span><span class="fl">1e-6</span><span class="op">)</span><span class="op">$</span><span class="fu">plot_state</span><span class="op">(</span><span class="st">"s_sz"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">initialise</span><span class="op">(</span><span class="fl">1e-6</span><span class="op">)</span><span class="op">$</span><span class="fu">plot_state</span><span class="op">(</span><span class="st">"s_sz"</span><span class="op">)</span>
+<span class="co">#&gt; Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj</span>
+<span class="co">#&gt; = prefer_proj): Discarded datum Unknown based on Airy 1830 ellipsoid in Proj4</span>
+<span class="co">#&gt; definition</span>
+<span class="co">#&gt; Warning in OGRSpatialRef(dsn, layer, morphFromESRI = morphFromESRI, dumpSRS =</span>
+<span class="co">#&gt; dumpSRS, : Discarded datum OSGB_1936 in Proj4 definition: +proj=tmerc +lat_0=49</span>
+<span class="co">#&gt; +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +units=m +no_defs</span></code></pre></div>
 <p><img src="dynatop_files/figure-html/initialise-1.png" width="700"></p>
 <p>The simulation can now be performed and the flow at the gauge extracted with</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
@@ -209,7 +215,13 @@
 <span class="co">#&gt; Suggest maximum sub step is: 0seconds</span></code></pre></div>
 <p>Note that the states of the system are now those at the end of the simulation for example:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">plot_state</span><span class="op">(</span><span class="st">"s_sz"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">plot_state</span><span class="op">(</span><span class="st">"s_sz"</span><span class="op">)</span>
+<span class="co">#&gt; Warning in showSRID(uprojargs, format = "PROJ", multiline = "NO", prefer_proj</span>
+<span class="co">#&gt; = prefer_proj): Discarded datum Unknown based on Airy 1830 ellipsoid in Proj4</span>
+<span class="co">#&gt; definition</span>
+<span class="co">#&gt; Warning in OGRSpatialRef(dsn, layer, morphFromESRI = morphFromESRI, dumpSRS =</span>
+<span class="co">#&gt; dumpSRS, : Discarded datum OSGB_1936 in Proj4 definition: +proj=tmerc +lat_0=49</span>
+<span class="co">#&gt; +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +units=m +no_defs</span></code></pre></div>
 <p><img src="dynatop_files/figure-html/new_states-1.png" width="700"></p>
 <p>Rerunning the simulation with the new initial states will of course produce different results</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
