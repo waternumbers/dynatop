@@ -25,10 +25,9 @@ after_success:
   - Rscript -e 'covr::coveralls()'
   - Rscript -e 'pkgdown::build_site()'
 deploy:
-  strategy: git
   provider: pages
-  cleanup: false
-  token: $GITHUB_PAT
+  skip_cleanup: true
+  github_token: $GITHUB_PAT
   keep_history: true
   local_dir: docs
   on:
