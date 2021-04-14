@@ -59,9 +59,8 @@ dynatop <- R6::R6Class(
             if( !is.numeric(initial_recharge) | length(initial_recharge) > 1 | any( initial_recharge < 0 ) ){
                 stop("Initial discharge should be a single positive numeric value")
             }
-            
+           
             private$init_hs(initial_recharge)
-            ##print("returned from init_hs")
             private$init_ch()
             invisible(self)
         },
@@ -116,7 +115,7 @@ dynatop <- R6::R6Class(
                 stop("Insufficent data to perform a simulation")
             }
             ## check initialised
-            if(!("linear_time" %in% names(private$unpack$channel))){
+            if(!("linear_time" %in% names(private$summary$channel))){
                 stop("Channel solution is not initialised")
             }
             
@@ -195,7 +194,8 @@ dynatop <- R6::R6Class(
                 return( setNames(private$time_series$state_record,
                                  private$time_series$index) )
             }else{
-                return( private$unpack$hillslope$states )
+                nm <- private$model_description[["hillslope"]]$name[private$model_description[["hillslope"]]$role=="state"]
+                return( private$model$hillslope[,c("id",nm)] )
             }
        },
        #' @description Plot a current state of the system
@@ -203,13 +203,13 @@ dynatop <- R6::R6Class(
        #' @param add_channel Logical indicating if the channel should be added to the plot
        plot_state = function(state,add_channel=TRUE){
            
-           if( is.null(private$unpack$map$hillslope) ){
+           if( is.null(private$model$map$hillslope) ){
                stop("The model contains no map of HSU locations")
            }
-           if( !file.exists(private$unpack$map$hillslope) ){ stop("The model map file is missing") }
-           if( add_channel & !file.exists(private$unpack$map$channel) ){ warnings("File containing the channel network does not exist") }
+           if( !file.exists(private$model$map$hillslope) ){ stop("The model map file is missing") }
+           if( add_channel & !file.exists(private$model$map$channel) ){ warnings("File containing the channel network does not exist") }
            
-           if(!(state%in%colnames(private$unpack$hillslope$state))){
+           if(!(state%in%colnames(private$model$hillslope))){
                stop("Model state does not exist")
            }
            
@@ -217,13 +217,13 @@ dynatop <- R6::R6Class(
                stop( "The raster package is required for plotting the maps of states - please install or add to libPath" )
            }
            
-           x <- private$unpack$hillslope$state[,state]
-           rst <- raster::raster(private$unpack$map$hillslope)
-           rst <- raster::subs(rst, data.frame(as.integer(names(x)),x))
+           ## x <- private$unpack$hillslope$state[,state]
+           rst <- raster::raster(private$model$map$hillslope)
+           rst <- raster::subs(rst, private$model$hillslope[,c("id",state)])
            
            raster::plot( rst)
-           if( add_channel & file.exists(private$unpack$map$channel) ){
-               chn <- raster::shapefile(private$unpack$map$channel)
+           if( add_channel & file.exists(private$model$map$channel) ){
+               chn <- raster::shapefile(private$model$map$channel)
                raster::plot(chn,add=TRUE)
            }
            
@@ -233,7 +233,8 @@ dynatop <- R6::R6Class(
     private = list(
         ## stores of data
         version = "0.2.0.9030",
-        unpack = list(), #storage for unpacked states, properties and parameters used in simulation
+        model = list(), # storage for model object
+        summary = list(), # storage for intermediate computed values used in code
         time_series = list(),
         info = list(can_sim_channel=FALSE),
         ## decribes a model tables
@@ -344,62 +345,35 @@ dynatop <- R6::R6Class(
 
             ## Assume everthing is numeric except for id's which are integer
 
-            ## unpack hillslope and channel
+            ## unpack hillslope and channel sorting by id and hadling states
             for(ii in c("hillslope","channel")){
                 model[[ii]] <-
                     model[[ii]][order(model[[ii]]$id,decreasing=TRUE),] ## sorting
-                private$unpack[[ii]] <- list() ## initialise output
-                ## attributes & id
-                nm <- private$model_description[[ii]]$name[private$model_description[[ii]]$role=="attribute"]
-                nm <- setdiff(nm,"id")
-                private$unpack[[ii]]$attribute <- data.matrix(model[[ii]][,nm])
-                private$unpack[[ii]]$id <- as.integer(model[[ii]]$id)
-                ## unpack states
-                nm <- private$model_description[[ii]]$name[private$model_description[[ii]]$role=="state"]
-                if(use_states){
-                    private$unpack[[ii]]$states <- data.matrix(model[[ii]][,nm])
-                }else{
-                    private$unpack[[ii]]$states <- matrix(as.numeric(NA),nrow(model[[ii]]),length(nm))
-                    if(length(nm)>0){
-                        dimnames(private$unpack[[ii]]$states) <- list(rownames(model[[ii]]), nm)
-                    }
+
+                ## handle states
+                if(!use_states){
+                    nm <- private$model_description[[ii]]$name[private$model_description[[ii]]$role=="state"]
+                    model[[ii]][nm] <- as.numeric(NA)
                 }
-                ## unpack parameters
-                nm <- private$model_description[[ii]]$name[private$model_description[[ii]]$role=="parameter"]
-                ## tmp <- matrix(as.numeric(NA),nrow(model[[ii]]),length(nm))
-                ## dimnames(tmp) <- list(model$hillslope$id,nm)
-                ## for(jj in nm){
-                ##     tmp[,jj] <- as.numeric(model$param[ model[[ii]][,jj] ] )
-                ## }
-                ## private$unpack[[ii]]$param_str <- model[[ii]][,nm,drop=FALSE]
-                private$unpack[[ii]]$param <- data.matrix(model[[ii]][,nm,drop=FALSE])
-                
-
+                private$model[[ii]] <- model[[ii]]
             }
-
-            ## unpack flow direction
-            model$flow_direction <-
-                model$flow_direction[order(model$flow_direction$from,decreasing=TRUE),] ## sort
-            private$unpack$flow_direction <- list(
-                from = as.integer(model$flow_direction$from),
-                to = as.integer(model$flow_direction$to),
-                frc = as.numeric(model$flow_direction$frc) )
-
-            ## rainfall and pet fractions
+            
+            ## unpack inputs - sorted but this is not used might be better to sort for speed?
             for(ii in c("precip_input","pet_input")){
                 model[[ii]] <-
-                    model[[ii]][order(model[[ii]]$id,decreasing=TRUE),]
-                private$unpack[[ii]] <- list(
-                    name = as.character(model[[ii]]$name),
-                    id = as.integer(model[[ii]]$id ),
-                    frc = as.numeric(model[[ii]]$frc) )
+                    model[[ii]][order(model[[ii]]$id,decreasing=TRUE),] ## sorting
+                private$model[[ii]] <- model[[ii]]
             }
 
-            ## channel inflows, gauge locastionsm, parameters etc - just copy..
-            for(ii in c("options","diffuse_inflow","point_inflow","gauge","map")){ ##"param",)){
-                private$unpack[[ii]] <- model[[ii]]
+            ## unpack flow direction - sorting is used here
+            private$model$flow_direction <-
+                model$flow_direction[order(model$flow_direction$from,decreasing=TRUE),] ## sort
+            
+            ## channel inflows, gauge locastions etc - just copy..
+            for(ii in c("options","diffuse_inflow","point_inflow","gauge","map")){
+                private$model[[ii]] <- model[[ii]]
             }
-
+            
             ## work out all the required input series
             data_series <- list()
             for(tbl in names(private$model_description)){
@@ -409,30 +383,14 @@ dynatop <- R6::R6Class(
             }
             
             private$info$data_series <- unique( do.call(c,data_series) )
-          
+            
             invisible( self )
         },
         ## convert the form the internal storage to that input
         ## we presume the model has been checked!!
         reform_model = function(){
-            
-            ## initialise output model format as a list
-            ## include variables that don;t need transformation
-            out <- list()
-            nm <- names(private$unpack) ## names of all parts of unpacked
-            cnm <- c("options","diffuse_inflow","point_inflow","gauge","map") #"param","map") ## names of bits that can just be copied
-            for(ii in cnm){
-                out[[ii]] <- private$unpack[[ii]]
-            }
-            
-            for(ii in setdiff(nm,cnm)){
-                #print(ii)
-                #if(ii=="channel"){browser()}
-                jj <- setdiff(names(private$unpack[[ii]]),"linear_time") #c("param","linear_time")) ## trim out matrix of numeric parameter values and other bits that aren't part of the model
-                out[[ii]] <- do.call(data.frame,private$unpack[[ii]][jj])
-                names(out[[ii]]) <- sapply(strsplit(names(out[[ii]]),"[.]"),
-                                           function(x){tail(x,1)})
-            }
+
+            out <- private$model
             
             ## TODO - add description...
             return(out)
@@ -680,10 +638,12 @@ dynatop <- R6::R6Class(
             private$time_series$index <- index(obs)
 
             ## set up the column vectors for the rainfall and pet
-            private$unpack$precip_input$col_idx <- as.integer(
-                match(private$unpack$precip_input$name, colnames(private$time_series$obs)) )
-            private$unpack$pet_input$col_idx <- as.integer(
-                match(private$unpack$pet_input$name, colnames(private$time_series$obs)) )
+            private$summary$precip_input <- private$model$precip_input
+            private$summary$precip_input$col_idx <- as.integer(
+                match(private$model$precip_input$name, colnames(private$time_series$obs)) - 1) # minus 1 to get C++ index
+            private$summary$pet_input <- private$model$pet_input
+            private$summary$pet_input$col_idx <- as.integer(
+                match(private$model$pet_input$name, colnames(private$time_series$obs)) -1 ) # minus 1 to get C++ index
         },
         ## compute the simulation timestep
         comp_ts = function(sub_step=NULL){
@@ -699,35 +659,30 @@ dynatop <- R6::R6Class(
         ## Initialise the states
         init_hs = function(initial_recharge){
             
-            q0 <- rep(as.numeric(initial_recharge),length(private$unpack$hillslope$id))
-            switch(private$unpack$options['transmissivity_profile'],
-                   "exponential" = dt_exp_init(as.integer(private$unpack$hillslope$id-1),
-                                               private$unpack$hillslope$states,
-                                               private$unpack$hillslope$attr,
-                                               private$unpack$hillslope$param,
-                                               private$unpack$channel$id - 1,
-                                               private$unpack$flow_direction$from - 1,
-                                               private$unpack$flow_direction$to - 1,
-                                               private$unpack$flow_direction$frc,
-                                               q0 ),
-                   "bounded_exponential" = dt_bexp_init(as.integer(private$unpack$hillslope$id-1),
-                                                        private$unpack$hillslope$states,
-                                                        private$unpack$hillslope$attr,
-                                                        private$unpack$hillslope$param,
-                                                        private$unpack$channel$id - 1,
-                                                        private$unpack$flow_direction$from - 1,
-                                                        private$unpack$flow_direction$to - 1,
-                                                        private$unpack$flow_direction$frc,
-                                                        q0 ),
-                   "constant" = dt_cnst_init(as.integer(private$unpack$hillslope$id-1),
-                                             private$unpack$hillslope$states,
-                                             private$unpack$hillslope$attr,
-                                             private$unpack$hillslope$param,
-                                             private$unpack$channel$id - 1,
-                                             private$unpack$flow_direction$from - 1,
-                                             private$unpack$flow_direction$to - 1,
-                                             private$unpack$flow_direction$frc,
-                                             q0 ),
+            q0 <- rep(as.numeric(initial_recharge),length(private$model$hillslope$id))
+            switch(private$model$options['transmissivity_profile'],
+                   "exponential" = dt_exp_init(private$model$hillslope,
+                                               private$model$channel,
+                                               private$model$flow_direction,
+                                               q0),
+                   ## "bounded_exponential" = dt_bexp_init(as.integer(private$unpack$hillslope$id-1),
+                   ##                                      private$unpack$hillslope$states,
+                   ##                                      private$unpack$hillslope$attr,
+                   ##                                      private$unpack$hillslope$param,
+                   ##                                      private$unpack$channel$id - 1,
+                   ##                                      private$unpack$flow_direction$from - 1,
+                   ##                                      private$unpack$flow_direction$to - 1,
+                   ##                                      private$unpack$flow_direction$frc,
+                   ##                                      q0 ),
+                   ## "constant" = dt_cnst_init(as.integer(private$unpack$hillslope$id-1),
+                   ##                           private$unpack$hillslope$states,
+                   ##                           private$unpack$hillslope$attr,
+                   ##                           private$unpack$hillslope$param,
+                   ##                           private$unpack$channel$id - 1,
+                   ##                           private$unpack$flow_direction$from - 1,
+                   ##                           private$unpack$flow_direction$to - 1,
+                   ##                           private$unpack$flow_direction$frc,
+                   ##                           q0 ),
                    stop("This is not yet implimented")
                    )
 
@@ -736,7 +691,7 @@ dynatop <- R6::R6Class(
         ## function to perform simulations
         sim_hs = function(keep_states,sub_step){
 
-            if(!all(is.finite(private$unpack$hillslope$states))){
+            if(!all(is.finite(private$model$hillslope$states))){
                 stop("States have a non-finite value - may need initialising")
             }
             
@@ -747,27 +702,25 @@ dynatop <- R6::R6Class(
             ts <- private$comp_ts(sub_step)
 
             ## work out the courant numbers
-            courant <- matrix(as.numeric(NA),length(private$unpack$hillslope$id),2)
+            courant <- matrix(as.numeric(NA),length(private$model$hillslope$id),2)
             #browser()
-            switch(private$unpack$options['transmissivity_profile'],
-                   "exponential" = dt_exp_courant(as.integer(private$unpack$hillslope$id-1),
-                                                  private$unpack$hillslope$attr,
-                                                  private$unpack$hillslope$param,
+            switch(private$model$options['transmissivity_profile'],
+                   "exponential" = dt_exp_courant(private$model$hillslope,
                                                   courant,
                                                   ts$step,
                                                   ts$n_sub_step),
-                   "bounded_exponential" = dt_bexp_courant(as.integer(private$unpack$hillslope$id-1),
-                                                           private$unpack$hillslope$attr,
-                                                           private$unpack$hillslope$param,
-                                                           courant,
-                                                           ts$step,
-                                                           ts$n_sub_step),
-                   "constant" = dt_cnst_courant(as.integer(private$unpack$hillslope$id-1),
-                                                private$unpack$hillslope$attr,
-                                                private$unpack$hillslope$param,
-                                                courant,
-                                                ts$step,
-                                                ts$n_sub_step),
+                   ## "bounded_exponential" = dt_bexp_courant(as.integer(private$unpack$hillslope$id-1),
+                   ##                                         private$unpack$hillslope$attr,
+                   ##                                         private$unpack$hillslope$param,
+                   ##                                         courant,
+                   ##                                         ts$step,
+                   ##                                         ts$n_sub_step),
+                   ## "constant" = dt_cnst_courant(as.integer(private$unpack$hillslope$id-1),
+                   ##                              private$unpack$hillslope$attr,
+                   ##                              private$unpack$hillslope$param,
+                   ##                              courant,
+                   ##                              ts$step,
+                   ##                              ts$n_sub_step),
                    stop("This is not yet implimented")
                    )
             ## Display number of sub steps required
@@ -798,28 +751,18 @@ dynatop <- R6::R6Class(
             colnames(private$time_series$mass_balance) <-
                 c("initial_state","e_t","p","channel_inflow","final_state")
 
-            ## make local copy of channel_inflow
+            ## set up  channel_inflow
             private$time_series$channel_inflow <- matrix(as.numeric(NA),
                                                          nrow(private$time_series$obs),
-                                                         length(private$unpack$channel$id))
-            colnames(private$time_series$channel_inflow) <- private$unpack$channel$id
+                                                         length(private$model$channel$id))
+            colnames(private$time_series$channel_inflow) <- private$model$channel$id
 
-            switch(private$unpack$options['transmissivity_profile'],
-                   "exponential" = dt_exp_implicit(private$unpack$hillslope$id-1,
-                                                   private$unpack$hillslope$states,
-                                                   private$unpack$hillslope$attribute,
-                                                   private$unpack$hillslope$param,
-                                                   private$unpack$channel$id-1,
-                                                   private$unpack$channel$attribute,
-                                                   private$unpack$flow_direction$from -1 ,
-                                                   private$unpack$flow_direction$to -1 ,
-                                                   private$unpack$flow_direction$frc,
-                                                   private$unpack$precip_input$col_idx - 1,
-                                                   private$unpack$precip_input$id - 1,
-                                                   private$unpack$precip_input$frc,
-                                                   private$unpack$pet_input$col_idx - 1,
-                                                   private$unpack$pet_input$id - 1,
-                                                   private$unpack$pet_input$frc,
+            switch(private$model$options['transmissivity_profile'],
+                   "exponential" = dt_exp_implicit(private$model$hillslope,
+                                                   private$model$channel,
+                                                   private$model$flow_direction,
+                                                   private$summary$precip_input,
+                                                   private$summary$pet_input,
                                                    private$time_series$obs,
                                                    private$time_series$channel_inflow,
                                                    private$time_series$mass_balance,
@@ -828,78 +771,77 @@ dynatop <- R6::R6Class(
                                                    ts$step,
                                                    ts$n_sub_step
                                                    ),
-                   "bounded_exponential" = dt_bexp_implicit(private$unpack$hillslope$id-1,
-                                                           private$unpack$hillslope$states,
-                                                           private$unpack$hillslope$attribute,
-                                                           private$unpack$hillslope$param,
-                                                           private$unpack$channel$id-1,
-                                                           private$unpack$channel$attribute,
-                                                           private$unpack$flow_direction$from -1 ,
-                                                           private$unpack$flow_direction$to -1 ,
-                                                           private$unpack$flow_direction$frc,
-                                                           private$unpack$precip_input$col_idx - 1,
-                                                           private$unpack$precip_input$id - 1,
-                                                           private$unpack$precip_input$frc,
-                                                           private$unpack$pet_input$col_idx - 1,
-                                                           private$unpack$pet_input$id - 1,
-                                                           private$unpack$pet_input$frc,
-                                                           private$time_series$obs,
-                                                           private$time_series$channel_inflow,
-                                                           private$time_series$mass_balance,
-                                                           as.logical( keep_states ),
-                                                           private$time_series$state_record,
-                                                           ts$step,
-                                                           ts$n_sub_step
-                                                           ),
-                   "constant" = dt_cnst_implicit(private$unpack$hillslope$id-1,
-                                                 private$unpack$hillslope$states,
-                                                 private$unpack$hillslope$attribute,
-                                                 private$unpack$hillslope$param,
-                                                 private$unpack$channel$id-1,
-                                                 private$unpack$channel$attribute,
-                                                 private$unpack$flow_direction$from -1 ,
-                                                 private$unpack$flow_direction$to -1 ,
-                                                 private$unpack$flow_direction$frc,
-                                                 private$unpack$precip_input$col_idx - 1,
-                                                 private$unpack$precip_input$id - 1,
-                                                 private$unpack$precip_input$frc,
-                                                 private$unpack$pet_input$col_idx - 1,
-                                                 private$unpack$pet_input$id - 1,
-                                                 private$unpack$pet_input$frc,
-                                                 private$time_series$obs,
-                                                 private$time_series$channel_inflow,
-                                                 private$time_series$mass_balance,
-                                                 as.logical( keep_states ),
-                                                 private$time_series$state_record,
-                                                 ts$step,
-                                                 ts$n_sub_step
-                                                 ),
+                   ## "bounded_exponential" = dt_bexp_implicit(private$unpack$hillslope$id-1,
+                   ##                                         private$unpack$hillslope$states,
+                   ##                                         private$unpack$hillslope$attribute,
+                   ##                                         private$unpack$hillslope$param,
+                   ##                                         private$unpack$channel$id-1,
+                   ##                                         private$unpack$channel$attribute,
+                   ##                                         private$unpack$flow_direction$from -1 ,
+                   ##                                         private$unpack$flow_direction$to -1 ,
+                   ##                                         private$unpack$flow_direction$frc,
+                   ##                                         private$unpack$precip_input$col_idx - 1,
+                   ##                                         private$unpack$precip_input$id - 1,
+                   ##                                         private$unpack$precip_input$frc,
+                   ##                                         private$unpack$pet_input$col_idx - 1,
+                   ##                                         private$unpack$pet_input$id - 1,
+                   ##                                         private$unpack$pet_input$frc,
+                   ##                                         private$time_series$obs,
+                   ##                                         private$time_series$channel_inflow,
+                   ##                                         private$time_series$mass_balance,
+                   ##                                         as.logical( keep_states ),
+                   ##                                         private$time_series$state_record,
+                   ##                                         ts$step,
+                   ##                                         ts$n_sub_step
+                   ##                                         ),
+                   ## "constant" = dt_cnst_implicit(private$unpack$hillslope$id-1,
+                   ##                               private$unpack$hillslope$states,
+                   ##                               private$unpack$hillslope$attribute,
+                   ##                               private$unpack$hillslope$param,
+                   ##                               private$unpack$channel$id-1,
+                   ##                               private$unpack$channel$attribute,
+                   ##                               private$unpack$flow_direction$from -1 ,
+                   ##                               private$unpack$flow_direction$to -1 ,
+                   ##                               private$unpack$flow_direction$frc,
+                   ##                               private$unpack$precip_input$col_idx - 1,
+                   ##                               private$unpack$precip_input$id - 1,
+                   ##                               private$unpack$precip_input$frc,
+                   ##                               private$unpack$pet_input$col_idx - 1,
+                   ##                               private$unpack$pet_input$id - 1,
+                   ##                               private$unpack$pet_input$frc,
+                   ##                               private$time_series$obs,
+                   ##                               private$time_series$channel_inflow,
+                   ##                               private$time_series$mass_balance,
+                   ##                               as.logical( keep_states ),
+                   ##                               private$time_series$state_record,
+                   ##                               ts$step,
+                   ##                               ts$n_sub_step
+                   ##                               ),
                    stop("This is not yet implimented")
                    )
             
         },
         ## #############################
         init_ch = function(){
-            ##browser()
-            channel <- private$unpack$channel
-            gauge <- private$unpack$gauge
-            point_inflow <- private$unpack$point_inflow
+            channel <- private$model$channel
+            gauge <- private$model$gauge
+            point_inflow <- private$model$point_inflow
             
             ## get the channels upstream of each id
             chn_con <- lapply(channel$id,
                               function(x){
                                   ## work out links going to reach from channels
-                                  idx <- (private$unpack$flow_direction$to==x) &
-                                      (private$unpack$flow_direction$from %in% channel$id)
+                                  idx <- (private$model$flow_direction$to==x) &
+                                      (private$model$flow_direction$from %in% channel$id)
                                   ## limit to only channels
-                                  return( paste(private$unpack$flow_direction$from[idx]) )
+                                  return( paste(private$model$flow_direction$from[idx]) )
                               }
                               )
             names(chn_con) <- paste(channel$id)
             
             
             ## compute the time to travel down each reach
-            reach_time <- setNames( channel$attribute[,"length"] / channel$param[,"v_ch"], #private$model$param[channel$v_ch],
+            reach_time <- setNames( channel[,"length"] / channel[,"v_ch"], #private$model$param[channel$v_ch],
                                    channel$id )
 
             ## storage for output
@@ -934,60 +876,14 @@ dynatop <- R6::R6Class(
 
                 linear_time[[gnm]] <- list(diffuse=df,point=pnt)
             }
-            
-            ##     colnames(pnt)
-                             
-            ##         ii <- as.integer(iis)
-                    
-            ##     time_to_head <- rep(NA,length(channel$id))
-            ##     ## add gaguge reach is in
-            ##     ii <- gauge$id[rw]
-            ##     time_to_head[ii] <- reach_time[ii]*gauge$fraction[rw]
-            ##     ## get upstream reaches
-            ##     idx <- which(chn_con==ii)
-            ##     ## loop upstream
-            ##     while(length(idx)>0){
-            ##         idx_list <- list()
-            ##         cnt <- 1
-            ##         for(ii in idx){
-            ##             time_to_head[ii] <- reach_time[ii] + time_to_head[ chn_con[ii] ]
-            ##             idx_list[[cnt]] <- which(chn_con==ii)
-            ##             cnt <- cnt+1
-            ##         }
-            ##         idx <- do.call(c,idx_list)
-            ##     }
-            ##     ## initialise gauge timeing object
-            ##     tmp <- list(diffuse=list(),
-            ##                 point=list())
-
-            ##     ## work out for diffuse inputs
-            ##     for(ii in which(is.finite(time_to_head))){
-            ##         tmp$diffuse[[paste(ii)]] <- list(head_to_gauge=time_to_head[ii],
-            ##                                          reach_time = reach_time[ii])
-            ##     }
-
-            ##     ## work out for points
-            ##     if(length(point_inflow$name)>0){
-            ##         for(ii in 1:length(point_inflow$name)){
-            ##             jj <- point_inflow$id[ii]
-            ##             if( is.finite( time_to_head[ jj ] ) ){
-            ##                 delta <- time_to_head[jj]* point_inflow$fraction[ii]
-            ##                 tmp$point[[ point_inflow$name[ii] ]] <- list(
-            ##                     head_to_gauge = time_to_head[jj] - delta,
-            ##                     reach_time = 0)
-            ##             }
-            ##         }
-            ##     }
-            ##     linear_time[[gauge$name[rw]]] <- tmp
-            ## }
-            
-            private$unpack$channel$linear_time <- linear_time
+                        
+            private$summary$channel$linear_time <- linear_time
         },
         sim_ch = function(){
             ## initialise the output
             out <- matrix(NA,length(private$time_series$index),
-                          length(private$unpack$channel$linear_time))
-            colnames(out) <- names(private$unpack$channel$linear_time)
+                          length(private$summary$channel$linear_time))
+            colnames(out) <- names(private$summary$channel$linear_time)
             
 
             ## function to make polynonial representing time delay histogram
@@ -1009,31 +905,15 @@ dynatop <- R6::R6Class(
                 return(ply/sum(ply))
             
             }
-    ## fpoly <- function(x){
-    ##             if( x$reach_time == 0 ){
-    ##                 ## point input
-    ##                 ms <- floor(x$head_to_gauge/private$info$ts$step)+1
-    ##                 ply <- rep(0,ms)
-    ##                 ply[ms] <- 1
-    ##             }else{
-    ##                 ms <- ceiling(x$head_to_gauge/private$info$ts$step)
-    ##                 ply <- (0:ms)*private$info$ts$step
-    ##                 ply[ply<=x$head_to_gauge - x$reach_time] <- x$head_to_gauge - x$reach_time
-    ##                 ply[ply>x$head_to_gauge] <- x$head_to_gauge
-    ##                 ply <- diff(ply)
-    ##                 ply <- ply/x$reach_time 
-    ##             }
-    ##             return(ply)
-    ##         }
-            ## Loop gauges
             
-            for(gnm in names(private$unpack$channel$linear_time)){
+            ## Loop gauges
+            for(gnm in names(private$summary$channel$linear_time)){
 
                 ## initialise the point - set to 0
                 out[,gnm] <- 0
 
                 ## diffuse inputs
-                df <- private$unpack$channel$linear_time[[gnm]]$diffuse
+                df <- private$summary$channel$linear_time[[gnm]]$diffuse
 
                 for(ii in rownames(df)){
                     ply <- fpoly(df[ii,])
@@ -1052,7 +932,7 @@ dynatop <- R6::R6Class(
                 }
 
                 ## handle point inputs
-                pnt <- private$unpack$channel$linear_time[[gnm]]$point
+                pnt <- private$summary$channel$linear_time[[gnm]]$point
                 ## loop point inputs upstream
                 for(ii in rownames(pnt)){
                     ply <- fpoly(pnt[ii,])
@@ -1066,51 +946,6 @@ dynatop <- R6::R6Class(
                     out[,gnm] <- out[,gnm] + q
                 }
             }
-            ## for(id in names(private$states$channel$linear_time)){
-
-            ##     ## initialise the point - set to 0
-            ##     out[,id] <- 0
-                
-                
-            ##     ## loop channel+diffuse upstream
-            ##     for(iid in names(private$states$channel$linear_time[[id]]$diffuse)){
-            ##         ## get time object
-            ##         tt <- private$states$channel$linear_time[[id]]$diffuse[[iid]]
-            ##         ## compute polynomial
-            ##         ply <- fpoly(tt)
-            ##         npad <- length(ply)-1
-            ##         ## compute input
-            ##         x <- private$time_series$channel_inflow[,iid]
-            ##         ## add diffuse inputs to x
-            ##         nm <- private$model$diffuse_inflow$name[private$model$diffuse_inflow$id==id]
-            ##         x <- x + rowSums(private$time_series$obs[,nm])
-
-            ##         ## add initial padding to input
-            ##         x <- c(rep(x[1],npad),x)
-            ##         ## apply polynomial
-            ##         q <- filter(x,ply,method="conv",sides=1)
-            ##         if(npad>0){q <- q[-(1:npad)]}
-            ##         out[,id] <- out[,id] + q
-            ##     }
-                
-            ##     ## loop point inputs upstream
-            ##     for(iid in names(private$states$channel$linear_time[[id]]$point)){
-            ##         ## get time object
-            ##         tt <- private$channel$states$linear_time[[id]]$diffuse[[iid]]
-            ##         ## compute polynomial
-            ##         ply <- fply(tt)
-            ##         npad <- length(ply)-1
-            ##         ## compute input
-            ##         x <- private$time_series$obs[,iid]
-            ##         ##TODO add diffuse inputs to x
-            ##         x <- c(rep(x[1],npad),x)
-            ##         ## apply polynomial
-            ##         q <- filter(x,ply,method="conv",sides=1)
-            ##         if(npad>0){q <- q[-(1:npad)]}
-            ##         out[,id] <- out[,id] + q
-            ##     }
-
-            ## }
 
             private$time_series$gauge_flow <- out
         }
