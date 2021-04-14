@@ -2,6 +2,7 @@
 
 - Adapted R and C++ code to pass data frames of hillslope and channel properties
 - tidy up of C++ code
+- Fix bug in hillslope HRU solution which was indexing incorrect PET value - this will only impact simulations with multiple PET series, if constant then results shoudl be identical to v0.2.0.9030.
 
 ## New features
 
