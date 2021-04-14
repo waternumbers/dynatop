@@ -1,3 +1,16 @@
+# dynatop 0.2.0.9035
+
+- Adapted R and C++ code to pass data frames of hillslope and channel properties
+- tidy up of C++ code
+
+## New features
+
+- None
+
+## Breaking Changes
+
+- None
+
 # dynatop 0.2.0.9030
 
 - Adapted hillslope solution to Finite Volume to address mass balance issues in v0.2.0.9020
