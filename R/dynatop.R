@@ -72,8 +72,9 @@ dynatop <- R6::R6Class(
         sim_hillslope = function(keep_states=NULL,sub_step=NULL){
 
             ## check presence of states
-            if( !all(is.finite(private$states$hillslope)) ){
-                stop("Model states are either no initialised or have non-finite values")
+            has_states <- all(sapply(private$model$hillslope,function(x){all(is.finite(x))}))
+            if( !has_states ){
+                stop("Model states are either not initialised or have non-finite values")
             }
             
             if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
