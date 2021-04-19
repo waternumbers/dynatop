@@ -169,7 +169,6 @@ sim2 <- ctch_mdl$sim()$get_gauge_flow()
 out <- merge( merge(swindale_obs,sim1),sim2)
 names(out) <- c(names(swindale_obs),'sim_1','sim_2')
 plot(out[,c('Flow','sim_1','sim_2')])
-
 ```
 
 ## Mass balance
