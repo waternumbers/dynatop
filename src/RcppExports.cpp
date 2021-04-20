@@ -146,6 +146,27 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
+// dt_exp_explicit
+void dt_exp_explicit(Rcpp::DataFrame hillslope, Rcpp::DataFrame channel, Rcpp::DataFrame flow_direction, Rcpp::DataFrame precip_input, Rcpp::DataFrame pet_input, Rcpp::NumericMatrix obs, Rcpp::NumericMatrix channel_inflow, Rcpp::NumericMatrix mass_balance, std::vector<bool> keep_states, Rcpp::List state_rec, double timestep, int n_sub_step);
+RcppExport SEXP _dynatop_dt_exp_explicit(SEXP hillslopeSEXP, SEXP channelSEXP, SEXP flow_directionSEXP, SEXP precip_inputSEXP, SEXP pet_inputSEXP, SEXP obsSEXP, SEXP channel_inflowSEXP, SEXP mass_balanceSEXP, SEXP keep_statesSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type hillslope(hillslopeSEXP);
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type channel(channelSEXP);
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type flow_direction(flow_directionSEXP);
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type precip_input(precip_inputSEXP);
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pet_input(pet_inputSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type obs(obsSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type channel_inflow(channel_inflowSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type mass_balance(mass_balanceSEXP);
+    Rcpp::traits::input_parameter< std::vector<bool> >::type keep_states(keep_statesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type state_rec(state_recSEXP);
+    Rcpp::traits::input_parameter< double >::type timestep(timestepSEXP);
+    Rcpp::traits::input_parameter< int >::type n_sub_step(n_sub_stepSEXP);
+    dt_exp_explicit(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dynatop_dt_bexp_courant", (DL_FUNC) &_dynatop_dt_bexp_courant, 4},
@@ -157,6 +178,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_dynatop_dt_exp_courant", (DL_FUNC) &_dynatop_dt_exp_courant, 4},
     {"_dynatop_dt_exp_init", (DL_FUNC) &_dynatop_dt_exp_init, 4},
     {"_dynatop_dt_exp_implicit", (DL_FUNC) &_dynatop_dt_exp_implicit, 12},
+    {"_dynatop_dt_exp_explicit", (DL_FUNC) &_dynatop_dt_exp_explicit, 12},
     {NULL, NULL, 0}
 };
 
