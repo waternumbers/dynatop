@@ -7,8 +7,8 @@
 
 // template class for solving the saturated zone - must have unique name
 template <class T>
-struct fsz {
-  fsz(double const& uz_, double const& sz_,
+struct fsz_cnst {
+  fsz_cnst(double const& uz_, double const& sz_,
       double const& D_, double const& csz_,
       double const& td_,
       double const& dt_, double const& dx_,
@@ -330,7 +330,7 @@ void dt_cnst_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
     			    (s_rz[ii] + Dt*(precip[cid] + r_sf_rz - pet[cid]) - s_rz_max[ii])/Dt);
 
 	// setup template function
-    	fsz<double> fnc(s_uz[ii], s_sz[ii],
+    	fsz_cnst<double> fnc(s_uz[ii], s_sz[ii],
 			D[ii], c_sz[ii],
 			t_d[ii], Dt,Dx[ii],  l_sz_in, r_rz_uz);
 	
@@ -349,7 +349,7 @@ void dt_cnst_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
 	    // drying - need to work lower depth to bracket
 	    double upr = 2.0*s_sz[ii];
 	    double fupr = fnc(upr);
-	    while( (fupr < 0.0) & (upr < 10.0)){
+	    while( (fupr < 0.0) & (upr < D[ii])){
 	      upr += upr;
 	      fupr = fnc(upr);
 	    }

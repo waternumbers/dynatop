@@ -37,3 +37,7 @@ dt_exp_implicit <- function(hillslope, channel, flow_direction, precip_input, pe
     invisible(.Call(`_dynatop_dt_exp_implicit`, hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step))
 }
 
+dt_exp_explicit <- function(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step) {
+    invisible(.Call(`_dynatop_dt_exp_explicit`, hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step))
+}
+
