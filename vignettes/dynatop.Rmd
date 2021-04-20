@@ -27,7 +27,7 @@ which returns a variable `Swindale` with the following components:
 names(Swindale)
 ```
 
-For better comparision with a likely analysis we seperate these into a model
+For better comparison with a likely analysis we separate these into a model
 and observed data variables
 
 ```{r sep}
@@ -42,14 +42,14 @@ elements
 names(swindale_model)
 ```
 which are described in [associated
-vignette](https://waternumbers.github.io/dynatop/articles/The_Model_Object.html). The
+vignette](The_Model_Object.html). The
 [dynatopGIS](https://waternumbers.github.io/dynatopGIS) package
 can be used for constructing models. 
 
 # Setting map locations
 
 While not required for simulations if the locations of the files containing
-the locations of the HSU's are provided the states can be visualed within
+the locations of the HRU's are provided the states can be visualised within
 dynatop.
 
 The locations of the files are set in the `map` element of the model. For this
@@ -66,18 +66,18 @@ swindale_model$map$channel_id <- system.file("extdata","channel_id.tif",package=
 
 The input to the model is expected to take the form of an ```xts``` object with
 constant time step whose column names are found in the 'precip' and 'pet'
-columns of the HSU tables in the model. Helpful functions for creating and
+columns of the HRU tables in the model. Helpful functions for creating and
 manipulating ```xts``` objects can be found
-[here]{http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html},
+[here](http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html),
 see also the `resample_xts` function in this package.
 
 The discharge, precipitation and potential evapotranspiration (PET) inputs for
-Swindale and contained with `swindale_obs` on a 15 minute time step.
+Swindale are contained with `swindale_obs` on a 15 minute time step.
 ```{r, obs}
 head(swindale_obs)
 ```
-Note the discharge is in $m^{3}/s$ while the precipitation and PET are in m
-accumulated over the timestep.
+Note the discharge is in m$^{3}$/s while the precipitation and PET are in m
+accumulated over the time step.
 
 To use the data with the model we need to set the names of the time series
 within the model. 
@@ -89,13 +89,13 @@ swindale_model$hillslope[,'pet'] <- swindale_model$channel[,'pet'] <- "PET"
 # Altering parameters
 
 The parameter values are stored within the table describing the hillslope and
-channel HRUs. Which parameters are present depend upon the options selected
+channel HRUs. Which parameters are present depends upon the options selected
 for the transmissivity and channel solution. Details can be found in the
-Hillslope and Channel Vignettes.
+[Hillslope](Hillslope_HRU.html) and [Channel](Channel_HRU.html) Vignettes.
 
-Altering parameter values requires changing there values in the HRY tables. 
+Altering parameter values requires changing their values in the HRU tables. 
 For this catchment all HRU have the same parameter values. For this simulation 
-we change the parameter vectors to me more representative of the
+we change the parameter vectors to be more representative of the
 catchment
 ```{r, change_param}
 swindale_model$hillslope$r_sfmax <- Inf
@@ -111,14 +111,14 @@ swindale_model$channel$v_ch <- 0.8
 
 # Creating the dynatop Object
 
-Simulations are performed by embeddign the model and the observed data into
+Simulations are performed by embedding the model and the observed data into
 a `dynatop` object. First the object is created using the model in list form
 
 ```{r create_object}
 ctch_mdl <- dynatop$new(swindale_model)
 ```
 
-This step performs some basis checks on the model for conistency.
+This step performs some basis checks on the model for consistency.
 The data can then be added
 
 ```{r add_data}
@@ -127,10 +127,10 @@ ctch_mdl$add_data(swindale_obs)
 
 # Running dynamic TOPMODEL
 
-The model currently consists of two types of HSU; hillslope and
+The model currently consists of two types of HRU; hillslope and
 channel. These can be run individually with the `sim_hillslope` and
-`sim_channel` methods of sequently with the `sim` method. The individual
-methods check that suitabel input data is available, but not how it was generated.
+`sim_channel` methods or sequentially with the `sim` method. The individual
+methods check that suitable input data is available, but not how it was generated.
 
 The initial states of the simulations can be specified in the model
 object. If, as in the case of this example, the states are not specified then
@@ -141,8 +141,8 @@ ctch_mdl$sim()
 ```
 
 The states need to be initialised using the `initialise` method which requires
-an initial recharge rate. In the following we initialse the states and plot
-the initial saturates zone storage, using the chaining of commands.
+an initial recharge rate. In the following we initialise the states and plot
+the initial saturated zone storage deficit, using the chaining of commands.
 
 ```{r initialise}
 ctch_mdl$initialise(1e-6)$plot_state("s_sz")
@@ -162,24 +162,24 @@ ctch_mdl$plot_state("s_sz")
 ```
 
 Rerunning the simulation with the new initial states will of course produce
-different results
+different results. Output for the above examples can be plotted against observed discharge for comparison as follows:
 
 ```{r sim2}
 sim2 <- ctch_mdl$sim()$get_gauge_flow()
 out <- merge( merge(swindale_obs,sim1),sim2)
 names(out) <- c(names(swindale_obs),'sim_1','sim_2')
-plot(out[,c('Flow','sim_1','sim_2')])
+plot(out[,c('Flow','sim_1','sim_2')], main="Discharge",ylab="m3/s",legend.loc="topright")
 ```
 
-## Mass balance
+# Mass balance
 
 It is possible to output the mass balance check for each time step of the
 simulation using the `get_mass_errors` method. The returned matrix gives 
-the volumes in the states at the start and end of the timestep along with the
+the volumes in the states at the start and end of the time step along with the
 other fluxes as volumes. This can easily be used to plot the errors as shown below.
 
 ```{r mass_check}
 mb <- ctch_mdl$get_mass_errors()
-plot( xts::xts(rowSums(mb),zoo::index(mb)) , main="Mass Error [m^3]")
+plot( xts::xts(rowSums(mb),zoo::index(mb)) , main="Mass Error", ylab="[m^3]")
 ```
 

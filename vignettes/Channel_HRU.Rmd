@@ -25,7 +25,9 @@ knitr::opts_chunk$set(
 The `dynatop` function in the dynamic TOPMODEL R package implements a set of numerical solutions to the
 governing equations of the dynamic TOPMODEL hillslope formulation. This
 returns the inflow to the channel reachs specified in the model. 
-This vignette documents the formulation and the numerical solution used to route these channel inflows, along with other diffuse and point inputs to the model.
+This vignette documents the formulation and the numerical solution used to
+route these channel inflows, along with other diffuse and point inputs to the
+model.
 
 # Notation and nomenclature
 
@@ -44,7 +46,71 @@ Table [tab:hru_notation] outlines the notation used in this document.
   Table: Outline of notation for describing time delay histogram routing
   HRUs[]{data-label="tab:channel_notation"}
      
+# Inputs to a channel length
+
+A channel length is considered as having two types of inflow, labelled diffuse
+and point. Diffuse infloes are considered as external inputs which occur at a
+constant rate of the length of the reach. These include precipitation, the
+inflow from Hillslope HRUs and time series specified in the `diffuse_inputs`
+table.
+
+Point inflow are considered to occur at the head of the channel length. These
+include inflow from reaches above that being considered and time series
+specified in the `point_inputs` table.
+
+
+
+## Diffuse inputs
+
+Diffuse inputs are handled in exactly the same way as hillslope inputs. In
+this case the each value in the input time series is expected to be the total
+volume of input over the time step (m$^3$) dived by length of the time step
+($s$) to give an effective time averaged flow (m$^3$/s) to the HRU, that is:
+\[
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
+d\left(x,t-\tau \right) dx d\tau
+\]
+
+## Point inputs
+
+Since the contributions to the simualted discharge at the gauge can be
+computed individually and summed it is possible to think of a point input as
+notional channel with infinitesimally small length. This results
+$d_{max}=d_{min}+1$ and a ratio $\tilde{L}/L=1$. 
+
+In this case that each value in the input time series is inflow averaged over
+the preceeding time step, that is
+\[
+\bar{p}_{t} = 
+\frac{1}{\Delta t}
+\int_{0}^{\Delta t} p\left(x,t-\tau \right) d\tau
+\]
+The assumptions used for hillslope routing above lead to contribution to the
+outflow being $\bar{p}_{t-d_{min}\Delta t}$.
+
 # Time Delay Channel Routing
+
+The time delay channel routing is selected by setting the `channel_solver`
+value in the model options vector to `histogram`. The method offers a basic representation of the movement of
+water in the channel based on assigning a constant velocity to each channel
+length. Consider that the inflow data have a regular time step $\Delta t$
+over which the flow rate is constant and we wish to evaluate the outflow at
+some point on the river network on the same regular time step. To do this a
+time delay histogram is constructed for each channel length and series in the
+`point_inflow` table.
+
+Utilisng the channel connectivity, channel lengths and velocities the time
+$t_{min}$ which it takes water from the foot of the channel length to reach the gauge can be
+computed. Similarly the time taken to reach the gauge from the head of the
+channel length is given by $t_{max} = t_{min} + L/v_{ch}$.
+
+Let $i$ be the largest integer less then $t_{min}/\Delta t$ and $j$ the
+largest integer less then $t_{max}/\Delta t$.
+
+the evaluation of the averageflow a given gauge point on the
+river at a regular time step $\Delta t$. solution ofTo compute the For a given gauge at which the flow is required on a Using the channel netwoekIt
+is 
 
 Using a time delay routing approach the discharge at the gauge $g$ at time $t$ can be computed from the inflows of the upstream points on the channel newtork $x \in \mathcal{X}$ and the time it takes the effect of the inflow to been seen at the gauge $\delta_{x\rightarrow g}$ as
 \[
