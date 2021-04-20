@@ -485,10 +485,10 @@ required. The additional parameter and properties are defined in Table \@ref(tab
 
 | Name                | $g\left(\bar{s}_{sz},\Theta_{sz}\right)$                                                                                       | Celerity                                                      | $\Theta_{sz}$     |  `transmissivity_profile` value    | Notes                                                        |
 | ----                | ----                                                                                                                           | ----                                                        | ----              | ----            | ----                                                         |
-| Exponental          | $T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)$                                                       | $\frac{\cos\beta}{m}g\left(\bar{s}_{sz},\Theta_{sz}\right)$ | $T_0,\beta,m$ | `"exponential"` | Originally given in [Beven & Freer 2001](http://example.com) |
+| Exponental          | $T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)$                                                       | $\frac{\cos\beta}{m}g\left(\bar{s}_{sz},\Theta_{sz}\right)$ | $T_0,\beta,m$ | `"exponential"` | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |
 | Bounded Exponential | $T_{0}\sin\left(\beta\right)\left(\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)
  - \exp\left(-\frac{\cos\beta}{m}D\right)\right)$ | $\frac{cos
-   \beta}{m}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)$ | $T_0,\beta,m,D$ | `"bounded_exponential"` | Originally given in [Beven & Freer 2001](http://example.com) |
+   \beta}{m}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)$ | $T_0,\beta,m,D$ | `"bounded_exponential"` | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |
 | Constant Celerity        |    $c_{sz}\left(D-s_{sz}\right)$                     | $c_{sz}$ | $c_{sz},D$ | `"constant"` | |                                                             |
                                                     
   Table: (\#tab:hs-transmissivity) Transmissivity profiles avaiable with the
