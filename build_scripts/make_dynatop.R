@@ -28,12 +28,14 @@ mch <- rhub::check(path = tmp,
                    platform = c("macos-highsierra-release-cran","windows-x86_64-release"))
 
 tmp <- paste0(pkgName,".tgz")
-download.file(file.path(mch$urls()$artifacts[1],tmp),tmp)
-drat::insertPackage(tmp,dratPath,action="prune")
+ftmp <- file.path("../..",tmp)
+download.file(file.path(mch$urls()$artifacts[1],tmp),ftmp)
+drat::insertPackage(ftmp,dratPath,action="prune")
 
 tmp <- paste0(pkgName,".zip")
-download.file(file.path(mch$urls()$artifacts[2],tmp),tmp)
-drat::insertPackage(tmp,dratPath,action="prune")
+ftmp <- file.path("../..",tmp)
+download.file(file.path(mch$urls()$artifacts[2],tmp),ftmp)
+drat::insertPackage(ftmp,dratPath,action="prune")
 
 ## tidy up drat
 drat::pruneRepo(dratPath,pkg=pkgName,remove="git")## this only does source files
