@@ -872,24 +872,64 @@ dynatop <- R6::R6Class(
             colnames(out) <- names(private$summary$channel$linear_time)
             
 
-            ## function to make polynonial representing time delay histogram
-            fpoly <- function(x){
-                if( x["min_time"] == x["max_time"] ){
-                    ## point input
-                    ms <- floor(x["max_time"]/private$info$ts$step)+1
-                    ply <- rep(0,ms)
-                    ply[ms] <- 1
+            ## ## function to make polynonial representing time delay histogram
+            ## ## this works for instananeous flows
+            ## fpoly <- function(x){
+            ##     if( x["min_time"] == x["max_time"] ){
+            ##         ## point input
+            ##         ms <- floor(x["max_time"]/private$info$ts$step)+1
+            ##         ply <- rep(0,ms)
+            ##         ply[ms] <- 1
+            ##     }else{
+            ##         ms <- ceiling(x["max_time"]/private$info$ts$step)
+            ##         #ply <- rep(NA,ms)
+            ##         fnsh <- (1:ms)*private$info$ts$step
+            ##         strt <- fnsh - private$info$ts$step
+            ##         strt <- pmax(strt,x["min_time"])
+            ##         fnsh <- pmin(fnsh,x["max_time"])
+            ##         ply <- pmax(0,fnsh-strt)
+            ##     }
+            ##     return(ply/sum(ply))
+            ## }
+            ## function for point inputs
+            fp <- function(x){
+                tau0 <- x["min_time"]
+                tauL <- x["max_time"]-x["min_time"]
+                Dt <- private$info$ts$step
+                rL <- floor((tau0+tauL)/Dt)
+                irL <- rL+1 ## index in vector since R starts at 1 not zero
+                b <- rep(0,irL+1)
+                b[irL] <- ((rL+1)*Dt - tau0-tauL)/Dt
+                b[irL+1] <- (tau0+tauL - rL*Dt)/Dt
+                return(b)
+            }
+            ## function for diffuse inputs
+            fd <- function(x){
+                tau0 <- x["min_time"]
+                tauL <- x["max_time"]-x["min_time"]
+                Dt <- private$info$ts$step
+                r0 <- floor(tau0/Dt)
+                ir0 <- r0+1 ## index in vector since R starts at 1 not zero
+                rL <- floor((tau0+tauL)/Dt)
+                irL <- rL+1 ## index in vector since R starts at 1 not zero
+                b <- rep(0,irL+1)
+                
+                if(rL>r0){
+                    b[ir0:(irL-1)] <- Dt # inital values valid unless over written
+                    b[ir0] <- ( ((r0+1)*Dt - tau0)^2 ) / (2*Dt)
+                    b[ir0+1] <- b[ir0] + ( ((r0+1)*Dt - tau0)*(tau0 - (r0*Dt)) ) / Dt
+                    b[irL+1] <- ( (tau0+tauL - (rL*Dt))^2 ) / (2*Dt)
+                    b[irL] <- b[irL] + b[irL+1] + ( ((tau0+tauL - (rL*Dt))*((rL+1)*Dt - tau0-tauL)) / Dt ) ## added to self since rL could equal r0+1
+                    if( rL > (r0+1) ){
+                        b[ir0+1] <- b[ir0+1] + Dt/2
+                        b[irL] <- b[irL] + Dt/2
+                    }
                 }else{
-                    ms <- ceiling(x["max_time"]/private$info$ts$step)
-                    #ply <- rep(NA,ms)
-                    fnsh <- (1:ms)*private$info$ts$step
-                    strt <- fnsh - private$info$ts$step
-                    strt <- pmax(strt,x["min_time"])
-                    fnsh <- pmin(fnsh,x["max_time"])
-                    ply <- pmax(0,fnsh-strt)
+                    b[ir0] <- (tauL/Dt)*( (r0+1)*Dt - tau0 - (tauL/2) )
+                    b[ir0+1] <- (tauL/Dt)*(tau0 + (tauL/2) - r0*Dt )
                 }
-                return(ply/sum(ply))
-            
+                
+                return(b/sum(b)) #this should really be b*v_ch/L
             }
             
             ## Loop gauges
@@ -902,7 +942,7 @@ dynatop <- R6::R6Class(
                 df <- private$summary$channel$linear_time[[gnm]]$diffuse
 
                 for(ii in rownames(df)){
-                    ply <- fpoly(df[ii,])
+                    ply <- fd(df[ii,]) ##fpoly(df[ii,])
                     ## compute input
                     x <- private$time_series$channel_inflow[,ii]
                     ## add diffuse inputs to x
@@ -921,7 +961,7 @@ dynatop <- R6::R6Class(
                 pnt <- private$summary$channel$linear_time[[gnm]]$point
                 ## loop point inputs upstream
                 for(ii in rownames(pnt)){
-                    ply <- fpoly(pnt[ii,])
+                    ply <- fp(pnt[ii,]) ##fpoly(pnt[ii,])
                     np <- length(ply)-1
                     ## compute input
                     x <- private$time_series$obs[,ii]
