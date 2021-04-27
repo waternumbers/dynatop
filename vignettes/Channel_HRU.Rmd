@@ -216,19 +216,6 @@ by $v_{ch}/L$ time delay histograms
 can be constructed for each HRU draining to the gauge. Table \@ref(tab:table-full) shows the solution for
 $r_{L}>r_0+1$ and Table \@ref(tab:table-three) for the case $r_{L}=r_0+1$.
 
-\[
-\frac{v_{ch}}{2L\Delta t}\left(\left(r_0+1\right)\Delta t -
-\tau_{0}\right)^2
-+
-\frac{v_{ch}\left(\tau_{0} - r_{0}\Delta
- t\right)\left(\left(r_0+1\right)\Delta t- \tau_{0}\right)}{L\Delta t}
-+
-\frac{v_{ch}}{L\Delta t}\left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2
-+
-\frac{
- v_{ch}\left(\tau_0 + \tau_{L} - r_L\Delta t\right)\left(\left(r_L + 1
- \right)\Delta t - \tau_{0} - \tau_L\right)}{L\Delta t}
-\]
 
 | Delay                                                                   | Inflow                             | Weight                                                                           |
 | ----                                                                    | -----                              | ----                                                                             |
