@@ -4,5 +4,5 @@ $.git$
 ^cran-comments\.md$ # Comments for CRAN submission
 ^\.travis\.yml$
 ^appveyor\.yml$
-make_dynatop.R
+^build_scripts$
 ^prebuilt$
