@@ -11,8 +11,7 @@ An object of class \code{list} of length 2.
 data(Swindale)
 }
 \description{
-This data set contains a processed modela nd observation data for Swindale.
-TO DO: Add more details about catchment
+This data set contains a processed model and observation data for Swindale.
 }
 \examples{
 require(dynatop)
