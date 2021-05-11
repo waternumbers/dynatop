@@ -19,7 +19,7 @@ warnings_are_errors: true
 os:
   - linux
   - osx
-dist: xenial
+dist: focal
 osx_image: xcode12.2   
 after_success:
   - Rscript -e 'covr::coveralls()'

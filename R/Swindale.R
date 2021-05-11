@@ -1,8 +1,7 @@
 #' Example dynamic TOPMODEL setup 
 #'
 #' @description
-#' This data set contains a processed modela nd observation data for Swindale.
-#' TO DO: Add more details about catchment
+#' This data set contains a processed model and observation data for Swindale.
 #'
 #' @docType data
 #'

@@ -3,7 +3,7 @@ rm(list=ls())
 graphics.off()
 
 ## path of the package
-pacPath <- './dynatop'
+pacPath <- '../'
 Rcpp::compileAttributes(pacPath)
 devtools::document(pacPath)
 devtools::check(pacPath)
@@ -28,36 +28,38 @@ mch <- rhub::check(path = tmp,
                    platform = c("macos-highsierra-release-cran","windows-x86_64-release"))
 
 tmp <- paste0(pkgName,".tgz")
-download.file(file.path(mch$urls()$artifacts[1],tmp),tmp)
-drat::insertPackage(tmp,dratPath,action="prune")
+ftmp <- file.path("../..",tmp)
+download.file(file.path(mch$urls()$artifacts[1],tmp),ftmp)
+drat::insertPackage(ftmp,dratPath,action="prune")
 
 tmp <- paste0(pkgName,".zip")
-download.file(file.path(mch$urls()$artifacts[2],tmp),tmp)
-drat::insertPackage(tmp,dratPath,action="prune")
+ftmp <- file.path("../..",tmp)
+download.file(file.path(mch$urls()$artifacts[2],tmp),ftmp)
+drat::insertPackage(ftmp,dratPath,action="prune")
 
 ## tidy up drat
-drat::pruneRepo(dratPath,pkg=pkgName,remove="git")## this only does source files
+drat::pruneRepo(dratPath,pkg="dynatop",remove="git")## this only does source files
 
 
 
 
 ###########################################################################
-## This converts the exdata for Swindale into the data object used in the examples.
+## This converts the data for Swindale into the data object used in the examples.
 rm(list=ls())
-pacPath <- './dynatop'
+pacPath <- '..'
 devtools::load_all(pacPath)
-model <- readRDS( system.file("extdata","Swindale.rds",package="dynatop") )
+model <- "Swindale.rds"
 model$precip_input$name <- "Rainfall"
 model$pet_input$name <- "PET"
 
-qr <- read.csv( system.file("extdata","start=2009-11-18_end=2009-11_4_int=0.25-hours_units=mm.hr-1.tsv",package="dynatop") ,sep="\t")
+qr <- read.csv( "start=2009-11-18_end=2009-11_4_int=0.25-hours_units=mm.hr-1.tsv",sep="\t")
 obs <- as.xts(qr[,c("Flow","Rainfall")],order.by= as.POSIXct(qr[,'Date'],format="%d/%m/%Y %H:%M",tz='GMT'))
 ## According to original notes and code Flow in cumecs and precip in mm/timestep
 obs$Rainfall <- obs$Rainfall/1000 # convert to m/timestep
 obs$PET <- evap_est(index(obs),0,5/1000) # in m
 
 Swindale <- list(model=model,obs=obs)
-save("Swindale",file="./dynatop/data/Swindale.rda")
+save("Swindale",file="../data/Swindale.rda")
 
 
 
