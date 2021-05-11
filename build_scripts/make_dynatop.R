@@ -38,13 +38,13 @@ download.file(file.path(mch$urls()$artifacts[2],tmp),ftmp)
 drat::insertPackage(ftmp,dratPath,action="prune")
 
 ## tidy up drat
-drat::pruneRepo(dratPath,pkg=pkgName,remove="git")## this only does source files
+drat::pruneRepo(dratPath,pkg="dynatop",remove="git")## this only does source files
 
 
 
 
 ###########################################################################
-## This converts the exdata for Swindale into the data object used in the examples.
+## This converts the data for Swindale into the data object used in the examples.
 rm(list=ls())
 pacPath <- '..'
 devtools::load_all(pacPath)
