@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9030</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9035</span>
       </span>
     </div>
 
@@ -113,24 +113,25 @@
 <p>One of the underlying principles of dynamic TOPMODEL is that the landscape can
 be broken up into hydrologically similar regions, or Hydrological Response
 Units (HRUs), where all the area within a HRU behaves in a hydrologically
-similar fashion. Further discussion and the connection of HRUs is outlined <a href="Notes_on_the_implementation_of_Dynamic_TOPMODEL">elsewhere</a>.</p>
+similar fashion. Further discussion and the connection of HRUs is outlined <a href="Notes_on_the_implementation_of_Dynamic_TOPMODEL.html">elsewhere</a>.</p>
 <p>This document outlines the conceptual structure and computational
 implementation of the hillslope HRU. The hillslope HRU is a representation of
 an area of hill slope with, for example, similar topographic, soil and upslope area
 characteristics.</p>
 <p>The hillslope HRU is considered to be a area of hill slope with outflow
-occurring across a specified with of it boundary.
+occurring across a specified width of it boundary.
 It is formed of four zones representing the surface water, which
 passes water between HRUs and drains to the root zone. The root zone characterises
-the interactions evapotranspiration and precipitation and when full spills to
+the interactions between evapotranspiration and precipitation and when full spills to
 the unsaturated zone. This drains to the saturated zone which also interacts
 with other HRUs. The behaviour of the saturated zone is modelled using a kinematic wave
 approximation.</p>
 <p>In the following section the governing equations of the hillslope HRU are
 given in a finite volume form. For comparison we also outline the equivalent
-equations for infinitesimal vertical slab across the outflow width which is in keeping with the
+equations for an infinitesimal vertical slab across the outflow width which is in keeping with the
 original derivation of Dynamic TOPMODEL. An implicit numerical scheme, valid
-for a wide range of transmissivity profiles, in then presented.</p>
+for a wide range of transmissivity profiles, is then presented. The vignette
+then concludes by presenting the tranmissivity profiles present within the code.</p>
 </div>
 <div id="notation" class="section level1">
 <h1 class="hasAnchor">
@@ -144,10 +145,10 @@ uniform along the hillslope.</p></li>
 <li><p>Precipitation and Potential Evapotranspiration occur at spatially uniform
 rates.</p></li>
 <li><p>All fluxes <span class="math inline">\(r_{\star \rightarrow \star}\)</span> are considered to be positive when
-travelling in the direction of the arrow, but can in cases be negative.</p></li>
+travelling in the direction of the arrow, but can, in some cases be negative.</p></li>
 <li><p>All fluxes <span class="math inline">\(l_{\star}\)</span> and <span class="math inline">\(q_{\star}\)</span> are considered to be positive flows travelling downslope.</p></li>
-<li><p>The superscripts <span class="math inline">\(^+\)</span> and <span class="math inline">\(^-\)</span> is used to denote variables for the outflow
-ans inflow to the hillslope.</p></li>
+<li><p>The superscripts <span class="math inline">\(^+\)</span> and <span class="math inline">\(^-\)</span> are used to denote variables for the outflow
+and inflow to the hillslope.</p></li>
 <li><p><span class="math inline">\(\left.y\right\rvert_t\)</span> indicates the value of the
 variable <span class="math inline">\(y\)</span> at time <span class="math inline">\(t\)</span></p></li>
 <li><p>Spatial averages are denoted with a <span class="math inline">\(\bar{}\)</span> so for example integrating
@@ -155,8 +156,8 @@ over the length of the hillslope <span class="math inline">\(\Delta x\)</span> w
 </ul>
 <ul>
 <li>Average values over a time step are denoted with a <span class="math inline">\(\hat{}\)</span>. If the
-temporal average is a of a spatial average teh <span class="math inline">\(\bar{}\)</span> is dropped. For
-example the average value of <span class="math inline">\(bar{y}\)</span> over a time step is <span class="math inline">\(\hat{y}\)</span>.</li>
+temporal average is of a spatial average the <span class="math inline">\(\bar{}\)</span> is dropped. For
+example the temporal average of the spatial average <span class="math inline">\(bar{y}\)</span> over a time step is <span class="math inline">\(\hat{y}\)</span>.</li>
 </ul>
 <table class="table">
 <caption>
@@ -309,7 +310,7 @@ section of the hillslope HRU</caption>
 <h1 class="hasAnchor">
 <a href="#finite-volume-formulation" class="anchor"></a>Finite Volume Formulation</h1>
 <p>In this section a finite volume formulation of the Dynamic TOPMODEL equations
-are derived.</p>
+is derived.</p>
 <div id="surface-zone" class="section level2">
 <h2 class="hasAnchor">
 <a href="#surface-zone" class="anchor"></a>Surface zone</h2>
@@ -326,7 +327,7 @@ zone to the surface giving negative values of <span class="math inline">\(r_{sf 
 \frac{dws_{sf}}{dt} = - \frac{dq_{sf}}{dx} - wr_{sf \rightarrow rz}
 \end{equation}\]</span>
 where <span class="math inline">\(r_{sf \rightarrow rz} \leq k_{sf}\)</span>.</p>
-<p>Integration over the length <span class="math inline">\(\Delta x\)</span> and subsituting in the spatial averages gives
+<p>Integration over the length <span class="math inline">\(\Delta x\)</span> and substituting in the spatial averages gives
 <span class="math display">\[\begin{equation}
 A\frac{d \bar{s}_{sf}}{dt} = q_{sf}^{-} - q_{sf}^{+} - A\bar{r}_{sf \rightarrow rz}
 \end{equation}\]</span></p>
@@ -364,10 +365,10 @@ approximation for the change of flow with length the governing ODE can be writte
 <div id="root-zone" class="section level2">
 <h2 class="hasAnchor">
 <a href="#root-zone" class="anchor"></a>Root zone</h2>
-<p>The root zone gains water from precipitation and the surface zone. It looses water through
-evaporation and to the unsaturated zone. The root zone storage satifies. Since
+<p>The root zone gains water from precipitation and the surface zone. It loses water through
+evaporation and to the unsaturated zone. Since
 all the veritcal fluxes are spatially uniform the evolution can be evaluated
-in terms of the spatial averages.</p>
+in terms of the spatial averages. The root zone storage satifies</p>
 
 <p>with the governing ODE
 <span class="math display">\[\begin{equation}
@@ -389,14 +390,14 @@ In this case <span class="math inline">\(\bar{r}_{rz \rightarrow uz}\)</span> ma
 p - e_p + \bar{r}_{sf\rightarrow rz} &gt; 0
 \end{equation}\]</span>
 so long as the unsaturated zone can receive the water. If <span class="math inline">\(\bar{r}_{rz \rightarrow uz}\)</span> is ‘throttled’ by the rate at which the unsaturated zone can
-receive water then <span class="math inline">\(\bar{r}_{sf\rightarrow rz}\)</span> is adjusted (potentially becoming
+receive water, then <span class="math inline">\(\bar{r}_{sf\rightarrow rz}\)</span> is adjusted (potentially becoming
 negative) to ensure the equality is met.</p>
 <div id="infinitesimal-slab-1" class="section level3">
 <h3 class="hasAnchor">
 <a href="#infinitesimal-slab-1" class="anchor"></a>Infinitesimal slab</h3>
 <p>The same formulation follows for the infinitesimal slab at the bottom of the
 hillslope with the averaged terms (using <span class="math inline">\(\bar{}\)</span>) replaced with those valid
-at the bottom of the hillsipe (using <span class="math inline">\(^{+}\)</span>).</p>
+at the bottom of the hillslope (using <span class="math inline">\(^{+}\)</span>).</p>
 </div>
 </div>
 <div id="unsaturated-zone" class="section level2">
@@ -408,17 +409,17 @@ at the bottom of the hillsipe (using <span class="math inline">\(^{+}\)</span>).
 <span class="math display">\[\begin{equation}
 \frac{d\bar{s}_{uz}}{dt} = \bar{r}_{rz \rightarrow uz} - \bar{r}_{uz \rightarrow sz}
 \end{equation}\]</span></p>
-<p>If water is able to path freely to the saturated zone then it flows at the rate
+<p>If water is able to pass freely to the saturated zone, then it flows at the rate
 <span class="math inline">\(\frac{\bar{s}_{uz}}{T_d \bar{s}_{sz}}\)</span>. If <span class="math inline">\(\bar{s}_{sz}=\bar{s}_{uz}=0\)</span> this is interpreted to mean
 that the flow rate is <span class="math inline">\(\frac{1}{T_d}\)</span>.
-In this situation that <span class="math inline">\(\bar{s}_{sz}=\bar{s}_{uz}\)</span> the subsurface below
+In this situation where <span class="math inline">\(\bar{s}_{sz}=\bar{s}_{uz}\)</span> the subsurface below
 the root zone can be considered saturated, as in there is no further available
-storage for water, but seperated into parts: an upper part with vertical
+storage for water, but separated into parts: an upper part with vertical
 flow and a lower part with lateral flux.</p>
 <p>It is possible that <span class="math inline">\(\bar{r}_{uz \rightarrow sz}\)</span> is
 constrained by the ability of the saturated zone to receive water. If
 this is the case <span class="math inline">\(\bar{r}_{uz \rightarrow sz}\)</span> occurs at the maximum
-possible rate and <span class="math inline">\(\bar{r}_{rz \rightarrow uz}\)</span> limited to ensure that
+possible rate and <span class="math inline">\(\bar{r}_{rz \rightarrow uz}\)</span> is limited to ensure that
 <span class="math inline">\(\bar{s}_{uz} \leq \bar{s}_{sz}\)</span>.</p>
 <div id="infinitesimal-slab-2" class="section level3">
 <h3 class="hasAnchor">
@@ -431,12 +432,12 @@ at the bottom of the hillsipe (using <span class="math inline">\(^{+}\)</span>).
 <div id="saturated-zone" class="section level2">
 <h2 class="hasAnchor">
 <a href="#saturated-zone" class="anchor"></a>Saturated Zone</h2>
-<p>For the a HRU the alteration of the storage in the saturated zone is
+<p>For a HRU the alteration of the storage in the saturated zone is
 given by
 <span class="math display">\[\begin{equation}
 \frac{dw\left(D-s_{sz}\right)}{dt} = -\frac{dq_{sz}}{dx} + wr_{uz \rightarrow sz}
 \end{equation}\]</span></p>
-<p>Integration over the length of the hillslope and subsitution of the
+<p>Integration over the length of the hillslope and substitution of the
 spatial averaged values gives
 <span class="math display">\[\begin{equation}
 -A\frac{d\bar{s}_{sz}}{dt} = q_{sz}^{-} - q_{sz}^{+}  + A\bar{r}_{uz \rightarrow sz}
@@ -446,21 +447,21 @@ spatial averaged values gives
 \frac{d\bar{s}_{sz}}{dt} = \frac{l_{sz}^{+} - q_{sz}^{-}/w^{+}}{A/w^{+}} - \bar{r}_{uz \rightarrow sz}
 \end{equation}\]</span></p>
 <p>The Kinematic approximation then depends upon the specification of a relationship
-between <span class="math inline">\(\bar{s}_{sz}\)</span> and <span class="math inline">\(l_{sz}^{+}\)</span>. This usually termed the transmivity
-profile however the use of the average, rather then cross sectional saturated
-storage deficit means this term is used only loosly. More generally the
+between <span class="math inline">\(\bar{s}_{sz}\)</span> and <span class="math inline">\(l_{sz}^{+}\)</span>. This usually termed the transmissivity
+profile however the use of the average, rather than cross sectional saturated
+storage deficit means this term is used only loosely. More generally the
 relationship is taken
 to be a one-to-one, continuously differentiable function
 <span class="math inline">\(g: \mathcal{R^{+}}\rightarrow \mathcal{R}^{+}\)</span> which returns the lateral flow on
-a unit width such that <span class="math inline">\(l_{sz}^{+} = g\left(\bar{s}_{sz}\right)\)</span> which satifies
+a unit width such that <span class="math inline">\(l_{sz}^{+} = g\left(\bar{s}_{sz},\Theta_{sz}\right)  \geq 0\)</span> which satisfies
 <span class="math display">\[\begin{equation}
-c_{sz} = -\frac{dl_{sz}^{+}}{d\bar{s}_{sz}} = -\frac{d}{d\bar{s}_{sz}}g\left(\bar{s}_{sz}\right) &gt; 0
+-\frac{dl_{sz}^{+}}{d\bar{s}_{sz}} = -\frac{d}{d\bar{s}_{sz}}g\left(\bar{s}_{sz},\Theta_{sz}\right) &gt; 0
 \end{equation}\]</span></p>
-<p>The later condition indicates that <span class="math inline">\(l_{sz}^{+}\)</span> increase with decreasing
+<p>The later condition ensures a positive celerity (wave speed) and indicates that <span class="math inline">\(l_{sz}^{+}\)</span> increases with decreasing
 <span class="math inline">\(\bar{s}_{sz}\)</span>. This is numerically helpful but not strictly required.</p>
 <p>Using the relationship between <span class="math inline">\(l_{sz}^{+}\)</span> and <span class="math inline">\(\bar{s}_{sz}\)</span> gives
 <span class="math display">\[\begin{equation}
-\frac{d\bar{s}_{sz}}{dt} = \frac{w^{+}}{A}g\left(\bar{s}_{sz}\right) - \frac{q_{sz}^{-}}{A} - \bar{r}_{uz \rightarrow sz}
+\frac{d\bar{s}_{sz}}{dt} = \frac{w^{+}}{A}g\left(\bar{s}_{sz},\Theta_{sz}\right) - \frac{q_{sz}^{-}}{A} - \bar{r}_{uz \rightarrow sz}
 \end{equation}\]</span></p>
 <div id="infinitesimal-slab-3" class="section level3">
 <h3 class="hasAnchor">
@@ -470,7 +471,7 @@ of the spatial gradient gives
 <span class="math display">\[\begin{equation}
 \frac{ds_{sz}^{+}}{dt} = \frac{l_{sz}^{+} - q_{sz}^{-}/w^{+}}{\Delta x} - r_{uz \rightarrow sz}^{+}
 \end{equation}\]</span></p>
-<p>As with the surface zone we see the similarilty in form, indicating that,
+<p>As with the surface zone we see the similarity in form, indicating that,
 subject to the evaluation of the temporal integral, the two formulations
 should return the same results when <span class="math inline">\(\Delta x = A/w^{+}\)</span></p>
 </div>
@@ -479,29 +480,23 @@ should return the same results when <span class="math inline">\(\Delta x = A/w^{
 <div id="temporal-integration" class="section level1">
 <h1 class="hasAnchor">
 <a href="#temporal-integration" class="anchor"></a>Temporal Integration</h1>
-<p>No analytical solution yet exists simulataneous integration of the system of
-ODEs outlined above.</p>
-<p>The basis of the solution is that a gravity driven system will maximise
-the downward flow of water within each timestep of size <span class="math inline">\(\Delta t\)</span>. We present
-two numerical schemes. The first is a simple implicit scheme, where fluxes
+<p>No analytical solution yet exists for simultaneous integration of the system of
+ODEs outlined above. In the following an implicit scheme, where fluxes
 between stores are considered constant over the time step and gradients are
-evaluated at the final state. The second is a more complex scheme the, given
-fluxes between stores are treated as constant over the timestep, the terms are
-numerically integrated.</p>
-<p>Recall that the temporal and spatial average vertical fluxes are denoted with
-a <span class="math inline">\(\hat{}\)</span>. and that at the start of the evaluation the</p>
-<div id="implict-scheme" class="section level2">
+evaluated at the final state, is presented.</p>
+<p>The basis of the solution is that a gravity driven system will maximise
+the downward flow of water within each timestep of size <span class="math inline">\(\Delta t\)</span>.</p>
+<div id="approximating-equations" class="section level2">
 <h2 class="hasAnchor">
-<a href="#implict-scheme" class="anchor"></a>Implict scheme</h2>
-<p>In the folloIn the following section an implicit numerical scheme is derived
-for a time step <span class="math inline">\(\Delta t\)</span>.</p>
-<p>The implicit approximations are stated using the unknown vertical fluxes
+<a href="#approximating-equations" class="anchor"></a>Approximating Equations</h2>
+<p>Recalling that the temporal and spatial average vertical fluxes are denoted with
+a <span class="math inline">\(\hat{}\)</span> the implicit approximations are stated in teh following sections using the unknown vertical fluxes
 <span class="math inline">\(\hat{r}_{\star \rightarrow \star}\)</span> which are then determined by maximising the
 downward flux.</p>
 <div id="surface-excess" class="section level3">
 <h3 class="hasAnchor">
 <a href="#surface-excess" class="anchor"></a>Surface excess</h3>
-<p>The implict scheme gives</p>
+<p>The implicit scheme gives</p>
 <p><span class="math display">\[\begin{equation}
 \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
 =
@@ -536,7 +531,7 @@ or
 <div id="root-zone-1" class="section level3">
 <h3 class="hasAnchor">
 <a href="#root-zone-1" class="anchor"></a>Root Zone</h3>
-<p>The implict formulation for the root zone gives
+<p>The implicit formulation for the root zone gives
 <span class="math display">\[\begin{equation}
 \left. \bar{s}_{rz} \right.\rvert_{\Delta t} = 
 \left( 1 + \frac{e_{p}\Delta t}{s_{rzmax}} \right)^{-1}
@@ -572,11 +567,10 @@ p + \hat{r}_{sf \rightarrow rz} - e_{p} \right)
 \end{equation}\]</span></p>
 <p>This condition also implies that <span class="math inline">\(\hat{r}_{uz \rightarrow sz} \leq  \frac{1}{T_d}\)</span></p>
 </div>
-</div>
-<div id="saturated-zone-1" class="section level2">
-<h2 class="hasAnchor">
-<a href="#saturated-zone-1" class="anchor"></a>Saturated Zone</h2>
-<p>Inital evaluation and subsitution of the flux from the unsaturated zone gives
+<div id="saturated-zone-1" class="section level3">
+<h3 class="hasAnchor">
+<a href="#saturated-zone-1" class="anchor"></a>Saturated Zone</h3>
+<p>Initial evaluation and substitution of the flux from the unsaturated zone gives
 <span class="math display">\[\begin{equation}
 \left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 
 \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + \Delta t \left(
@@ -588,27 +582,29 @@ p + \hat{r}_{sf \rightarrow rz} - e_{p} \right)
 \end{equation}\]</span></p>
 <p>Limiting the inflow by reaching the saturation level gives</p>
 
-<p>Selecting <span class="math inline">\(\bar{s}_{sz}\)</span> to satify the above equation describes a non-linear
-problem. However since the LHS is strictly increasing with <span class="math inline">\(\bar{s}_{sz}\)</span>,
+<p>Selecting <span class="math inline">\(\bar{s}_{sz}\)</span> to satisfy the above equation describes a non-linear
+problem. However, since the LHS is strictly increasing with <span class="math inline">\(\bar{s}_{sz}\)</span>,
 while the RHS is decreasing so single solution is present and can be reliably
 located.</p>
-<div id="algorithm" class="section level3">
-<h3 class="hasAnchor">
-<a href="#algorithm" class="anchor"></a>Algorithm</h3>
-<p>An implimentation of the above considitions which is consistent with
-maximising the downward flux makes use of the psuedo-function
+</div>
+</div>
+<div id="algorithm" class="section level2">
+<h2 class="hasAnchor">
+<a href="#algorithm" class="anchor"></a>Algorithm</h2>
+<p>An implementation of the approximating equations which is consistent with
+maximising the downward flux which makes use of the psuedo-function
 <span class="math inline">\(f\left(\check{s}_{sz},\check{r}_{rz \rightarrow uz}\right)\)</span> which returns the
 value
 <span class="math display">\[\begin{equation}
 \check{s}_{sz} - 
 \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - \Delta t \left(
-\frac{w^{+}}{A}g\left(\check{s}_{sz}\right) -
+\frac{w^{+}}{A}g\left(\check{s}_{sz},\Theta_{sz}\right) -
 \frac{q_{sz}^{-}}{A} - \min\left(\frac{1}{T_d},
 \frac{ \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
 { T_{d} \check{s}_{sz} + \Delta t} \right)
 \right)
 \end{equation}\]</span></p>
-<p>In implimentation the algorithm takes the following steps:</p>
+<p>takes the following steps:</p>
 <ol style="list-style-type: decimal">
 <li>Compute <span class="math inline">\(\check{r}_{sf \rightarrow rz} = \min\left( k_{sf}, \left. \bar{s}_{sf} \right\rvert_{0} + \frac{\Delta t \hat{q}_{sf}^{-}}{A} \right)\)</span>
 </li>
@@ -616,9 +612,9 @@ value
 </li>
 <li>Test for saturation. If <span class="math inline">\(f\left(0,\check{r}_{rz \rightarrow uz}\right) \geq 0\)</span> then goto 4 else goto 5</li>
 <li>Saturated. Set <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0\)</span> and
-<span class="math inline">\(\hat{r}_{rz \rightarrow uz} = \frac{1}{\Delta t}\left( \left. \bar{s}_{sz}\right.\rvert_{0} + \Delta t \left( \frac{w^{+}}{A}g\left(0\right) - \frac{q_{sz}^{-}}{A}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)\)</span>,
+<span class="math inline">\(\hat{r}_{rz \rightarrow uz} = \frac{1}{\Delta t}\left( \left. \bar{s}_{sz}\right.\rvert_{0} + \Delta t \left( \frac{w^{+}}{A}g\left(0,\Theta_{sz}\right) - \frac{q_{sz}^{-}}{A}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)\)</span>,
 Goto 7</li>
-<li>Not saturated: Find <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\)</span> such that
+<li>Not saturated: find <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\)</span> such that
 <span class="math inline">\(f\left(\left. \bar{s}_{sz}\right.\rvert_{\Delta t},\check{r}_{rz \rightarrow  uz}\right) = 0\)</span>.</li>
 <li>Set <span class="math inline">\(\hat{r}_{rz \rightarrow uz} = \min\left(\check{r}_{rz \rightarrow uz},\frac{1}{\Delta t} \left( \left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \frac{\Delta t}{T_d} -  \left. \bar{s}_{uz} \right.\rvert_{0}\right)\right)\)</span>.</li>
 <li>Compute <span class="math inline">\(\hat{r}_{sf \rightarrow rz} = \min\left(\check{r}_{sf \rightarrow  rz}, \frac{1}{\Delta t}\left( s_{rzmax} - \left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p - \hat{r}_{rz  \rightarrow uz} \right) \right)\right)\)</span>
@@ -628,42 +624,110 @@ Goto 7</li>
 <span class="math inline">\(\left. \bar{s}_{sf}\right.\rvert_{\Delta t}\)</span> using the computed vertical
 fluxes.</li>
 </ol>
-</div>
-<div id="solving-in-terms-of-the-lateral-flux" class="section level3">
-<h3 class="hasAnchor">
-<a href="#solving-in-terms-of-the-lateral-flux" class="anchor"></a>Solving in terms of the lateral flux</h3>
-<p>The Finite volume formulations for the surface and saturated zones can be
-written in terms of the lateral flux rather then storage.
-For the surface the constant celerity <span class="math inline">\(c_{sf}\)</span> leads to an identical implicit
-scheme regardless of which variables is used.
-For the saturated zone multiplying through the through the expression for the
-evolutions of <span class="math inline">\(\bar{s}_{sz}\)</span> over time by the celerity gives
-<span class="math display">\[\begin{equation}
-\frac{dl_{sz}^{+}}{dt} = c_{sz}\left(\frac{q_{sz}^{-}}{A} + \bar{r}_{uz
-\rightarrow sz} - \frac{w^{+}l_{sz}^{+}}{A}\right)
-\end{equation}\]</span>
-giving rise to the implicit scheme, expressed in terms of <span class="math inline">\(\bar{s}_{sz}\)</span> of
-<span class="math display">\[\begin{equation}
-g \left(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} \right) = 
-g\left( \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} \right) + 
-c_{sz}\left(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\right) \Delta t \left(
-\frac{q_{sz}^{-}}{A} + \frac{
-\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \hat{r}_{rz \rightarrow uz} }
-{ T_{d}\left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \Delta t} -
-\frac{w^{+}}{A}g\left(\left.\bar{s}_{sz}\right\rvert_{\Delta t}\right)\right)
-\end{equation}\]</span></p>
-<p>Whether a valid solution of this can be found, and if the resulting estimate
-of <span class="math inline">\(\hat{l}_{sz}^{+}\)</span>, which can be computed by mass balance , is non-negative will depend upon the properties of
-<span class="math inline">\(g\left(\bar{s}_{sz}\right)\)</span>.</p>
-<p><strong>TO DO</strong> - Consider the exponential transmissivity in detail
-| | <span class="math inline">\(l_{szmax}\)</span> | Maximum lateral flux in the saturated zone per unit width | m<span class="math inline">\(^2\)</span>/s |
-| | <span class="math inline">\(s_{rzmax}\)</span> | Maximum root zone storage depth | m |
-| | <span class="math inline">\(m\)</span> | Exponential transmissivity constant | - |
-| | <span class="math inline">\(\Delta x\)</span> | Length of the hillslope HRU | m |
-| | <span class="math inline">\(w\)</span> | Width of hillslope cross-section | m |
-| | <span class="math inline">\(\beta\)</span> | Angle of hill slope | rad |</p>
+<p>The first two steps compute the maximum potential downward flux from the
+surface and root zones. Steps 3-6 solve saturated zoneand adjust the fluz from
+the root zone to the unsaturated zone accordingly. Step 7 adjusts the flux
+from the surface zone in the case of upward flow from the unsaturated zone,
+with Step 8 using the corrected vertical fluxes to solve for the new values of
+the states.</p>
 </div>
 </div>
+<div id="transmissivity-profiles" class="section level1">
+<h1 class="hasAnchor">
+<a href="#transmissivity-profiles" class="anchor"></a>Transmissivity Profiles</h1>
+<p>The solution and numerical scheme have been presented with a general
+transmissivity function <span class="math inline">\(g\left(\bar{s}_{sz},\Theta_{sz}\right)\)</span>. Table
+<a href="#tab:hs-transmissivity">2</a> present the transmissivity profiles present as options within the <code>dynatop</code>
+package, the corresponding value to use for the <code>transmissivity_profile</code> value
+in the model options vector and the additional parameters or properties
+required. The additional parameter and properties are defined in Table <a href="#tab:hs-transmissivity-param">3</a>.</p>
+<table class="table">
+<caption>
+<span id="tab:hs-transmissivity">Table 2: </span> Transmissivity profiles avaiable with the
+<code>dynatop</code> package.</caption>
+<colgroup>
+<col width="16%">
+<col width="16%">
+<col width="16%">
+<col width="16%">
+<col width="16%">
+<col width="16%">
+</colgroup>
+<thead><tr class="header">
+<th>Name</th>
+<th><span class="math inline">\(g\left(\bar{s}_{sz},\Theta_{sz}\right)\)</span></th>
+<th>Celerity</th>
+<th><span class="math inline">\(\Theta_{sz}\)</span></th>
+<th>
+<code>transmissivity_profile</code> value</th>
+<th>Notes</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Exponental</td>
+<td><span class="math inline">\(T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)\)</span></td>
+<td><span class="math inline">\(\frac{\cos\beta}{m}g\left(\bar{s}_{sz},\Theta_{sz}\right)\)</span></td>
+<td><span class="math inline">\(T_0,\beta,m\)</span></td>
+<td><code>"exponential"</code></td>
+<td>Originally given in <a href="https://doi.org/10.1002/hyp.252">Beven &amp; Freer 2001</a>
+</td>
+</tr>
+<tr class="even">
+<td>Bounded Exponential</td>
+<td><span class="math inline">\(T_{0}\sin\left(\beta\right)\left(\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)  - \exp\left(-\frac{\cos\beta}{m}D\right)\right)\)</span></td>
+<td><span class="math inline">\(\frac{cos  \beta}{m}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)\)</span></td>
+<td><span class="math inline">\(T_0,\beta,m,D\)</span></td>
+<td><code>"bounded_exponential"</code></td>
+<td>Originally given in <a href="https://doi.org/10.1002/hyp.252">Beven &amp; Freer 2001</a>
+</td>
+</tr>
+<tr class="odd">
+<td>Constant Celerity</td>
+<td><span class="math inline">\(c_{sz}\left(D-s_{sz}\right)\)</span></td>
+<td><span class="math inline">\(c_{sz}\)</span></td>
+<td><span class="math inline">\(c_{sz},D\)</span></td>
+<td><code>"constant"</code></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<table class="table">
+<caption>
+<span id="tab:hs-transmissivity-param">Table 3: </span> Additional paraemters used in the transmissivity profiles.</caption>
+<thead><tr class="header">
+<th>Symbol</th>
+<th>Description</th>
+<th>unit</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(T_0\)</span></td>
+<td>Transmissiviy at saturation</td>
+<td>m<span class="math inline">\(^2\)</span>/s</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(m\)</span></td>
+<td>Exponential transmissivity constant</td>
+<td>m<span class="math inline">\(^{-1}\)</span>
+</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(\beta\)</span></td>
+<td>Angle of hill slope</td>
+<td>rad</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(c_{sz}\)</span></td>
+<td>Saturated zone celerity</td>
+<td>m/s</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(D\)</span></td>
+<td>Depth at which zero lateral flow occurs</td>
+<td>m</td>
+</tr>
+</tbody>
+</table>
 </div>
   </div>
 

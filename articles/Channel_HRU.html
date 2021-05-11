@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9030</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9035</span>
       </span>
     </div>
 
@@ -107,19 +107,20 @@
 
     
     
-<p><strong>WHILE CORRECT THIS USES A NOTATION DIFFERENT TO THE REMAINDER OF THE VIGNETTES</strong></p>
 <p>The <code>dynatop</code> function in the dynamic TOPMODEL R package implements a set of numerical solutions to the
 governing equations of the dynamic TOPMODEL hillslope formulation. This
 returns the inflow to the channel reachs specified in the model.
-This vignette documents the formulation and the numerical solution used to route these channel inflows, along with other diffuse and point inputs to the model.</p>
+This vignette documents the formulation and the numerical solution used to
+route these channel inflows, along with other diffuse and point inputs to the
+model.</p>
 <div id="notation-and-nomenclature" class="section level1">
 <h1 class="hasAnchor">
 <a href="#notation-and-nomenclature" class="anchor"></a>Notation and nomenclature</h1>
-<p>Table [tab:hru_notation] outlines the notation used in this document.</p>
+<p>Table @ref(tab:ch-notation} outlines the notation used in this document.</p>
 <table class="table">
-<caption>Outline of notation for describing time delay histogram routing
-HRUs<span data-label="tab:channel_notation"></span>
-</caption>
+<caption>
+<span id="tab:ch-notation">Table 1: </span> Outline of notation for describing the Channel HRU
+section of the hillslope HRU</caption>
 <colgroup>
 <col width="15%">
 <col width="10%">
@@ -134,198 +135,424 @@ HRUs<span data-label="tab:channel_notation"></span>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>Dischage at the point <span class="math inline">\(x\)</span> at time <span class="math inline">\(t\)</span>
+<td>Dischage from a reach at time <span class="math inline">\(t\)</span>
 </td>
-<td align="center"><span class="math inline">\(q\left(x,t\right)\)</span></td>
-<td>Instananeous discharge at the point x on the channel network</td>
-<td align="center">-</td>
-</tr>
-<tr class="even">
-<td>A gauged location</td>
-<td align="center"><span class="math inline">\(g\)</span></td>
-<td>A gagued point on the channel network</td>
-<td align="center">-</td>
-</tr>
-<tr class="odd">
-<td>Channel inflow</td>
-<td align="center"><span class="math inline">\(h\left(x,t\right)\)</span></td>
-<td>Inflow from the hillslope to a point on the channel network</td>
+<td align="center"><span class="math inline">\(q\left(t\right)\)</span></td>
+<td>Instananeous discharge</td>
 <td align="center">m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="even">
-<td>Diffuse inflow</td>
-<td align="center"><span class="math inline">\(d\left(x,t\right)\)</span></td>
-<td>Inflow from diffuse inputs to a point on the channel network</td>
+<td>Dischage from a reach at time <span class="math inline">\(t\)</span>
+</td>
+<td align="center"><span class="math inline">\(g\left(t\right)\)</span></td>
+<td>Instananeous discharge</td>
 <td align="center">m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="odd">
 <td>Diffuse inflow</td>
-<td align="center"><span class="math inline">\(p\left(x,t\right)\)</span></td>
-<td>Inflow from a point source to a point on the channel network</td>
+<td align="center"><span class="math inline">\(d\left(t\right)\)</span></td>
+<td>Instantaneous inflow from diffuse inputs to the channel HRU</td>
 <td align="center">m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="even">
+<td>Point inflow</td>
+<td align="center"><span class="math inline">\(p\left(t\right)\)</span></td>
+<td>Instantaneous inflow from a point source to the head of the Channel HRU</td>
+<td align="center">m<span class="math inline">\(^3\)</span>/s</td>
+</tr>
+<tr class="odd">
 <td>Velocity</td>
-<td align="center"><span class="math inline">\(v_{ch}\left(x\right)\)</span></td>
-<td>Effective velocity of water convience at a point ont eh channel network</td>
+<td align="center"><span class="math inline">\(v_{ch}\)</span></td>
+<td>Effective velocity of water convience within the Channel HRUnetwork</td>
 <td align="center">m/s</td>
 </tr>
 </tbody>
 </table>
 </div>
+<div id="inputs-to-a-channel-hru" class="section level1">
+<h1 class="hasAnchor">
+<a href="#inputs-to-a-channel-hru" class="anchor"></a>Inputs to a Channel HRU</h1>
+<p>A Channel HRU is considered as representing a channel reach of length
+<span class="math inline">\(L\)</span>. Each Channel HRU has two types of inflow, labelled diffuse
+and point. Diffuse inflows are external inputs which occur at a
+constant rate over the length of the reach. These include precipitation, the
+inflow from Hillslope HRUs and time series specified in the <code>diffuse_inputs</code>
+table.</p>
+<p>Point inflows are considered to occur at the head of the channel reach. These
+consist of the inflow from upstream channel HRUs and time series specified in the <code>point_inputs</code> table.</p>
+</div>
 <div id="time-delay-channel-routing" class="section level1">
 <h1 class="hasAnchor">
 <a href="#time-delay-channel-routing" class="anchor"></a>Time Delay Channel Routing</h1>
-<p>Using a time delay routing approach the discharge at the gauge <span class="math inline">\(g\)</span> at time <span class="math inline">\(t\)</span> can be computed from the inflows of the upstream points on the channel newtork <span class="math inline">\(x \in \mathcal{X}\)</span> and the time it takes the effect of the inflow to been seen at the gauge <span class="math inline">\(\delta_{x\rightarrow g}\)</span> as
+<p>The time delay channel routing is selected by setting the <code>channel_solver</code>
+value in the model options vector to <code>histogram</code>. The method offers a basic representation of the movement of
+water in which a constant velocity to assigned to each channel reach.</p>
+<p>For the diffuse inputs to a single channel reach of length <span class="math inline">\(L\)</span> the
+contribution to the outflow at time <span class="math inline">\(t\)</span> is given by
 <span class="math display">\[
-q\left(g,t\right) = \int_{x\in\mathcal{X}} h\left(x,t-\delta_{x\rightarrow g}\right) dx
-\]</span></p>
-<p>The conceptualisation of Dynamic Topmodel breaks the channel network down into
-<span class="math inline">\(n\)</span> disjoint channel HRUs whose inflows contribute to the discharge at the
-gauge giving
-<span class="math display">\[
-q\left(g,t\right) = \sum\limits_{i=1}^{n} \int_{x\in\mathcal{X}_{i}}
-h\left(x,t-\delta_{x\rightarrow g}\right) dx 
-\]</span></p>
-</div>
-<div id="numerical-solution" class="section level1">
-<h1 class="hasAnchor">
-<a href="#numerical-solution" class="anchor"></a>Numerical Solution</h1>
-<p>Consider the contribution to the gauges flow from a single channel HRU
-<span class="math display">\[
-\int_{x\in\mathcal{X}_{i}}
-h\left(x,t-\delta_{x\rightarrow g}\right) dx d\tau
-\]</span></p>
-<p>To further derive the numerical solution a number of assumpptions are made.
-The first assumption is that the channel represents a single reach of river such the a spatial location <span class="math inline">\(x \in \mathcal{X}_{i}\)</span> can be replaced by a unique length <span class="math inline">\(l\)</span> from the head of the reach. The maximum value of <span class="math inline">\(l\)</span>, denoted<span class="math inline">\(\tilde{L}\)</span>, is the lower of the length of the reach <span class="math inline">\(L\)</span> or the distance to the gauge from the head of the reach.
-The contribution of the channel HRU to the gauged flow can be expressed as
-<span class="math display">\[
-\int_{0}^{\tilde{L}}
-h\left(l,t-\delta_{l\rightarrow g}\right) dl
-\]</span></p>
-<p>The second assumption is that there is a constant effecive velocity <span class="math inline">\(v\)</span> within the reach. The time delay <span class="math inline">\(\delta_{l\rightarrow g}\)</span> can then be written in terms of the time delay for the head of the reach <span class="math inline">\(\delta_{0\rightarrow g}\)</span> as
-<span class="math display">\[
-\delta_{l\rightarrow g} = \delta_{0\rightarrow g} - lv^{-1}
+\frac{1}{L} \int\limits_{l=0}^{L} d\left(t - \frac{l}{v_{ch}}\right) dl
 \]</span>
-The contribution of the channel HRU to the discharge at the gauge then becomes
+where as for a point input to the same channel the contribution is
 <span class="math display">\[
-\int_{0}^{\tilde{L}}
-h\left(l,t-\delta_{0\rightarrow g}+lv^{-1}\right) dl
+p\left(t - \frac{L}{v_{ch}}\right)
+\]</span>
+such that
+<span class="math display">\[
+q\left(t\right) = \frac{1}{L} \int\limits_{l=0}^{L} d\left(t -
+\frac{l}{v_{ch}}\right) dl + p\left(t - \frac{L}{v_{ch}}\right)
 \]</span></p>
-<p>Since the model is solved in discrete time the interal can be divided up into
-time steps.
-Let <span class="math inline">\(d_{min}\)</span> be the largest and <span class="math inline">\(d_{max}\)</span> the smallest integers such that <span class="math inline">\(d_{min} &lt; d_{max}\)</span> and
+<p>Consider next a change of variables by taking <span class="math inline">\(\tau = l/v_{ch}\)</span> and defining
+<span class="math inline">\(\tau_{L} = L/v_{ch}\)</span> so that
 <span class="math display">\[
-d_{min}\Delta t &lt; \delta_{0\rightarrow g}-\tilde{L}v^{-1} &lt;
-\delta_{0\rightarrow g} &lt; d_{max}\Delta t
-\]</span>
-Then taking <span class="math inline">\(\Delta l = v\Delta t\)</span> we can divide the integral up to give
-<span class="math display">\[
-\sum\limits_{j=d_{min}}^{d_{max}-1} \int_{0}^{\Delta l}
-h\left(l,t-j\Delta lv^{-1}-\lambda v^{-1}\right) d\lambda
-- \int_{0}^{\delta_{0\rightarrow g}-\tilde{L}v^{-1} - d_{min}\Delta lv^{-1}}
-h\left(l,t-d_{min}\Delta lv^{-1}-\lambda v^{-1}\right) d\lambda
-- \int_{\delta_{0\rightarrow g} - \left(d_{max}-1\right)\Delta
-  lv^{-1}}^{\Delta l} h\left(l,t-\left(d_{max}-1\right)\Delta lv^{-1}-\lambda v^{-1}\right) d\lambda
+q\left(t\right) =
+\frac{v_{ch}}{L} \int\limits_{\tau=0}^{\tau_{L}} d\left(t - \tau\right) d\tau +
+p\left(t - \tau_{L}\right)
 \]</span></p>
-<p>The second assumption is that there is no spatial pattern in the inflow to the
-reach and constant inflow over time steps so that we can write
-<span class="math display">\[
-h\left(l,t-\tau\right) = \bar{h}_{t} \quad \forall
-l\in\left(0,L\right),\tau\in\left(0,\Delta t\right)
-\]</span>
-an express the contribution to the gauged flow as
-<span class="math display">\[
-\sum\limits_{j=d_{min}}^{d_{max}-1} \Delta l \bar{h}_{t-j\Delta lv^{-1}}
-- \left(\delta_{0\rightarrow g}v - d_{min}\Delta l - \tilde{L}\right)
-\bar{h}_{t-d_{min}\Delta l v^{-1}}
-- \left( d_{max}\Delta l - \delta_{0\rightarrow g}v \right) \bar{h}_{t-\left(d_{max}-1\right)\Delta lv^{-1}}
+<p>Since the action on the point inputs is purely advective the flow at a gauged
+location can be written as the summation of the diffuse and external point
+inflows to the Channel
+HRUs (reachs) above the location. For the <span class="math inline">\(k\)</span>th Channel HRU above the gauge let
+<span class="math inline">\(\tau_{0}^{\left[k\right]}\)</span> be the advective time delay between water leaving the reach and
+arriving at the gauge. This is readily computed from the channel HRU
+connectivity, reach lengths and velocities. The gauged flow can thus be
+expressed as</p>
+<p><span class="math display">\[
+g\left(t\right) = \sum_{k}
+\frac{v_{ch}^{\left[k\right]}}{L^{\left[k\right]}}
+\int\limits_{\tau_{0}^{\left[k\right]}}^{\tau_{0}^{\left[k\right]} + \tau_{L}^{\left[k\right]}} d\left(t -
+\tau \right) d\tau +
+\hat{p}\left(t - \tau_{0}^{\left[k\right]} - \tau_{L}^{\left[k\right]}\right)
 \]</span></p>
-<p>This can now be expressed in terms of a polynomial of the the backward shift
-operator <span class="math inline">\(z^{-1}\)</span> as <span class="math inline">\(B\left(z^{-1}\right) \bar{h}_{t-d_{min}\Delta t}\)</span> where</p>
-<ul>
-<li>for <span class="math inline">\(d_{max}=d_{min}+1\)</span>
+<p>To solve for the gauge flow on a discrete time step <span class="math inline">\(\Delta t\)</span> suppose that
+<span class="math inline">\(t = i\Delta t\)</span> and that the flow index by the time subscript is valid over
+the preceeding time step; for example
 <span class="math display">\[
-B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
-d_{min}\Delta l - \tilde{L}\right) - \left(d_{max}\Delta l -
-\delta_{0\rightarrow g}v\right)\right)  = \tilde{L}
-\]</span>
-</li>
-<li>for <span class="math inline">\(d_{max}=d_{min}+2\)</span>
-<span class="math display">\[
-B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
-d_{min}\Delta l - \tilde{L}\right)\right) + \left(\Delta l - \left(d_{max}\Delta l - \delta_{0\rightarrow g}v\right)\right) z^{-1}
-\]</span>
-</li>
-<li>for <span class="math inline">\(d_{max}&gt;d_{min}+2\)</span>
-<span class="math display">\[
-B\left(z^{-1}\right) = \left(\Delta l - \left(\delta_{0\rightarrow g}v -
-d_{min}\Delta l - \tilde{L}\right)\right) + \Delta l z^{-1} + \ldots + \Delta l
-z^{-(d_{max}-d_{min}-2)} + \left(\Delta l - \left(d_{max}\Delta l - \delta_{0\rightarrow g}v\right)\right) z^{-(d_{max}-d_{min}-1)}
-\]</span>
-</li>
-</ul>
-<p>This shows that the instanaeous flow at the outlet can be approximated
-from the <span class="math inline">\(\bar{h}_{t-d_{min}\Delta t}\)</span> by a linear operation.
-It remains to be shown that <span class="math inline">\(\bar{h}_{t-d_{min}\Delta t}\)</span> can be related to
-the output of the <code>dynatop</code> function which is
-<span class="math display">\[
-\frac{1}{\Delta t}
-\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
-h\left(x,t-\tau \right) dx d\tau
-\]</span>
-Under the channel routing assumptions
-<span class="math display">\[
-\frac{1}{\Delta t}
-\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
-h\left(x,t-\tau \right) dx d\tau =
-\frac{1}{\Delta t}
-\int_{0}^{\Delta t}\int_{0}^{L}
-h\left(l,t-\tau \right) dl d\tau =
-L \bar{h}_{t}
+d\left(t\right) = d_{i\Delta t} \quad \left(i-1\right)\Delta t \leq t &lt;i\Delta t
 \]</span></p>
-<p>The contribution to the discharge at the channel outlet is therefore a linear
-filtering of the output of <code>dynatop</code>. From summing the coeffiecnts of
-<span class="math inline">\(B\left(z^{-1}\right)\)</span> the fraction of the <code>dynatop</code> output returned as
-discharge at the gauge is <span class="math inline">\(\tilde{L}/L\)</span>. This implies mass conservation the
-inputs of channel HRUs above the gauge, while if the gauge is sited within the
-HRU mass is proportional to the fraction fo the reach above it.</p>
-</div>
-<div id="diffuse-and-point-inputs" class="section level1">
-<h1 class="hasAnchor">
-<a href="#diffuse-and-point-inputs" class="anchor"></a>Diffuse and Point inputs</h1>
-<p>Diffuse input are considered as external inputs that occur over the whole
-channel HRU while point inputs occur at a given location on the channel
-network.</p>
-<div id="diffuse-inputs" class="section level2">
+<p>Then to evaluate <span class="math inline">\(g_{i\Delta t}\)</span> while maintaing mass
+conservation in the formulation, the gauged flows must be integrated over the
+time period. Consider one of the contributing
+HRUs, then (dropping the superscript <span class="math inline">\(k\)</span>) the contribution of the point inflow
+is
+<span class="math display">\[
+\frac{1}{\Delta t}\int\limits_{\left(i-1\right)\Delta t}^{i\Delta
+  t} \hat{p}\left(t - \tau_{0} - \tau_{L}\right) dt
+=
+\frac{\left(r_{L}+1\right)\Delta t - \left(\tau_{0}+\tau_{L}\right)}{\Delta t}
+\hat{p}_{\left(i-r_L\right)\Delta t} +
+\frac{\tau_0 + \tau_L- r_L \Delta t}{\Delta t}
+\hat{p}_{\left(i-1-r_L\right)\Delta t}
+\]</span>
+where <span class="math inline">\(r_L\)</span> is the largest integer for which
+<span class="math inline">\(r_{L}\Delta t \leq \tau_0 + \tau_L\)</span>.
+The right hand side of this expression gives the time delay histogram for the
+point inflow.</p>
+<p>As similar expression holds for each value of <span class="math inline">\(\tau\)</span> along the HRU, such that
+the average inflow at that point over the time step is given by
+<span class="math display">\[
+\frac{1}{\Delta t}\int\limits_{\left(i-1\right)\Delta t}^{i\Delta
+  t} d\left(t - \tau\right) dt
+=
+\frac{\left(r_{\tau}+1\right)\Delta t - \tau}{\Delta t}
+d_{\left(i-r_{\tau}\right)\Delta t} +
+\frac{\tau- r_{\tau} \Delta t}{\Delta t}
+d_{\left(i-1-r_{\tau}\right)\Delta t}
+\]</span>
+where <span class="math inline">\(r_\tau\)</span> is the largest integer for which
+<span class="math inline">\(r_{\tau}\Delta t \leq \tau\)</span>.
+Next consider the integral of the difuse inflows over <span class="math inline">\(\tau\)</span>; that is
+<span class="math display">\[
+\int\limits_{\tau_{0}}^{\tau_{0} +
+  \tau_{L}}
+\frac{\left(r_{\tau}+1\right)\Delta t - \tau}{\Delta t}
+d_{\left(i-r_{\tau}\right)\Delta t} +
+\frac{\tau- r_{\tau} \Delta t}{\Delta t}
+d_{\left(i-1-r_{\tau}\right)\Delta t} d\tau
+\]</span></p>
+<p>The range of <span class="math inline">\(\tau\)</span> can be divided into intervals which share the same value
+of <span class="math inline">\(r_{\tau}\)</span>. Defining the minimum value of <span class="math inline">\(r_\tau\)</span> as
+<span class="math inline">\(r_{0} = r_{\tau_{0}}\)</span> then if <span class="math inline">\(r_{L}&gt;r_{0}\)</span> the intervals are given by
+<span class="math display">\[
+\left(\tau_0,\left(r_{0}+1\right)\Delta t\right),
+\left(\left(r_{0}+1\right)\Delta t,\left(r_{0}+2\right)\Delta t\right),
+\ldots,
+\left(\left(r_{0}+n\right)\Delta t,\tau_{0}+\tau_{L}\right)
+\]</span></p>
+<p>For <span class="math inline">\(j=1,\ldots,n-1\)</span> the integral over an interval of <span class="math inline">\(\Delta t\)</span> gives
+<span class="math display">\[
+\int\limits_{\left(r_{0}+j\right)\Delta t}^{\left(r_{0}+j+1\right)\Delta t}
+\frac{\left(r_{0}+j+1\right)\Delta t - \tau}{\Delta t}
+d_{\left(i-r_{0}-j\right)\Delta t} +
+\frac{\tau- \left(r_{0}+j\right) \Delta t}{\Delta t}
+d_{\left(i-r_{0}-j-1\right)\Delta t} d\tau \\
+= \frac{\Delta t}{2}
+\left(\left(r_{0}+j+1\right)-\left(r_{0}+j\right)\right)^2
+d_{\left(i-r-j\right)\Delta t} +
+\frac{\Delta t}{2}
+\left(\left(r_{0}+j+1\right)-\left(r_{0}+j\right)\right)^2
+d_{\left(i-r-j-1\right)\Delta t} \\
+=  \frac{\Delta t}{2} d_{\left(i-r_{0}-j\right)\Delta t} +
+\frac{\Delta t}{2} d_{\left(i-r_{0}-j-1\right)\Delta t}
+\]</span></p>
+<p>For the initial interval
+<span class="math display">\[
+\int\limits_{\tau_{0}}^{\left(r_{0}+1\right)\Delta t}
+\frac{\left(r_{0}+1\right)\Delta t - \tau}{\Delta t}
+d_{\left(i-r_{0}\right)\Delta t} +
+\frac{\tau- r_{0}\Delta t}{\Delta t}
+d_{\left(i-r_{0}-1\right)\Delta t} d\tau \\
+= \frac{1}{2\Delta t} \left(\left(r_0+1\right)\Delta t - \tau_{0}\right)^2
+d_{\left(i-r_{0}\right)\Delta t} +
+\left\{
+\frac{1}{2\Delta t} \left(\left(r_0+1\right)\Delta t - \tau_{0}\right)^2 +
+\frac{ \left(\tau_{0} - r_{0}\Delta t\right)\left(\left(r_0+1\right)\Delta t -
+  \tau_{0}\right)}{\Delta t} \right\}
+d_{\left(i-r_{0}-1\right)\Delta t}
+\]</span></p>
+<p>and the final interval and noting that <span class="math inline">\(r_{0}+n = r_{L}\)</span>
+<span class="math display">\[
+\int\limits_{r_{L}\Delta t}^{\tau_0+\tau_L}
+\frac{\left(r_{L}+1\right)\Delta t - \tau}{\Delta t}
+d_{\left(i-r_{L}\right)\Delta t} +
+\frac{\tau- r_{L} \Delta t}{\Delta t}
+d_{\left(i-r_{L}-1\right)\Delta t} d\tau \\
+= 
+\left\{
+\frac{1}{2\Delta t} \left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2 +
+\frac{ \left(\tau_0 + \tau_{L} - r_L\Delta t\right)\left(\left(r_L + 1
+  \right)\Delta t - \tau_{0} - \tau_L\right)}{\Delta t}
+\right\}d_{\left(i-r_{L}\right)\Delta t} +
+\frac{1}{2\Delta t} \left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2
+d_{\left(i-r_{L}-1\right)\Delta t}
+\]</span></p>
+<p>By grouping the terms for the individual inputs together and multiply through
+by <span class="math inline">\(v_{ch}/L\)</span> time delay histograms
+can be constructed for each HRU draining to the gauge. Table <a href="#tab:table-full">2</a> shows the solution for
+<span class="math inline">\(r_{L}&gt;r_0+1\)</span> and Table <a href="#tab:table-three">3</a> for the case <span class="math inline">\(r_{L}=r_0+1\)</span>.</p>
+<table class="table">
+<caption>
+<span id="tab:table-full">Table 2: </span> Outline of the time delay histogram for the diffuse input in the case <span class="math inline">\(r_{L}&gt;r_0+1\)</span>
+</caption>
+<colgroup>
+<col width="30%">
+<col width="38%">
+<col width="30%">
+</colgroup>
+<thead><tr class="header">
+<th>Delay</th>
+<th>Inflow</th>
+<th>Weight</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(r=0,\ldots,r_0-1\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r\right)\Delta t}\)</span></td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(r_0\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_0\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}}{2L\Delta t} \left(\left(r_0+1\right)\Delta t - \tau_{0}\right)^2\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(r_0+1\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_0-1\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}\Delta t}{2L} + \frac{v_{ch}}{2L\Delta t} \left(\left(r_0+1\right)\Delta t - \tau_{0}\right)^2 + \frac{ v_{ch}\left(\tau_{0} - r_{0}\Delta t\right)\left(\left(r_0+1\right)\Delta t - \tau_{0}\right)}{L\Delta t}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(r=r_{0}+2,\ldots,r_{L}-1\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}\Delta t}{L}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(r_{L}\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_{L}\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}\Delta t}{2L} + \frac{v_{ch}}{2L\Delta t} \left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2 + \frac{ v_{ch}\left(\tau_0 + \tau_{L} - r_L\Delta t\right)\left(\left(r_L + 1 \right)\Delta t - \tau_{0} - \tau_L\right)}{L\Delta t}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(r_{L}+1\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_{L}-1\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}}{2L\Delta t} \left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2\)</span></td>
+</tr>
+</tbody>
+</table>
+<table class="table">
+<caption>
+<span id="tab:table-three">Table 3: </span> Outline of the time delay histogram for the diffuse input in the case <span class="math inline">\(r_{L}=r_0+1\)</span>
+</caption>
+<colgroup>
+<col width="30%">
+<col width="38%">
+<col width="30%">
+</colgroup>
+<thead><tr class="header">
+<th>Delay</th>
+<th>Inflow</th>
+<th>Weight</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(r=0,\ldots,r_0-1\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r\right)\Delta t}\)</span></td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(r_0\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_0\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}}{2L\Delta t} \left(\left(r_0+1\right)\Delta t - \tau_{0}\right)^2\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(r_0+1 = r_{L}\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_0-1\right)\Delta t}\)</span></td>
+<td><span class="math display">\[\frac{v_{ch}}{2L\Delta t}\left(\left(r_0+1\right)\Delta t -
+\tau_{0}\right)^2
++
+\frac{v_{ch}\left(\tau_{0} - r_{0}\Delta
+ t\right)\left(\left(r_0+1\right)\Delta t- \tau_{0}\right)}{L\Delta t}
++\\
+\frac{v_{ch}}{L\Delta t}\left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2
++
+\frac{
+ v_{ch}\left(\tau_0 + \tau_{L} - r_L\Delta t\right)\left(\left(r_L + 1
+ \right)\Delta t - \tau_{0} - \tau_L\right)}{L\Delta t}\]</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(r_{L}+1\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_{L}-1\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}}{2L\Delta t} \left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The final case to consider is <span class="math inline">\(r_{0} = r_{L}\)</span>. In this case there is a single
+integral to evaluate:
+<span class="math display">\[
+\int\limits_{\tau_{0}}^{\tau_{0}+\tau_{L}}
+\frac{\left(r_{0}+1\right)\Delta t - \tau}{\Delta t}
+d_{\left(i-r_{0}\right)\Delta t} +
+\frac{\tau- r_{0} \Delta t}{\Delta t}
+d_{\left(i-r_{0}-1\right)\Delta t} d\tau \\
+= \frac{\tau_{L}}{\Delta t}
+\left(\left(r_{0}+1\right)\Delta t - \tau_{0} - \tau_{L}/2 \right)
+d_{\left(i-r_{0}\right)\Delta t} +
+\frac{\tau_{L}}{\Delta t}
+\left(\tau_{)} + \tau_{L}/2 - r_{0}\Delta t\right)
+d_{\left(i-r_{0}-1\right)\Delta t}
+\]</span></p>
+<div id="examples" class="section level2">
 <h2 class="hasAnchor">
-<a href="#diffuse-inputs" class="anchor"></a>Diffuse inputs</h2>
-<p>Diffuse inputs are handled in exactly the same way as hillslope inputs. In
-this case the each value in the input time series is expected to be the total
-volume of input over the time step (m<span class="math inline">\(^3\)</span>) dived by length of the time step
-(<span class="math inline">\(s\)</span>) to give an effective time averaged flow (m<span class="math inline">\(^3\)</span>/s) to the HRU, that is:
-<span class="math display">\[
-\frac{1}{\Delta t}
-\int_{0}^{\Delta t}\int_{x\in\mathcal{X}_{i}}
-d\left(x,t-\tau \right) dx d\tau
-\]</span></p>
+<a href="#examples" class="anchor"></a>Examples</h2>
+<p>In this section some example histograms are generated based upon the length,
+velocity and <span class="math inline">\(\tau_0\)</span> of the Channel HRU alond with the time step <span class="math inline">\(\Delta t\)</span>.</p>
+<div id="point-input" class="section level3">
+<h3 class="hasAnchor">
+<a href="#point-input" class="anchor"></a>Point input</h3>
+<p>First a function for defining the histrogram for a point inflow can be coded
+as follows:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co">## L is length of channel</span>
+<span class="co">## vch is channel velocity</span>
+<span class="co">## Dt is the time step</span>
+<span class="co">## tau0 is the time delay between the gauge and foot of the reach</span>
+<span class="va">fp</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span>,<span class="va">vch</span>,<span class="va">Dt</span>,<span class="va">tau0</span><span class="op">)</span><span class="op">{</span>
+  <span class="va">tauL</span> <span class="op">&lt;-</span> <span class="va">L</span><span class="op">/</span><span class="va">vch</span>
+  <span class="va">rL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">floor</a></span><span class="op">(</span><span class="op">(</span><span class="va">tau0</span><span class="op">+</span><span class="va">tauL</span><span class="op">)</span><span class="op">/</span><span class="va">Dt</span><span class="op">)</span>
+  <span class="va">irL</span> <span class="op">&lt;-</span> <span class="va">rL</span><span class="op">+</span><span class="fl">1</span> <span class="co">## index in vector since R starts at 1 not zero</span>
+  <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0</span>,<span class="va">irL</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span>
+  <span class="va">b</span><span class="op">[</span><span class="va">irL</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="op">(</span><span class="va">rL</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">*</span><span class="va">Dt</span> <span class="op">-</span> <span class="va">tau0</span><span class="op">-</span><span class="va">tauL</span><span class="op">)</span><span class="op">/</span><span class="va">Dt</span>
+  <span class="va">b</span><span class="op">[</span><span class="va">irL</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">tau0</span><span class="op">+</span><span class="va">tauL</span> <span class="op">-</span> <span class="va">rL</span><span class="op">*</span><span class="va">Dt</span><span class="op">)</span><span class="op">/</span><span class="va">Dt</span>
+  <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
+<span class="op">}</span></code></pre></div>
+<p>For the first example all the input should occur with one time step delay
+(second element in output vector) since <span class="math inline">\(L/v_ch\)</span> exactly matches the time step
+and <span class="math inline">\(\tau_{0}=0\)</span></p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">fp</span><span class="op">(</span>L<span class="op">=</span><span class="fl">100</span>,vch<span class="op">=</span><span class="fl">0.5</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">0</span><span class="op">)</span>
+<span class="co">#&gt; [1] 0 1 0</span></code></pre></div>
+<p>In this example <span class="math inline">\(\tau_{0}+L/v_ch = \frac{7}{2}\Delta t\)</span>; so the first non zero
+value of the vector should be the 4th element with the 4th and 5th
+elements being equal.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">fp</span><span class="op">(</span>L<span class="op">=</span><span class="fl">100</span>,vch<span class="op">=</span><span class="fl">1</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">600</span><span class="op">)</span>
+<span class="co">#&gt; [1] 0.0 0.0 0.0 0.5 0.5</span></code></pre></div>
+<p>This build upon the above example, altering the velocity such that the only
+non-zero elements are the 4th and 5th, but with the 4th being larger then the 5th.</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">fp</span><span class="op">(</span>L<span class="op">=</span><span class="fl">100</span>,vch<span class="op">=</span><span class="fl">1.5</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">600</span><span class="op">)</span>
+<span class="co">#&gt; [1] 0.0000000 0.0000000 0.0000000 0.6666667 0.3333333</span></code></pre></div>
 </div>
-<div id="point-inputs" class="section level2">
-<h2 class="hasAnchor">
-<a href="#point-inputs" class="anchor"></a>Point inputs</h2>
-<p>Since the contributions to the simualted discharge at the gauge can be
-computed individually and summed it is possible to think of a point input as
-notional channel with infinitesimally small length. This results
-<span class="math inline">\(d_{max}=d_{min}+1\)</span> and a ratio <span class="math inline">\(\tilde{L}/L=1\)</span>.</p>
-<p>In this case that each value in the input time series is inflow averaged over
-the preceeding time step, that is
-<span class="math display">\[
-\bar{p}_{t} = 
-\frac{1}{\Delta t}
-\int_{0}^{\Delta t} p\left(x,t-\tau \right) d\tau
-\]</span>
-The assumptions used for hillslope routing above lead to contribution to the
-outflow being <span class="math inline">\(\bar{p}_{t-d_{min}\Delta t}\)</span>.</p>
+<div id="diffuse-inflow" class="section level3">
+<h3 class="hasAnchor">
+<a href="#diffuse-inflow" class="anchor"></a>Diffuse inflow</h3>
+<p>The function for the difuse inflow is more complex since the special cases
+have to be handled:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">fd</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span>,<span class="va">vch</span>,<span class="va">Dt</span>,<span class="va">tau0</span><span class="op">)</span><span class="op">{</span>
+  <span class="va">tauL</span> <span class="op">&lt;-</span> <span class="va">L</span><span class="op">/</span><span class="va">vch</span>
+  <span class="va">r0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">floor</a></span><span class="op">(</span><span class="va">tau0</span><span class="op">/</span><span class="va">Dt</span><span class="op">)</span>
+  <span class="va">ir0</span> <span class="op">&lt;-</span> <span class="va">r0</span><span class="op">+</span><span class="fl">1</span> <span class="co">## index in vector since R starts at 1 not zero</span>
+  <span class="va">rL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">floor</a></span><span class="op">(</span><span class="op">(</span><span class="va">tau0</span><span class="op">+</span><span class="va">tauL</span><span class="op">)</span><span class="op">/</span><span class="va">Dt</span><span class="op">)</span>
+  <span class="va">irL</span> <span class="op">&lt;-</span> <span class="va">rL</span><span class="op">+</span><span class="fl">1</span> <span class="co">## index in vector since R starts at 1 not zero</span>
+  <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0</span>,<span class="va">irL</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span>
+  
+  <span class="kw">if</span><span class="op">(</span><span class="va">rL</span><span class="op">&gt;</span><span class="va">r0</span><span class="op">)</span><span class="op">{</span>
+    <span class="va">b</span><span class="op">[</span><span class="va">ir0</span><span class="op">:</span><span class="op">(</span><span class="va">irL</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">Dt</span> <span class="co"># inital values valid unless over written</span>
+    <span class="va">b</span><span class="op">[</span><span class="va">ir0</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">(</span> <span class="op">(</span><span class="op">(</span><span class="va">r0</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">*</span><span class="va">Dt</span> <span class="op">-</span> <span class="va">tau0</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span> <span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">2</span><span class="op">*</span><span class="va">Dt</span><span class="op">)</span>
+    <span class="va">b</span><span class="op">[</span><span class="va">ir0</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">b</span><span class="op">[</span><span class="va">ir0</span><span class="op">]</span> <span class="op">+</span> <span class="op">(</span> <span class="op">(</span><span class="op">(</span><span class="va">r0</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">*</span><span class="va">Dt</span> <span class="op">-</span> <span class="va">tau0</span><span class="op">)</span><span class="op">*</span><span class="op">(</span><span class="va">tau0</span> <span class="op">-</span> <span class="op">(</span><span class="va">r0</span><span class="op">*</span><span class="va">Dt</span><span class="op">)</span><span class="op">)</span> <span class="op">)</span> <span class="op">/</span> <span class="va">Dt</span>
+    <span class="va">b</span><span class="op">[</span><span class="va">irL</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">(</span> <span class="op">(</span><span class="va">tau0</span><span class="op">+</span><span class="va">tauL</span> <span class="op">-</span> <span class="op">(</span><span class="va">rL</span><span class="op">*</span><span class="va">Dt</span><span class="op">)</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span> <span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">2</span><span class="op">*</span><span class="va">Dt</span><span class="op">)</span>
+    <span class="va">b</span><span class="op">[</span><span class="va">irL</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">b</span><span class="op">[</span><span class="va">irL</span><span class="op">]</span> <span class="op">+</span> <span class="va">b</span><span class="op">[</span><span class="va">irL</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">+</span> <span class="op">(</span> <span class="op">(</span><span class="op">(</span><span class="va">tau0</span><span class="op">+</span><span class="va">tauL</span> <span class="op">-</span> <span class="op">(</span><span class="va">rL</span><span class="op">*</span><span class="va">Dt</span><span class="op">)</span><span class="op">)</span><span class="op">*</span><span class="op">(</span><span class="op">(</span><span class="va">rL</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">*</span><span class="va">Dt</span> <span class="op">-</span> <span class="va">tau0</span><span class="op">-</span><span class="va">tauL</span><span class="op">)</span><span class="op">)</span> <span class="op">/</span> <span class="va">Dt</span> <span class="op">)</span> <span class="co">## added to self since rL could equal r0+1</span>
+    <span class="kw">if</span><span class="op">(</span> <span class="va">rL</span> <span class="op">&gt;</span> <span class="op">(</span><span class="va">r0</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span> <span class="op">)</span><span class="op">{</span>
+      <span class="va">b</span><span class="op">[</span><span class="va">ir0</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">b</span><span class="op">[</span><span class="va">ir0</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">+</span> <span class="va">Dt</span><span class="op">/</span><span class="fl">2</span>
+      <span class="va">b</span><span class="op">[</span><span class="va">irL</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">b</span><span class="op">[</span><span class="va">irL</span><span class="op">]</span> <span class="op">+</span> <span class="va">Dt</span><span class="op">/</span><span class="fl">2</span>
+    <span class="op">}</span>
+  <span class="op">}</span><span class="kw">else</span><span class="op">{</span>
+    <span class="va">b</span><span class="op">[</span><span class="va">ir0</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">tauL</span><span class="op">/</span><span class="va">Dt</span><span class="op">)</span><span class="op">*</span><span class="op">(</span> <span class="op">(</span><span class="va">r0</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">*</span><span class="va">Dt</span> <span class="op">-</span> <span class="va">tau0</span> <span class="op">-</span> <span class="op">(</span><span class="va">tauL</span><span class="op">/</span><span class="fl">2</span><span class="op">)</span> <span class="op">)</span>
+    <span class="va">b</span><span class="op">[</span><span class="va">ir0</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">tauL</span><span class="op">/</span><span class="va">Dt</span><span class="op">)</span><span class="op">*</span><span class="op">(</span><span class="va">tau0</span> <span class="op">+</span> <span class="op">(</span><span class="va">tauL</span><span class="op">/</span><span class="fl">2</span><span class="op">)</span> <span class="op">-</span> <span class="va">r0</span><span class="op">*</span><span class="va">Dt</span> <span class="op">)</span>
+  <span class="op">}</span>
+  
+  <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="va">b</span><span class="op">*</span><span class="va">vch</span><span class="op">/</span><span class="va">L</span><span class="op">)</span>
+<span class="op">}</span></code></pre></div>
+<p>In the first example there is no advective time delay and
+<span class="math inline">\(L/v_{ch} = \Delta t\)</span>. This results in time delay historgram in which the
+first two values equal 0.5. This is an example of the case <span class="math inline">\(r_{L}=r_{0}+1\)</span></p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">fd</span><span class="op">(</span>L<span class="op">=</span><span class="fl">200</span>,vch<span class="op">=</span><span class="fl">1</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">0</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
+<span class="co">#&gt; [1] 1</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
+<p><img src="Channel_HRU_files/figure-html/unnamed-chunk-7-1.png"><!-- --></p>
+<p>Extending the previous example the velocity now altered to that
+<span class="math inline">\(r_{L}=r_{0}\)</span>. The resulting non-negative histogram values are now the first
+two in the vector.</p>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">fd</span><span class="op">(</span>L<span class="op">=</span><span class="fl">200</span>,vch<span class="op">=</span><span class="fl">1.5</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">0</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
+<span class="co">#&gt; [1] 1</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
+<p><img src="Channel_HRU_files/figure-html/unnamed-chunk-8-1.png"><!-- --></p>
+<p>In contrast decreasing the channel velocity produces a more delayed
+histogram. In this case <span class="math inline">\(r_{L}&gt;r_{0}+1\)</span>.</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">fd</span><span class="op">(</span>L<span class="op">=</span><span class="fl">200</span>,vch<span class="op">=</span><span class="fl">0.5</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">0</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
+<span class="co">#&gt; [1] 1</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
+<p><img src="Channel_HRU_files/figure-html/unnamed-chunk-9-1.png"><!-- --></p>
+<p>Finally we look at two cases where <span class="math inline">\(\tau_0\)</span> is posisitve; being either a
+direct multiple of the time step</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">fd</span><span class="op">(</span>L<span class="op">=</span><span class="fl">600</span>,vch<span class="op">=</span><span class="fl">1</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">800</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
+<span class="co">#&gt; [1] 1</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
+<p><img src="Channel_HRU_files/figure-html/unnamed-chunk-10-1.png"><!-- --></p>
+<p>or not</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">fd</span><span class="op">(</span>L<span class="op">=</span><span class="fl">600</span>,vch<span class="op">=</span><span class="fl">1</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">850</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
+<span class="co">#&gt; [1] 1</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
+<p><img src="Channel_HRU_files/figure-html/unnamed-chunk-11-1.png"><!-- --></p>
+</div>
 </div>
 </div>
   </div>

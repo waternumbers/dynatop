@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9030</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9035</span>
       </span>
     </div>
 
@@ -131,7 +131,7 @@ catchment data supplied with the package. This can be loaded with</p>
 below.</p>
 <table class="table">
 <caption>
-<span id="tab:model-table">Table 1: </span> Description of top level model components</caption>
+<span id="tab:model-table">Table 1: </span> Description of top-level model components</caption>
 <colgroup>
 <col width="25%">
 <col width="25%">
@@ -165,7 +165,7 @@ below.</p>
 </tr>
 <tr class="odd">
 <td>point_inflow</td>
-<td>$data.frame</td>
+<td>data.frame</td>
 <td>Description of the point inflows to the channel network</td>
 </tr>
 <tr class="even">
@@ -191,14 +191,14 @@ below.</p>
 <tr class="even">
 <td>map</td>
 <td>list</td>
-<td>Location of files for for creating maps of the HRUs</td>
+<td>Location of files for creating plots of the HRUs</td>
 </tr>
 </tbody>
 </table>
 <div id="options" class="section level2">
 <h2 class="hasAnchor">
 <a href="#options" class="anchor"></a>Options</h2>
-<p>The options vector is a named character vector. Two names variables are used:</p>
+<p>The options vector is a named character vector. Two named variables are used:</p>
 <ul>
 <li>
 <code>transmissivity_profile</code> which defines the transmissivity function used
@@ -208,15 +208,15 @@ for the hillslope HRUs</li>
 </ul>
 <p>The columns present in the hillslope and channel data.frames will depend upon
 the value taken by these options. See the
-<a href="https://waternumbers.github.io/dynatop/articles/hillslope_hru.html">hillslope</a>
+<a href="Hillslope_HRU.html">hillslope</a>
 and
-<a href="https://waternumbers.github.io/dynatop/articles/channel_hru.html">channel</a>
+<a href="Channel_HRU.html">channel</a>
 vignettes for further details.</p>
 </div>
 <div id="hillslope-hru-table" class="section level2">
 <h2 class="hasAnchor">
 <a href="#hillslope-hru-table" class="anchor"></a>Hillslope HRU table</h2>
-<p>Each row of the hillslope HRU table describes a single hillslope HRU. In this example it looks like:</p>
+<p>Each row of the hillslope table describes a single hillslope HRU. In this example it looks like:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">hillslope</span><span class="op">)</span>
 <span class="co">#&gt;   id      area   atb_bar      s_bar min_dst width class r_sfmax s_rzmax s_rz0</span>
@@ -235,7 +235,7 @@ vignettes for further details.</p>
 <span class="co">#&gt; 6    -2 0.04 7200  0.1</span></code></pre></div>
 <p>The individual columns are documented in Table
 <a href="#tab:hillslope-table">2</a>. In this example the parameter columns relate to the exponential
-transmissivity profile. The parameters in the table will with the
+transmissivity profile. The parameters in the table will look like this with the
 transmissivity options selected.</p>
 <table class="table">
 <caption>
@@ -256,13 +256,14 @@ transmissivity options selected.</p>
 <tr class="odd">
 <td>id</td>
 <td>integer</td>
-<td>:-:</td>
+<td>-</td>
 <td>Unique identifying number of the HRU. These combined with the HRU numbers in the channel table should be unique and take values 1,2,3…</td>
 </tr>
 <tr class="even">
 <td>area</td>
 <td>numeric</td>
-<td><span class="math inline">\(m^2\)</span></td>
+<td>m<span class="math inline">\(^2\)</span>
+</td>
 <td>Surface area of the HRU</td>
 </tr>
 <tr class="odd">
@@ -274,7 +275,7 @@ transmissivity options selected.</p>
 <tr class="even">
 <td>s_bar</td>
 <td>numeric</td>
-<td>:-:</td>
+<td>-</td>
 <td>Average gradient</td>
 </tr>
 <tr class="odd">
@@ -286,49 +287,49 @@ transmissivity options selected.</p>
 <tr class="even">
 <td>class</td>
 <td>integer</td>
-<td>:-:</td>
+<td>-</td>
 <td>Classification of HRU e.g. by a combination of topographic index and rainfall input</td>
 </tr>
 <tr class="odd">
 <td>r_sfmax</td>
 <td>numeric</td>
-<td><span class="math inline">\(m/s\)</span></td>
+<td>m/s</td>
 <td>Maximum flow rate from surface to root zone (parameter)</td>
 </tr>
 <tr class="even">
 <td>c_sf</td>
 <td>numeric</td>
-<td><span class="math inline">\(m/s\)</span></td>
+<td>m/s</td>
 <td>Celerity of the surface excess storage (parameter)</td>
 </tr>
 <tr class="odd">
 <td>s_rzmax</td>
 <td>numeric</td>
-<td><span class="math inline">\(m\)</span></td>
+<td>m</td>
 <td>Maximum root zone depth (parameter)</td>
 </tr>
 <tr class="even">
 <td>s_rz0</td>
 <td>numeric</td>
-<td><span class="math inline">\(0-1\)</span></td>
+<td>0-1</td>
 <td>Initial root zone depth expressed as fraction of maximum depth (parameter)</td>
 </tr>
 <tr class="odd">
 <td>t_d</td>
 <td>numeric</td>
-<td><span class="math inline">\(s/m\)</span></td>
+<td>s/m</td>
 <td>Unsaturated zone time constant given per <span class="math inline">\(m\)</span> of saturated storage deficit (parameter)</td>
 </tr>
 <tr class="even">
 <td>ln_t0</td>
 <td>numeric</td>
-<td><span class="math inline">\(m/s\)</span></td>
+<td>m/s</td>
 <td>Log of the soil saturated conductivity (parameter)</td>
 </tr>
 <tr class="odd">
 <td>m</td>
 <td>numeric</td>
-<td>:-:</td>
+<td>-</td>
 <td>Exponential transmissivity decay parameter (parameter)</td>
 </tr>
 </tbody>
@@ -389,26 +390,27 @@ data. The columns required are documented in Table <a href="#tab:channel-table">
 <tr class="odd">
 <td>id</td>
 <td>integer</td>
-<td>:-:</td>
-<td>Unique identifying number of the hillslope HRU. These, combined with the id from the hillslope table should for consecutive integers increasing from 1.</td>
+<td>-</td>
+<td>Unique identifying number of the channel HRU. These, combined with the id from the hillslope table should for consecutive integers increasing from 1.</td>
 </tr>
 <tr class="even">
 <td>area</td>
 <td>numeric</td>
-<td><span class="math inline">\(m^2\)</span></td>
+<td>m<span class="math inline">\(^2\)</span>
+</td>
 <td>Surface area of the HRU in m<span class="math inline">\(^2\)</span>
 </td>
 </tr>
 <tr class="odd">
 <td>length</td>
 <td>numeric</td>
-<td><span class="math inline">\(m\)</span></td>
+<td>m</td>
 <td>Length of the channel in metres</td>
 </tr>
 <tr class="even">
 <td>v_ch</td>
 <td>numeric</td>
-<td><span class="math inline">\(m/s\)</span></td>
+<td>m/s</td>
 <td>Channel velocity parameter</td>
 </tr>
 </tbody>
@@ -438,13 +440,13 @@ data. The columns required are documented in Table <a href="#tab:channel-table">
 <tr class="odd">
 <td>name</td>
 <td>character</td>
-<td>:-:</td>
+<td>-</td>
 <td>Unique name to identify the gauge. Used to name the output series</td>
 </tr>
 <tr class="even">
 <td>id</td>
 <td>integer</td>
-<td>:-:</td>
+<td>-</td>
 <td>The id of the channel HRU on which the gauge is sited</td>
 </tr>
 </tbody>
@@ -473,13 +475,13 @@ are added to the inflow at the head of the channel length.</p>
 <tr class="odd">
 <td>name</td>
 <td>character</td>
-<td>:-:</td>
+<td>-</td>
 <td>Name of the input series to use.</td>
 </tr>
 <tr class="even">
 <td>id</td>
 <td>integer</td>
-<td>:-:</td>
+<td>-</td>
 <td>The id of the channel HRU to which the inflow is added</td>
 </tr>
 </tbody>
@@ -508,13 +510,13 @@ the channel. These are presumed to occur uniformly along the channel length.</p>
 <tr class="odd">
 <td>name</td>
 <td>character</td>
-<td>:-:</td>
+<td>-</td>
 <td>Name of the input series to use.</td>
 </tr>
 <tr class="even">
 <td>id</td>
 <td>integer</td>
-<td>:-:</td>
+<td>-</td>
 <td>The id of the channel HRU to which the inflow is added</td>
 </tr>
 </tbody>
@@ -528,7 +530,7 @@ the channel. These are presumed to occur uniformly along the channel length.</p>
 <div id="flow-direction" class="section level2">
 <h2 class="hasAnchor">
 <a href="#flow-direction" class="anchor"></a>Flow direction</h2>
-<p>The flow_direction data frame described the connections between the HRUs.</p>
+<p>The flow_direction data frame describes the connections between the HRUs.</p>
 <table class="table">
 <caption>
 <span id="tab:flow-direction-table">Table 7: </span> Description of flow_direction data frame columns</caption>
@@ -548,13 +550,13 @@ the channel. These are presumed to occur uniformly along the channel length.</p>
 <tr class="odd">
 <td>from</td>
 <td>integer</td>
-<td>:-:</td>
+<td>-</td>
 <td>id of the HRU which the flow comes from</td>
 </tr>
 <tr class="even">
 <td>to</td>
 <td>integer</td>
-<td>:-:</td>
+<td>-</td>
 <td>id of the HRU to which the flow is going</td>
 </tr>
 <tr class="odd">
@@ -581,7 +583,7 @@ the channel. These are presumed to occur uniformly along the channel length.</p>
 <a href="#precipitation-input" class="anchor"></a>Precipitation input</h2>
 <p>The precip_input data frame describes the precipitation series to use for each
 HRU. Each row contains a HRU id, the series to use and the fraction of the HRU
-are to which this series should be applied. From this an average precipitation
+to which this series should be applied. From this an average precipitation
 for each HRU is derived.</p>
 <table class="table">
 <caption>
@@ -602,13 +604,13 @@ for each HRU is derived.</p>
 <tr class="odd">
 <td>id</td>
 <td>integer</td>
-<td>:-:</td>
+<td>-</td>
 <td>The id of the channel HRU to which the input is applied</td>
 </tr>
 <tr class="even">
 <td>name</td>
 <td>character</td>
-<td>:-:</td>
+<td>-</td>
 <td>Name of the input series to use.</td>
 </tr>
 <tr class="odd">
@@ -635,7 +637,7 @@ for each HRU is derived.</p>
 <a href="#pet-input" class="anchor"></a>PET input</h2>
 <p>The pet_input data frame describes the potential evapotranspiration series to use for each
 HRU. Each row contains a HRU id, the series to use and the fraction of the HRU
-are to which this series should be applied. From this an average PET value
+to which this series should be applied. From this an average PET value
 for each HRU is derived.</p>
 <table class="table">
 <caption>
@@ -656,13 +658,13 @@ for each HRU is derived.</p>
 <tr class="odd">
 <td>id</td>
 <td>integer</td>
-<td>:-:</td>
+<td>-</td>
 <td>The id of the channel HRU to which the input is applied</td>
 </tr>
 <tr class="even">
 <td>name</td>
 <td>character</td>
-<td>:-:</td>
+<td>-</td>
 <td>Name of the input series to use.</td>
 </tr>
 <tr class="odd">
