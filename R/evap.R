@@ -48,14 +48,20 @@
 #' @export
 evap_est <- function(ts, eMin=0, eMax=0){
 
-    ## checks on input - TODO
-    ## fail if more then daily
+    ## Check min and max
+    if(!(eMin < eMax)){
+        stop("eMin should be less then eMax")
+    }
+    
+    
+    ## Check timestep
     dt <- diff(as.numeric(ts))
     if(!all(dt[]==dt[1])){
         stop("Irregularly spaced time series supplied")
     }else{
         dt <- dt[1]
     }
+    if(dt > 24*60*60){ stop("Time step can be no mroe then a day") }
 
     ## create a series of daily PET values based on eMin and eMax
     ## day 0 is Jan 1, 31 Dec is day 364 or day 365 depending on if leap year

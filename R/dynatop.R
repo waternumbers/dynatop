@@ -394,7 +394,6 @@ dynatop <- R6::R6Class(
 
             out <- private$model
             
-            ## TODO - add description...
             return(out)
         },
         ## this code checks the model
@@ -460,27 +459,7 @@ dynatop <- R6::R6Class(
             for(jj in names(req_names)){
                 req_names[[jj]] <- do.call(c,req_names[[jj]])
             }
-            
-            
-            ## parameter vector should be named numeric vector and contain all required names
-            ## if( !all(is.vector(model$param), is.numeric(model$param)) ){
-            ##     stop("param should be a numeric vector")
-            ## }
-            ## if( length(unique(names(model$param))) != length(model$param) ){
-            ##     stop("All values in param should have a unique name")
-            ## }
-            
-            ## idx  <- req_names$parameter %in% names(model$param)
-            ## if(!all(idx)){
-            ##     stop(paste("The following parameters are not specified:",
-            ##                paste(req_names[!idx],collapse=",")))
-            ## }
-            ## idx  <- names(model$param) %in% req_names$parameter
-            ## if(!all(idx)){
-            ##     stop(paste("The following parameters are not used:",
-            ##                paste(names(model$param)[!idx],collapse=",")))
-            ## }
-            
+                        
             ## check all output series have unique names
             if( length(req_names$output_names) != length(unique(req_names$output_names)) ){
                 stop("All output series should have a unique name")
@@ -567,7 +546,6 @@ dynatop <- R6::R6Class(
             nm <- intersect(paste(model$channel$id),names(tmp))
             n_chn_con[nm] <- tmp[nm]
             
-            ## TODO change this to reflect constant celerity solution!!!
             if( any(n_chn_con>1) ){
                 warning("Only channel HSUs routing to single channel HSUs are supported",
                         "\n",
@@ -598,7 +576,7 @@ dynatop <- R6::R6Class(
                 stop("Some channels do not reach an outlet")
             }
 
-            ## TODO add checks to map
+            ## Checks maps exist
             tmp <- sapply(model$map,file.exists)
             if(!all(tmp)){
                 warning("The following maps are missing:\n",
