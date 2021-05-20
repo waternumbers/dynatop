@@ -131,7 +131,7 @@ void dt_exp_init(Rcpp::DataFrame hillslope, // hillslope data frame
     log_l_sz_max[i] = ln_t0[i] + std::log( std::sin(beta[i]) );
     cosbeta_m[i] = std::cos(beta[i]) /m[i];
   }
-
+  
   // variable use with loop
   int cid; // current id
   double l_sz; // saturated zone outflow per unit width
@@ -272,6 +272,9 @@ void dt_exp_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
   const boost::uintmax_t opt_maxit = 1000;
   boost::uintmax_t opt_it = opt_maxit;
   std::pair<double, double> opt_res; // solution for output
+
+  //Rcpp::Rcout << "end of initialisation" << std::endl;
+
   
   // variable use with loop
   int cid; // current id
@@ -289,7 +292,8 @@ void dt_exp_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
 
   // start loop of time steps
   for(int it = 0; it < obs.nrow(); ++it) {
-    
+    //Rcpp::Rcout << "Interation " << it << std::endl;
+
     // initialise mass balance for the timestep
     std::fill(mbv.begin(), mbv.end(), 0.0);
     for(int ii=0; ii<nhillslope; ++ii){
@@ -350,25 +354,33 @@ void dt_exp_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
     	fsz_exp<double> fnc(s_uz[ii], s_sz[ii],
     			    l_sz_max[ii], cosbeta_m[ii],
     			    t_d[ii], Dt,Dx[ii],  l_sz_in, r_rz_uz);
-	
+	//Rcpp::Rcout << "Start of saturation " << std::endl;
+	//Rcpp::Rcout << fnc(0.0) << std::endl;
     	// test for saturation
     	if( fnc(0.0) >= 0.0 ){
+	  //Rcpp::Rcout << "Saturated" << std::endl;
     	  // then saturated
 	  l_sz = l_sz_max[ii];
 	  r_rz_uz = ( s_sz[ii] + (Dt/Dx[ii])*(l_sz - l_sz_in) - s_uz[ii] )/Dt;
 	  s_sz[ii] = 0.0;
     	}else{
+	  //Rcpp::Rcout << "Not Saturated" << std::endl;
 	  // not saturated test to see if wetting or drying
     	  if( fnc(s_sz[ii]) >= 0.0 ){
     	    // then wetting - solution between current s_sz and 0
+	    //Rcpp::Rcout << "Calling bisection" << std::endl;
 	    opt_res = boost::math::tools::bisect(fnc, 0.0, s_sz[ii], TerminationCondition(),opt_it);
     	  }else{
+	    //Rcpp::Rcout << "Drying" << std::endl;
 	    // drying - need to work lower depth to bracket
-	    double upr = 2.0*s_sz[ii];
+	    double upr = 2.0*s_sz[ii] + 0.01;
+	    //Rcpp::Rcout << "s_sz at start " << s_sz[ii] << std::endl;
 	    double fupr = fnc(upr);
 	    while( (fupr < 0.0) & (upr < 10.0)){
 	      upr += upr;
 	      fupr = fnc(upr);
+	      //Rcpp::Rcout << "upr is " << upr << " " << fupr << std::endl;
+	      
 	    }
 	    opt_res = boost::math::tools::bisect(fnc, s_sz[ii],upr, TerminationCondition(),opt_it);
     	  }
@@ -377,28 +389,31 @@ void dt_exp_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
     	      " Current best guess is between " << opt_res.first << " and " <<
     	      opt_res.second << std::endl;
     	  }
-	  
+	  //Rcpp::Rcout << "Final sat bit" << std::endl;
     	  s_sz[ii] = (opt_res.second + opt_res.first)/2.0;
     	  r_rz_uz = std::min( r_rz_uz, (s_sz[ii] + Dt/t_d[ii] - s_uz[ii])/Dt );
     	  l_sz = l_sz_max[ii]*exp(-s_sz[ii]*cosbeta_m[ii]);
     	}
-	
+	//Rcpp::Rcout << "unsat" << std::endl;
     	// solve unsaturated zone
     	s_uz[ii] = ( (t_d[ii]*s_sz[ii])/(t_d[ii]*s_sz[ii] + Dt) ) * (s_uz[ii]+Dt*r_rz_uz);
+	//Rcpp::Rcout << "r_sf_sz" << std::endl;
     	// compute revised r_sf_rz
     	r_sf_rz = std::min( r_sf_rz,
     			    (s_rz_max[ii] - s_rz[ii] - Dt*(precip[cid]-pet[cid]-r_rz_uz))/Dt
     			    );
-
+	//Rcpp::Rcout << "root zone" << std::endl;
 	// solve for root zone
 	s_rz[ii] = ( s_rz[ii] + Dt*(precip[cid] + r_sf_rz - r_rz_uz) ) * ( s_rz_max[ii] / (s_rz_max[ii] + Dt*pet[cid]) );
+	//Rcpp::Rcout << "surface" << std::endl;
     	// solve for surface
     	s_sf[ii] = ( Dx[ii] / (Dx[ii] + Dt*c_sf[ii]) ) * ( s_sf[ii] + Dt*( (q_sf_in[cid]/area[ii]) - r_sf_rz ));
-	
+	//Rcpp::Rcout << "mass balance" << std::endl;
     	// apply pet loss and precip input to mass balance
     	mbv[1] -= pet[cid]*(s_rz[ii]/s_rz_max[ii])*area[ii]*Dt;
     	mbv[2] += precip[cid]*area[ii]*Dt;
 
+	//Rcpp::Rcout << "strting link" << std::endl;
 	// tranfer on the outflow
     	q_sf_out = width[ii]*c_sf[ii]*s_sf[ii];
     	q_sz_out = width[ii]*l_sz;
@@ -413,9 +428,11 @@ void dt_exp_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
     	    link_from_id = flow_from[link_cntr];
     	  }
     	}
+	//Rcpp::Rcout << "ended link" << std::endl;
     	// end of hillslope loop
     	
       }
+      //Rcpp::Rcout << "exit hillslope loop" << std::endl;
       
       // loop channels for the sub step
       for(int ii=0; ii < nchannel; ++ii){
@@ -427,6 +444,7 @@ void dt_exp_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
       }
       // end of substep loop
     }
+    //Rcpp::Rcout << "exit substep loop" << std::endl;
     // final mass balance states
     for(int ii=0; ii<nhillslope; ++ii){
       mbv[4] -= area[ii]*(s_sf[ii] + s_rz[ii] + s_uz[ii] - s_sz[ii]);
