@@ -285,6 +285,7 @@ void dt_exp_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
   double chn_in; // flow volume to channel
   std::vector<double> mbv(5,0.0); // mass balance vector
   std::vector<double> ch_in(nchannel,0.0); // channel inflow vector
+  double lwr, upr; // used in saturated zone optimisation
 
   // variables for handling links
   int link_cntr = 0; // counter for flow links
@@ -369,28 +370,34 @@ void dt_exp_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
     	  if( fnc(s_sz[ii]) >= 0.0 ){
     	    // then wetting - solution between current s_sz and 0
 	    //Rcpp::Rcout << "Calling bisection" << std::endl;
-	    opt_res = boost::math::tools::bisect(fnc, 0.0, s_sz[ii], TerminationCondition(),opt_it);
+	    lwr = 0.0;
+	    upr = s_sz[ii];
+
     	  }else{
 	    //Rcpp::Rcout << "Drying" << std::endl;
+	    lwr = s_sz[ii];
 	    // drying - need to work lower depth to bracket
-	    double upr = 2.0*s_sz[ii] + 0.01;
+	    upr = 2.0*s_sz[ii] + 0.01;
 	    //Rcpp::Rcout << "s_sz at start " << s_sz[ii] << std::endl;
 	    double fupr = fnc(upr);
 	    while( (fupr < 0.0) & (upr < 10.0)){
 	      upr += upr;
 	      fupr = fnc(upr);
-	      //Rcpp::Rcout << "upr is " << upr << " " << fupr << std::endl;
-	      
 	    }
-	    opt_res = boost::math::tools::bisect(fnc, s_sz[ii],upr, TerminationCondition(),opt_it);
     	  }
+	  
+	  opt_res = boost::math::tools::bisect(fnc, lwr, upr, TerminationCondition(),opt_it);
+
+	  
     	  if(opt_it >= opt_maxit){
     	    Rcpp::Rcout << "Unable to locate solution in chosen iterations:" <<
     	      " Current best guess is between " << opt_res.first << " and " <<
     	      opt_res.second << std::endl;
     	  }
+	  
 	  //Rcpp::Rcout << "Final sat bit" << std::endl;
-    	  s_sz[ii] = (opt_res.second + opt_res.first)/2.0;
+	  s_sz[ii] = (lwr+upr)/2.0;
+    	  //s_sz[ii] = (opt_res.second + opt_res.first)/2.0;
     	  r_rz_uz = std::min( r_rz_uz, (s_sz[ii] + Dt/t_d[ii] - s_uz[ii])/Dt );
     	  l_sz = l_sz_max[ii]*exp(-s_sz[ii]*cosbeta_m[ii]);
     	}
