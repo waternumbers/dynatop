@@ -380,14 +380,17 @@ void dt_exp_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
 	    upr = 2.0*s_sz[ii] + 0.01;
 	    //Rcpp::Rcout << "s_sz at start " << s_sz[ii] << std::endl;
 	    double fupr = fnc(upr);
-	    while( (fupr < 0.0) & (upr < 10.0)){
+	    while( (fupr < 0.0) & (upr < 100.0)){
 	      upr += upr;
 	      fupr = fnc(upr);
 	    }
     	  }
+	  //Rcpp::Rcout << "lower " << lwr << " " << fnc(lwr) << std::endl;
+	  //Rcpp::Rcout << "upper " << upr << " " << fnc(upr) << std::endl;
 	  
+	  opt_it = opt_maxit;
 	  opt_res = boost::math::tools::bisect(fnc, lwr, upr, TerminationCondition(),opt_it);
-
+	  
 	  
     	  if(opt_it >= opt_maxit){
     	    Rcpp::Rcout << "Unable to locate solution in chosen iterations:" <<
@@ -396,7 +399,8 @@ void dt_exp_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
     	  }
 	  
 	  //Rcpp::Rcout << "Final sat bit" << std::endl;
-	  s_sz[ii] = (lwr+upr)/2.0;
+	  s_sz[ii] = (opt_res.first+opt_res.second)/2.0;
+	  //Rcpp::Rcout << "Opt " << s_sz[ii] << " " << fnc(s_sz[ii]) << std::endl;
     	  //s_sz[ii] = (opt_res.second + opt_res.first)/2.0;
     	  r_rz_uz = std::min( r_rz_uz, (s_sz[ii] + Dt/t_d[ii] - s_uz[ii])/Dt );
     	  l_sz = l_sz_max[ii]*exp(-s_sz[ii]*cosbeta_m[ii]);

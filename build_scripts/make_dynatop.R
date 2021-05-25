@@ -68,9 +68,30 @@ save("Swindale",file="../data/Swindale.rda")
 
 
 ## ########################################
-## This code uses Swindale and fits nearly all the input and output calls
+## This code uses Swindale and calls all the different transmissivity profiles
 rm(list=ls())
-devtools::load_all("./dynatop"); data("Swindale");
+devtools::load_all(".."); data("Swindale");
+
+dt <- dynatop$new(Swindale$model)$add_data(Swindale$obs)
+dt$initialise(1e-6)$sim_hillslope()
+range(dt$get_mass_errors())
+
+mdl <- Swindale$model
+mdl$hillslope$c_sz <- 0.5; mdl$hillslope$D <- 5
+mdl$options["transmissivity_profile"] <- "constant"
+dt <- dynatop$new(mdl)$add_data(Swindale$obs)
+dt$initialise(1e-6)$sim_hillslope()
+range(rowSums(dt$get_mass_errors()))
+
+mdl <- Swindale$model
+mdl$hillslope$D <- 5
+mdl$options["transmissivity_profile"] <- "bounded_exponential"
+dt <- dynatop$new(mdl)$add_data(Swindale$obs)
+dt$initialise(1e-6)$sim_hillslope()
+range(rowSums(dt$get_mass_errors()))
+
+
+############################################################################
 
 profvis::profvis({m1 <- dynatop$new(Swindale$model)$add_data(Swindale$obs)$initialise(1e-6)$sim_hillslope(mass_check=TRUE)$sim_channel(mass_check=TRUE)})
 

@@ -287,7 +287,8 @@ void dt_bexp_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
   double chn_in; // flow volume to channel
   std::vector<double> mbv(5,0.0); // mass balance vector
   std::vector<double> ch_in(nchannel,0.0); // channel inflow vector
-
+  double lwr, upr; // used in saturated zone optimisation
+  
   // variables for handling links
   int link_cntr = 0; // counter for flow links
   int link_from_id = flow_from[link_cntr];
@@ -366,18 +367,25 @@ void dt_bexp_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
 	  // not saturated test to see if wetting or drying
     	  if( fnc(s_sz[ii]) >= 0.0 ){
     	    // then wetting - solution between current s_sz and 0
-	    opt_res = boost::math::tools::bisect(fnc, 0.0, s_sz[ii], TerminationCondition(),opt_it);
+	    lwr = 0.0;
+	    upr = s_sz[ii];
     	  }else{
 	    // drying - need to work lower depth to bracket
-	    double upr = 2.0*s_sz[ii] + 0.01;
+	    lwr = s_sz[ii];
+	    upr = 2.0*s_sz[ii] + 0.01;
 	    double fupr = fnc(upr);
 	    while( (fupr < 0.0) & (upr < D[ii])){
 	      upr += upr;
 	      fupr = fnc(upr);
 	    }
 	    upr = std::min(D[ii],upr); // since fnc extects 0=<x=<D
-	    opt_res = boost::math::tools::bisect(fnc, s_sz[ii],upr, TerminationCondition(),opt_it);
-    	  }
+	  }
+	  //Rcpp::Rcout << "lower " << lwr << " " << fnc(lwr) << std::endl;
+	  //Rcpp::Rcout << "upper " << upr << " " << fnc(upr) << std::endl;
+	  
+	  opt_it = opt_maxit;
+	  opt_res = boost::math::tools::bisect(fnc, lwr, upr, TerminationCondition(),opt_it);
+
     	  if(opt_it >= opt_maxit){
     	    Rcpp::Rcout << "Unable to locate solution in chosen iterations:" <<
     	      " Current best guess is between " << opt_res.first << " and " <<
