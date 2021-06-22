@@ -144,13 +144,13 @@ dynatop <- R6::R6Class(
         ## Functions for extracting and plotting data
         #' @description Return channel inflow as an xts series or list of xts series
         #' @param total logical if plot total inflow is to be plotted
-        #' @param seperate logical if the surface and saturated zone inflows should be returned seperately
-        get_channel_inflow = function(total=FALSE,seperate=FALSE){
+        #' @param separate logical if the surface and saturated zone inflows should be returned separately
+        get_channel_inflow = function(total=FALSE,separate=FALSE){
             x <- private$time_series$channel_inflow
             if(total){
                 x <- lapply(x,rowSums)
             }
-            if(seperate){
+            if(separate){
                 x$surface <- xts::xts(x$surface,
                                    order.by=private$time_series$index)
                 x$saturated <- xts::xts(x$saturated,

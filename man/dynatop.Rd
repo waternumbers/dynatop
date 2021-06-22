@@ -191,7 +191,7 @@ invisible(self) for chaining
 \subsection{Method \code{get_channel_inflow()}}{
 Return channel inflow as an xts series or list of xts series
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$get_channel_inflow(total = FALSE, seperate = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$get_channel_inflow(total = FALSE, separate = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -199,7 +199,7 @@ Return channel inflow as an xts series or list of xts series
 \describe{
 \item{\code{total}}{logical if plot total inflow is to be plotted}
 
-\item{\code{seperate}}{logical if the surface and saturated zone inflows should be returned seperately}
+\item{\code{separate}}{logical if the surface and saturated zone inflows should be returned separately}
 }
 \if{html}{\out{</div>}}
 }
