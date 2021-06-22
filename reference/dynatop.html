@@ -73,7 +73,7 @@ R6 Class for Dynamic TOPMODEL" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9040</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9041</span>
       </span>
     </div>
 
@@ -277,12 +277,14 @@ R6 Class for Dynamic TOPMODEL" />
 <p>invisible(self) for chaining</p>
 <p><hr>
 <a id="method-get_channel_inflow"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>get_channel_inflow()</code></h3>
-<p>Return channel inflow as an xts series</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>dynatop</span><span class='op'>$</span><span class='fu'>get_channel_inflow</span><span class='op'>(</span>total <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre><p></div></p>
+<p>Return channel inflow as an xts series or list of xts series</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
+<p><div class="r"></p><pre><span class='va'>dynatop</span><span class='op'>$</span><span class='fu'>get_channel_inflow</span><span class='op'>(</span>total <span class='op'>=</span> <span class='cn'>FALSE</span>, separate <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
 <dt><code>total</code></dt><dd><p>logical if plot total inflow is to be plotted</p></dd>
+
+<dt><code>separate</code></dt><dd><p>logical if the surface and saturated zone inflows should be returned separately</p></dd>
 
 </dl><p></div></p>
 <p><hr>
