@@ -169,18 +169,19 @@ void dt_cnst_init(Rcpp::DataFrame hillslope, // hillslope data frame
 // Function for solving
 // [[Rcpp::export]]
 void dt_cnst_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
-		     Rcpp::DataFrame channel, // channel data frame
-		     Rcpp::DataFrame flow_direction, // flow directions data frame
-		     Rcpp::DataFrame precip_input, // precipitation input data frame
-		     Rcpp::DataFrame pet_input, // PET input data frame
-		     Rcpp::NumericMatrix obs, // external series
-		     Rcpp::NumericMatrix channel_inflow, // channel_inflow to compute
-		     Rcpp::NumericMatrix mass_balance, // mass balance for each timestep
-		     std::vector<bool> keep_states,
-		     Rcpp::List state_rec,
-		     double timestep,
-		     int n_sub_step
-		     ){
+		      Rcpp::DataFrame channel, // channel data frame
+		      Rcpp::DataFrame flow_direction, // flow directions data frame
+		      Rcpp::DataFrame precip_input, // precipitation input data frame
+		      Rcpp::DataFrame pet_input, // PET input data frame
+		      Rcpp::NumericMatrix obs, // external series
+		      Rcpp::NumericMatrix channel_inflow_sf, // channel_inflow from surface - to compute
+		      Rcpp::NumericMatrix channel_inflow_sz, // channel_inflow from saturated - to compute
+		      Rcpp::NumericMatrix mass_balance, // mass balance for each timestep
+		      std::vector<bool> keep_states,
+		      Rcpp::List state_rec,
+		      double timestep,
+		      int n_sub_step
+		      ){
 
   // seperate out hillslope to vector
   // recall NumericVector are references in this case
@@ -264,7 +265,8 @@ void dt_cnst_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
   double q_sf_out,q_sz_out; // out flow fluxes
   double chn_in; // flow volume to channel
   std::vector<double> mbv(5,0.0); // mass balance vector
-  std::vector<double> ch_in(nchannel,0.0); // channel inflow vector
+  std::vector<double> ch_in_sf(nchannel,0.0); // channel inflow vector for surface
+  std::vector<double> ch_in_sz(nchannel,0.0); // channel inflow vector for saturated
   double lwr, upr; // used in saturated zone optimisation
  
   // variables for handling links
@@ -281,7 +283,8 @@ void dt_cnst_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
     }
 
     // initialise channel inflow
-    std::fill(ch_in.begin(), ch_in.end(), 0.0);
+    std::fill(ch_in_sf.begin(), ch_in_sf.end(), 0.0);
+    std::fill(ch_in_sz.begin(), ch_in_sz.end(), 0.0);
 
     // compute the precipitation input
     std::fill(precip.begin(), precip.end(),0.0);
@@ -419,10 +422,13 @@ void dt_cnst_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
       // loop channels for the sub step
       for(int ii=0; ii < nchannel; ++ii){
       	cid = channel_id[ii];
+	// mass balance
       	chn_in = (channel_area[ii]*precip[cid]+ q_sf_in[cid] + q_sz_in[cid])*Dt;
       	mbv[2] += precip[cid]*channel_area[ii]*Dt; 
-      	ch_in[ii] += chn_in; // volume of flow to channel
       	mbv[3] -= chn_in; // volume lost from hillslope to channel
+	// add volumes to correct channel contributions
+      	ch_in_sf[ii] += (channel_area[ii]*precip[cid]+ q_sf_in[cid])*Dt; // volume of rainfall and flow from surface
+	ch_in_sz[ii] += q_sz_in[cid]*Dt; // volume of flow to channel from saturated zone
       }
       // end of substep loop
     }
@@ -438,7 +444,9 @@ void dt_cnst_implicit(Rcpp::DataFrame hillslope, // hillslope data frame
     
     // convert channel inflow to rate
     for(int ii=0; ii < nchannel; ++ii){
-      channel_inflow(it,ii) = ch_in[ii]/timestep; //channel_inflow(it,ii)/timestep;
+      channel_inflow_sf(it,ii) = ch_in_sf[ii]/timestep;
+      channel_inflow_sz(it,ii) = ch_in_sz[ii]/timestep;
+      // channel_inflow(it,ii) = ch_in[ii]/timestep; //channel_inflow(it,ii)/timestep;
     }
     
     // keep states if required

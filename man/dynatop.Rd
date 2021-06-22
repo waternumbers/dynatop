@@ -189,15 +189,17 @@ invisible(self) for chaining
 \if{html}{\out{<a id="method-get_channel_inflow"></a>}}
 \if{latex}{\out{\hypertarget{method-get_channel_inflow}{}}}
 \subsection{Method \code{get_channel_inflow()}}{
-Return channel inflow as an xts series
+Return channel inflow as an xts series or list of xts series
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$get_channel_inflow(total = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$get_channel_inflow(total = FALSE, seperate = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{total}}{logical if plot total inflow is to be plotted}
+
+\item{\code{seperate}}{logical if the surface and saturated zone inflows should be returned seperately}
 }
 \if{html}{\out{</div>}}
 }

@@ -35,9 +35,9 @@ drat::insertPackage(ftmp,dratPath,action="prune")
 
 tmp <- paste0(pkgName,".zip")
 ftmp <- file.path("../..",tmp)
-download.file(file.path(mch$urls()$artifacts[2],tmp),ftmp)
-drat::insertPackage(ftmp,dratPath,action="prune")
 download.file(file.path(mch$urls()$artifacts[3],tmp),ftmp)
+drat::insertPackage(ftmp,dratPath,action="prune")
+download.file(file.path(mch$urls()$artifacts[2],tmp),ftmp)
 drat::insertPackage(ftmp,dratPath,action="prune")
 
 ## tidy up drat
@@ -49,7 +49,7 @@ drat::pruneRepo(dratPath,pkg="dynatop",remove="git")## this only does source fil
 ###########################################################################
 ## This converts the data for Swindale into the data object used in the examples.
 rm(list=ls())
-pacPath <- '..'
+pacPath <- '../'
 devtools::load_all(pacPath)
 model <- "Swindale.rds"
 model$precip_input$name <- "Rainfall"
@@ -73,11 +73,11 @@ save("Swindale",file="../data/Swindale.rda")
 ## ########################################
 ## This code uses Swindale and calls all the different transmissivity profiles
 rm(list=ls())
-devtools::load_all(".."); data("Swindale");
+devtools::load_all("../"); data("Swindale");
 
 dt <- dynatop$new(Swindale$model)$add_data(Swindale$obs)
 dt$initialise(1e-6)$sim_hillslope()
-range(dt$get_mass_errors())
+range(rowSums(dt$get_mass_errors()))
 
 mdl <- Swindale$model
 mdl$hillslope$c_sz <- 0.5; mdl$hillslope$D <- 5
@@ -89,6 +89,12 @@ range(rowSums(dt$get_mass_errors()))
 mdl <- Swindale$model
 mdl$hillslope$D <- 5
 mdl$options["transmissivity_profile"] <- "bounded_exponential"
+dt <- dynatop$new(mdl)$add_data(Swindale$obs)
+dt$initialise(1e-6)$sim_hillslope()
+range(rowSums(dt$get_mass_errors()))
+
+mdl <- Swindale$model
+mdl$options["transmissivity_profile"] <- "exponential_explicit"
 dt <- dynatop$new(mdl)$add_data(Swindale$obs)
 dt$initialise(1e-6)$sim_hillslope()
 range(rowSums(dt$get_mass_errors()))

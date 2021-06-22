@@ -108,7 +108,7 @@ dynatop <- R6::R6Class(
             }
             
             ## check presence of channel_inflow
-            if( nrow(private$time_series$channel_inflow) !=
+            if( nrow(private$time_series$channel_inflow$surface) !=
                 length(private$time_series$index) ){
                 stop("Suitable channel_inflow not available")
             }
@@ -142,15 +142,25 @@ dynatop <- R6::R6Class(
         },
         ## ############
         ## Functions for extracting and plotting data
-        #' @description Return channel inflow as an xts series
+        #' @description Return channel inflow as an xts series or list of xts series
         #' @param total logical if plot total inflow is to be plotted
-        get_channel_inflow = function(total=FALSE){
+        #' @param seperate logical if the surface and saturated zone inflows should be returned seperately
+        get_channel_inflow = function(total=FALSE,seperate=FALSE){
             x <- private$time_series$channel_inflow
             if(total){
-                x <- rowSums(x)
+                x <- lapply(x,rowSums)
             }
-            xts::xts(x,
-                     order.by=private$time_series$index)
+            if(seperate){
+                x$surface <- xts::xts(x$surface,
+                                   order.by=private$time_series$index)
+                x$saturated <- xts::xts(x$saturated,
+                                   order.by=private$time_series$index)
+            }else{
+                x <- x$surface + x$saturated
+                x <- xts::xts(x,
+                              order.by=private$time_series$index)
+            }
+            return(x)
         },
         #' @description Plot the channel inflow
         #' @param total logical if plot total inflow is to be plotted
@@ -723,11 +733,21 @@ dynatop <- R6::R6Class(
                 c("initial_state","e_t","p","channel_inflow","final_state")
 
             ## set up  channel_inflow
-            private$time_series$channel_inflow <- matrix(as.numeric(NA),
-                                                         nrow(private$time_series$obs),
-                                                         length(private$model$channel$id))
-            colnames(private$time_series$channel_inflow) <- private$model$channel$id
+            ## cpode prior to splitting inputs
+            ## private$time_series$channel_inflow <- matrix(as.numeric(NA),
+            ##                                              nrow(private$time_series$obs),
+            ##                                              length(private$model$channel$id))
+            ## colnames(private$time_series$channel_inflow) <- private$model$channel$id
+            private$time_series$channel_inflow <- list(surface = matrix(as.numeric(NA),
+                                                                     nrow(private$time_series$obs),
+                                                                     length(private$model$channel$id)),
+                                                       saturated = matrix(as.numeric(NA),
+                                                                     nrow(private$time_series$obs),
+                                                                     length(private$model$channel$id)))
+                                                       
+            colnames(private$time_series$channel_inflow$surface) <- colnames(private$time_series$channel_inflow$saturated) <- private$model$channel$id
 
+            
             switch(private$model$options['transmissivity_profile'],
                    "exponential" = dt_exp_implicit(private$model$hillslope,
                                                    private$model$channel,
@@ -735,7 +755,8 @@ dynatop <- R6::R6Class(
                                                    private$summary$precip_input,
                                                    private$summary$pet_input,
                                                    private$time_series$obs,
-                                                   private$time_series$channel_inflow,
+                                                   private$time_series$channel_inflow$surface,
+                                                   private$time_series$channel_inflow$saturated,
                                                    private$time_series$mass_balance,
                                                    as.logical( keep_states ),
                                                    private$time_series$state_record,
@@ -748,8 +769,8 @@ dynatop <- R6::R6Class(
                                                             private$summary$precip_input,
                                                             private$summary$pet_input,
                                                             private$time_series$obs,
-                                                            private$time_series$channel_inflow,
-                                                            private$time_series$mass_balance,
+                                                            private$time_series$channel_inflow$surface,
+                                                            private$time_series$channel_inflow$saturated,                                                        private$time_series$mass_balance,
                                                             as.logical( keep_states ),
                                                             private$time_series$state_record,
                                                             ts$step,
@@ -761,7 +782,8 @@ dynatop <- R6::R6Class(
                                                             private$summary$precip_input,
                                                             private$summary$pet_input,
                                                             private$time_series$obs,
-                                                            private$time_series$channel_inflow,
+                                                            private$time_series$channel_inflow$surface,
+                                                            private$time_series$channel_inflow$saturated,
                                                             private$time_series$mass_balance,
                                                             as.logical( keep_states ),
                                                             private$time_series$state_record,
@@ -774,7 +796,8 @@ dynatop <- R6::R6Class(
                                                  private$summary$precip_input,
                                                  private$summary$pet_input,
                                                  private$time_series$obs,
-                                                 private$time_series$channel_inflow,
+                                                 private$time_series$channel_inflow$surface,
+                                                 private$time_series$channel_inflow$saturated,
                                                  private$time_series$mass_balance,
                                                  as.logical( keep_states ),
                                                  private$time_series$state_record,
@@ -922,7 +945,8 @@ dynatop <- R6::R6Class(
                 for(ii in rownames(df)){
                     ply <- fd(df[ii,]) ##fpoly(df[ii,])
                     ## compute input
-                    x <- private$time_series$channel_inflow[,ii]
+                    x <- private$time_series$channel_inflow$surface[,ii] +
+                        private$time_series$channel_inflow$saturated[,ii]
                     ## add diffuse inputs to x
                     idx <- paste(private$model$diffuse_inflow$id)==ii
                     nm <- private$model$diffuse_inflow$name[idx]

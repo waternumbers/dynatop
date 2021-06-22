@@ -9,8 +9,8 @@ dt_bexp_init <- function(hillslope, channel, flow_direction, r_uz_sz_0) {
     invisible(.Call(`_dynatop_dt_bexp_init`, hillslope, channel, flow_direction, r_uz_sz_0))
 }
 
-dt_bexp_implicit <- function(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step) {
-    invisible(.Call(`_dynatop_dt_bexp_implicit`, hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step))
+dt_bexp_implicit <- function(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step) {
+    invisible(.Call(`_dynatop_dt_bexp_implicit`, hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step))
 }
 
 dt_cnst_courant <- function(hillslope, courant, timestep, n_sub_step) {
@@ -21,8 +21,8 @@ dt_cnst_init <- function(hillslope, channel, flow_direction, r_uz_sz_0) {
     invisible(.Call(`_dynatop_dt_cnst_init`, hillslope, channel, flow_direction, r_uz_sz_0))
 }
 
-dt_cnst_implicit <- function(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step) {
-    invisible(.Call(`_dynatop_dt_cnst_implicit`, hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step))
+dt_cnst_implicit <- function(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step) {
+    invisible(.Call(`_dynatop_dt_cnst_implicit`, hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step))
 }
 
 dt_exp_courant <- function(hillslope, courant, timestep, n_sub_step) {
@@ -33,11 +33,11 @@ dt_exp_init <- function(hillslope, channel, flow_direction, r_uz_sz_0) {
     invisible(.Call(`_dynatop_dt_exp_init`, hillslope, channel, flow_direction, r_uz_sz_0))
 }
 
-dt_exp_implicit <- function(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step) {
-    invisible(.Call(`_dynatop_dt_exp_implicit`, hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step))
+dt_exp_implicit <- function(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step) {
+    invisible(.Call(`_dynatop_dt_exp_implicit`, hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step))
 }
 
-dt_exp_explicit <- function(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step) {
-    invisible(.Call(`_dynatop_dt_exp_explicit`, hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow, mass_balance, keep_states, state_rec, timestep, n_sub_step))
+dt_exp_explicit <- function(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step) {
+    invisible(.Call(`_dynatop_dt_exp_explicit`, hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step))
 }
 

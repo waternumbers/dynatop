@@ -13,7 +13,8 @@ void dt_exp_explicit(Rcpp::DataFrame hillslope, // hillslope data frame
 		     Rcpp::DataFrame precip_input, // precipitation input data frame
 		     Rcpp::DataFrame pet_input, // PET input data frame
 		     Rcpp::NumericMatrix obs, // external series
-		     Rcpp::NumericMatrix channel_inflow, // channel_inflow to compute
+		     Rcpp::NumericMatrix channel_inflow_sf, // channel_inflow from surface - to compute
+		     Rcpp::NumericMatrix channel_inflow_sz, // channel_inflow from saturated - to comput
 		     Rcpp::NumericMatrix mass_balance, // mass balance for each timestep
 		     std::vector<bool> keep_states,
 		     Rcpp::List state_rec,
@@ -109,8 +110,9 @@ void dt_exp_explicit(Rcpp::DataFrame hillslope, // hillslope data frame
   double tDt(0.0); // total time evaluated in step
   
   std::vector<double> mbv(5,0.0); // mass balance vector
-  std::vector<double> ch_in(nchannel,0.0); // channel inflow vector
-  
+  std::vector<double> ch_in_sf(nchannel,0.0); // channel inflow vector for surface
+  std::vector<double> ch_in_sz(nchannel,0.0); // channel inflow vector for saturated
+   
   // variables for handling links
   int link_cntr = 0; // counter for flow links
   int link_from_id = flow_from[link_cntr];
@@ -125,8 +127,9 @@ void dt_exp_explicit(Rcpp::DataFrame hillslope, // hillslope data frame
     }
     
     // initialise channel inflow
-    std::fill(ch_in.begin(), ch_in.end(), 0.0);
-    
+    std::fill(ch_in_sf.begin(), ch_in_sf.end(), 0.0);
+    std::fill(ch_in_sz.begin(), ch_in_sz.end(), 0.0);
+       
     // compute the precipitation input
     std::fill(precip.begin(), precip.end(),0.0);
     for(unsigned int ii=0; ii<precip_id.size(); ++ii){
@@ -255,10 +258,13 @@ void dt_exp_explicit(Rcpp::DataFrame hillslope, // hillslope data frame
       // loop channels for the sub step
       for(int ii=0; ii < nchannel; ++ii){
       	cid = channel_id[ii];
+	// mass balance
       	double chn_in = (channel_area[ii]*precip[cid]+ q_sf_in[cid] + q_sz_in[cid])*Dt;
       	mbv[2] += precip[cid]*channel_area[ii]*Dt; 
-      	ch_in[ii] += chn_in; // volume of flow to channel
       	mbv[3] -= chn_in; // volume lost from hillslope to channel
+	// add volumes to correct channel contributions
+      	ch_in_sf[ii] += (channel_area[ii]*precip[cid]+ q_sf_in[cid])*Dt; // volume of rainfall and flow from surface
+	ch_in_sz[ii] += q_sz_in[cid]*Dt; // volume of flow to channel from saturated zone
       }
 
       // add to time
@@ -278,7 +284,8 @@ void dt_exp_explicit(Rcpp::DataFrame hillslope, // hillslope data frame
     
     // convert channel inflow to rate
     for(int ii=0; ii < nchannel; ++ii){
-      channel_inflow(it,ii) = ch_in[ii]/timestep; //channel_inflow(it,ii)/timestep;
+      channel_inflow_sf(it,ii) = ch_in_sf[ii]/timestep;
+      channel_inflow_sz(it,ii) = ch_in_sz[ii]/timestep;
     }
     
     // keep states if required
