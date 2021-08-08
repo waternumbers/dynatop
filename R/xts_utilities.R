@@ -10,6 +10,7 @@
 #' @details Time series of observation data are often of different temporal resolutions, however the input to most hydrological models, as is the case with the Dynamic TOPMODEL, requires those data at the same interval. This provides a method to resample a collection of such data to a single interval.
 #'
 #' Because of the methods used the results:
+#' 
 #' - are not accurate when the input data does not have a constant timestep. The code issued a warnign and proceeds assuming the data are equally spaced with the modal timestep.
 #' - do not guarentee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.
 #'
@@ -56,7 +57,7 @@ resample_xts <- function(obs, dt, is.rate=FALSE){
         ## period e.g m/hr
         vals <- apply(as.matrix(obs), MARGIN=2, FUN=rep, each=fact)   # won't wotk if fact is not an integer
         vals <- matrix(vals, ncol=ncol(vals))
-        tms <- seq(index(obs)[1], along.with=vals, by=dt)
+        tms <- seq(index(obs)[1]-dt, along.with=vals, by=dt)
         ## if the value is a rate then it should be applied to all of the values in
         ## the interval "as is". Otherwise each values needs to be divided across the
         ## smaller time steps so that the total across the original time intervals is the same
@@ -67,12 +68,17 @@ resample_xts <- function(obs, dt, is.rate=FALSE){
         ## then we need to aggregate (e.g. quarterly to hourly)
         tryCatch({ fact <- floor(dt/dt_series) },
                  error = {fact <- 1})
-        tms <- seq(start(obs), end(obs), by=dt)
+        tms <- index(obs)[seq(fact,nrow(obs),by=fact)]
+        # tms <- seq(start(obs), end(obs), by=dt)
         idx <- rep(tms, each=fact)
-        idx <- idx[1:nrow(obs)]
+        nn <- min(length(idx),nrow(obs))
+        idx <- idx[1:nn]
+        obs <- obs[1:nn,]
+        ##idx <- idx[1:nrow(obs)]
         if(is.rate){fun=mean}else{fun=sum}
-        obs_agg <- aggregate(zoo::zoo(obs), by = idx, FUN=fun)
+        obs_agg <- as.xts(aggregate(zoo::zoo(obs), by = idx, FUN=fun))
         names(obs_agg) <- names(obs)
+        
     }
 
     return(obs_agg)

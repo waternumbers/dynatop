@@ -5,6 +5,11 @@
 
 using namespace Rcpp;
 
+#ifdef RCPP_USE_GLOBAL_ROSTREAM
+Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
+Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
+#endif
+
 // dt_bexp_courant
 void dt_bexp_courant(Rcpp::DataFrame hillslope, Rcpp::NumericMatrix courant, double timestep, int n_sub_step);
 RcppExport SEXP _dynatop_dt_bexp_courant(SEXP hillslopeSEXP, SEXP courantSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP) {
