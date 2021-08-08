@@ -210,13 +210,15 @@ Return channel inflow as an xts series or list of xts series
 \subsection{Method \code{plot_channel_inflow()}}{
 Plot the channel inflow
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_channel_inflow(total = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_channel_inflow(total = FALSE, separate = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{total}}{logical if plot total inflow is to be plotted}
+\item{\code{total}}{logical if total inflow is to be plotted}
+
+\item{\code{separate}}{logical logical if the surface and saturated zone inflows should be plotted separately}
 }
 \if{html}{\out{</div>}}
 }
@@ -244,7 +246,7 @@ Return flow at the gauges as an xts series
 \subsection{Method \code{plot_gauge_flow()}}{
 Get the flow at gauges
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_gauge_flow(gauge = names(private$time_series$gauge_flow))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_gauge_flow(gauge = colnames(private$time_series$gauge_flow))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -297,7 +299,7 @@ Return states
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{record}}{logical TRUE if the record should be returned. Otherwise surrent states returned}
+\item{\code{record}}{logical TRUE if the record should be returned. Otherwise the current states returned}
 }
 \if{html}{\out{</div>}}
 }

@@ -25,8 +25,7 @@ rhub::validate_email() # for first time that session
 pkgName <- sub('\\.tar.gz$', '', basename(tmp)) 
 ## rhub::platforms()[,1] # lists platforms
 mch <- rhub::check(path = tmp,
-                   platform = c("macos-highsierra-release-cran","windows-x86_64-release",
-                                "windows-x86_64-oldrel"))
+                   platform = c("macos-highsierra-release-cran","windows-x86_64-release"))
 
 tmp <- paste0(pkgName,".tgz")
 ftmp <- file.path("../..",tmp)
@@ -35,8 +34,8 @@ drat::insertPackage(ftmp,dratPath,action="prune")
 
 tmp <- paste0(pkgName,".zip")
 ftmp <- file.path("../..",tmp)
-download.file(file.path(mch$urls()$artifacts[3],tmp),ftmp)
-drat::insertPackage(ftmp,dratPath,action="prune")
+##download.file(file.path(mch$urls()$artifacts[3],tmp),ftmp)
+##drat::insertPackage(ftmp,dratPath,action="prune")
 download.file(file.path(mch$urls()$artifacts[2],tmp),ftmp)
 drat::insertPackage(ftmp,dratPath,action="prune")
 

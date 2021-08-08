@@ -163,10 +163,23 @@ dynatop <- R6::R6Class(
             return(x)
         },
         #' @description Plot the channel inflow
-        #' @param total logical if plot total inflow is to be plotted
-        plot_channel_inflow = function(total=FALSE){
-            x <- self$get_channel_inflow(total)
-            plot(x)
+        #' @param total logical if total inflow is to be plotted
+        #' @param separate logical logical if the surface and saturated zone inflows should be plotted separately
+        plot_channel_inflow = function(total=FALSE,separate=FALSE){
+            x <- self$get_channel_inflow(total,separate)
+            if(total){
+                lloc <- NULL
+                if(separate){
+                    x <- merge(x$surface,x$saturated)
+                    names(x) = c("surface","saturated")
+                    lloc <- "topright"
+                }
+                plot(x,main="Channel Inflow",legend.loc=lloc)
+            }else{
+                x11();par(mfrow=c(2,1))
+                plot(x$surface,main="Channel Inflow: surface",legend.loc=lloc)
+                plot(x$saturated,main="Channel Inflow: saturated",legend.loc=lloc)
+            }
         },
         #' @description Return flow at the gauges as an xts series
         #' @param gauge names of gauges to return (default is all gauges)
@@ -178,8 +191,8 @@ dynatop <- R6::R6Class(
         },
         #' @description Get the flow at gauges
         #' @param gauge names of gauges to return (default is all gauges)
-        plot_gauge_flow = function(gauge=names(private$time_series$gauge_flow)){
-            plot( self$get_gauge_flow(gauge) )
+        plot_gauge_flow = function(gauge=colnames(private$time_series$gauge_flow)){
+            plot( self$get_gauge_flow(gauge),main="Simulated Flows",legend.loc="topright")
         },
         #' @description Get the observed data
         get_obs_data = function(){
@@ -199,7 +212,7 @@ dynatop <- R6::R6Class(
                      order.by=private$time_series$index)
         },
         #' @description Return states
-        #' @param record logical TRUE if the record should be returned. Otherwise surrent states returned
+        #' @param record logical TRUE if the record should be returned. Otherwise the current states returned
         get_states = function(record=FALSE){
             if( record ){
                 return( setNames(private$time_series$state_record,
