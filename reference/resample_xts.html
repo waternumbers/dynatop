@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9041</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9042</span>
       </span>
     </div>
 
@@ -172,8 +172,8 @@
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Time series of observation data are often of different temporal resolutions, however the input to most hydrological models, as is the case with the Dynamic TOPMODEL, requires those data at the same interval. This provides a method to resample a collection of such data to a single interval.</p>
-<p>Because of the methods used the results:
-- are not accurate when the input data does not have a constant timestep. The code issued a warnign and proceeds assuming the data are equally spaced with the modal timestep.
+<p>Because of the methods used the results:</p>
+<p>- are not accurate when the input data does not have a constant timestep. The code issued a warnign and proceeds assuming the data are equally spaced with the modal timestep.
 - do not guarentee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.</p>
 
 
@@ -187,7 +187,7 @@
 
 <span class='co'># check totals</span>
 <span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span><span class='op'>(</span><span class='va'>obs</span><span class='op'>$</span><span class='va'>Rainfall</span><span class='op'>*</span><span class='fl'>15</span><span class='op'>/</span><span class='fl'>60</span>, na.rm<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span>
-</div><div class='output co'>#&gt; [1] 0.04705</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span><span class='op'>(</span><span class='va'>Swindale</span><span class='op'>$</span><span class='va'>obs</span><span class='op'>$</span><span class='va'>Rainfall</span>, na.rm<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span>
+</div><div class='output co'>#&gt; [1] 0.0468</div><div class='input'><span class='fu'><a href='https://rdrr.io/r/base/sum.html'>sum</a></span><span class='op'>(</span><span class='va'>Swindale</span><span class='op'>$</span><span class='va'>obs</span><span class='op'>$</span><span class='va'>Rainfall</span>, na.rm<span class='op'>=</span><span class='cn'>TRUE</span><span class='op'>)</span>
 </div><div class='output co'>#&gt; [1] 0.1882</div><div class='input'>
 </div></pre>
   </div>

@@ -73,7 +73,7 @@ R6 Class for Dynamic TOPMODEL" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9041</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9042</span>
       </span>
     </div>
 
@@ -290,11 +290,13 @@ R6 Class for Dynamic TOPMODEL" />
 <p><hr>
 <a id="method-plot_channel_inflow"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>plot_channel_inflow()</code></h3>
 <p>Plot the channel inflow</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>dynatop</span><span class='op'>$</span><span class='fu'>plot_channel_inflow</span><span class='op'>(</span>total <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre><p></div></p>
+<p><div class="r"></p><pre><span class='va'>dynatop</span><span class='op'>$</span><span class='fu'>plot_channel_inflow</span><span class='op'>(</span>total <span class='op'>=</span> <span class='cn'>FALSE</span>, separate <span class='op'>=</span> <span class='cn'>FALSE</span><span class='op'>)</span></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
-<dt><code>total</code></dt><dd><p>logical if plot total inflow is to be plotted</p></dd>
+<dt><code>total</code></dt><dd><p>logical if total inflow is to be plotted</p></dd>
+
+<dt><code>separate</code></dt><dd><p>logical logical if the surface and saturated zone inflows should be plotted separately</p></dd>
 
 </dl><p></div></p>
 <p><hr>
@@ -310,7 +312,7 @@ R6 Class for Dynamic TOPMODEL" />
 <p><hr>
 <a id="method-plot_gauge_flow"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>plot_gauge_flow()</code></h3>
 <p>Get the flow at gauges</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>dynatop</span><span class='op'>$</span><span class='fu'>plot_gauge_flow</span><span class='op'>(</span>gauge <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/names.html'>names</a></span><span class='op'>(</span><span class='va'>private</span><span class='op'>$</span><span class='va'>time_series</span><span class='op'>$</span><span class='va'>gauge_flow</span><span class='op'>)</span><span class='op'>)</span></pre><p></div></p>
+<p><div class="r"></p><pre><span class='va'>dynatop</span><span class='op'>$</span><span class='fu'>plot_gauge_flow</span><span class='op'>(</span>gauge <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/colnames.html'>colnames</a></span><span class='op'>(</span><span class='va'>private</span><span class='op'>$</span><span class='va'>time_series</span><span class='op'>$</span><span class='va'>gauge_flow</span><span class='op'>)</span><span class='op'>)</span></pre><p></div></p>
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
@@ -339,7 +341,7 @@ R6 Class for Dynamic TOPMODEL" />
 
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
 <p><div class="arguments"></p><dl>
-<dt><code>record</code></dt><dd><p>logical TRUE if the record should be returned. Otherwise surrent states returned</p></dd>
+<dt><code>record</code></dt><dd><p>logical TRUE if the record should be returned. Otherwise the current states returned</p></dd>
 
 </dl><p></div></p>
 <p><hr>
