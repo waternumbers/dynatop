@@ -105,16 +105,9 @@ invisible(self) suitable for chaining
 \subsection{Method \code{initialise()}}{
 Initialises a dynatop object in the simpliest way possible.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$initialise(initial_recharge)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$initialise()}\if{html}{\out{</div>}}
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{initial_recharge}}{Initial recharge to the saturated zone in steady state in m/s}
-}
-\if{html}{\out{</div>}}
-}
 \subsection{Returns}{
 invisible(self) suitable for chaining
 }
@@ -125,7 +118,11 @@ invisible(self) suitable for chaining
 \subsection{Method \code{sim_hillslope()}}{
 Simulate the hillslope output of a dynatop object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim_hillslope(keep_states = NULL, sub_step = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim_hillslope(
+  keep_states = NULL,
+  sub_step = NULL,
+  solver = c("implicit", "explicit")
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -134,6 +131,8 @@ Simulate the hillslope output of a dynatop object
 \item{\code{keep_states}}{a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept}
 
 \item{\code{sub_step}}{simulation timestep in seconds, default value of NULL results in data time step}
+
+\item{\code{solver}}{whetther implicit or explict solver should be used}
 }
 \if{html}{\out{</div>}}
 }

@@ -50,9 +50,15 @@ drat::pruneRepo(dratPath,pkg="dynatop",remove="git")## this only does source fil
 rm(list=ls())
 pacPath <- '../'
 devtools::load_all(pacPath)
-model <- "Swindale.rds"
+model <- readRDS("Swindale.rds")
 model$precip_input$name <- "Rainfall"
 model$pet_input$name <- "PET"
+
+## tempory code relating to model structure change until dynatopGIS catchs up
+model$hillslope$r_uz_sz0 <- 1e-6
+model$hillslope$c_sz <- Inf
+model$hillslope$D <- Inf
+model$hillslope$type_sz <- "exp"
 
 qr <- read.csv( "start=2009-11-18_end=2009-11_4_int=0.25-hours_units=mm.hr-1.tsv",sep="\t")
 obs <- as.xts(qr[,c("Flow","Rainfall")],order.by= as.POSIXct(qr[,'Date'],format="%d/%m/%Y %H:%M",tz='GMT'))

@@ -3,6 +3,8 @@
 export(dynatop)
 export(evap_est)
 export(resample_xts)
+export(startProfiler)
+export(stopProfiler)
 import(xts)
 importFrom(Rcpp,evalCpp)
 importFrom(stats,aggregate)
