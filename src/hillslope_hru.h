@@ -3,9 +3,7 @@
 
 #include <iostream>
 #include <cmath>
-#include <boost/math/tools/roots.hpp>
-#include <boost/bind/bind.hpp>
-#include <boost/bind/placeholders.hpp>
+#include "Rcpp.h"
 
 // Class for the Hillslope HRU
 class hillslope_hru {
@@ -19,8 +17,8 @@ class hillslope_hru {
   double const& t_d; // unsaturated zone parameters
   double const& ln_t0; double const& m; double const& D; // saturated zone parameters
   int const& type_sz; // type of saturated zone
-  double Dx, beta, l_sz_max,cosbeta_m; // values computed during initialisation
-  double r_rz_uz, l_sz_in, Dts; // values used during optimisation of sz
+  double Dx, beta, l_sz_max,cosbeta_m,r_uz_sz_max; // values computed during initialisation
+  double r_rz_uz, l_sz_in; // values used during optimisation of sz
 public:
   hillslope_hru(double& ,double&, double&, double&,
 		double const&, double const&, double const&,
@@ -37,25 +35,7 @@ public:
   void init(double& s_rz_0, double& r_uz_sz_0);
   void implicit_step(double& pet, double& precip, double& Dt, int& max_it);
   double fsz(double&, double&); //,double&,double&,double&);
-  struct TerminationCondition {
-    bool operator()(double min, double max);
-  };
-  struct Fsz {
-    double const& suz; double const& ssz;
-    double const& lszmax; double const& cosbetam;
-    double const& td; double const d; double const m;
-    double const& dt; double const& dx;
-    double const& lszin; double const& rrzuz;
-    int const& typesz;
-  public:
-    Fsz(double const& suz_, double const& ssz_,
-	double const& lszmax_, double const& cosbetam_,
-	double const& td_, double const d_, double const m_,
-	double const& dt_, double const& dx_,
-	double const& lszin_, double const& rrzuz_,
-	int const& typesz);
-    double operator()(double const& x);
-  };
+  double flz(double&); //,double&,double&,double&);
 };
 
 #endif
