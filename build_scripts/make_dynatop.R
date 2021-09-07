@@ -58,10 +58,10 @@ model$pet_input$name <- "PET"
 model$hillslope$r_uz_sz0 <- 1e-6
 model$hillslope$c_sz <- Inf
 model$hillslope$D <- Inf
-model$hillslope$type_sz <- "exp"
+model$hillslope$opt <- "exp"
 model$hillslope$m_2 <- 0.002
 model$hillslope$omega <- 0
-
+model$hillslope$s_sz <- model$hillslope$s_sf <- model$hillslope$s_uz <- model$hillslope$s_rz <- as.numeric(NA)
 qr <- read.csv( "start=2009-11-18_end=2009-11_4_int=0.25-hours_units=mm.hr-1.tsv",sep="\t")
 obs <- as.xts(qr[,c("Flow","Rainfall")],order.by= as.POSIXct(qr[,'Date'],format="%d/%m/%Y %H:%M",tz='GMT'))
 ## According to original notes and code Flow in cumecs and precip in mm/timestep

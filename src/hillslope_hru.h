@@ -16,7 +16,7 @@ class hillslope_hru {
   double const& s_rz_max; // root zone store parameters
   double const& t_d; // unsaturated zone parameters
   double const& ln_t0; double const& m; double const& D; double const& m_2; double const& omega;// saturated zone parameters
-  int const& type_sz; // type of saturated zone
+  int const& opt; // type of saturated zone
   double Dx, beta, l_sz_max,cosbeta_m,cosbeta_m_2, r_uz_sz_max; // values computed during initialisation
   double v_rz_uz, l_sz_in, Dt_Dx; // values used during optimisation of sz
   // v_rz_uz = Dt*r_rz_uz - used to stop rescaling by Dt in code

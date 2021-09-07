@@ -27,7 +27,7 @@ void dt_courant(Rcpp::DataFrame hillslope, // hillslope data frame
   Rcpp::NumericVector D = hillslope["D"]; // maximum storage depth
   Rcpp::NumericVector m_2 = hillslope["m_2"]; // second transmissivity decay parameter
   Rcpp::NumericVector omega = hillslope["omega"]; // second transmissivity decay parameter
-  Rcpp::IntegerVector type_sz = hillslope["type_sz"]; // type of saturated zone
+  Rcpp::IntegerVector opt = hillslope["opt"]; // type of saturated zone
   
   // work out some dimensions
   int nhillslope = id.size();
@@ -54,7 +54,7 @@ void dt_courant(Rcpp::DataFrame hillslope, // hillslope data frame
 				     s_rz_max[ii], // root zone store parameters
 				     t_d[ii], // unsaturated zone parameters
 				     ln_t0[ii],   m[ii],   D[ii], m_2[ii], omega[ii],// saturated zone parameters
-				     type_sz[ii]   ); //type of saturated zone
+				     opt[ii]   ); //type of saturated zone
     cr = hs.courant(Dt);
     courant(ii,0) = cr.first;
     courant(ii,1) = cr.second;

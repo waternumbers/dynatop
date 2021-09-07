@@ -9,7 +9,7 @@ hillslope_hru::hillslope_hru(double& s_sf_,double& s_rz_,double& s_uz_,double& s
 			     double const& s_rz_max_, // root zone store parameters
 			     double const& t_d_, // unsaturated zone parameters
 			     double const& ln_t0_, double const& m_, double const& D_, double const& m_2_, double const& omega_,// saturated zone parameter
-			     int const& type_sz_
+			     int const& opt_
 			     ):
   s_sf(s_sf_), s_rz(s_rz_), s_uz(s_uz_), s_sz(s_sz_),
   s_bar(s_bar_), area(area_), width(width_),
@@ -20,7 +20,7 @@ hillslope_hru::hillslope_hru(double& s_sf_,double& s_rz_,double& s_uz_,double& s
   s_rz_max(s_rz_max_),
   t_d(t_d_),
   ln_t0(ln_t0_), m(m_), D(D_), m_2(m_2_), omega(omega_),
-  type_sz(type_sz_)
+  opt(opt_)
 {
   // compute summary for saturated zone
   beta = std::atan(s_bar_);
@@ -30,30 +30,12 @@ hillslope_hru::hillslope_hru(double& s_sf_,double& s_rz_,double& s_uz_,double& s
   Dx = area_/width;
   r_uz_sz_max = 1/t_d;
 
-  // handle the fact that D is set for some transmissivity profiles
-  // but is used in the code since a max is required
-  switch (type_sz) {
-  case 1: // exponential transmissivity
-    D = std::numeric_limits<double>::max();
-    break;
-  case 2: // constant celerity
-    //D = D;
-    break;
-  case 3: // bounded exponential
-    //D = l_sz_max * ( std::exp(-x*cosbeta_m) - std::exp( -D*cosbeta_m ) );
-    break;
-  case 4: // double exponential
-    D = std::numeric_limits<double>::max();
-    break;
-  }
-
-
 }
 
 std::pair<double, double> hillslope_hru::courant(double& Dt){
   std::pair<double, double> cr(-99.0,-99.0);
   cr.first = c_sf*Dt/Dx;
-  switch (type_sz) {
+  switch (opt) {
   case 1: // exponential transmissivity
     cr.second = std::exp(ln_t0)*std::sin(2.0*beta)/(2.0*m*Dx);
     break;
@@ -193,7 +175,7 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, int& 
 double hillslope_hru::flz(double& x){ // compute saturated zone outflow
   //double l = l_sz_max*std::exp(-x*cosbeta_m);
   double l=-99.0;
-  switch (type_sz) {
+  switch (opt) {
   case 1: // exponential transmissivity
     l = l_sz_max*std::exp(-x*cosbeta_m);
     break;
