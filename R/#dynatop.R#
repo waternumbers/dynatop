@@ -612,7 +612,7 @@ dynatop <- R6::R6Class(
                 private$model[[ii]] <- model[[ii]]
             }
 
-            ## convert types into integer values
+            ## convert types into integer values and set values based on type
             for(ii in names(private$type_options)){
                 for(jj in names(private$type_options[[ii]])){
                     tmp <- private$type_options[[ii]][[jj]]

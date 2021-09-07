@@ -8,7 +8,7 @@ hillslope_hru::hillslope_hru(double& s_sf_,double& s_rz_,double& s_uz_,double& s
 			     double const& r_sf_max_, double const& c_sf_, // surface store parameters
 			     double const& s_rz_max_, // root zone store parameters
 			     double const& t_d_, // unsaturated zone parameters
-			     double const& ln_t0_, double const& m_, double const& D_, // saturated zone parameter
+			     double const& ln_t0_, double const& m_, double const& D_, double const& m_2_, double const& omega_,// saturated zone parameter
 			     int const& type_sz_
 			     ):
   s_sf(s_sf_), s_rz(s_rz_), s_uz(s_uz_), s_sz(s_sz_),
@@ -19,15 +19,35 @@ hillslope_hru::hillslope_hru(double& s_sf_,double& s_rz_,double& s_uz_,double& s
   r_sf_max(r_sf_max_), c_sf(c_sf_),
   s_rz_max(s_rz_max_),
   t_d(t_d_),
-  ln_t0(ln_t0_), m(m_), D(D_),
+  ln_t0(ln_t0_), m(m_), D(D_), m_2(m_2_), omega(omega_),
   type_sz(type_sz_)
 {
   // compute summary for saturated zone
   beta = std::atan(s_bar_);
   l_sz_max = std::exp(ln_t0_)*std::sin(beta);
   cosbeta_m = std::cos(beta) / m;
+  cosbeta_m_2 = std::cos(beta) / m_2;
   Dx = area_/width;
   r_uz_sz_max = 1/t_d;
+
+  // handle the fact that D is set for some transmissivity profiles
+  // but is used in the code since a max is required
+  switch (type_sz) {
+  case 1: // exponential transmissivity
+    D = std::numeric_limits<double>::max();
+    break;
+  case 2: // constant celerity
+    //D = D;
+    break;
+  case 3: // bounded exponential
+    //D = l_sz_max * ( std::exp(-x*cosbeta_m) - std::exp( -D*cosbeta_m ) );
+    break;
+  case 4: // double exponential
+    D = std::numeric_limits<double>::max();
+    break;
+  }
+
+
 }
 
 std::pair<double, double> hillslope_hru::courant(double& Dt){
@@ -43,6 +63,8 @@ std::pair<double, double> hillslope_hru::courant(double& Dt){
   case 3: // bounded exponential
     cr.second = std::exp(ln_t0)*std::sin(2.0*beta)/(2.0*m*Dx);
     break;
+  case 4: // double exponential
+    cr.second = (std::exp(ln_t0)*std::sin(2.0*beta)/(2*Dx))*( omega/m + (1.0-omega)/m_2 );
   }
   
   return cr;
@@ -63,29 +85,45 @@ void hillslope_hru::init(double& s_rz_0, double& r_uz_sz_0){
 
 void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, int& max_it)
 {
-  double l_sz;
-  double r_sf_rz;
- 
+  // NOTE: Throughout the vertical fluxes r_*_* are computed as volumes v_*_* = Dt*r_*_*
+  // This stops constant rescaling and speeds up the code
+  
+  double l_sz, l_sf_in;
+  //double r_sf_rz;
+  double v_sf_rz; //, v_rz_uz;
+    
   std::pair<double, double> opt_res; // solution for output of optimiser
   
-  // standardise inflow to the saturated zone by width
+  // standardise inflows by width
   l_sz_in = q_sz_in / width;
+  l_sf_in = q_sf_in / width;
 
-  // compute first downward flux estimate from surface ans root zone
-  // these are given as \check{r} in documentation	
-  r_sf_rz = std::min( r_sf_max , (s_sf + Dt*q_sf_in/area)/Dt );
-  r_rz_uz = std::max(0.0 ,
-		     (s_rz + Dt*(precip + r_sf_rz - pet) - s_rz_max)/Dt);
+  // set ration of Dt_Dx used
+  Dt_Dx = Dt/Dx;
+
+
+  
+
+  // compute first downward flux estimate from surface and root zone
+  // these are given as \check{r} in documentation
+  // These are computed a volumes - that is Dt*\check{r}
+  //r_sf_rz = std::min( r_sf_max , (s_sf + Dt_Dx*l_sf_in)/Dt );
+  //r_rz_uz = std::max(0.0 ,
+  //	     (s_rz + Dt*(precip + r_sf_rz - pet) - s_rz_max)/Dt);
+  v_sf_rz = std::min( Dt*r_sf_max , s_sf + Dt_Dx*l_sf_in );
+  v_rz_uz = std::max(0.0 ,
+		     (s_rz + Dt*(precip - pet) + v_sf_rz - s_rz_max));
 
   // initialise the bands for the search
-  double lwr(0), upr(D);
+  double lwr(0.0), upr(D);
 
   // test for saturation
   double x(0.0); // declared here so can be passed into fsz to test for saturation
   if( fsz(x,Dt) >= 0.0 ){
     // then saturated
     l_sz = l_sz_max;
-    r_rz_uz = ( s_sz + (Dt/Dx)*(l_sz - l_sz_in) - s_uz )/Dt;
+    //    r_rz_uz = ( s_sz + Dt_Dx*(l_sz - l_sz_in) - s_uz )/Dt;
+    v_rz_uz = ( s_sz + Dt_Dx*(l_sz - l_sz_in) - s_uz );
     s_sz = 0.0;
   }else{
     // not saturated test to see if wetting or drying
@@ -103,6 +141,7 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, int& 
 	upr += upr;
 	fupr = fsz(upr,Dt);
       }
+      upr = std::min(upr,D); // since loop may result in upr > D
     }
 
     int it(0);
@@ -119,20 +158,29 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, int& 
     }
     
     s_sz = (upr+lwr)/2.0;
-    r_rz_uz = std::min( r_rz_uz, (s_sz + Dt/t_d - s_uz)/Dt );
+    //r_rz_uz = std::min( r_rz_uz, (s_sz + Dt/t_d - s_uz)/Dt );
+    v_rz_uz = std::min( v_rz_uz, (s_sz + Dt/t_d - s_uz) );
     l_sz = flz(s_sz);
   }
 
   // solve unsaturated zone
-  s_uz = ( (t_d*s_sz)/(t_d*s_sz + Dt) ) * (s_uz+Dt*r_rz_uz);
+  //s_uz = ( (t_d*s_sz)/(t_d*s_sz + Dt) ) * (s_uz+Dt*r_rz_uz);
+  s_uz = ( (t_d*s_sz)/(t_d*s_sz + Dt) ) * (s_uz+v_rz_uz);
+  
   // compute revised r_sf_rz
-  r_sf_rz = std::min( r_sf_rz,
-		      (s_rz_max - s_rz - Dt*(precip-pet-r_rz_uz))/Dt
+  // r_sf_rz = std::min( r_sf_rz,
+  // 		      (s_rz_max - s_rz - Dt*(precip-pet-r_rz_uz))/Dt
+  // 		      );
+  v_sf_rz = std::min( v_sf_rz,
+		      s_rz_max - s_rz - Dt*(precip-pet)+v_rz_uz
 		      );
   // solve for root zone
-  s_rz = ( s_rz + Dt*(precip + r_sf_rz - r_rz_uz) ) * ( s_rz_max / (s_rz_max + Dt*pet) );
+  //s_rz = ( s_rz + Dt*(precip + r_sf_rz - r_rz_uz) ) * ( s_rz_max / (s_rz_max + Dt*pet) );
+  s_rz = ( s_rz + Dt*precip + v_sf_rz - v_rz_uz ) * ( s_rz_max / (s_rz_max + Dt*pet) );
+
   // solve for surface
-  s_sf = ( Dx / (Dx + Dt*c_sf) ) * ( s_sf + Dt*( (q_sf_in/area) - r_sf_rz ));
+  //s_sf = ( Dx / (Dx + Dt*c_sf) ) * ( s_sf + Dt_Dx*l_sf_in - Dt*r_sf_rz );
+  s_sf = ( Dx / (Dx + Dt*c_sf) ) * ( s_sf + Dt_Dx*l_sf_in - v_sf_rz );
   // compute actual pet loss
   e_a = pet*(s_rz/s_rz_max);
 
@@ -153,7 +201,10 @@ double hillslope_hru::flz(double& x){ // compute saturated zone outflow
     l = std::max( m*(D-x) , 0.0 );
     break;
   case 3: // bounded exponential
-    l = l_sz_max * ( std::exp(-x*cosbeta_m) - std::exp( -D *cosbeta_m ) );
+    l = l_sz_max * ( std::exp(-x*cosbeta_m) - std::exp( -D*cosbeta_m ) );
+    break;
+  case 4: // double exponential
+    l = l_sz_max * ( omega*std::exp(-x*cosbeta_m) + (1-omega)* std::exp( -x*cosbeta_m_2 ) );
     break;
   }
   return l;
@@ -162,107 +213,106 @@ double hillslope_hru::flz(double& x){ // compute saturated zone outflow
 double hillslope_hru::fsz(double& x, double& Dt){ // compute for saturated zone function
   //double l = l_sz_max*std::exp(-x*cosbeta_m);
   double l = flz(x);
-  double r = std::min( r_uz_sz_max , (s_uz + Dt*r_rz_uz)/(t_d*x + Dt) );
-  //double r = (s_uz + Dt*r_rz_uz)/(t_d*x + Dt);
-  //if( r > r_uz_sz_max ){ r = r_uz_sz_max; }
+  //double r = std::min( r_uz_sz_max , (s_uz + Dt*r_rz_uz)/(t_d*x + Dt) );
+  double r = std::min( r_uz_sz_max , (s_uz + v_rz_uz)/(t_d*x + Dt) );
   
-  return x - s_sz - Dt*((l - l_sz_in)/Dx - r);
+  return x - s_sz - Dt_Dx*(l - l_sz_in) + Dt*r;
 }
 
 
-void hillslope_hru::explicit_step(double& pet, double& precip, double& Dt, int& max_it)
-{
-  double l_sz;
-  double r_sf_rz;
+// void hillslope_hru::explicit_step(double& pet, double& precip, double& Dt, int& max_it)
+// {
+//   double l_sz;
+//   double r_sf_rz;
  
-  std::pair<double, double> opt_res; // solution for output of optimiser
+//   std::pair<double, double> opt_res; // solution for output of optimiser
   
-  // standardise inflow to the saturated zone by width
-  l_sz_in = q_sz_in / width;
+//   // standardise inflow to the saturated zone by width
+//   l_sz_in = q_sz_in / width;
 
-  // compute first downward flux estimate from surface ans root zone
-  // these are given as \check{r} in documentation	
-  r_sf_rz = std::min( r_sf_max , (s_sf + Dt*q_sf_in/area)/Dt );
-  r_rz_uz = std::max(0.0 ,
-		     (s_rz + Dt*(precip + r_sf_rz - pet) - s_rz_max)/Dt);
+//   // compute first downward flux estimate from surface ans root zone
+//   // these are given as \check{r} in documentation	
+//   r_sf_rz = std::min( r_sf_max , (s_sf + Dt*q_sf_in/area)/Dt );
+//   r_rz_uz = std::max(0.0 ,
+// 		     (s_rz + Dt*(precip + r_sf_rz - pet) - s_rz_max)/Dt);
 
-  // compute inital estimate fo the outflow
-  l_sz = flz(s_sz);
+//   // compute inital estimate fo the outflow
+//   l_sz = flz(s_sz);
 
-  // parts of the quadratic
-  double qc = s_sz - s_sz +Dt*(l_sz-l_sz_in-r_rz_uz);
-  double qb = t_d*(s_sz +Dt*(l_sz-l_sz_in)) + Dt;
-  double& qa = t_d;
+//   // parts of the quadratic
+//   double qc = s_sz - s_sz +Dt*(l_sz-l_sz_in-r_rz_uz);
+//   double qb = t_d*(s_sz +Dt*(l_sz-l_sz_in)) + Dt;
+//   double& qa = t_d;
 
-  // test for saturation
-  if( qc <= 0.0 ){
-    // is saturated so limit r_rz_uz
-    r_rz_uz = ( s_sz + (Dt/Dx)*(l_sz - l_sz_in) - s_uz )/Dt;
-    s_sz = 0.0;
-  }else{
-    // test if reaches D
-    if( 
-  // initialise the bands for the search
-  double lwr(0), upr(D);
+//   // test for saturation
+//   if( qc <= 0.0 ){
+//     // is saturated so limit r_rz_uz
+//     r_rz_uz = ( s_sz + (Dt/Dx)*(l_sz - l_sz_in) - s_uz )/Dt;
+//     s_sz = 0.0;
+//   }else{
+//     // test if reaches D
+//     if( 
+//   // initialise the bands for the search
+//   double lwr(0), upr(D);
 
-  // test for saturation
-  double x(0.0); // declared here so can be passed into fsz to test for saturation
-  if( fsz(x,Dt) >= 0.0 ){
-    // then saturated
-    l_sz = l_sz_max;
-    r_rz_uz = ( s_sz + (Dt/Dx)*(l_sz - l_sz_in) - s_uz )/Dt;
-    s_sz = 0.0;
-  }else{
-    // not saturated test to see if wetting or drying
-    if( fsz(s_sz,Dt) >= 0.0 ){
-      // then wetting - solution between current s_sz and 0
-      lwr = 0.0;
-      upr = s_sz;
-    }else{
-      // drying
-      lwr = s_sz;
-      // drying - need to work lower depth to bracket
-      upr = 2.0*s_sz + 0.01;
-      double fupr = fsz(upr,Dt);
-      while( (fupr < 0.0) & (upr < D)){
-	upr += upr;
-	fupr = fsz(upr,Dt);
-      }
-    }
+//   // test for saturation
+//   double x(0.0); // declared here so can be passed into fsz to test for saturation
+//   if( fsz(x,Dt) >= 0.0 ){
+//     // then saturated
+//     l_sz = l_sz_max;
+//     r_rz_uz = ( s_sz + (Dt/Dx)*(l_sz - l_sz_in) - s_uz )/Dt;
+//     s_sz = 0.0;
+//   }else{
+//     // not saturated test to see if wetting or drying
+//     if( fsz(s_sz,Dt) >= 0.0 ){
+//       // then wetting - solution between current s_sz and 0
+//       lwr = 0.0;
+//       upr = s_sz;
+//     }else{
+//       // drying
+//       lwr = s_sz;
+//       // drying - need to work lower depth to bracket
+//       upr = 2.0*s_sz + 0.01;
+//       double fupr = fsz(upr,Dt);
+//       while( (fupr < 0.0) & (upr < D)){
+// 	upr += upr;
+// 	fupr = fsz(upr,Dt);
+//       }
+//     }
 
-    int it(0);
-    double e;
-    while( (it < max_it) and ((upr-lwr)>1e-16) ){
-      x = (upr+lwr)/2.0;
-      e = fsz(x,Dt);
-      if(e<=0){ lwr=x; }
-      if(e>=0){ upr=x; }
-      it +=1;
-    }
-    if(it >max_it){
-      Rcpp::Rcout << it << std::endl;
-    }
+//     int it(0);
+//     double e;
+//     while( (it < max_it) and ((upr-lwr)>1e-16) ){
+//       x = (upr+lwr)/2.0;
+//       e = fsz(x,Dt);
+//       if(e<=0){ lwr=x; }
+//       if(e>=0){ upr=x; }
+//       it +=1;
+//     }
+//     if(it >max_it){
+//       Rcpp::Rcout << it << std::endl;
+//     }
     
-    s_sz = (upr+lwr)/2.0;
-    r_rz_uz = std::min( r_rz_uz, (s_sz + Dt/t_d - s_uz)/Dt );
-    l_sz = l_sz_max*std::exp(-s_sz*cosbeta_m);
-  }
+//     s_sz = (upr+lwr)/2.0;
+//     r_rz_uz = std::min( r_rz_uz, (s_sz + Dt/t_d - s_uz)/Dt );
+//     l_sz = l_sz_max*std::exp(-s_sz*cosbeta_m);
+//   }
 
-  // solve unsaturated zone
-  s_uz = ( (t_d*s_sz)/(t_d*s_sz + Dt) ) * (s_uz+Dt*r_rz_uz);
-  // compute revised r_sf_rz
-  r_sf_rz = std::min( r_sf_rz,
-		      (s_rz_max - s_rz - Dt*(precip-pet-r_rz_uz))/Dt
-		      );
-  // solve for root zone
-  s_rz = ( s_rz + Dt*(precip + r_sf_rz - r_rz_uz) ) * ( s_rz_max / (s_rz_max + Dt*pet) );
-  // solve for surface
-  s_sf = ( Dx / (Dx + Dt*c_sf) ) * ( s_sf + Dt*( (q_sf_in/area) - r_sf_rz ));
-  // compute actual pet loss
-  e_a = pet*(s_rz/s_rz_max);
+//   // solve unsaturated zone
+//   s_uz = ( (t_d*s_sz)/(t_d*s_sz + Dt) ) * (s_uz+Dt*r_rz_uz);
+//   // compute revised r_sf_rz
+//   r_sf_rz = std::min( r_sf_rz,
+// 		      (s_rz_max - s_rz - Dt*(precip-pet-r_rz_uz))/Dt
+// 		      );
+//   // solve for root zone
+//   s_rz = ( s_rz + Dt*(precip + r_sf_rz - r_rz_uz) ) * ( s_rz_max / (s_rz_max + Dt*pet) );
+//   // solve for surface
+//   s_sf = ( Dx / (Dx + Dt*c_sf) ) * ( s_sf + Dt*( (q_sf_in/area) - r_sf_rz ));
+//   // compute actual pet loss
+//   e_a = pet*(s_rz/s_rz_max);
 
-  // compute the outflow
-  q_sf_out = width*c_sf*s_sf;
-  q_sz_out = width*l_sz;
+//   // compute the outflow
+//   q_sf_out = width*c_sf*s_sf;
+//   q_sz_out = width*l_sz;
 
-}
+// }

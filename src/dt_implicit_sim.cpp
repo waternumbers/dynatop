@@ -36,6 +36,8 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
   Rcpp::NumericVector ln_t0 = hillslope["ln_t0"]; // log of saturated transmissivity
   Rcpp::NumericVector m = hillslope["m"]; // decay parameter of transmissivity profile
   Rcpp::NumericVector D = hillslope["D"]; // depth parameter of transmissivity profile
+  Rcpp::NumericVector m_2 = hillslope["m_2"]; // second transmissivity decay parameter
+  Rcpp::NumericVector omega = hillslope["omega"]; // second transmissivity decay parameter
   Rcpp::IntegerVector type_sz = hillslope["type_sz"]; // type of saturated zone
   
   // rebuild the states as a data frame for saving
@@ -102,7 +104,7 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
 			       r_sf_max[ii],   c_sf[ii], // surface store parameters
 			       s_rz_max[ii], // root zone store parameters
 			       t_d[ii], // unsaturated zone parameters
-			       ln_t0[ii],   m[ii],   D[ii], // saturated zone parameters
+			       ln_t0[ii],   m[ii],   D[ii], m_2[ii], omega[ii],// saturated zone parameters
 			       type_sz[ii]   ) //type of saturated zone
 		     );
   }

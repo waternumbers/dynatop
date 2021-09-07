@@ -15,10 +15,13 @@ class hillslope_hru {
   double const& r_sf_max; double const& c_sf; // surface store parameters
   double const& s_rz_max; // root zone store parameters
   double const& t_d; // unsaturated zone parameters
-  double const& ln_t0; double const& m; double const& D; // saturated zone parameters
+  double const& ln_t0; double const& m; double const& D; double const& m_2; double const& omega;// saturated zone parameters
   int const& type_sz; // type of saturated zone
-  double Dx, beta, l_sz_max,cosbeta_m,r_uz_sz_max; // values computed during initialisation
-  double r_rz_uz, l_sz_in; // values used during optimisation of sz
+  double Dx, beta, l_sz_max,cosbeta_m,cosbeta_m_2, r_uz_sz_max; // values computed during initialisation
+  double v_rz_uz, l_sz_in, Dt_Dx; // values used during optimisation of sz
+  // v_rz_uz = Dt*r_rz_uz - used to stop rescaling by Dt in code
+  
+
 public:
   hillslope_hru(double& ,double&, double&, double&,
 		double const&, double const&, double const&,
@@ -28,7 +31,7 @@ public:
 		double const&, double const&, // surface store parameters
 		double const&, // root zone store parameters
 		double const&, // unsaturated zone parameters
-		double const&, double const&, double const&, // saturated zone parameters
+		double const&, double const&, double const&, double const&, double const&,// saturated zone parameters
 		int const& // type of sautruated zone
 	    );
   std::pair<double, double> courant(double& Dt);
