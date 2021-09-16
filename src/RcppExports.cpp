@@ -24,8 +24,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // dt_implicit_sim
-void dt_implicit_sim(Rcpp::DataFrame hillslope, Rcpp::DataFrame channel, Rcpp::DataFrame flow_direction, Rcpp::DataFrame precip_input, Rcpp::DataFrame pet_input, Rcpp::NumericMatrix obs, Rcpp::NumericMatrix channel_inflow_sf, Rcpp::NumericMatrix channel_inflow_sz, Rcpp::NumericMatrix mass_balance, std::vector<bool> keep_states, Rcpp::List state_rec, double timestep, int n_sub_step);
-RcppExport SEXP _dynatop_dt_implicit_sim(SEXP hillslopeSEXP, SEXP channelSEXP, SEXP flow_directionSEXP, SEXP precip_inputSEXP, SEXP pet_inputSEXP, SEXP obsSEXP, SEXP channel_inflow_sfSEXP, SEXP channel_inflow_szSEXP, SEXP mass_balanceSEXP, SEXP keep_statesSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP) {
+void dt_implicit_sim(Rcpp::DataFrame hillslope, Rcpp::DataFrame channel, Rcpp::DataFrame flow_direction, Rcpp::DataFrame precip_input, Rcpp::DataFrame pet_input, Rcpp::NumericMatrix obs, Rcpp::NumericMatrix channel_inflow_sf, Rcpp::NumericMatrix channel_inflow_sz, Rcpp::NumericMatrix mass_balance, std::vector<bool> keep_states, Rcpp::List state_rec, double timestep, int n_sub_step, double tol, int max_it);
+RcppExport SEXP _dynatop_dt_implicit_sim(SEXP hillslopeSEXP, SEXP channelSEXP, SEXP flow_directionSEXP, SEXP precip_inputSEXP, SEXP pet_inputSEXP, SEXP obsSEXP, SEXP channel_inflow_sfSEXP, SEXP channel_inflow_szSEXP, SEXP mass_balanceSEXP, SEXP keep_statesSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP, SEXP tolSEXP, SEXP max_itSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type hillslope(hillslopeSEXP);
@@ -41,7 +41,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< Rcpp::List >::type state_rec(state_recSEXP);
     Rcpp::traits::input_parameter< double >::type timestep(timestepSEXP);
     Rcpp::traits::input_parameter< int >::type n_sub_step(n_sub_stepSEXP);
-    dt_implicit_sim(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< int >::type max_it(max_itSEXP);
+    dt_implicit_sim(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step, tol, max_it);
     return R_NilValue;
 END_RCPP
 }
@@ -57,34 +59,11 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// start_profiler
-SEXP start_profiler(SEXP str);
-RcppExport SEXP _dynatop_start_profiler(SEXP strSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type str(strSEXP);
-    rcpp_result_gen = Rcpp::wrap(start_profiler(str));
-    return rcpp_result_gen;
-END_RCPP
-}
-// stop_profiler
-SEXP stop_profiler();
-RcppExport SEXP _dynatop_stop_profiler() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(stop_profiler());
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dynatop_dt_courant", (DL_FUNC) &_dynatop_dt_courant, 4},
-    {"_dynatop_dt_implicit_sim", (DL_FUNC) &_dynatop_dt_implicit_sim, 13},
+    {"_dynatop_dt_implicit_sim", (DL_FUNC) &_dynatop_dt_implicit_sim, 15},
     {"_dynatop_dt_init", (DL_FUNC) &_dynatop_dt_init, 3},
-    {"_dynatop_start_profiler", (DL_FUNC) &_dynatop_start_profiler, 1},
-    {"_dynatop_stop_profiler", (DL_FUNC) &_dynatop_stop_profiler, 0},
     {NULL, NULL, 0}
 };
 

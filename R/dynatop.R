@@ -55,14 +55,20 @@ dynatop <- R6::R6Class(
         #' @description Simulate the hillslope output of a dynatop object
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
-        #' @param solver whetther implicit or explict solver should be used
+        #' @param tol tolerance for the solution for the saturated zone
+        #' @param max_it maximum number of iterations to use in the solution of the saturated zone
         #'
         #' @details Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
-        sim_hillslope = function(keep_states=NULL,sub_step=NULL,solver=c("implicit","explicit")){
+        sim_hillslope = function(keep_states=NULL,sub_step=NULL,tol = 2*.Machine$double.eps, max_it = 1000){
 
-            ## check the solver option
-            solver <- match.arg(solver)
-            if(solver=="explicit"){stop("Not yet implimented")}
+            ## check the solver options
+            tol <- as.double(tol)
+            if(tol < .Machine$double.eps){
+                stop("Toleerance is set lower then machine eps")
+            }
+            
+            max_it <- as.integer(max_it)
+            if(max_it < 10){stop("Please use at least 10 iterations")}
              
             ## check presence of finite states
             sv <- c("s_sf","s_rz","s_uz","s_sz")
@@ -90,7 +96,7 @@ dynatop <- R6::R6Class(
             keep_states <- keep_states[keep_states %in% private$time_series$index]
                         
             ## simulate
-            private$sim_hs(keep_states,sub_step[1])
+            private$sim_hs(keep_states,sub_step[1],tol,max_it)
 
             invisible(self)
         },
@@ -114,9 +120,7 @@ dynatop <- R6::R6Class(
             if(!("linear_time" %in% names(private$summary$channel))){
                 stop("Channel solution is not initialised")
             }
-            
-                
-           
+
             private$sim_ch()
 
             invisible(self)
@@ -125,13 +129,14 @@ dynatop <- R6::R6Class(
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
         #' @param mass_check Flag indicating is a record of mass balance errors shuld be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
-        #' @param use_R shoudl the R version of the simulation code be used (default FALSE)
+        #' @param tol tolerance for the solution for the saturated zone
+        #' @param max_it maximum number of iterations to use in the solution of the saturated zone
         #'
         #' @details Calls the sim_hillslope and sim_channel in sequence. Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
         #'
         #' @return invisible(self) for chaining
-        sim = function(keep_states=NULL,sub_step=NULL){
-            self$sim_hillslope(keep_states,sub_step)
+        sim = function(keep_states=NULL,sub_step=NULL,tol=2*.Machine$double.eps,max_it=1000){
+            self$sim_hillslope(keep_states,sub_step,tol,max_it)
             self$sim_channel()
             invisible(self)
         },
@@ -752,7 +757,7 @@ dynatop <- R6::R6Class(
         },
         ## ###############################
         ## function to perform simulations
-        sim_hs = function(keep_states,sub_step,solver){
+        sim_hs = function(keep_states,sub_step,tol,max_it){
            
             ## compute time substep
             if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
@@ -817,7 +822,9 @@ dynatop <- R6::R6Class(
                             as.logical( keep_states ),
                             private$time_series$state_record,
                             ts$step,
-                            ts$n_sub_step
+                            ts$n_sub_step,
+                            as.double(tol),
+                            as.integer(max_it)
                             )
         },
         ## #############################

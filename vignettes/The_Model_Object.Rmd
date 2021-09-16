@@ -81,14 +81,12 @@ vignettes for further details.
 ## Hillslope HRU table
 
 Each row of the hillslope table describes a single hillslope HRU. In this example it looks like:
+
 ```{r hillslope_parts}
 head(model$hillslope)
 ```
 
-The individual columns are documented in Table
-\@ref(tab:hillslope-table). In this example the parameter columns relate to the exponential
-transmissivity profile. The parameters in the table will look like this with the
-transmissivity options selected. 
+The individual columns are documented in Table \@ref(tab:hillslope-table). Not all the parameters are revelent for each option. See the Hillslope HRU vignette for details.
 
 | Name    | Class   | Unit  | Description                                                                                                                              |
 | ---     | ---     | ---   | -----                                                                                                                                    |
@@ -96,15 +94,26 @@ transmissivity options selected.
 | area    | numeric | m$^2$ | Surface area of the HRU                                                                                                                  |
 | atb_bar | numeric | ??    | Topographic index, log if the upslope area divided by tangent of gradient                                                                |
 | s_bar   | numeric | -   | Average gradient                                                                                                                         |
+| min_dst | numeric | -[m] | Minimum distance from HRU to a channel from the distance metric used in the model generation |
 | width   | numeric | m     | Contour length of downslope end of HRU                                                                                                   |
-| class   | integer | -   | Classification of HRU e.g. by a combination of topographic index and rainfall input                                                      |
+| s_sf | numeric | m | Surface Zone storage volume per unit area (state) |
+| s_rz | numeric | m | Root Zone storage volume per unit area (state) |
+| s_uz | numeric | m | Unsaturated Zone storage volume per unit area (state) |
+| s_sz | numeric | m | Saturated Zone storage deficit per unit area (state) |
+| cls_*   | integer | -   | Classification of HRU in each of the classes used in its definition. The extra part fo the name matches the class name given in dynatopGIS                                                      |
+| opt   | character | - | Option controlling the type of Hillslope HRU. Currently defines the transmissivity profile.                                                       |
 | r_sfmax | numeric | m/s | Maximum flow rate from surface to root zone (parameter)                                                                                  |
 | c_sf    | numeric | m/s | Celerity of the surface excess storage (parameter)                                                                                       |
 | s_rzmax | numeric | m   | Maximum root zone depth (parameter)                                                                                                      |
-| s_rz0   | numeric | 0-1 | Initial root zone depth expressed as fraction of maximum depth (parameter)                                                                |
 | t_d     | numeric | s/m | Unsaturated zone time constant given per $m$ of saturated storage deficit (parameter)                                                    |
 | ln_t0   | numeric | m/s | Log of the soil saturated conductivity (parameter)                                                                                       |
 | m       | numeric | -   | Exponential transmissivity decay parameter (parameter)                                                                                   |
+| m_2     | numeric | -   | Second Exponential transmissivity decay parameter (parameter)                                                                            |
+| omega   | numeric | 0-1   | Weighting between the two transmissivity parameters (parameter)                                                                                     |
+| c_sz    | numeric | m/s | Constant saturated zone celerity (parameter)                                                                                     |
+| s_rz0   | numeric | 0-1 | Initial root zone depth expressed as fraction of maximum depth (parameter)                                                                |
+| r_uz_sz0   | numeric | m/s | Initial recharge to the saturated zone per unit area (parameter)                                                                |
+
 
 Table: (\#tab:hillslope-table) Description of hillslope data frame columns
 

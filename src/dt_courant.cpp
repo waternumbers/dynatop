@@ -23,6 +23,7 @@ void dt_courant(Rcpp::DataFrame hillslope, // hillslope data frame
   Rcpp::NumericVector c_sf = hillslope["c_sf"]; // surface flow celerity
   Rcpp::NumericVector t_d = hillslope["t_d"]; // unsaturated zone time constant
   Rcpp::NumericVector ln_t0 = hillslope["ln_t0"]; // log of saturated transmissivity
+  Rcpp::NumericVector c_sz = hillslope["c_sz"]; // constant celerity of saturated zone 
   Rcpp::NumericVector m = hillslope["m"]; // transmissivity decay parameter
   Rcpp::NumericVector D = hillslope["D"]; // maximum storage depth
   Rcpp::NumericVector m_2 = hillslope["m_2"]; // second transmissivity decay parameter
@@ -44,7 +45,7 @@ void dt_courant(Rcpp::DataFrame hillslope, // hillslope data frame
   // loop to create hillslope class objects
   //std::vector<hillslope> hs_hru;
   for(int ii=0; ii<nhillslope; ++ii){
-    hillslope_hru hs = hillslope_hru(
+    hillslope_hru hs = hillslope_hru(id[ii],
 				     s_sf[ii], s_rz[ii], s_uz[ii], s_sz[ii],
 				     s_bar[ii],   area[ii],   width[ii],
 				     dummy_double, dummy_double, // surface zone lateral fluxes
@@ -53,7 +54,7 @@ void dt_courant(Rcpp::DataFrame hillslope, // hillslope data frame
 				     r_sf_max[ii],   c_sf[ii], // surface store parameters
 				     s_rz_max[ii], // root zone store parameters
 				     t_d[ii], // unsaturated zone parameters
-				     ln_t0[ii],   m[ii],   D[ii], m_2[ii], omega[ii],// saturated zone parameters
+				     ln_t0[ii], c_sz[ii], m[ii], D[ii], m_2[ii], omega[ii],// saturated zone parameters
 				     opt[ii]   ); //type of saturated zone
     cr = hs.courant(Dt);
     courant(ii,0) = cr.first;

@@ -1,3 +1,22 @@
+# dynatop 0.2.0.9101
+
+## Breaking changes
+
+- New model structure allowing for the transmissivity profile to be specified per HRU
+- New transmissivity profile (double exponential) meaning additional parameter columnes (m_2, omega) in the model
+
+## Other changes
+
+- dropping of Boost bisection algorithm for direct implimentation with user
+  specified tolerance and maximum iterations
+- C++ code refactored for speed improvements, making use of a single hillslope_hru class
+- Refinements to the vignettes and documentation to reflect changes 
+
+# dynatop 0.2.0.904*
+
+- changes to improve plotting
+
+
 # dynatop 0.2.0.9035
 
 - Adapted R and C++ code to pass data frames of hillslope and channel properties
@@ -20,7 +39,7 @@
 
 ## New features
 
-- Addition of two further transmissivity profiles - these implimnetations should be considered **experimental**
+- Addition of two further transmissivity profiles - these implimentations should be considered **experimental**
 
 ## Breaking Changes
 

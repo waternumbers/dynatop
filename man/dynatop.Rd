@@ -119,7 +119,8 @@ Simulate the hillslope output of a dynatop object
 \if{html}{\out{<div class="r">}}\preformatted{dynatop$sim_hillslope(
   keep_states = NULL,
   sub_step = NULL,
-  solver = c("implicit", "explicit")
+  tol = 2 * .Machine$double.eps,
+  max_it = 1000
 )}\if{html}{\out{</div>}}
 }
 
@@ -130,7 +131,9 @@ Simulate the hillslope output of a dynatop object
 
 \item{\code{sub_step}}{simulation timestep in seconds, default value of NULL results in data time step}
 
-\item{\code{solver}}{whetther implicit or explict solver should be used}
+\item{\code{tol}}{tolerance for the solution for the saturated zone}
+
+\item{\code{max_it}}{maximum number of iterations to use in the solution of the saturated zone}
 }
 \if{html}{\out{</div>}}
 }
@@ -158,7 +161,12 @@ invisible(self) for chaining
 \subsection{Method \code{sim()}}{
 Simulate the hillslope and channel componets of a dynatop object
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim(keep_states = NULL, sub_step = NULL)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$sim(
+  keep_states = NULL,
+  sub_step = NULL,
+  tol = 2 * .Machine$double.eps,
+  max_it = 1000
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -168,9 +176,11 @@ Simulate the hillslope and channel componets of a dynatop object
 
 \item{\code{sub_step}}{simulation timestep in seconds, default value of NULL results in data time step}
 
-\item{\code{mass_check}}{Flag indicating is a record of mass balance errors shuld be kept}
+\item{\code{tol}}{tolerance for the solution for the saturated zone}
 
-\item{\code{use_R}}{shoudl the R version of the simulation code be used (default FALSE)}
+\item{\code{max_it}}{maximum number of iterations to use in the solution of the saturated zone}
+
+\item{\code{mass_check}}{Flag indicating is a record of mass balance errors shuld be kept}
 }
 \if{html}{\out{</div>}}
 }

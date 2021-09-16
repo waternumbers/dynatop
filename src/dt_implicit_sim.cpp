@@ -4,18 +4,20 @@
 
 // [[Rcpp::export]]
 void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
-		  Rcpp::DataFrame channel, // channel data frame
-		  Rcpp::DataFrame flow_direction, // flow directions data frame
-		  Rcpp::DataFrame precip_input, // precipitation input data frame
-		  Rcpp::DataFrame pet_input, // PET input data frame
-		  Rcpp::NumericMatrix obs, // external series
-		  Rcpp::NumericMatrix channel_inflow_sf, // channel_inflow from surface - to compute
-		  Rcpp::NumericMatrix channel_inflow_sz, // channel_inflow from saturated - to compute
-		  Rcpp::NumericMatrix mass_balance, // mass balance for each timestep
-		  std::vector<bool> keep_states,
-		  Rcpp::List state_rec,
-		  double timestep,
-		  int n_sub_step
+		     Rcpp::DataFrame channel, // channel data frame
+		     Rcpp::DataFrame flow_direction, // flow directions data frame
+		     Rcpp::DataFrame precip_input, // precipitation input data frame
+		     Rcpp::DataFrame pet_input, // PET input data frame
+		     Rcpp::NumericMatrix obs, // external series
+		     Rcpp::NumericMatrix channel_inflow_sf, // channel_inflow from surface - to compute
+		     Rcpp::NumericMatrix channel_inflow_sz, // channel_inflow from saturated - to compute
+		     Rcpp::NumericMatrix mass_balance, // mass balance for each timestep
+		     std::vector<bool> keep_states,
+		     Rcpp::List state_rec,
+		     double timestep,
+		     int n_sub_step,
+		     double tol,
+		     int max_it
 		  ){
   
 
@@ -34,6 +36,7 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
   Rcpp::NumericVector c_sf = hillslope["c_sf"]; // surface flow celerity
   Rcpp::NumericVector t_d = hillslope["t_d"]; // unsaturated zone time constant
   Rcpp::NumericVector ln_t0 = hillslope["ln_t0"]; // log of saturated transmissivity
+  Rcpp::NumericVector c_sz = hillslope["c_sz"]; // constant celerity of saturated zone
   Rcpp::NumericVector m = hillslope["m"]; // decay parameter of transmissivity profile
   Rcpp::NumericVector D = hillslope["D"]; // depth parameter of transmissivity profile
   Rcpp::NumericVector m_2 = hillslope["m_2"]; // second transmissivity decay parameter
@@ -95,7 +98,7 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
   std::vector<hillslope_hru> hs_hru;
   for(int ii=0; ii<nhillslope; ++ii){
     cid = id[ii];
-    hs_hru.push_back(hillslope_hru(
+    hs_hru.push_back(hillslope_hru(id[ii],
 			       s_sf[ii], s_rz[ii], s_uz[ii], s_sz[ii],
 			       s_bar[ii],   area[ii],   width[ii],
 			       q_sf_in[cid], q_sf_out[cid], // surface zone lateral fluxes
@@ -104,7 +107,7 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
 			       r_sf_max[ii],   c_sf[ii], // surface store parameters
 			       s_rz_max[ii], // root zone store parameters
 			       t_d[ii], // unsaturated zone parameters
-			       ln_t0[ii],   m[ii],   D[ii], m_2[ii], omega[ii],// saturated zone parameters
+			       ln_t0[ii], c_sz[ii], m[ii], D[ii], m_2[ii], omega[ii],// saturated zone parameters
 			       opt[ii]   ) //type of saturated zone
 		     );
   }
@@ -168,8 +171,8 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
     	cid = id[ii];
 
 	// evolve hillslope
-	int max_it = 1000;
-	hs_hru[ii].implicit_step(pet[cid], precip[cid], Dt, max_it);
+	//int max_it = 10000;
+	hs_hru[ii].implicit_step(pet[cid], precip[cid], Dt, tol, max_it);
 
 	
     	while( (link_from_id == cid) & (link_cntr<nlink) ){

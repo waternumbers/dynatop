@@ -111,8 +111,8 @@ the computational sequence (or comments)
 
 Currently the code uses a purely implicit scheme for the solution of the
 hillslope HRUs. This requires a solving a *zero finding* problem for each HRU
-at each (sub)time step. Currently a simple bisection algorithm from the Boost
-math library is used. Notionally faster algorithms (such as the TOMS-748
-algorithm) could be used, but initial experiments suggest that these sometimes
-fail to converge well enough to achieve a reasonable mass balance. This is
-probably due to poor specification of the starting interval.
+at each (sub)time step. Currently a simple bisection algorithm is used with a
+user specified tolerance and maximum number of iterations. The tolerance is
+defined as the difference between the upper and lower limits of the interval
+containing the zero point. Notionally faster algorithms (such as the TOMS-748
+algorithm) could be used.
