@@ -6,3 +6,4 @@ $.git$
 ^appveyor\.yml$
 ^build_scripts$
 ^prebuilt$
+^\.github$

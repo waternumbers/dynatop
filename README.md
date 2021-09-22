@@ -1,8 +1,8 @@
 # dynatop
 
 <!-- badges: start -->
-[![Build Status](https://app.travis-ci.com/waternumbers/dynatop.svg?branch=master)](https://app.travis-ci.com/waternumbers/dynatop)
-[![Coveralls test coverage](https://coveralls.io/repos/github/waternumbers/dynatop/badge.svg)](https://coveralls.io/r/waternumbers/dynatop?branch=master)
+[![R-CMD-check](https://github.com/waternumbers/dynatop/workflows/R-CMD-check/badge.svg)](https://github.com/waternumbers/dynatop/actions)
+[![codecov](https://codecov.io/gh/waternumbers/dynatop/branch/master/graph/badge.svg?token=XzqU2C6K8i)](https://codecov.io/gh/waternumbers/dynatop)
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/waternumbers/dynatop?branch=master&svg=true)](https://ci.appveyor.com/project/waternumbers/dynatop)
 <!-- badges: end -->
 
