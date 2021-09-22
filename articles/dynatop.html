@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9042</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9101</span>
       </span>
     </div>
 
@@ -94,7 +94,7 @@
 
       
 
-      </header><div class="row">
+      </header><script src="dynatop_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Using Dynamic TOPMODEL</h1>
@@ -195,29 +195,39 @@
 <p>The initial states of the simulations can be specified in the model object. If, as in the case of this example, the states are not specified then any attempt to perform a simulation will fail.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">sim</span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; Error in self$sim_hillslope(keep_states, sub_step): Model states are either not initialised or have non-finite values</span></code></pre></div>
+<span class="co">#&gt; Error in self$sim_hillslope(keep_states, sub_step, tol, max_it): Model states are either not initialised or have non-finite values</span></code></pre></div>
 <p>The states need to be initialised using the <code>initialise</code> method which requires an initial recharge rate. In the following we initialise the states and plot the initial saturated zone storage deficit, using the chaining of commands.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">initialise</span><span class="op">(</span><span class="fl">1e-6</span><span class="op">)</span><span class="op">$</span><span class="fu">plot_state</span><span class="op">(</span><span class="st">"s_sz"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">initialise</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">plot_state</span><span class="op">(</span><span class="st">"s_sz"</span><span class="op">)</span>
+<span class="co">#&gt; Warning in showSRID(SRS_string, format = "PROJ", multiline = "NO", prefer_proj =</span>
+<span class="co">#&gt; prefer_proj): Discarded datum OSGB 1936 in Proj4 definition</span>
+<span class="co">#&gt; Warning in OGRSpatialRef(dsn, layer, morphFromESRI = morphFromESRI, dumpSRS =</span>
+<span class="co">#&gt; dumpSRS, : Discarded datum OSGB_1936 in Proj4 definition: +proj=tmerc +lat_0=49</span>
+<span class="co">#&gt; +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +units=m +no_defs</span></code></pre></div>
 <p><img src="dynatop_files/figure-html/initialise-1.png" width="700"></p>
 <p>The simulation can now be performed and the flow at the gauge extracted with</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">sim1</span> <span class="op">&lt;-</span> <span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">sim</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">get_gauge_flow</span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; Warning in private$sim_hs(keep_states, sub_step[1]): Courant number for surface zone is over 0.7</span>
+<span class="co">#&gt; Warning in private$sim_hs(keep_states, sub_step[1], tol, max_it): Courant number for surface zone is over 0.7</span>
 <span class="co">#&gt; Suggest maximum sub step is: 63.11seconds</span>
-<span class="co">#&gt; Warning in private$sim_hs(keep_states, sub_step[1]): Courant number for saturated zone is over 0.7</span>
-<span class="co">#&gt; Suggest maximum sub step is: 0seconds</span></code></pre></div>
+<span class="co">#&gt; Warning in private$sim_hs(keep_states, sub_step[1], tol, max_it): Courant number for saturated zone is over 0.7</span>
+<span class="co">#&gt; Suggest maximum sub step is: 0.2seconds</span></code></pre></div>
 <p>Note that the states of the system are now those at the end of the simulation for example:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">plot_state</span><span class="op">(</span><span class="st">"s_sz"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">plot_state</span><span class="op">(</span><span class="st">"s_sz"</span><span class="op">)</span>
+<span class="co">#&gt; Warning in showSRID(SRS_string, format = "PROJ", multiline = "NO", prefer_proj =</span>
+<span class="co">#&gt; prefer_proj): Discarded datum OSGB 1936 in Proj4 definition</span>
+<span class="co">#&gt; Warning in OGRSpatialRef(dsn, layer, morphFromESRI = morphFromESRI, dumpSRS =</span>
+<span class="co">#&gt; dumpSRS, : Discarded datum OSGB_1936 in Proj4 definition: +proj=tmerc +lat_0=49</span>
+<span class="co">#&gt; +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +units=m +no_defs</span></code></pre></div>
 <p><img src="dynatop_files/figure-html/new_states-1.png" width="700"></p>
 <p>Rerunning the simulation with the new initial states will of course produce different results. Output for the above examples can be plotted against observed discharge for comparison as follows:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">sim2</span> <span class="op">&lt;-</span> <span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">sim</span><span class="op">(</span><span class="op">)</span><span class="op">$</span><span class="fu">get_gauge_flow</span><span class="op">(</span><span class="op">)</span>
-<span class="co">#&gt; Warning in private$sim_hs(keep_states, sub_step[1]): Courant number for surface zone is over 0.7</span>
+<span class="co">#&gt; Warning in private$sim_hs(keep_states, sub_step[1], tol, max_it): Courant number for surface zone is over 0.7</span>
 <span class="co">#&gt; Suggest maximum sub step is: 63.11seconds</span>
-<span class="co">#&gt; Warning in private$sim_hs(keep_states, sub_step[1]): Courant number for saturated zone is over 0.7</span>
-<span class="co">#&gt; Suggest maximum sub step is: 0seconds</span>
+<span class="co">#&gt; Warning in private$sim_hs(keep_states, sub_step[1], tol, max_it): Courant number for saturated zone is over 0.7</span>
+<span class="co">#&gt; Suggest maximum sub step is: 0.2seconds</span>
 <span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html">merge</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html">merge</a></span><span class="op">(</span><span class="va">swindale_obs</span>,<span class="va">sim1</span><span class="op">)</span>,<span class="va">sim2</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">swindale_obs</span><span class="op">)</span>,<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span><span class="op">)</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">out</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">'Flow'</span>,<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span><span class="op">)</span><span class="op">]</span>, main<span class="op">=</span><span class="st">"Discharge"</span>,ylab<span class="op">=</span><span class="st">"m3/s"</span>,legend.loc<span class="op">=</span><span class="st">"topright"</span><span class="op">)</span></code></pre></div>
@@ -229,7 +239,7 @@
 <p>It is possible to output the mass balance check for each time step of the simulation using the <code>get_mass_errors</code> method. The returned matrix gives the volumes in the states at the start and end of the time step along with the other fluxes as volumes. This can easily be used to plot the errors as shown below.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mb</span> <span class="op">&lt;-</span> <span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">get_mass_errors</span><span class="op">(</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span> <span class="fu">xts</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/xts/man/xts.html">xts</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/colSums.html">rowSums</a></span><span class="op">(</span><span class="va">mb</span><span class="op">)</span>,<span class="fu">zoo</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/zoo/man/index.html">index</a></span><span class="op">(</span><span class="va">mb</span><span class="op">)</span><span class="op">)</span> , main<span class="op">=</span><span class="st">"Mass Error"</span>, ylab<span class="op">=</span><span class="st">"[m^3]"</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span> <span class="va">mb</span><span class="op">[</span>,<span class="fl">6</span><span class="op">]</span> , main<span class="op">=</span><span class="st">"Mass Error"</span>, ylab<span class="op">=</span><span class="st">"[m^3]"</span><span class="op">)</span></code></pre></div>
 <p><img src="dynatop_files/figure-html/mass_check-1.png" width="700"></p>
 </div>
   </div>

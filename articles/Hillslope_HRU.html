@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9042</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9101</span>
       </span>
     </div>
 
@@ -94,7 +94,7 @@
 
       
 
-      </header><div class="row">
+      </header><script src="Hillslope_HRU_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>The Hillslope HRU</h1>
@@ -126,12 +126,16 @@ the interactions between evapotranspiration and precipitation and when full spil
 the unsaturated zone. This drains to the saturated zone which also interacts
 with other HRUs. The behaviour of the saturated zone is modelled using a kinematic wave
 approximation.</p>
+<p><em>TODO: Add figure from training course - add figure of conceptual dimensions</em></p>
 <p>In the following section the governing equations of the hillslope HRU are
-given in a finite volume form. For comparison we also outline the equivalent
-equations for an infinitesimal vertical slab across the outflow width which is in keeping with the
-original derivation of Dynamic TOPMODEL. An implicit numerical scheme, valid
-for a wide range of transmissivity profiles, is then presented. The vignette
-then concludes by presenting the tranmissivity profiles present within the code.</p>
+given in a finite volume form. Approximating equations for the solution of the
+governing equations are then derived with associated implicit and semi-implicit numerical
+schemes. These are valid for a wide range of transmissivity profiles,
+includign those present in the code and presented in the third sections of the
+vignette.</p>
+<p>Two appendices provide supporting information justifying the numerical schemes
+and an alternative derivation of the governing equations based on the
+infinitesimal vertical slab used in the original derivation of Dynamic TOPMODEL.</p>
 </div>
 <div id="notation" class="section level1">
 <h1 class="hasAnchor">
@@ -152,12 +156,15 @@ and inflow to the hillslope.</p></li>
 <li><p><span class="math inline">\(\left.y\right\rvert_t\)</span> indicates the value of the
 variable <span class="math inline">\(y\)</span> at time <span class="math inline">\(t\)</span></p></li>
 <li><p>Spatial averages are denoted with a <span class="math inline">\(\bar{}\)</span> so for example integrating
-over the length of the hillslope <span class="math inline">\(\Delta x\)</span> we find</p></li>
+over the length of the hillslope we find</p></li>
 </ul>
+<p><span class="math display">\[\begin{equation}
+\int wy dx = A\bar{y}
+\end{equation}\]</span></p>
 <ul>
 <li>Average values over a time step are denoted with a <span class="math inline">\(\hat{}\)</span>. If the
 temporal average is of a spatial average the <span class="math inline">\(\bar{}\)</span> is dropped. For
-example the temporal average of the spatial average <span class="math inline">\(bar{y}\)</span> over a time step is <span class="math inline">\(\hat{y}\)</span>.</li>
+example the temporal average of the spatial average <span class="math inline">\(\bar{y}\)</span> over a time step is <span class="math inline">\(\hat{y}\)</span>.</li>
 </ul>
 <table class="table">
 <caption>
@@ -221,13 +228,13 @@ section of the hillslope HRU</caption>
 <tr class="even">
 <td>Lateral fluxes</td>
 <td><span class="math inline">\(l_{sf}\)</span></td>
-<td>Lateral flow in the surface zone per unit width</td>
+<td>Lateral flow in the surface zone per unit outflow width</td>
 <td>m<span class="math inline">\(^2\)</span>/s</td>
 </tr>
 <tr class="odd">
 <td></td>
 <td><span class="math inline">\(l_{sz}\)</span></td>
-<td>Lateral flow in the saturated zone per unit width</td>
+<td>Lateral flow in the saturated zone per unit outflow width</td>
 <td>m<span class="math inline">\(^2\)</span>/s</td>
 </tr>
 <tr class="even">
@@ -264,13 +271,13 @@ section of the hillslope HRU</caption>
 <tr class="odd">
 <td></td>
 <td><span class="math inline">\(w\)</span></td>
-<td>Width of outlet cross section</td>
+<td>Width of a hill slope cross section</td>
 <td>m</td>
 </tr>
 <tr class="even">
 <td></td>
 <td><span class="math inline">\(\Delta x\)</span></td>
-<td>Length of the hillslope HRU</td>
+<td>Effective length of the hillslope HRU (Area divided by outflow width)</td>
 <td>m</td>
 </tr>
 <tr class="odd">
@@ -322,45 +329,26 @@ receive water (for example if the saturation storage deficit is 0 and the root z
 <p>In cases where lateral flows in the saturated zone produce
 saturation storage deficits water may be returned from the root
 zone to the surface giving negative values of <span class="math inline">\(r_{sf \rightarrow rz}\)</span>.</p>
-<p>The governing ODE can be written as
+<p>The governing ODE for a cross section of the hillslope can be written as
 <span class="math display">\[\begin{equation}
 \frac{dws_{sf}}{dt} = - \frac{dq_{sf}}{dx} - wr_{sf \rightarrow rz}
 \end{equation}\]</span>
 where <span class="math inline">\(r_{sf \rightarrow rz} \leq k_{sf}\)</span>.</p>
-<p>Integration over the length <span class="math inline">\(\Delta x\)</span> and substituting in the spatial averages gives
+<p>Integration over the hillslope length and substituting in the spatial averages gives
 <span class="math display">\[\begin{equation}
 A\frac{d \bar{s}_{sf}}{dt} = q_{sf}^{-} - q_{sf}^{+} - A\bar{r}_{sf \rightarrow rz}
 \end{equation}\]</span></p>
-<p>Dividing through by <span class="math inline">\(w^+\)</span> and re arranging gives
+<p>Since <span class="math inline">\(\Delta x = A/w^{+}\)</span> and <span class="math inline">\(l_{sf}^{-} = q_{sf}^{-}/w^{+}\)</span> re arranging gives
 <span class="math display">\[\begin{equation}
-\frac{d \bar{s}_{sf}}{dt} = \frac{q_{sf}^{-}/w^{+} - l_{sf}^{+}}{A/w^+} - \bar{r}_{sf \rightarrow rz}
+\frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} - l_{sf}^{+}\right) - \bar{r}_{sf \rightarrow rz}
 \end{equation}\]</span>
 This equation represents the evolution in time of <span class="math inline">\(\bar{s}_{sf}\)</span> expressed in
 terms of the unit width fluxes and an effective length <span class="math inline">\(A/w^+\)</span></p>
 <p>To complete the formulation assume that <span class="math inline">\(l_{sf}^{+} = c_{sf}\bar{s}_{sf}\)</span>
 which gives
 <span class="math display">\[\begin{equation}
-\frac{d \bar{s}_{sf}}{dt} = \frac{q_{sf}^{-}}{A} - \bar{r}_{sf \rightarrow rz}
-- \frac{w^{+}c_{sf}}{A} \bar{s}_{sf}
+\frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} - c_{sf}\bar{s}_{sf}\right) - \bar{r}_{sf \rightarrow rz}
 \end{equation}\]</span></p>
-<div id="infinitesimal-slab" class="section level3">
-<h3 class="hasAnchor">
-<a href="#infinitesimal-slab" class="anchor"></a>Infinitesimal slab</h3>
-<p>A similar expression for the evolution can be derived by considering the
-infinitesimal slab at the downslope end of the HRU. Taking a discrete
-approximation for the change of flow with length the governing ODE can be written as
-<span class="math display">\[\begin{equation}
-\frac{dw^{+}s_{sf}^{+}}{dt} = \frac{q_{sf}^{-} - q_{sf}^{+}}{\Delta x} - w^{+}r_{sf \rightarrow rz}^{+}
-\end{equation}\]</span></p>
-<p>Dividing through by <span class="math inline">\(w^{+}\)</span> gives
-<span class="math display">\[\begin{equation}
-\frac{ds_{sf}^{+}}{dt} = \frac{q_{sf}^{-}/w^{+} - l_{sf}^{+}}{\Delta x} - r_{sf \rightarrow rz}^{+}
-\end{equation}\]</span></p>
-<p>Note the similaties between this and the finite volume solution. Infact if
-<span class="math inline">\(r_{sf \rightarrow rz}\)</span> is taken to be spatially uniform and
-<span class="math inline">\(\Delta x = A/w^{+}\)</span> then this solution for <span class="math inline">\(s_{sf}^{+}\)</span> will evolve in a similar fashion to
-<span class="math inline">\(\bar{s}_{sf}\)</span></p>
-</div>
 </div>
 <div id="root-zone" class="section level2">
 <h2 class="hasAnchor">
@@ -369,7 +357,7 @@ approximation for the change of flow with length the governing ODE can be writte
 evaporation and to the unsaturated zone. Since
 all the veritcal fluxes are spatially uniform the evolution can be evaluated
 in terms of the spatial averages. The root zone storage satifies</p>
-
+<p><span class="math display">\[\begin{equation} 0 \leq \bar{s}_{rz} \leq s_{rzmax} \end{equation}\]</span></p>
 <p>with the governing ODE
 <span class="math display">\[\begin{equation}
 \frac{d\bar{s}_{rz}}{dt} = p - \frac{e_p}{s_{rzmax}} \bar{s}_{rz} +
@@ -392,13 +380,6 @@ p - e_p + \bar{r}_{sf\rightarrow rz} &gt; 0
 so long as the unsaturated zone can receive the water. If <span class="math inline">\(\bar{r}_{rz \rightarrow uz}\)</span> is ‘throttled’ by the rate at which the unsaturated zone can
 receive water, then <span class="math inline">\(\bar{r}_{sf\rightarrow rz}\)</span> is adjusted (potentially becoming
 negative) to ensure the equality is met.</p>
-<div id="infinitesimal-slab-1" class="section level3">
-<h3 class="hasAnchor">
-<a href="#infinitesimal-slab-1" class="anchor"></a>Infinitesimal slab</h3>
-<p>The same formulation follows for the infinitesimal slab at the bottom of the
-hillslope with the averaged terms (using <span class="math inline">\(\bar{}\)</span>) replaced with those valid
-at the bottom of the hillslope (using <span class="math inline">\(^{+}\)</span>).</p>
-</div>
 </div>
 <div id="unsaturated-zone" class="section level2">
 <h2 class="hasAnchor">
@@ -421,19 +402,12 @@ constrained by the ability of the saturated zone to receive water. If
 this is the case <span class="math inline">\(\bar{r}_{uz \rightarrow sz}\)</span> occurs at the maximum
 possible rate and <span class="math inline">\(\bar{r}_{rz \rightarrow uz}\)</span> is limited to ensure that
 <span class="math inline">\(\bar{s}_{uz} \leq \bar{s}_{sz}\)</span>.</p>
-<div id="infinitesimal-slab-2" class="section level3">
-<h3 class="hasAnchor">
-<a href="#infinitesimal-slab-2" class="anchor"></a>Infinitesimal slab</h3>
-<p>The same formulation follows for the infinitesimal slab at the bottom of the
-hillslope with the averaged terms (using <span class="math inline">\(\bar{}\)</span>) replaced with those valid
-at the bottom of the hillsipe (using <span class="math inline">\(^{+}\)</span>).</p>
-</div>
 </div>
 <div id="saturated-zone" class="section level2">
 <h2 class="hasAnchor">
 <a href="#saturated-zone" class="anchor"></a>Saturated Zone</h2>
 <p>For a HRU the alteration of the storage in the saturated zone is
-given by
+given by teh kinematic equation
 <span class="math display">\[\begin{equation}
 \frac{dw\left(D-s_{sz}\right)}{dt} = -\frac{dq_{sz}}{dx} + wr_{uz \rightarrow sz}
 \end{equation}\]</span></p>
@@ -442,9 +416,9 @@ spatial averaged values gives
 <span class="math display">\[\begin{equation}
 -A\frac{d\bar{s}_{sz}}{dt} = q_{sz}^{-} - q_{sz}^{+}  + A\bar{r}_{uz \rightarrow sz}
 \end{equation}\]</span></p>
-<p>Dividing through by <span class="math inline">\(w^+\)</span> and rearranging gives
+<p>Rearranging this gives
 <span class="math display">\[\begin{equation}
-\frac{d\bar{s}_{sz}}{dt} = \frac{l_{sz}^{+} - q_{sz}^{-}/w^{+}}{A/w^{+}} - \bar{r}_{uz \rightarrow sz}
+\frac{d\bar{s}_{sz}}{dt} = \frac{1}{\Delta x}\left(\frac{l_{sz}^{+} - l_{sz}^{-}\right) - \bar{r}_{uz \rightarrow sz}
 \end{equation}\]</span></p>
 <p>The Kinematic approximation then depends upon the specification of a relationship
 between <span class="math inline">\(\bar{s}_{sz}\)</span> and <span class="math inline">\(l_{sz}^{+}\)</span>. This usually termed the transmissivity
@@ -455,82 +429,74 @@ to be a one-to-one, continuously differentiable function
 <span class="math inline">\(g: \mathcal{R^{+}}\rightarrow \mathcal{R}^{+}\)</span> which returns the lateral flow on
 a unit width such that <span class="math inline">\(l_{sz}^{+} = g\left(\bar{s}_{sz},\Theta_{sz}\right)  \geq 0\)</span> which satisfies
 <span class="math display">\[\begin{equation}
--\frac{dl_{sz}^{+}}{d\bar{s}_{sz}} = -\frac{d}{d\bar{s}_{sz}}g\left(\bar{s}_{sz},\Theta_{sz}\right) &gt; 0
-\end{equation}\]</span></p>
-<p>The later condition ensures a positive celerity (wave speed) and indicates that <span class="math inline">\(l_{sz}^{+}\)</span> increases with decreasing
-<span class="math inline">\(\bar{s}_{sz}\)</span>. This is numerically helpful but not strictly required.</p>
+-\frac{dl_{sz}^{+}}{d\bar{s}_{sz}} = -\frac{d}{d\bar{s}_{sz}}g\left(\bar{s}_{sz},\Theta_{sz}\right) \geq 0
+\end{equation}\]</span>
+and
+<span class="math display">\[\begin{equation}
+g\left(\bar{s}_{sz},\Theta_{sz}\right) \rightarrow 0 \quad \mathrm{as} \quad
+ \bar{s}_{sz}\rightarrow \infty
+\end{equation}\]</span>
+The first condition ensures a non negative celerity (wave speed) which is in
+keeping with the conceptualisation of the model. The first condition also implies
+that <span class="math inline">\(l_{sz}^{+}\)</span> decreases with increasing <span class="math inline">\(\bar{s}_{sz}\)</span>. This combined with
+the second condition ensures that the model respresents a state where no
+lateral inflow is generated.</p>
 <p>Using the relationship between <span class="math inline">\(l_{sz}^{+}\)</span> and <span class="math inline">\(\bar{s}_{sz}\)</span> gives
 <span class="math display">\[\begin{equation}
-\frac{d\bar{s}_{sz}}{dt} = \frac{w^{+}}{A}g\left(\bar{s}_{sz},\Theta_{sz}\right) - \frac{q_{sz}^{-}}{A} - \bar{r}_{uz \rightarrow sz}
+\frac{d\bar{s}_{sz}}{dt} = \frac{1}{\Delta x}\left(g\left(\bar{s}_{sz},\Theta_{sz}\right) - l_{sz}^{-}\right) - \bar{r}_{uz \rightarrow sz}
 \end{equation}\]</span></p>
-<div id="infinitesimal-slab-3" class="section level3">
-<h3 class="hasAnchor">
-<a href="#infinitesimal-slab-3" class="anchor"></a>Infinitesimal slab</h3>
-<p>Evaluating for the foot of the hillslope and taking a discrete approximation
-of the spatial gradient gives
-<span class="math display">\[\begin{equation}
-\frac{ds_{sz}^{+}}{dt} = \frac{l_{sz}^{+} - q_{sz}^{-}/w^{+}}{\Delta x} - r_{uz \rightarrow sz}^{+}
-\end{equation}\]</span></p>
-<p>As with the surface zone we see the similarity in form, indicating that,
-subject to the evaluation of the temporal integral, the two formulations
-should return the same results when <span class="math inline">\(\Delta x = A/w^{+}\)</span></p>
 </div>
 </div>
-</div>
-<div id="temporal-integration" class="section level1">
+<div id="approximating-equations" class="section level1">
 <h1 class="hasAnchor">
-<a href="#temporal-integration" class="anchor"></a>Temporal Integration</h1>
+<a href="#approximating-equations" class="anchor"></a>Approximating Equations</h1>
 <p>No analytical solution yet exists for simultaneous integration of the system of
 ODEs outlined above. In the following an implicit scheme, where fluxes
 between stores are considered constant over the time step and gradients are
 evaluated at the final state, is presented.</p>
 <p>The basis of the solution is that a gravity driven system will maximise
 the downward flow of water within each timestep of size <span class="math inline">\(\Delta t\)</span>.</p>
-<div id="approximating-equations" class="section level2">
-<h2 class="hasAnchor">
-<a href="#approximating-equations" class="anchor"></a>Approximating Equations</h2>
 <p>Recalling that the temporal and spatial average vertical fluxes are denoted with
 a <span class="math inline">\(\hat{}\)</span> the implicit approximations are stated in teh following sections using the unknown vertical fluxes
 <span class="math inline">\(\hat{r}_{\star \rightarrow \star}\)</span> which are then determined by maximising the
 downward flux.</p>
-<div id="surface-excess" class="section level3">
-<h3 class="hasAnchor">
-<a href="#surface-excess" class="anchor"></a>Surface excess</h3>
+<div id="surface-excess" class="section level2">
+<h2 class="hasAnchor">
+<a href="#surface-excess" class="anchor"></a>Surface excess</h2>
 <p>The implicit scheme gives</p>
 <p><span class="math display">\[\begin{equation}
 \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
 =
 \left. \bar{s}_{sf} \right\rvert_{0}
-+ \Delta t \left(
-\frac{\hat{q}_{sf}^{-}}{A} - 
-\hat{r}_{sf \rightarrow rz}
-- \frac{w^{+}c_{sf}}{A} \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
-\right)
-\end{equation}\]</span>
-or
-<span class="math display">\[\begin{equation}
++ \frac{\Delta t}{\Delta x} \left(
+\hat{l}_{sf}^{-} - c_{sf} \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
+\right) 
+- \Delta t \hat{r}_{sf \rightarrow rz}
+\end{equation}\]</span></p>
+<p>or</p>
+<p><span class="math display">\[\begin{equation}
 \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
-= \left(1 + \frac{w^{+}c_{sf}}{A}\right)^{-1}
+= \left(1 + \frac{c_{sf}\Delta t}{\Delta x}\right)^{-1}
 \left( \left. \bar{s}_{sf} \right\rvert_{0}
-+ \Delta t \left(
-\frac{\hat{q}_{sf}^{-}}{A} - 
-\hat{r}_{sf \rightarrow rz}
-\right) \right)
++  \frac{\Delta t}{\Delta x} \hat{l}_{sf}^{-} - 
+\Delta t \hat{r}_{sf \rightarrow rz}
+\right)
 \end{equation}\]</span></p>
 <p>To ensure that the surface storage does not become negative
 <span class="math display">\[\begin{equation}
 \hat{r}_{sf \rightarrow rz} \leq \min\left( k_{sf},
-\left. \bar{s}_{sf} \right\rvert_{0} + \frac{\Delta t \hat{q}_{sf}^{-}}{A}
-\right)
+\left. \frac{1}{\Delta t}\left(\bar{s}_{sf} \right\rvert_{0} + \frac{\Delta
+t}{\Delta x} \hat{l}_{sf}^{-}
+\right)\right)
 \end{equation}\]</span></p>
 <p>The surface outflow over the time step is evaluated as
 <span class="math display">\[\begin{equation}
-\hat{q}_{sf}^{+} = \frac{w^{+}c_{sf}}{A} \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
+\hat{q}_{sf}^{+} = w^{+}c_{sf} \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
 \end{equation}\]</span></p>
 </div>
-<div id="root-zone-1" class="section level3">
-<h3 class="hasAnchor">
-<a href="#root-zone-1" class="anchor"></a>Root Zone</h3>
+<div id="root-zone-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#root-zone-1" class="anchor"></a>Root Zone</h2>
 <p>The implicit formulation for the root zone gives
 <span class="math display">\[\begin{equation}
 \left. \bar{s}_{rz} \right.\rvert_{\Delta t} = 
@@ -553,13 +519,19 @@ p + \hat{r}_{sf \rightarrow rz} - e_{p} \right)
 \right)\right)
 \end{equation}\]</span></p>
 </div>
-<div id="unsaturated-zone-1" class="section level3">
-<h3 class="hasAnchor">
-<a href="#unsaturated-zone-1" class="anchor"></a>Unsaturated Zone</h3>
+<div id="unsaturated-zone-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#unsaturated-zone-1" class="anchor"></a>Unsaturated Zone</h2>
 <p>The expression for the unsaturated zone is given in terms of
 <span class="math inline">\(\left. \bar{s}_{uz} \right.\rvert_{\Delta t}\)</span> and
 <span class="math inline">\(\left. \bar{s}_{sz} \right.\rvert_{\Delta t}\)</span> as</p>
-
+<p><span class="math display">\[\begin{equation}
+\left. \bar{s}_{uz} \right.\rvert_{\Delta t} = 
+\frac{T_{d}\left. \bar{s}_{sz} \right.\rvert_{\Delta t}}{
+T_{d}\left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \Delta t}
+\left( \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \hat{r}_{rz
+\rightarrow uz}\right)
+\end{equation}\]</span></p>
 <p>Since <span class="math inline">\(\left. \bar{s}_{uz} \right.\rvert_{\Delta t} \leq \left. \bar{s}_{sz}  \right.\rvert_{\Delta t}\)</span> this places an additional condition of
 <span class="math display">\[\begin{equation}
 \hat{r}_{rz \rightarrow uz} \leq \frac{1}{\Delta t} \left(
@@ -567,70 +539,100 @@ p + \hat{r}_{sf \rightarrow rz} - e_{p} \right)
 \end{equation}\]</span></p>
 <p>This condition also implies that <span class="math inline">\(\hat{r}_{uz \rightarrow sz} \leq  \frac{1}{T_d}\)</span></p>
 </div>
-<div id="saturated-zone-1" class="section level3">
-<h3 class="hasAnchor">
-<a href="#saturated-zone-1" class="anchor"></a>Saturated Zone</h3>
+<div id="saturated-zone-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#saturated-zone-1" class="anchor"></a>Saturated Zone</h2>
 <p>Initial evaluation and substitution of the flux from the unsaturated zone gives
 <span class="math display">\[\begin{equation}
 \left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 
-\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + \Delta t \left(
-\frac{w^{+}}{A}g\left(\left.\bar{s}_{sz}\right\rvert_{\Delta t}\right) -
-\frac{q_{sz}^{-}}{A} - \frac{
+\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + 
+\frac{\Delta t}{\Delta x} \left(g\left(\left.\bar{s}_{sz}\right\rvert_{\Delta t},\Theta_{sz}\right) -
+l_{sz}^{-}\right) - \Delta t \frac{
 \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \hat{r}_{rz \rightarrow uz} }
 { T_{d}\left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \Delta t}
-\right)
 \end{equation}\]</span></p>
 <p>Limiting the inflow by reaching the saturation level gives</p>
-
-<p>Selecting <span class="math inline">\(\bar{s}_{sz}\)</span> to satisfy the above equation describes a non-linear
-problem. However, since the LHS is strictly increasing with <span class="math inline">\(\bar{s}_{sz}\)</span>,
-while the RHS is decreasing so single solution is present and can be reliably
-located.</p>
-</div>
-</div>
-<div id="algorithm" class="section level2">
-<h2 class="hasAnchor">
-<a href="#algorithm" class="anchor"></a>Algorithm</h2>
-<p>An implementation of the approximating equations which is consistent with
-maximising the downward flux which makes use of the psuedo-function
-<span class="math inline">\(f\left(\check{s}_{sz},\check{r}_{rz \rightarrow uz}\right)\)</span> which returns the
-value
-<span class="math display">\[\begin{equation}
-\check{s}_{sz} - 
-\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - \Delta t \left(
-\frac{w^{+}}{A}g\left(\check{s}_{sz},\Theta_{sz}\right) -
-\frac{q_{sz}^{-}}{A} - \min\left(\frac{1}{T_d},
-\frac{ \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
-{ T_{d} \check{s}_{sz} + \Delta t} \right)
-\right)
+<p><span class="math display">\[\begin{equation}
+\hat{r}_{rz \rightarrow uz} \leq \frac{1}{\Delta t}\left(
+\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + 
+\frac{\Delta t}{\Delta x} \left(g\left(\left.\bar{s}_{sz}\right\rvert_{\Delta t},\Theta_{sz}\right) -
+l_{sz}^{-}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)
 \end{equation}\]</span></p>
-<p>takes the following steps:</p>
+<p>Selecting <span class="math inline">\(\bar{s}_{sz}\)</span> and <span class="math inline">\(\hat{r}_{rz \rightarrow uz}\)</span> to satisfy the above equation describes a non-linear
+problem with two unknowns a multiple solutions. A further condition, that the
+downward flux is maximised, is imposed to ensure a unique solution.</p>
+</div>
+</div>
+<div id="numerical-algorithm" class="section level1">
+<h1 class="hasAnchor">
+<a href="#numerical-algorithm" class="anchor"></a>Numerical Algorithm</h1>
+<p>An implementation of the approximating equations which is consistent with
+maximising the downward flux produces a fully implicit numeric scheme.</p>
+<p>The maximum downward flux from the surface is given by
+<span class="math display">\[
+\check{r}_{sf \rightarrow rz} = \min\left( k_{sf},
+\left. \frac{1}{\Delta t}\left(\bar{s}_{sf} \right\rvert_{0} + \frac{\Delta
+t}{\Delta x} \hat{l}_{sf}^{-}
+\right)\right)
+\]</span></p>
+<p>which results in a maximum downward flux from the root zone of
+<span class="math display">\[
+\check{r}_{rz \rightarrow uz} = \max\left(0, \frac{1}{\Delta t}\left(
+\left. \bar{s}_{rz} \right.\rvert_{0} + \Delta t \left( p + \check{r}_{sf
+\rightarrow rz} - e_{p} \right) - s_{rzmax} \right)\right)
+\]</span></p>
+<p>Consider the psuedo-function
+<span class="math display">\[
+f\left(z\right) = 
+z - 
+\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} -
+\frac{\Delta t}{\Delta x} \left(g\left(z,\Theta_{sz}\right) -
+l_{sz}^{-}\right) + \Delta t \min\left(\frac{1}{T_d},\frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} z + \Delta t}\right)
+\]</span></p>
+<p>adapted from the approximating equation for the saturated zone storage with the minima
+ensuring the limit on the flux from the unsaturated zone. If <span class="math inline">\(f(0) \geq 0\)</span> the
+downward flux is enough to produce saturation in the subsurface and
+<span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0\)</span>. If <span class="math inline">\(f(0) &lt; 0\)</span> then
+<span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0\)</span> is given by a solution of
+<span class="math inline">\(f(z) = 0\)</span>. In Appendix A it is
+shown that <span class="math inline">\(f\left(z\right)\)</span> is a monotonic increasing function of
+<span class="math inline">\(z &gt; 0\)</span>; hence if <span class="math inline">\(f\left(0\right) \leq 0\)</span> and <span class="math inline">\(f\left(D\right) \geq 0\)</span> a
+unique solution for <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\)</span> can be found.</p>
+<!-- ### Algorithm 1 - Simple Implicit -->
+<p>A direct implimnetation of the above results takes the form of</p>
 <ol style="list-style-type: decimal">
-<li>Compute <span class="math inline">\(\check{r}_{sf \rightarrow rz} = \min\left( k_{sf}, \left. \bar{s}_{sf} \right\rvert_{0} + \frac{\Delta t \hat{q}_{sf}^{-}}{A} \right)\)</span>
+<li>Compute <span class="math inline">\(\check{r}_{sf \rightarrow rz}\)</span> and <span class="math inline">\(\check{r}_{rz \rightarrow uz}\)</span>
 </li>
-<li>Compute <span class="math inline">\(\check{r}_{rz \rightarrow uz} = \max\left(0, \frac{1}{\Delta t}\left( \left. \bar{s}_{rz} \right.\rvert_{0} + \Delta t \left( p + \check{r}_{sf  \rightarrow rz} - e_{p} \right) - s_{rzmax} \right)\right)\)</span>
-</li>
-<li>Test for saturation. If <span class="math inline">\(f\left(0,\check{r}_{rz \rightarrow uz}\right) \geq 0\)</span> then goto 4 else goto 5</li>
+<li>Test for saturation. If <span class="math inline">\(f\left(0\right) \geq 0\)</span> then goto Step 3 else goto Step 4</li>
 <li>Saturated. Set <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0\)</span> and
-<span class="math inline">\(\hat{r}_{rz \rightarrow uz} = \frac{1}{\Delta t}\left( \left. \bar{s}_{sz}\right.\rvert_{0} + \Delta t \left( \frac{w^{+}}{A}g\left(0,\Theta_{sz}\right) - \frac{q_{sz}^{-}}{A}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)\)</span>,
-Goto 7</li>
-<li>Not saturated: find <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\)</span> such that
-<span class="math inline">\(f\left(\left. \bar{s}_{sz}\right.\rvert_{\Delta t},\check{r}_{rz \rightarrow  uz}\right) = 0\)</span>.</li>
-<li>Set <span class="math inline">\(\hat{r}_{rz \rightarrow uz} = \min\left(\check{r}_{rz \rightarrow uz},\frac{1}{\Delta t} \left( \left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \frac{\Delta t}{T_d} -  \left. \bar{s}_{uz} \right.\rvert_{0}\right)\right)\)</span>.</li>
-<li>Compute <span class="math inline">\(\hat{r}_{sf \rightarrow rz} = \min\left(\check{r}_{sf \rightarrow  rz}, \frac{1}{\Delta t}\left( s_{rzmax} - \left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p - \hat{r}_{rz  \rightarrow uz} \right) \right)\right)\)</span>
+<span class="math display">\[\hat{r}_{rz \rightarrow uz} = \frac{1}{\Delta t}\left(
+\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + 
+\frac{\Delta t}{\Delta x} \left(g\left(0,\Theta_{sz}\right) -
+l_{sz}^{-}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)
+\]</span>
+Goto Step 5.</li>
+<li>Not saturated. Find <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\)</span> such that
+<span class="math inline">\(f\left(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\right) = 0\)</span> and take
+<span class="math display">\[
+\hat{r}_{rz \rightarrow uz} = \min\left(\check{r}_{rz \rightarrow uz},\frac{1}{\Delta t} \left(
+\left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \frac{\Delta t}{T_d} -
+ \left. \bar{s}_{uz} \right.\rvert_{0}\right)\right)\]</span>
+Goto Step 5.</li>
+<li>Compute
+<span class="math display">\[
+\hat{r}_{sf \rightarrow rz} = \min\left(\check{r}_{sf \rightarrow
+  rz}, \frac{1}{\Delta t}\left( s_{rzmax} - 
+\left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p - \hat{r}_{rz
+  \rightarrow uz} \right) \right)\right)\]</span>
 </li>
 <li>Solve for <span class="math inline">\(\left. \bar{s}_{uz}\right.\rvert_{\Delta t}\)</span>,
 <span class="math inline">\(\left. \bar{s}_{rz}\right.\rvert_{\Delta t}\)</span> and
 <span class="math inline">\(\left. \bar{s}_{sf}\right.\rvert_{\Delta t}\)</span> using the computed vertical
 fluxes.</li>
 </ol>
-<p>The first two steps compute the maximum potential downward flux from the
-surface and root zones. Steps 3-6 solve saturated zoneand adjust the fluz from
-the root zone to the unsaturated zone accordingly. Step 7 adjusts the flux
-from the surface zone in the case of upward flow from the unsaturated zone,
-with Step 8 using the corrected vertical fluxes to solve for the new values of
-the states.</p>
-</div>
+<!-- ## Algorithm 2 --><!-- 1. Compute $\check{r}_{sf \rightarrow rz} = \min\left( k_{sf}, --><!-- \left. \bar{s}_{sf} \right\rvert_{0} + \frac{\Delta t \hat{q}_{sf}^{-}}{A} --><!-- \right)$ --><!-- 2. Compute $\check{r}_{rz \rightarrow uz} = \max\left(0, \frac{1}{\Delta t}\left( --><!-- \left. \bar{s}_{rz} \right.\rvert_{0} + \Delta t \left( p + \check{r}_{sf --><!--   \rightarrow rz} - e_{p} \right) - s_{rzmax} \right)\right)$ --><!-- 3. Test for saturation. If $f\left(0,\check{r}_{rz \rightarrow uz}\right) \geq --><!--    0$ then goto 4 else goto 5 --><!-- 4. Saturated. Set $\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0$ and --><!-- $\hat{r}_{rz \rightarrow uz} = \frac{1}{\Delta t}\left( --><!-- \left. \bar{s}_{sz}\right.\rvert_{0} + \Delta t \left( --><!-- \frac{w^{+}}{A}g\left(0,\Theta_{sz}\right) - --><!-- \frac{q_{sz}^{-}}{A}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)$, --><!-- Goto 7 --><!-- 5. Not saturated: find $\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ such that  --><!-- $f\left(\left. \bar{s}_{sz}\right.\rvert_{\Delta t},\check{r}_{rz \rightarrow --><!--   uz}\right) = 0$.  --><!-- 6. Set $\hat{r}_{rz \rightarrow uz} = \min\left(\check{r}_{rz \rightarrow uz},\frac{1}{\Delta t} \left( --><!-- \left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \frac{\Delta t}{T_d} - --><!--  \left. \bar{s}_{uz} \right.\rvert_{0}\right)\right)$. --><!-- 7. Compute $\hat{r}_{sf \rightarrow rz} = \min\left(\check{r}_{sf \rightarrow --><!--   rz}, \frac{1}{\Delta t}\left( s_{rzmax} -  --><!-- \left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p - \hat{r}_{rz --><!--   \rightarrow uz} \right) \right)\right)$ --><!-- 8. Solve for $\left. \bar{s}_{uz}\right.\rvert_{\Delta t}$, --><!-- $\left. \bar{s}_{rz}\right.\rvert_{\Delta t}$ and --><!-- $\left. \bar{s}_{sf}\right.\rvert_{\Delta t}$ using the computed vertical --><!-- fluxes. --><!-- The first two steps compute the maximum potential downward flux from the --><!-- surface and root zones. Steps 3-6 solve saturated zoneand adjust the fluz from --><!-- the root zone to the unsaturated zone accordingly. Step 7 adjusts the flux --><!-- from the surface zone in the case of upward flow from the unsaturated zone, --><!-- with Step 8 using the corrected vertical fluxes to solve for the new values of --><!-- the states. -->
 </div>
 <div id="transmissivity-profiles" class="section level1">
 <h1 class="hasAnchor">
@@ -668,16 +670,16 @@ required. The additional parameter and properties are defined in Table <a href="
 <td><span class="math inline">\(T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)\)</span></td>
 <td><span class="math inline">\(\frac{\cos\beta}{m}g\left(\bar{s}_{sz},\Theta_{sz}\right)\)</span></td>
 <td><span class="math inline">\(T_0,\beta,m\)</span></td>
-<td><code>"exponential"</code></td>
+<td><code>"exp"</code></td>
 <td>Originally given in <a href="https://doi.org/10.1002/hyp.252">Beven &amp; Freer 2001</a>
 </td>
 </tr>
 <tr class="even">
 <td>Bounded Exponential</td>
-<td><span class="math inline">\(T_{0}\sin\left(\beta\right)\left(\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)  - \exp\left(-\frac{\cos\beta}{m}D\right)\right)\)</span></td>
-<td><span class="math inline">\(\frac{cos  \beta}{m}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)\)</span></td>
+<td><span class="math inline">\(T_{0}\sin\left(\beta\right)\left(\exp\left(-\frac{\cos\beta}{m}s_{sz}\right) - \exp\left(-\frac{\cos\beta}{m}D\right)\right)\)</span></td>
+<td><span class="math inline">\(\frac{cos \beta}{m}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)\)</span></td>
 <td><span class="math inline">\(T_0,\beta,m,D\)</span></td>
-<td><code>"bounded_exponential"</code></td>
+<td><code>"bexp"</code></td>
 <td>Originally given in <a href="https://doi.org/10.1002/hyp.252">Beven &amp; Freer 2001</a>
 </td>
 </tr>
@@ -686,7 +688,15 @@ required. The additional parameter and properties are defined in Table <a href="
 <td><span class="math inline">\(c_{sz}\left(D-s_{sz}\right)\)</span></td>
 <td><span class="math inline">\(c_{sz}\)</span></td>
 <td><span class="math inline">\(c_{sz},D\)</span></td>
-<td><code>"constant"</code></td>
+<td><code>"cnst"</code></td>
+<td></td>
+</tr>
+<tr class="even">
+<td>Double Exponential</td>
+<td><span class="math inline">\(T_{0}\sin\left(\beta\right)\left( \omega\exp\left(-\frac{\cos\beta}{m}s_{sz}\right) + \left(1-\omega\right)\exp\left(\frac{\cos\beta}{m_2}s_{sz}\right)\right)\)</span></td>
+<td><span class="math inline">\(\omega\frac{cos \beta}{m}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right) + \left(1-\omega \right)\frac{cos \beta}{m_2}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m_2}s_{sz}\right)\)</span></td>
+<td><span class="math inline">\(T_0,\beta,m,m_2,\omega\)</span></td>
+<td>“dexp”</td>
 <td></td>
 </tr>
 </tbody>
@@ -706,8 +716,10 @@ required. The additional parameter and properties are defined in Table <a href="
 <td>m<span class="math inline">\(^2\)</span>/s</td>
 </tr>
 <tr class="even">
-<td><span class="math inline">\(m\)</span></td>
-<td>Exponential transmissivity constant</td>
+<td>
+<span class="math inline">\(m\)</span>,<span class="math inline">\(m_2\)</span>
+</td>
+<td>Exponential transmissivity constants</td>
 <td>m<span class="math inline">\(^{-1}\)</span>
 </td>
 </tr>
@@ -726,8 +738,196 @@ required. The additional parameter and properties are defined in Table <a href="
 <td>Depth at which zero lateral flow occurs</td>
 <td>m</td>
 </tr>
+<tr class="even">
+<td><span class="math inline">\(\omega\)</span></td>
+<td>weighting parameter</td>
+<td>-</td>
+</tr>
 </tbody>
 </table>
+</div>
+<div id="appendix-a---monoticity-of-fleftzright" class="section level1">
+<h1 class="hasAnchor">
+<a href="#appendix-a---monoticity-of-fleftzright" class="anchor"></a>Appendix A - Monoticity of <span class="math inline">\(f\left(z\right)\)</span>
+</h1>
+<p>By definition <span class="math inline">\(\left. \bar{s}_{uz} \right.\rvert_{0}\)</span>, <span class="math inline">\(\Delta t\)</span>, <span class="math inline">\(\Delta X\)</span>,
+<span class="math inline">\(T_d\)</span>, <span class="math inline">\(\check{r}_{rz \rightarrow uz}\)</span> and <span class="math inline">\(z\)</span> are all greater or equal to 0. Rewrite the expression for <span class="math inline">\(f\left(z\right)\)</span> as
+<span class="math display">\[
+f\left(z\right) = \left\{ \begin{array}{cl}
+z - 
+\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} -
+\frac{\Delta t}{\Delta x} \left(g\left(z,\Theta_{sz}\right) -
+l_{sz}^{-}\right) + \frac{\Delta t}{T_d} &amp; 
+\frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} z + \Delta t} \geq \frac{1}{T_d} \\
+z - 
+\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} -
+\frac{\Delta t}{\Delta x} \left(g\left(z,\Theta_{sz}\right) -
+l_{sz}^{-}\right) + \Delta t \frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} z + \Delta t} &amp; 
+\frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} z + \Delta t} &lt; \frac{1}{T_d}
+\end{array}\right.
+\]</span></p>
+<p>Differentiating with respect to <span class="math inline">\(z\)</span> gives
+<span class="math display">\[
+\frac{d}{dz} f\left(z\right) = \left\{ \begin{array}{cl}
+1 - 
+\frac{\Delta t}{\Delta x} \frac{d}{dz}g\left(z,\Theta_{sz}\right) &amp; 
+\frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} z + \Delta t} \geq \frac{1}{T_d} \\
+1 - 
+\frac{\Delta t}{\Delta x} \frac{d}{dz}g\left(z,\Theta_{sz}\right)
+- T_d \Delta t \frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ \left(T_{d} z + \Delta t\right)^2} &amp; 
+\frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} z + \Delta t} &lt; \frac{1}{T_d}
+\end{array}\right.
+\]</span></p>
+<p>The definition of the function <span class="math inline">\(g\)</span> states that
+<span class="math display">\[
+-\frac{d}{dz}g\left(z,\Theta_{sz}\right) \geq 0
+\]</span>
+Using this relationship and the expression for the range of <span class="math inline">\(z\)</span> gives
+<span class="math display">\[
+\frac{d}{dz} f\left(z\right) \geq \left\{ \begin{array}{cl}
+1 &amp; 
+\frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} z + \Delta t} \geq \frac{1}{T_d} \\
+1 - \frac{\Delta t}{T_{d} z + \Delta t} &amp; 
+\frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} z + \Delta t} &lt; \frac{1}{T_d}
+\end{array}\right.
+\]</span></p>
+<p>From this it can be seen that <span class="math inline">\(\frac{d}{dz} f\left(z\right) \geq 0\)</span> with
+equality possible when <span class="math inline">\(z=0\)</span>.</p>
+<!-- ### Solution of $f\left(z\right)$ for known $l_{sz}^{+}$ -->
+<!-- By definition $\left. \bar{s}_{uz} \right.\rvert_{0}$, $l_{sz}^{+}$, -->
+<!-- $l_{sz}^{-}$, $\Delta t$, $\Delta X$, -->
+<!-- $T_d$, $\check{r}_{rz -->
+<!-- \rightarrow uz}$ and $z$ are all greater or equal to 0. Rewrite the expression -->
+<!-- for $f\left(z\right)$ with known $l_{sz}^{+}$ as -->
+<!-- \[ -->
+<!-- \tilde{f}\left(z\right) = \left\{ \begin{array}{cl} -->
+<!-- z -  -->
+<!-- \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - -->
+<!-- \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} - -->
+<!-- l_{sz}^{-}\right) + \frac{\Delta t}{T_d} &  -->
+<!-- \frac{ -->
+<!-- \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} } -->
+<!-- { T_{d} z + \Delta t} \geq \frac{1}{T_d} \\ -->
+<!-- z -  -->
+<!-- \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - -->
+<!-- \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} - -->
+<!-- l_{sz}^{-}\right) + \Delta t \frac{ -->
+<!-- \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} } -->
+<!-- { T_{d} z + \Delta t} &  -->
+<!-- \frac{ -->
+<!-- \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} } -->
+<!-- { T_{d} z + \Delta t} < \frac{1}{T_d} -->
+<!-- \end{array}\right. -->
+<!-- \] -->
+<!-- Taking $z_{C} = \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t -->
+<!-- \check{r}_{rz \rightarrow uz} - \frac{\Delta t}{T_d}$ gives -->
+<!-- \[ -->
+<!-- \tilde{f}\left(z\right) = \left\{ \begin{array}{cl} -->
+<!-- z -  -->
+<!-- \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - -->
+<!-- \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} - -->
+<!-- l_{sz}^{-}\right) + \frac{\Delta t}{T_d}  -->
+<!-- & z_{C} \geq z \\ -->
+<!-- z -  -->
+<!-- \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - -->
+<!-- \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} - -->
+<!-- l_{sz}^{-}\right) + \Delta t \frac{ -->
+<!-- \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} } -->
+<!-- { T_{d} z + \Delta t}  -->
+<!-- & z_{C} < z  -->
+<!-- \end{array} \right. -->
+<!-- \] -->
+<!-- The monotonic properties of $\tilde{f}\left(z\right)$ are identical to those -->
+<!-- of $f\left(z\right)$. Consider the case that $\tilde{f}\left(z\right) < 0$, -->
+<!-- hence $\left. s_{sz} \right.\rvert_{\Delta t} > 0$. If $z_{C} > 0$ and -->
+<!-- $\tilde{f}\left(z_{C}\right) \geq 0$ then $0< \left. s_{sz} \right.\rvert_{\Delta -->
+<!-- t} \leq z_{C}$ and is given by -->
+<!-- \[ -->
+<!-- \left. s_{sz} \right.\rvert_{\Delta t} =  -->
+<!-- \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + -->
+<!-- \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} - -->
+<!-- l_{sz}^{-}\right) - \frac{\Delta t}{T_d}  -->
+<!-- \] -->
+<!-- Alternatively either $z_{C} \leq 0$ or $\tilde{f}\left(z_{C}\right) < 0$ for a -->
+<!-- $z_{C} > 0$. The solution for $\left. s_{sz} \right.\rvert_{\Delta -->
+<!-- t}$ in then a value of $z$ for which -->
+<!-- \[ -->
+<!-- z -  -->
+<!-- \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - -->
+<!-- \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} - -->
+<!-- l_{sz}^{-}\right) + \Delta t \frac{ -->
+<!-- \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} } -->
+<!-- { T_{d} z + \Delta t} =0 -->
+<!-- \] -->
+<!-- \[ -->
+<!-- z - \mu + \frac{\pi}{T_{d} z + \Delta t} =0 \\ -->
+<!-- T_{d} z^2 + z\Delta t - \mu T_{d}z - \mu \Delta t + \pi = 0\\ -->
+<!-- T_{d} z^2 + \left(\Delta t - \mu T_{d}\right)z + \pi - \mu \Delta t = 0 -->
+<!-- \] -->
+</div>
+<div id="appendix-b---comparision-to-the-infantesimal-slab-derivation" class="section level1">
+<h1 class="hasAnchor">
+<a href="#appendix-b---comparision-to-the-infantesimal-slab-derivation" class="anchor"></a>Appendix B - Comparision to the Infantesimal slab derivation</h1>
+<div id="surface-zone-1" class="section level2">
+<h2 class="hasAnchor">
+<a href="#surface-zone-1" class="anchor"></a>Surface Zone</h2>
+<p>A similar expression for the evolution can be derived by considering the
+infinitesimal slab at the downslope end of the HRU. Taking a discrete
+approximation for the change of flow with length the governing ODE can be written as
+<span class="math display">\[\begin{equation}
+\frac{dw^{+}s_{sf}^{+}}{dt} = \frac{q_{sf}^{-} - q_{sf}^{+}}{\Delta x} - w^{+}r_{sf \rightarrow rz}^{+}
+\end{equation}\]</span></p>
+<p>Dividing through by <span class="math inline">\(w^{+}\)</span> gives
+<span class="math display">\[\begin{equation}
+\frac{ds_{sf}^{+}}{dt} = \frac{q_{sf}^{-}/w^{+} - l_{sf}^{+}}{\Delta x} - r_{sf \rightarrow rz}^{+}
+\end{equation}\]</span></p>
+<p>Note the similaties between this and the finite volume solution. Infact if
+<span class="math inline">\(r_{sf \rightarrow rz}\)</span> is taken to be spatially uniform and
+<span class="math inline">\(\Delta x = A/w^{+}\)</span> then this solution for <span class="math inline">\(s_{sf}^{+}\)</span> will evolve in a similar fashion to
+<span class="math inline">\(\bar{s}_{sf}\)</span></p>
+</div>
+<div id="root-zone-2" class="section level2">
+<h2 class="hasAnchor">
+<a href="#root-zone-2" class="anchor"></a>Root Zone</h2>
+<p>The same formulation follows for the infinitesimal slab at the bottom of the
+hillslope with the averaged terms (using <span class="math inline">\(\bar{}\)</span>) replaced with those valid
+at the bottom of the hillslope (using <span class="math inline">\(^{+}\)</span>).</p>
+</div>
+<div id="unsaturated-zone-2" class="section level2">
+<h2 class="hasAnchor">
+<a href="#unsaturated-zone-2" class="anchor"></a>Unsaturated Zone</h2>
+<p>The same formulation follows for the infinitesimal slab at the bottom of the
+hillslope with the averaged terms (using <span class="math inline">\(\bar{}\)</span>) replaced with those valid
+at the bottom of the hillsipe (using <span class="math inline">\(^{+}\)</span>).</p>
+</div>
+<div id="saturated-zone-2" class="section level2">
+<h2 class="hasAnchor">
+<a href="#saturated-zone-2" class="anchor"></a>Saturated Zone</h2>
+<p>Evaluating for the foot of the hillslope and taking a discrete approximation
+of the spatial gradient gives
+<span class="math display">\[\begin{equation}
+\frac{ds_{sz}^{+}}{dt} = \frac{l_{sz}^{+} - q_{sz}^{-}/w^{+}}{\Delta x} - r_{uz \rightarrow sz}^{+}
+\end{equation}\]</span></p>
+<p>As with the surface zone we see the similarity in form, indicating that,
+subject to the evaluation of the temporal integral, the two formulations
+should return the same results when <span class="math inline">\(\Delta x = A/w^{+}\)</span></p>
+</div>
 </div>
   </div>
 

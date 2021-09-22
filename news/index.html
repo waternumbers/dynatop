@@ -71,7 +71,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9042</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9101</span>
       </span>
     </div>
 
@@ -141,9 +141,37 @@
       <small>Source: <a href='https://github.com/waternumbers/dynatop/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
-    <div id="dynatop-0-2-0-9035" class="section level1">
+    <div id="dynatop-0209101" class="section level1">
+<h1 class="page-header" data-toc-text="0.2.0.9101">
+<a href="#dynatop-0209101" class="anchor"></a>dynatop 0.2.0.9101</h1>
+<div id="breaking-changes" class="section level2">
+<h2 class="hasAnchor">
+<a href="#breaking-changes" class="anchor"></a>Breaking changes</h2>
+<ul>
+<li>New model structure allowing for the transmissivity profile to be specified per HRU</li>
+<li>New transmissivity profile (double exponential) meaning additional parameter columnes (m_2, omega) in the model</li>
+</ul>
+</div>
+<div id="other-changes" class="section level2">
+<h2 class="hasAnchor">
+<a href="#other-changes" class="anchor"></a>Other changes</h2>
+<ul>
+<li>dropping of Boost bisection algorithm for direct implimentation with user specified tolerance and maximum iterations</li>
+<li>C++ code refactored for speed improvements, making use of a single hillslope_hru class</li>
+<li>Refinements to the vignettes and documentation to reflect changes</li>
+</ul>
+</div>
+</div>
+    <div id="dynatop-020904" class="section level1">
+<h1 class="page-header" data-toc-text="0.2.0.904">
+<a href="#dynatop-020904" class="anchor"></a>dynatop 0.2.0.904*</h1>
+<ul>
+<li>changes to improve plotting</li>
+</ul>
+</div>
+    <div id="dynatop-0209035" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.0.9035">
-<a href="#dynatop-0-2-0-9035" class="anchor"></a>dynatop 0.2.0.9035</h1>
+<a href="#dynatop-0209035" class="anchor"></a>dynatop 0.2.0.9035</h1>
 <ul>
 <li>Adapted R and C++ code to pass data frames of hillslope and channel properties</li>
 <li>tidy up of C++ code</li>
@@ -157,17 +185,17 @@
 <li>None</li>
 </ul>
 </div>
-<div id="breaking-changes" class="section level2">
+<div id="breaking-changes-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#breaking-changes" class="anchor"></a>Breaking Changes</h2>
+<a href="#breaking-changes-1" class="anchor"></a>Breaking Changes</h2>
 <ul>
 <li>None</li>
 </ul>
 </div>
 </div>
-    <div id="dynatop-0-2-0-9030" class="section level1">
+    <div id="dynatop-0209030" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.0.9030">
-<a href="#dynatop-0-2-0-9030" class="anchor"></a>dynatop 0.2.0.9030</h1>
+<a href="#dynatop-0209030" class="anchor"></a>dynatop 0.2.0.9030</h1>
 <ul>
 <li>Adapted hillslope solution to Finite Volume to address mass balance issues in v0.2.0.9020</li>
 <li>Improved mass balance checkign and output</li>
@@ -176,13 +204,13 @@
 <h2 class="hasAnchor">
 <a href="#new-features-1" class="anchor"></a>New features</h2>
 <ul>
-<li>Addition of two further transmissivity profiles - these implimnetations should be considered <strong>experimental</strong>
+<li>Addition of two further transmissivity profiles - these implimentations should be considered <strong>experimental</strong>
 </li>
 </ul>
 </div>
-<div id="breaking-changes-1" class="section level2">
+<div id="breaking-changes-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#breaking-changes-1" class="anchor"></a>Breaking Changes</h2>
+<a href="#breaking-changes-2" class="anchor"></a>Breaking Changes</h2>
 <ul>
 <li>Alterations to model sturcture
 <ul>
@@ -193,24 +221,24 @@
 </ul>
 </div>
 </div>
-    <div id="dynatop-0-2-0-9020" class="section level1">
+    <div id="dynatop-0209020" class="section level1">
 <h1 class="page-header" data-toc-text="0.2.0.9020">
-<a href="#dynatop-0-2-0-9020" class="anchor"></a>dynatop 0.2.0.9020</h1>
+<a href="#dynatop-0209020" class="anchor"></a>dynatop 0.2.0.9020</h1>
 <ul>
 <li>Adapted to use a contour (cross section) solution. This brings brings the model into line with the original dynamic TOPMODEL concept.</li>
 <li>Complete rewrite of the hillslope simulation code making better use of std C++ classes and Boost libraries.</li>
 </ul>
-<div id="breaking-changes-2" class="section level2">
+<div id="breaking-changes-3" class="section level2">
 <h2 class="hasAnchor">
-<a href="#breaking-changes-2" class="anchor"></a>Breaking Changes</h2>
+<a href="#breaking-changes-3" class="anchor"></a>Breaking Changes</h2>
 <ul>
 <li>Model structure altered to contain a further data frame containing all the HRU linkages</li>
 </ul>
 </div>
 </div>
-    <div id="dynatop-0-13" class="section level1">
+    <div id="dynatop-013" class="section level1">
 <h1 class="page-header" data-toc-text="0.13">
-<a href="#dynatop-0-13" class="anchor"></a>dynatop 0.13</h1>
+<a href="#dynatop-013" class="anchor"></a>dynatop 0.13</h1>
 <div id="new-features-2" class="section level2">
 <h2 class="hasAnchor">
 <a href="#new-features-2" class="anchor"></a>New features</h2>
@@ -220,9 +248,9 @@
 </ul>
 </div>
 </div>
-    <div id="dynatop-0-12" class="section level1">
+    <div id="dynatop-012" class="section level1">
 <h1 class="page-header" data-toc-text="0.12">
-<a href="#dynatop-0-12" class="anchor"></a>dynatop 0.12</h1>
+<a href="#dynatop-012" class="anchor"></a>dynatop 0.12</h1>
 <div id="new-features-3" class="section level2">
 <h2 class="hasAnchor">
 <a href="#new-features-3" class="anchor"></a>New features</h2>
@@ -233,9 +261,9 @@
 </ul>
 </div>
 </div>
-    <div id="dynatop-0-11" class="section level1">
+    <div id="dynatop-011" class="section level1">
 <h1 class="page-header" data-toc-text="0.11">
-<a href="#dynatop-0-11" class="anchor"></a>dynatop 0.11</h1>
+<a href="#dynatop-011" class="anchor"></a>dynatop 0.11</h1>
 <div id="new-features-4" class="section level2">
 <h2 class="hasAnchor">
 <a href="#new-features-4" class="anchor"></a>New features</h2>
@@ -246,12 +274,12 @@
 </ul>
 </div>
 </div>
-    <div id="dynatop-0-1" class="section level1">
+    <div id="dynatop-01" class="section level1">
 <h1 class="page-header" data-toc-text="0.1">
-<a href="#dynatop-0-1" class="anchor"></a>dynatop 0.1</h1>
-<div id="breaking-changes-3" class="section level2">
+<a href="#dynatop-01" class="anchor"></a>dynatop 0.1</h1>
+<div id="breaking-changes-4" class="section level2">
 <h2 class="hasAnchor">
-<a href="#breaking-changes-3" class="anchor"></a>Breaking Changes</h2>
+<a href="#breaking-changes-4" class="anchor"></a>Breaking Changes</h2>
 <ul>
 <li>Code base reformulated in an Object orientated form using the <code>R6</code> package. Except for change below algorithms as for v0.0.4</li>
 <li>Input format of model changed to reflect <code>dynatopGIS</code> v0.1</li>
@@ -269,19 +297,19 @@
 </ul>
 </div>
 </div>
-    <div id="dynatop-0-0-4" class="section level1">
+    <div id="dynatop-004" class="section level1">
 <h1 class="page-header" data-toc-text="0.0.4">
-<a href="#dynatop-0-0-4" class="anchor"></a>dynatop 0.0.4</h1>
-<div id="breaking-changes-4" class="section level2">
+<a href="#dynatop-004" class="anchor"></a>dynatop 0.0.4</h1>
+<div id="breaking-changes-5" class="section level2">
 <h2 class="hasAnchor">
-<a href="#breaking-changes-4" class="anchor"></a>Breaking changes</h2>
+<a href="#breaking-changes-5" class="anchor"></a>Breaking changes</h2>
 <ul>
 <li>New solutions to the surface and saturated zone means models for previous versions of dynatop will not work. See the model description and the <code>dynatopGIS</code> package (0.0.4) for a method of generating models int he revised format</li>
 </ul>
 </div>
-<div id="other-changes" class="section level2">
+<div id="other-changes-1" class="section level2">
 <h2 class="hasAnchor">
-<a href="#other-changes" class="anchor"></a>Other changes</h2>
+<a href="#other-changes-1" class="anchor"></a>Other changes</h2>
 <ul>
 <li>The surface store, previously labeled <span class="math inline"><em>s</em><sub><em>e</em><em>x</em></sub></span> has been relabelled <span class="math inline"><em>s</em><sub><em>s</em><em>f</em></sub></span> since this is felt to be more logical.</li>
 <li>The <code>Matrix</code> package is allowing the use of sparse matrices.</li>
@@ -291,9 +319,9 @@
 </ul>
 </div>
 </div>
-    <div id="dynatop-0-0-3" class="section level1">
+    <div id="dynatop-003" class="section level1">
 <h1 class="page-header" data-toc-text="0.0.3">
-<a href="#dynatop-0-0-3" class="anchor"></a>dynatop 0.0.3</h1>
+<a href="#dynatop-003" class="anchor"></a>dynatop 0.0.3</h1>
 <div id="new-features-6" class="section level2">
 <h2 class="hasAnchor">
 <a href="#new-features-6" class="anchor"></a>New features</h2>
@@ -309,25 +337,25 @@
 <li>Improved handling of case of infinite saturated zone deficit</li>
 </ul>
 </div>
-<div id="breaking-changes-5" class="section level2">
+<div id="breaking-changes-6" class="section level2">
 <h2 class="hasAnchor">
-<a href="#breaking-changes-5" class="anchor"></a>Breaking changes</h2>
+<a href="#breaking-changes-6" class="anchor"></a>Breaking changes</h2>
 <ul>
 <li>The model structure has been adapted to allow for the channel connectivity and specification of gauges and inputs on the channel network. See the model object vignette. If using dynatopGIS then rerun create_model.</li>
 </ul>
 </div>
-<div id="other-changes-1" class="section level2">
+<div id="other-changes-2" class="section level2">
 <h2 class="hasAnchor">
-<a href="#other-changes-1" class="anchor"></a>Other changes</h2>
+<a href="#other-changes-2" class="anchor"></a>Other changes</h2>
 <ul>
 <li>Fixed minor formating issues in the vignettes</li>
 <li>Added vignette on checking mass balances</li>
 </ul>
 </div>
 </div>
-    <div id="dynatop-0-0-2" class="section level1">
+    <div id="dynatop-002" class="section level1">
 <h1 class="page-header" data-toc-text="0.0.2">
-<a href="#dynatop-0-0-2" class="anchor"></a>dynatop 0.0.2</h1>
+<a href="#dynatop-002" class="anchor"></a>dynatop 0.0.2</h1>
 <div id="bug-fixes-1" class="section level2">
 <h2 class="hasAnchor">
 <a href="#bug-fixes-1" class="anchor"></a>Bug fixes</h2>
@@ -335,29 +363,29 @@
 <li>Added purl=FALSE where error=TRUE in vignette</li>
 </ul>
 </div>
-<div id="other-changes-2" class="section level2">
+<div id="other-changes-3" class="section level2">
 <h2 class="hasAnchor">
-<a href="#other-changes-2" class="anchor"></a>Other changes</h2>
+<a href="#other-changes-3" class="anchor"></a>Other changes</h2>
 <ul>
 <li>Removed unused Rcpp functions and library dependencies</li>
 </ul>
 </div>
 </div>
-    <div id="dynatop-0-0-1" class="section level1">
+    <div id="dynatop-001" class="section level1">
 <h1 class="page-header" data-toc-text="0.0.1">
-<a href="#dynatop-0-0-1" class="anchor"></a>dynatop 0.0.1</h1>
-<div id="other-changes-3" class="section level2">
+<a href="#dynatop-001" class="anchor"></a>dynatop 0.0.1</h1>
+<div id="other-changes-4" class="section level2">
 <h2 class="hasAnchor">
-<a href="#other-changes-3" class="anchor"></a>Other changes</h2>
+<a href="#other-changes-4" class="anchor"></a>Other changes</h2>
 <ul>
 <li>Removed vignette data from package to reduce size. Now on git hub</li>
 <li>Minor spelling and format changes to vignette</li>
 </ul>
 </div>
 </div>
-    <div id="dynatop-0-0-0-9000" class="section level1">
+    <div id="dynatop-0009000" class="section level1">
 <h1 class="page-header" data-toc-text="0.0.0.9000">
-<a href="#dynatop-0-0-0-9000" class="anchor"></a>dynatop 0.0.0.9000</h1>
+<a href="#dynatop-0009000" class="anchor"></a>dynatop 0.0.0.9000</h1>
 <div id="context" class="section level2">
 <h2 class="hasAnchor">
 <a href="#context" class="anchor"></a>Context</h2>

@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9042</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9101</span>
       </span>
     </div>
 
@@ -94,7 +94,7 @@
 
       
 
-      </header><div class="row">
+      </header><script src="The_Model_Object_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>The Model Object</h1>
@@ -219,24 +219,28 @@ vignettes for further details.</p>
 <p>Each row of the hillslope table describes a single hillslope HRU. In this example it looks like:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">hillslope</span><span class="op">)</span>
-<span class="co">#&gt;   id      area   atb_bar      s_bar min_dst width class r_sfmax s_rzmax s_rz0</span>
-<span class="co">#&gt; 1 20  1451.820  9.121463 0.28916356       1    40     1     Inf    0.05  0.75</span>
-<span class="co">#&gt; 2 21  5911.932  9.598746 0.36701868       1   160     2     Inf    0.05  0.75</span>
-<span class="co">#&gt; 3 22 16356.278 10.264301 0.26385821       1   440     3     Inf    0.05  0.75</span>
-<span class="co">#&gt; 4 23 23625.880 10.824251 0.18010123       1   640     4     Inf    0.05  0.75</span>
-<span class="co">#&gt; 5 24 48632.930 11.497418 0.15906415       1  1320     5     Inf    0.05  0.75</span>
-<span class="co">#&gt; 6 25 75373.071 12.106720 0.09886103       1  2040     8     Inf    0.05  0.75</span>
-<span class="co">#&gt;   ln_t0    m  t_d c_sf</span>
-<span class="co">#&gt; 1    -2 0.04 7200  0.1</span>
-<span class="co">#&gt; 2    -2 0.04 7200  0.1</span>
-<span class="co">#&gt; 3    -2 0.04 7200  0.1</span>
-<span class="co">#&gt; 4    -2 0.04 7200  0.1</span>
-<span class="co">#&gt; 5    -2 0.04 7200  0.1</span>
-<span class="co">#&gt; 6    -2 0.04 7200  0.1</span></code></pre></div>
-<p>The individual columns are documented in Table
-<a href="#tab:hillslope-table">2</a>. In this example the parameter columns relate to the exponential
-transmissivity profile. The parameters in the table will look like this with the
-transmissivity options selected.</p>
+<span class="co">#&gt;   id      area   atb_bar      s_bar min_dst width s_sf s_rz s_uz s_sz</span>
+<span class="co">#&gt; 1 20  1451.820  9.121463 0.28916356       1    40   NA   NA   NA   NA</span>
+<span class="co">#&gt; 2 21  5911.932  9.598746 0.36701868       1   160   NA   NA   NA   NA</span>
+<span class="co">#&gt; 3 22 16356.278 10.264301 0.26385821       1   440   NA   NA   NA   NA</span>
+<span class="co">#&gt; 4 23 23625.880 10.824251 0.18010123       1   640   NA   NA   NA   NA</span>
+<span class="co">#&gt; 5 24 48632.930 11.497418 0.15906415       1  1320   NA   NA   NA   NA</span>
+<span class="co">#&gt; 6 25 75373.071 12.106720 0.09886103       1  2040   NA   NA   NA   NA</span>
+<span class="co">#&gt;   cls_atb_20_band cls_atb_20 cls_band opt r_sfmax c_sf s_rzmax  t_d ln_t0 c_sz</span>
+<span class="co">#&gt; 1               1          1        1 exp     Inf  0.1    0.05 7200    -2   NA</span>
+<span class="co">#&gt; 2               2          2        1 exp     Inf  0.1    0.05 7200    -2   NA</span>
+<span class="co">#&gt; 3               3          3        1 exp     Inf  0.1    0.05 7200    -2   NA</span>
+<span class="co">#&gt; 4               4          4        1 exp     Inf  0.1    0.05 7200    -2   NA</span>
+<span class="co">#&gt; 5               5          5        1 exp     Inf  0.1    0.05 7200    -2   NA</span>
+<span class="co">#&gt; 6               8          6        1 exp     Inf  0.1    0.05 7200    -2   NA</span>
+<span class="co">#&gt;      m  D m_2 omega s_rz0 r_uz_sz0</span>
+<span class="co">#&gt; 1 0.04 NA  NA    NA  0.75    1e-06</span>
+<span class="co">#&gt; 2 0.04 NA  NA    NA  0.75    1e-06</span>
+<span class="co">#&gt; 3 0.04 NA  NA    NA  0.75    1e-06</span>
+<span class="co">#&gt; 4 0.04 NA  NA    NA  0.75    1e-06</span>
+<span class="co">#&gt; 5 0.04 NA  NA    NA  0.75    1e-06</span>
+<span class="co">#&gt; 6 0.04 NA  NA    NA  0.75    1e-06</span></code></pre></div>
+<p>The individual columns are documented in Table <a href="#tab:hillslope-table">2</a>. Not all the parameters are revelent for each option. See the Hillslope HRU vignette for details.</p>
 <table class="table">
 <caption>
 <span id="tab:hillslope-table">Table 2: </span> Description of hillslope data frame columns</caption>
@@ -279,16 +283,52 @@ transmissivity options selected.</p>
 <td>Average gradient</td>
 </tr>
 <tr class="odd">
+<td>min_dst</td>
+<td>numeric</td>
+<td>-[m]</td>
+<td>Minimum distance from HRU to a channel from the distance metric used in the model generation</td>
+</tr>
+<tr class="even">
 <td>width</td>
 <td>numeric</td>
 <td>m</td>
 <td>Contour length of downslope end of HRU</td>
 </tr>
+<tr class="odd">
+<td>s_sf</td>
+<td>numeric</td>
+<td>m</td>
+<td>Surface Zone storage volume per unit area (state)</td>
+</tr>
 <tr class="even">
-<td>class</td>
+<td>s_rz</td>
+<td>numeric</td>
+<td>m</td>
+<td>Root Zone storage volume per unit area (state)</td>
+</tr>
+<tr class="odd">
+<td>s_uz</td>
+<td>numeric</td>
+<td>m</td>
+<td>Unsaturated Zone storage volume per unit area (state)</td>
+</tr>
+<tr class="even">
+<td>s_sz</td>
+<td>numeric</td>
+<td>m</td>
+<td>Saturated Zone storage deficit per unit area (state)</td>
+</tr>
+<tr class="odd">
+<td>cls_*</td>
 <td>integer</td>
 <td>-</td>
-<td>Classification of HRU e.g. by a combination of topographic index and rainfall input</td>
+<td>Classification of HRU in each of the classes used in its definition. The extra part fo the name matches the class name given in dynatopGIS</td>
+</tr>
+<tr class="even">
+<td>opt</td>
+<td>character</td>
+<td>-</td>
+<td>Option controlling the type of Hillslope HRU. Currently defines the transmissivity profile.</td>
 </tr>
 <tr class="odd">
 <td>r_sfmax</td>
@@ -309,28 +349,52 @@ transmissivity options selected.</p>
 <td>Maximum root zone depth (parameter)</td>
 </tr>
 <tr class="even">
+<td>t_d</td>
+<td>numeric</td>
+<td>s/m</td>
+<td>Unsaturated zone time constant given per <span class="math inline">\(m\)</span> of saturated storage deficit (parameter)</td>
+</tr>
+<tr class="odd">
+<td>ln_t0</td>
+<td>numeric</td>
+<td>m/s</td>
+<td>Log of the soil saturated conductivity (parameter)</td>
+</tr>
+<tr class="even">
+<td>m</td>
+<td>numeric</td>
+<td>-</td>
+<td>Exponential transmissivity decay parameter (parameter)</td>
+</tr>
+<tr class="odd">
+<td>m_2</td>
+<td>numeric</td>
+<td>-</td>
+<td>Second Exponential transmissivity decay parameter (parameter)</td>
+</tr>
+<tr class="even">
+<td>omega</td>
+<td>numeric</td>
+<td>0-1</td>
+<td>Weighting between the two transmissivity parameters (parameter)</td>
+</tr>
+<tr class="odd">
+<td>c_sz</td>
+<td>numeric</td>
+<td>m/s</td>
+<td>Constant saturated zone celerity (parameter)</td>
+</tr>
+<tr class="even">
 <td>s_rz0</td>
 <td>numeric</td>
 <td>0-1</td>
 <td>Initial root zone depth expressed as fraction of maximum depth (parameter)</td>
 </tr>
 <tr class="odd">
-<td>t_d</td>
-<td>numeric</td>
-<td>s/m</td>
-<td>Unsaturated zone time constant given per <span class="math inline">\(m\)</span> of saturated storage deficit (parameter)</td>
-</tr>
-<tr class="even">
-<td>ln_t0</td>
+<td>r_uz_sz0</td>
 <td>numeric</td>
 <td>m/s</td>
-<td>Log of the soil saturated conductivity (parameter)</td>
-</tr>
-<tr class="odd">
-<td>m</td>
-<td>numeric</td>
-<td>-</td>
-<td>Exponential transmissivity decay parameter (parameter)</td>
+<td>Initial recharge to the saturated zone per unit area (parameter)</td>
 </tr>
 </tbody>
 </table>

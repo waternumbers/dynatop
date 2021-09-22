@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9042</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9101</span>
       </span>
     </div>
 
@@ -94,7 +94,7 @@
 
       
 
-      </header><div class="row">
+      </header><script src="Notes_on_the_implementation_of_Dynamic_TOPMODEL_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Notes on the implementation of Dynamic TOPMODEL</h1>
@@ -123,7 +123,7 @@ for ‘similar’ areas of hill slope the catchment a each time step.
 The second termed “channel” represents a length of river channel in a
 simplified manner allowing the extraction of the inflow from the
 hill slope. The solutions for each of these HRU types are presented in the
-<a href="hillslope_hru">hillslope</a> and <a href="channel" class="uri">channel</a> vignettes.</p>
+<a href="hillslope_hru">hillslope</a> and <a href="channel">channel</a> vignettes.</p>
 <p>The aim of this document is to outline</p>
 <ul>
 <li>the computational sequence and linking the HRUs</li>
@@ -186,7 +186,7 @@ with regards to the vignettes. For example:</p>
 </li>
 </ul>
 <p>However the notation used in the vignettes for intermediate values of fluxes
-or states (e.g. ) is dropped from the code where it can be inferred from
+or states (e.g. ) is dropped from the code where it can be inferred from
 the computational sequence (or comments)</p>
 </div>
 <div id="numerical-solutions" class="section level2">
@@ -194,11 +194,11 @@ the computational sequence (or comments)</p>
 <a href="#numerical-solutions" class="anchor"></a>Numerical solutions</h2>
 <p>Currently the code uses a purely implicit scheme for the solution of the
 hillslope HRUs. This requires a solving a <em>zero finding</em> problem for each HRU
-at each (sub)time step. Currently a simple bisection algorithm from the Boost
-math library is used. Notionally faster algorithms (such as the TOMS-748
-algorithm) could be used, but initial experiments suggest that these sometimes
-fail to converge well enough to achieve a reasonable mass balance. This is
-probably due to poor specification of the starting interval.</p>
+at each (sub)time step. Currently a simple bisection algorithm is used with a
+user specified tolerance and maximum number of iterations. The tolerance is
+defined as the difference between the upper and lower limits of the interval
+containing the zero point. Notionally faster algorithms (such as the TOMS-748
+algorithm) could be used.</p>
 </div>
 </div>
   </div>
