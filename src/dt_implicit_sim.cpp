@@ -1,26 +1,25 @@
 #include "Rcpp.h"
-#include <boost/math/tools/roots.hpp>
+#include "hillslope_hru.h"
 
-//* ======================================================================================= *//
-//* ======================================================================================= *//
-//* ======================================================================================= *//
 
-// Function for solving
 // [[Rcpp::export]]
-void dt_exp_explicit(Rcpp::DataFrame hillslope, // hillslope data frame
+void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
 		     Rcpp::DataFrame channel, // channel data frame
 		     Rcpp::DataFrame flow_direction, // flow directions data frame
 		     Rcpp::DataFrame precip_input, // precipitation input data frame
 		     Rcpp::DataFrame pet_input, // PET input data frame
 		     Rcpp::NumericMatrix obs, // external series
 		     Rcpp::NumericMatrix channel_inflow_sf, // channel_inflow from surface - to compute
-		     Rcpp::NumericMatrix channel_inflow_sz, // channel_inflow from saturated - to comput
+		     Rcpp::NumericMatrix channel_inflow_sz, // channel_inflow from saturated - to compute
 		     Rcpp::NumericMatrix mass_balance, // mass balance for each timestep
 		     std::vector<bool> keep_states,
 		     Rcpp::List state_rec,
 		     double timestep,
-		     int n_sub_step
-		     ){
+		     int n_sub_step,
+		     double tol,
+		     int max_it
+		  ){
+  
 
   // seperate out hillslope to vector
   // recall NumericVector are references in this case
@@ -37,8 +36,13 @@ void dt_exp_explicit(Rcpp::DataFrame hillslope, // hillslope data frame
   Rcpp::NumericVector c_sf = hillslope["c_sf"]; // surface flow celerity
   Rcpp::NumericVector t_d = hillslope["t_d"]; // unsaturated zone time constant
   Rcpp::NumericVector ln_t0 = hillslope["ln_t0"]; // log of saturated transmissivity
-  Rcpp::NumericVector m = hillslope["m"]; // transmissivity decay parameter
-
+  Rcpp::NumericVector c_sz = hillslope["c_sz"]; // constant celerity of saturated zone
+  Rcpp::NumericVector m = hillslope["m"]; // decay parameter of transmissivity profile
+  Rcpp::NumericVector D = hillslope["D"]; // depth parameter of transmissivity profile
+  Rcpp::NumericVector m_2 = hillslope["m_2"]; // second transmissivity decay parameter
+  Rcpp::NumericVector omega = hillslope["omega"]; // second transmissivity decay parameter
+  Rcpp::IntegerVector opt = hillslope["opt"]; // type of saturated zone
+  
   // rebuild the states as a data frame for saving
   Rcpp::DataFrame states =
     Rcpp::DataFrame::create(Rcpp::Named("id") = id ,
@@ -74,173 +78,103 @@ void dt_exp_explicit(Rcpp::DataFrame hillslope, // hillslope data frame
   int nlink = flow_from.size();
   int maxid = std::max( *std::max_element(std::begin(id), std::end(id)),
 			*std::max_element(std::begin(channel_id),std::end(channel_id)) );
+   
+  // work out computational timestep - explicit casting of n_sub_step to double
+  double Dt = timestep / (double)n_sub_step;
 
-  
-  // safety factor for computing computational timestep
-  double alpha = 0.7;
-  double min_step = 1;
-  
-  double Dt = timestep;
-  
-  
-  
   // create vectors for storing lateral fluxes, precip and pet
   std::vector<double> q_sf_in(maxid+1,0.0), q_sz_in(maxid+1,0.0);
   std::vector<double> q_sf_out(maxid+1,0.0), q_sz_out(maxid+1,0.0);
+  std::vector<double> e_a(maxid+1,0.0);
   std::vector<double> precip(maxid+1,0.0), pet(maxid+1,0.0);
-  
-  // compute the property summaries for the hillslope required
-  std::vector<double> l_sz_max(nhillslope,-999.0); // max saturated zone flux
-  std::vector<double> beta (nhillslope,-999.0); // slope angle
-  std::vector<double> cosbeta_m (nhillslope,-999.0); // cos(beta)/m
-  std::vector<double> Dx (nhillslope,-999.0); // Effective length
-  
-  for(int i=0;i<nhillslope;++i){
-    beta[i] = std::atan(s_bar[i]);
-    l_sz_max[i] = std::exp(ln_t0[i])*std::sin(beta[i]);
-    cosbeta_m[i] = std::cos(beta[i]) /m[i];
-    Dx[i] = area[i]/width[i];
-  }
-  
-  
-  
-  // variable use with loop
+
+  // variable use with loops
   int cid; // current id
-  double r_sf_rz,r_rz_uz,r_uz_sz; // fluxes between stores
-  double tDt(0.0); // total time evaluated in step
-  
-  std::vector<double> mbv(5,0.0); // mass balance vector
+  std::vector<double> mbv(6,0.0); // mass balance vector
   std::vector<double> ch_in_sf(nchannel,0.0); // channel inflow vector for surface
   std::vector<double> ch_in_sz(nchannel,0.0); // channel inflow vector for saturated
-   
+ 
+  // loop to create hillslope class objects
+  std::vector<hillslope_hru> hs_hru;
+  for(int ii=0; ii<nhillslope; ++ii){
+    cid = id[ii];
+    hs_hru.push_back(hillslope_hru(id[ii],
+			       s_sf[ii], s_rz[ii], s_uz[ii], s_sz[ii],
+			       s_bar[ii],   area[ii],   width[ii],
+			       q_sf_in[cid], q_sf_out[cid], // surface zone lateral fluxes
+			       q_sz_in[cid], q_sz_out[cid], // saturated zone lateral fluxes
+			       e_a[cid], // actual evapotranspiration as a rate [m/s]
+			       r_sf_max[ii],   c_sf[ii], // surface store parameters
+			       s_rz_max[ii], // root zone store parameters
+			       t_d[ii], // unsaturated zone parameters
+			       ln_t0[ii], c_sz[ii], m[ii], D[ii], m_2[ii], omega[ii],// saturated zone parameters
+			       opt[ii]   ) //type of saturated zone
+		     );
+  }
+
+  // loop time steps
+
   // variables for handling links
   int link_cntr = 0; // counter for flow links
   int link_from_id = flow_from[link_cntr];
-  
+
   // start loop of time steps
   for(int it = 0; it < obs.nrow(); ++it) {
-    
+    //Rcpp::Rcout << "Interation " << it << std::endl;
+
     // initialise mass balance for the timestep
     std::fill(mbv.begin(), mbv.end(), 0.0);
     for(int ii=0; ii<nhillslope; ++ii){
       mbv[0] += area[ii]*(s_sf[ii] + s_rz[ii] + s_uz[ii] - s_sz[ii]);
     }
-    
+
     // initialise channel inflow
     std::fill(ch_in_sf.begin(), ch_in_sf.end(), 0.0);
     std::fill(ch_in_sz.begin(), ch_in_sz.end(), 0.0);
-       
+    
     // compute the precipitation input
     std::fill(precip.begin(), precip.end(),0.0);
     for(unsigned int ii=0; ii<precip_id.size(); ++ii){
       int& i = precip_id[ii];
       int& c = precip_col[ii];
       double& f = precip_frc[ii];
-      precip[i] += f*obs(it,c)/timestep;
+      precip[i] += f*obs(it,c)/timestep; // precip as rate
     }
-    
+
     // compute the pet input
     std::fill(pet.begin(), pet.end(),0.0);
     for(unsigned int ii=0; ii<pet_id.size(); ++ii){
       int& i = pet_id[ii];
       int& c = pet_col[ii];
       double& f = pet_frc[ii];
-      pet[i] += f*obs(it,c)/timestep;
+      pet[i] += f*obs(it,c)/timestep; // pet as rate
     }
-    
-    // set tDt to 0
-    tDt = 0.0;
-    
+      
     // start loop of substeps
-    while( tDt < timestep ){
-  
-      //Rcpp::Rcout << "Time step "<< it << " time passed " << tDt << " of " << timestep << std::endl;
-											  
+    for(int nn = 0; nn < n_sub_step; ++nn){
+
       // set flow passing records to 0
       std::fill(q_sf_in.begin(), q_sf_in.end(), 0.0);
       std::fill(q_sz_in.begin(), q_sz_in.end(), 0.0);
       std::fill(q_sf_out.begin(), q_sf_out.end(), 0.0);
       std::fill(q_sz_out.begin(), q_sz_out.end(), 0.0);
+      std::fill(e_a.begin(), e_a.end(), 0.0);
 
-      // work out outflow fluxes and timestep
-      Dt = timestep - tDt;
-
-      for(int ii=0; ii<nhillslope; ++ii){
-	// current id used to reference longer vectors
-    	cid = id[ii];
-	// apply Dt estimate relating to surface
-	double cr = c_sf[ii];
-	Dt = std::min( Dt, alpha*Dx[ii]/cr );
-	// Apply Dt estimate relating to subsurface
-	cr = cosbeta_m[ii]*l_sz_max[ii]*std::exp(-cosbeta_m[ii]*s_sz[ii]);
-	Dt = std::min( Dt, alpha*Dx[ii]/cr );
-      }
-      // Rcpp::Rcout << Dt << std::endl;
-			     
-      Dt = std::max(Dt,min_step);
-      
-      
       // set all counters to initial value
       link_cntr = 0; // counter for flow links
       link_from_id = flow_from[link_cntr];
       
       // loop HSUs
       for(int ii=0; ii<nhillslope; ++ii){
-	
-    	//Rcpp::Rcout << it << " " << nn << " " << ii << std::endl;
-    	// current id used to reference longer vectors
+
+	// current id used to reference longer vectors
     	cid = id[ii];
-	
-	// apply pet loss and precip input to mass balance
-    	mbv[1] -= pet[cid]*(s_rz[ii]/s_rz_max[ii])*area[ii]*Dt;
-    	mbv[2] += precip[cid]*area[ii]*Dt;
-	
-    	// compute first downward flux estimate from surface and root zone
-    	// these are given as \check{r} in documentation	
-    	r_sf_rz = std::min( r_sf_max[ii] , (s_sf[ii] + Dt*q_sf_in[cid]/area[ii])/Dt );
-    	r_rz_uz = std::max( 0.0 ,
-    			    (s_rz[ii] + Dt*(precip[cid] + r_sf_rz - pet[cid]*(s_rz[ii]/s_rz_max[ii])) - s_rz_max[ii])/Dt);
 
-	if( s_sz[ii] > 0.0 ){
-	  r_uz_sz = std::min( s_uz[ii]/(t_d[ii]*s_sz[ii]), (s_uz[ii] + Dt*r_rz_uz)/Dt );	  
-	}else{
-	  r_uz_sz = std::min( 1/t_d[ii], (s_uz[ii] + Dt*r_rz_uz)/Dt );
-	}
+	// evolve hillslope
+	//int max_it = 10000;
+	hs_hru[ii].implicit_step(pet[cid], precip[cid], Dt, tol, max_it);
 
-	// if(cid==734){
-	//   Rcpp::Rcout << "Inflow " << q_sf_in[cid] << " " << q_sz_in[cid] << std::endl;
-	//   Rcpp::Rcout << "uzcalc " << s_uz[ii] << " " << s_sz[ii] << " " << t_d[ii]*s_sz[ii] << std::endl;
-	//   Rcpp::Rcout << "Before " << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
-	// }
 	
-	// solve saturated zone
-	q_sz_out[cid] = l_sz_max[ii]*std::exp(-cosbeta_m[ii]*s_sz[ii]);
-	r_uz_sz = std::min( r_uz_sz ,
-			    (s_sz[ii] - Dt*(q_sz_in[cid]-q_sz_out[cid])/area[ii])/Dt ); 
-	s_sz[ii] = s_sz[ii] - Dt*r_uz_sz -Dt*(q_sz_in[cid]-q_sz_out[cid])/area[ii];
-	
-	// solve unsat
-	r_rz_uz = std::min( r_rz_uz, (s_sz[ii] - s_uz[ii] +Dt*r_uz_sz)/Dt );
-	s_uz[ii] += Dt*(r_rz_uz-r_uz_sz);
-	//s_uz[ii] = std::max(0.0,s_uz[ii]);
-	
-	// solve root zone
-	r_sf_rz = std::min( r_sf_rz,
-			    (s_rz_max[ii] - (s_rz[ii] + Dt*(precip[cid] - r_rz_uz - pet[cid]*(s_rz[ii]/s_rz_max[ii]))))/Dt );
-	s_rz[ii] += Dt*(precip[cid] + r_sf_rz - r_rz_uz - pet[cid]*(s_rz[ii]/s_rz_max[ii]));
-	//s_rz[ii] = std::max(0.0,s_rz[ii]);
-	// solve surface
-	q_sf_out[cid] = std::min( width[ii]*s_sf[ii]*c_sf[ii],
-				  (area[ii]*s_sf[ii] - Dt*area[ii]*r_sf_rz + Dt*q_sf_in[cid])/Dt );
-	s_sf[ii] += Dt*(q_sf_in[cid]-q_sf_out[cid])/area[ii] - Dt*r_sf_rz;
-	//s_sf[ii] = std::max(0.0,s_sf[ii]);
-	
-	// if(cid==734){
-	//   Rcpp::Rcout << "After " << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
-	//   Rcpp::Rcout << "Outflow " << q_sf_out[cid] << " " << q_sz_out[cid] << std::endl;
-	// }
-	
-	//Rcpp::Rcout << link_cntr << " " << link_from_id << std::endl;
     	while( (link_from_id == cid) & (link_cntr<nlink) ){
     	  int j = flow_to[link_cntr];
     	  double f = flow_frc[link_cntr];
@@ -251,34 +185,36 @@ void dt_exp_explicit(Rcpp::DataFrame hillslope, // hillslope data frame
     	    link_from_id = flow_from[link_cntr];
     	  }
     	}
-    	// end of hillslope loop
-    	
+	
+	// apply pet loss and precip input to mass balance
+    	mbv[1] += e_a[cid]*area[ii]*Dt;
+    	mbv[2] += precip[cid]*area[ii]*Dt;
+	
+	// end of hillslope loop
       }
+      
       
       // loop channels for the sub step
       for(int ii=0; ii < nchannel; ++ii){
       	cid = channel_id[ii];
-	// mass balance
-      	double chn_in = (channel_area[ii]*precip[cid]+ q_sf_in[cid] + q_sz_in[cid])*Dt;
-      	mbv[2] += precip[cid]*channel_area[ii]*Dt; 
-      	mbv[3] -= chn_in; // volume lost from hillslope to channel
 	// add volumes to correct channel contributions
       	ch_in_sf[ii] += (channel_area[ii]*precip[cid]+ q_sf_in[cid])*Dt; // volume of rainfall and flow from surface
 	ch_in_sz[ii] += q_sz_in[cid]*Dt; // volume of flow to channel from saturated zone
-      }
 
-      // add to time
-      tDt += Dt;
-      
+	// mass balance contribution
+      	mbv[2] += precip[cid]*channel_area[ii]*Dt; // rainfall into system 
+      	mbv[3] += ch_in_sf[ii]+ch_in_sz[ii]; // volume lost to channel
+      }
       // end of substep loop
     }
-    // final mass balance states
+    
+    // final state volumes for mass balance
     for(int ii=0; ii<nhillslope; ++ii){
-      mbv[4] -= area[ii]*(s_sf[ii] + s_rz[ii] + s_uz[ii] - s_sz[ii]);
+      mbv[4] += area[ii]*(s_sf[ii] + s_rz[ii] + s_uz[ii] - s_sz[ii]);
     }
-
+    mbv[5] = mbv[0] - mbv[1] + mbv[2] - mbv[3] - mbv[4];// mass balance error
     // copy mass balance to record
-    for(int ii=0; ii < 5; ++ii){
+    for(int ii=0; ii < 6; ++ii){
       mass_balance(it,ii) = mbv[ii];
     }
     

@@ -145,7 +145,7 @@ an initial recharge rate. In the following we initialise the states and plot
 the initial saturated zone storage deficit, using the chaining of commands.
 
 ```{r initialise}
-ctch_mdl$initialise(1e-6)$plot_state("s_sz")
+ctch_mdl$initialise()$plot_state("s_sz")
 ```
 
 The simulation can now be performed and the flow at the gauge extracted with
@@ -180,6 +180,6 @@ other fluxes as volumes. This can easily be used to plot the errors as shown bel
 
 ```{r mass_check}
 mb <- ctch_mdl$get_mass_errors()
-plot( xts::xts(rowSums(mb),zoo::index(mb)) , main="Mass Error", ylab="[m^3]")
+plot( mb[,6] , main="Mass Error", ylab="[m^3]")
 ```
 
