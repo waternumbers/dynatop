@@ -5,7 +5,9 @@
 // [[Rcpp::export]]
 void dt_init(Rcpp::DataFrame hillslope, // hillslope data frame
 	     Rcpp::DataFrame channel, // channel data frame
-	     Rcpp::DataFrame flow_direction // flow directions data frame
+	     Rcpp::DataFrame flow_direction, // flow directions data frame
+	     double tol,
+	     int max_it
 	     ){
   
 
@@ -89,7 +91,7 @@ void dt_init(Rcpp::DataFrame hillslope, // hillslope data frame
     cid = id[ii];
     
     // evolve hillslope
-    hs_hru[ii].init(s_rz_0[ii], r_uz_sz_0[ii]);
+    hs_hru[ii].init(s_rz_0[ii], r_uz_sz_0[ii],tol,max_it);
 
     // resdistribute flows
     while( (link_from_id == cid) & (link_cntr<nlink) ){

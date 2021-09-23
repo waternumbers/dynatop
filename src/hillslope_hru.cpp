@@ -66,7 +66,7 @@ std::pair<double, double> hillslope_hru::courant(double& Dt){
   return cr;
 }
 
-void hillslope_hru::init(double& s_rz_0, double& r_uz_sz_0){
+void hillslope_hru::init(double& s_rz_0, double& r_uz_sz_0, double& tol, int& max_it){
   double l_sz_in, l_sz;
   double r_uz_sz;
   l_sz_in = q_sz_in / width; // standardise inflows by width
@@ -75,7 +75,61 @@ void hillslope_hru::init(double& s_rz_0, double& r_uz_sz_0){
   l_sz = std::min(l_sz_max, l_sz_in + Dx*r_uz_sz_0); // outflow flux under steady state
   r_uz_sz = (l_sz - l_sz_in)/Dx; // solve to find actual r_uz_sz
   // compute saturated zone storage deficit
-  s_sz = std::max(0.0, (std::log(l_sz_max) - std::log(l_sz))/cosbeta_m);
+  switch (opt) {
+  case 1: // exponential transmissivity
+    s_sz = std::max(0.0, (std::log(l_sz_max) - std::log(l_sz))/cosbeta_m);
+    break;
+  case 2: // constant celerity
+    s_sz = (c_sz*D - l_sz)/c_sz;
+    break;
+  case 3: // bounded exponential
+    s_sz = std::max(0.0,
+		    -std::log( (l_sz/(std::exp(ln_t0)*std::sin(beta))) +
+			       std::exp( -D*cosbeta_m ) ) / cosbeta_m );
+    break;
+  case 4: // double exponential
+    // this needs a numeric search
+    // test for zero flow which is impossible but then set a large s_sz
+    if( l_sz <= 0.0 ){
+      Rcpp::warning("ID: %i. No lateral flux in initialisation - setting depth to 100");
+      s_sz = 100.0;
+    }else{
+      // test for saturation
+      double x(0.0); // declared here so can be passed into fsz to test for saturation
+      double lwr(0), upr(0); // upper and lower limits of search
+      if( (flz(x)-l_sz) <= 0.0 ){
+	// then saturated
+	s_sz = 0.0;
+      }else{
+	// not saturated then determine lwr bound
+	lwr = 0.0;
+	// need to work upper depth to bracket
+	upr = 0.01;
+	while( (flz(upr)-l_sz) >= 0.0 ){
+	  upr += upr;
+	}
+	upr = std::min(upr,D); // since loop may result in upr > D
+      }
+      // bisection
+      int it(0);
+      double e;
+      while( (it <= max_it) and ((upr-lwr)>tol) ){
+	x = (upr+lwr)/2.0;
+	e = flz(x) - l_sz;
+	if(e>=0.0){ lwr=x; }
+	if(e<=0.0){ upr=x; }
+	it +=1;
+      }
+      if(it >max_it){
+	// Rcpp::Rcout << "ID: " << id << ". No root found within "<< max_it <<
+	// 	" iterations. Difference between bounds is " << upr-lwr << std::endl;
+	Rcpp::warning("ID: %i. No root found within %i iterations of initialisation. Difference between bounds is %d",
+		      id, max_it, upr-lwr);
+      }
+      s_sz = (upr+lwr)/2.0;
+    }
+    break;
+  }
   s_uz = std::min( s_sz, r_uz_sz*t_d*s_sz ); // compute unsaturated zone storage
 }
 

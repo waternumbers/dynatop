@@ -45,10 +45,13 @@ dynatop <- R6::R6Class(
         },
         #' @description Initialises a dynatop object in the simpliest way possible.
         #'
+        #' @param tol tolerance for the solution for the saturated zone
+        #' @param max_it maximum number of iterations to use in the solution of the saturated zone
+        #'
         #' @return invisible(self) suitable for chaining
-        initialise = function(){
+        initialise = function(tol = 2*.Machine$double.eps, max_it = 1000){
                        
-            private$init_hs()
+            private$init_hs(tol,max_it)
             private$init_ch()
             invisible(self)
         },
@@ -665,7 +668,7 @@ dynatop <- R6::R6Class(
 
             ## set D for exp and dexp options
             ## this is used in the c++ as the upper search limit
-            model$hillslope$D[ model$hillslope$opt %in% c("exp","bexp") ] <- 1e32
+            model$hillslope$D[ model$hillslope$opt %in% c("exp","dexp") ] <- 1e32
             
             ## convert hillslope opt into integer values
             tmp <- c("exp"=1,"cnst"=2,"bexp"=3,"dexp"=4)
@@ -697,7 +700,7 @@ dynatop <- R6::R6Class(
             tmp <- c("exp","cnst","bexp","dexp")
             model$hillslope$opt <- tmp[model$hillslope$opt]
             ## change D back to NA
-            model$hillslope$D[ model$hillslope$opt %in% c("exp","bexp") ] <- NA
+            model$hillslope$D[ model$hillslope$opt %in% c("exp","dexp") ] <- NA
             
             return(model)
         },        
@@ -750,10 +753,13 @@ dynatop <- R6::R6Class(
         },
         ## ###########################################
         ## Initialise the states
-        init_hs = function(){
+        init_hs = function(tol,max_it){
             dt_init(private$model$hillslope,
                     private$model$channel,
-                    private$model$flow_direction)
+                    private$model$flow_direction,
+                    as.double(tol),
+                    as.integer(max_it)
+                    )
         },
         ## ###############################
         ## function to perform simulations

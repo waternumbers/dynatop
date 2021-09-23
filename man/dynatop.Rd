@@ -103,9 +103,18 @@ invisible(self) suitable for chaining
 \subsection{Method \code{initialise()}}{
 Initialises a dynatop object in the simpliest way possible.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$initialise()}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$initialise(tol = 2 * .Machine$double.eps, max_it = 1000)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{tol}}{tolerance for the solution for the saturated zone}
+
+\item{\code{max_it}}{maximum number of iterations to use in the solution of the saturated zone}
+}
+\if{html}{\out{</div>}}
+}
 \subsection{Returns}{
 invisible(self) suitable for chaining
 }

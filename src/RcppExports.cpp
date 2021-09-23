@@ -48,14 +48,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // dt_init
-void dt_init(Rcpp::DataFrame hillslope, Rcpp::DataFrame channel, Rcpp::DataFrame flow_direction);
-RcppExport SEXP _dynatop_dt_init(SEXP hillslopeSEXP, SEXP channelSEXP, SEXP flow_directionSEXP) {
+void dt_init(Rcpp::DataFrame hillslope, Rcpp::DataFrame channel, Rcpp::DataFrame flow_direction, double tol, int max_it);
+RcppExport SEXP _dynatop_dt_init(SEXP hillslopeSEXP, SEXP channelSEXP, SEXP flow_directionSEXP, SEXP tolSEXP, SEXP max_itSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type hillslope(hillslopeSEXP);
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type channel(channelSEXP);
     Rcpp::traits::input_parameter< Rcpp::DataFrame >::type flow_direction(flow_directionSEXP);
-    dt_init(hillslope, channel, flow_direction);
+    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
+    Rcpp::traits::input_parameter< int >::type max_it(max_itSEXP);
+    dt_init(hillslope, channel, flow_direction, tol, max_it);
     return R_NilValue;
 END_RCPP
 }
@@ -63,7 +65,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_dynatop_dt_courant", (DL_FUNC) &_dynatop_dt_courant, 4},
     {"_dynatop_dt_implicit_sim", (DL_FUNC) &_dynatop_dt_implicit_sim, 15},
-    {"_dynatop_dt_init", (DL_FUNC) &_dynatop_dt_init, 3},
+    {"_dynatop_dt_init", (DL_FUNC) &_dynatop_dt_init, 5},
     {NULL, NULL, 0}
 };
 
