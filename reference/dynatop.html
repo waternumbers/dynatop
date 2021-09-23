@@ -73,7 +73,7 @@ R6 Class for Dynamic TOPMODEL" />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9101</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9102</span>
       </span>
     </div>
 
@@ -221,8 +221,15 @@ R6 Class for Dynamic TOPMODEL" />
 <p><hr>
 <a id="method-initialise"></a></p><h3 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Method <code>initialise()</code></h3>
 <p>Initialises a dynatop object in the simpliest way possible.</p><h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Usage</h4>
-<p><div class="r"></p><pre><span class='va'>dynatop</span><span class='op'>$</span><span class='fu'>initialise</span><span class='op'>(</span><span class='op'>)</span></pre><p></div></p>
+<p><div class="r"></p><pre><span class='va'>dynatop</span><span class='op'>$</span><span class='fu'>initialise</span><span class='op'>(</span>tol <span class='op'>=</span> <span class='fl'>2</span> <span class='op'>*</span> <span class='va'>.Machine</span><span class='op'>$</span><span class='va'>double.eps</span>, max_it <span class='op'>=</span> <span class='fl'>1000</span><span class='op'>)</span></pre><p></div></p>
 
+<h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Arguments</h4>
+<p><div class="arguments"></p><dl>
+<dt><code>tol</code></dt><dd><p>tolerance for the solution for the saturated zone</p></dd>
+
+<dt><code>max_it</code></dt><dd><p>maximum number of iterations to use in the solution of the saturated zone</p></dd>
+
+</dl><p></div></p>
 <h4 class='hasAnchor' id='arguments'><a class='anchor' href='#arguments'></a>Returns</h4>
 <p>invisible(self) suitable for chaining</p>
 <p><hr>
