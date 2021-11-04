@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 ```
 The purpose of this vignette is to document the structure of a Dynamic
 TOPMODEL model 'object'; that is the structure of the model that can be generated in
-the [dynatopGIS](https://waternumbers.github.io/dynatopGIS) package and is
+the [dynatopGIS](https://waternumbers.github.io/dynatopGIS/) package and is
 used in calls to the ```dynatop``` function in the current package. Currently
 the model is stored as an R variable of the list class.
 

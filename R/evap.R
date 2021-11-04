@@ -44,7 +44,7 @@
 #' hpet <- evap_est(hour_ts,0,1)
 #'
 #' ## the totals should eb the same...
-#' stopifnot(sum(hpet)==sum(dpet))
+#' stopifnot(all.equal(sum(hpet), sum(dpet)))
 #' @export
 evap_est <- function(ts, eMin=0, eMax=0){
 

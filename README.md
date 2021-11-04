@@ -2,14 +2,14 @@
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/waternumbers/dynatop/workflows/R-CMD-check/badge.svg)](https://github.com/waternumbers/dynatop/actions)
-[![codecov](https://codecov.io/gh/waternumbers/dynatop/branch/master/graph/badge.svg?token=XzqU2C6K8i)](https://codecov.io/gh/waternumbers/dynatop)
+[![codecov](https://app.codecov.io/gh/waternumbers/dynatop/branch/master/graph/badge.svg?token=XzqU2C6K8i)](https://app.codecov.io/gh/waternumbers/dynatop)
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/waternumbers/dynatop?branch=master&svg=true)](https://ci.appveyor.com/project/waternumbers/dynatop)
 <!-- badges: end -->
 
 This R package contains the core code to perform a dynamic TOPMODEL
 simulation. A related package for processing GIS data to set up dynamic TOPMODEL
 implementations can be found
-[here](https://waternumbers.github.io/dynatopGIS).
+[here](https://waternumbers.github.io/dynatopGIS/).
 
 These two packages are intended as successors to the original Dynamic TOPMODEL implementation in R;
 the [dynatopmodel](https://CRAN.R-project.org/package=dynatopmodel) package. Currently
@@ -26,7 +26,7 @@ versions of dynamic TOPMODEL, selected references can be found [here](articles/S
 
 Thanks goes to:
 * Peter Metcalfe who developed the original port of Dynamic TOPMODEL to R
-during his PhD sponsored by the [JBA Trust](https://www.jbatrust.org). 
+during his PhD sponsored by the [JBA Trust](https://www.jbatrust.org).
 * The [NERC Q-NFM project (NE/R004722/1)](https://www.lancaster.ac.uk/lec/sites/qnfm/) at Lancaster University for supporting this update to dynatop.
 * The original developers of Dynamic TOPMODEL, [Keith
 Beven](https://www.lancaster.ac.uk/lec/about-us/people/keith-beven) and [Jim
@@ -35,13 +35,12 @@ contributed to the original R port of Dynamic TOPMODEL.
 
 ## Using the code
 
-Currently the packages are not available on
-[CRAN](https://cran.r-project.org/). The latest version can be installed from
+Alongside the packages available on [CRAN](https://cran.r-project.org/) the
+latest development version can be installed from
 the git repository from within R using the devtools package: 
 
 ```
 devtools::install_github("waternumbers/dynatop")
 ```
 
-Prebuild packages (usually including the latest
-version) are available from the waternumbers drat repository [here](https://waternumbers.github.io/drat).
+Prebuild packages of the development version (which may be ahead of CRAN) are available from the waternumbers drat repository [here](https://waternumbers.github.io/drat/).

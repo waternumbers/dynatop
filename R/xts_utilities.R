@@ -18,16 +18,19 @@
 #'
 #' @export
 #' @examples
-#' # Resample Brompton rainfall to 15 minute intervals
+#' # Resample Swindale Rainfall to hourly intervals
 #' require(dynatop)
 #' data("Swindale")
-#'
-#' obs <- resample_xts(Swindale$obs, dt=60*60) # hourly data
-#'
+#' obs <- Swindale$obs
+#' cobs <- resample_xts(obs, dt=60*60) # hourly data
+#' dobs <- resample_xts(cobs,dt=15*60) # back to 15 minute data
+#' cdobs <- resample_xts(dobs,dt=60*60) # back to hourly data - checks time stamp conversion
+#' obs <- obs[zoo::index(obs)<=max(zoo::index(cobs)),]
+#' 
 #' # check totals
-#' sum(obs$Rainfall*15/60, na.rm=TRUE)
-#' sum(Swindale$obs$Rainfall, na.rm=TRUE)
-#'
+#' stopifnot( all.equal(sum(obs),sum(cobs)) )
+#' stopifnot( all.equal(sum(obs),sum(dobs)) )
+#' stopifnot( all.equal(cobs,cdobs) )
 resample_xts <- function(obs, dt, is.rate=FALSE){
 
     ## if the set is NULL then return
@@ -57,7 +60,7 @@ resample_xts <- function(obs, dt, is.rate=FALSE){
         ## period e.g m/hr
         vals <- apply(as.matrix(obs), MARGIN=2, FUN=rep, each=fact)   # won't wotk if fact is not an integer
         vals <- matrix(vals, ncol=ncol(vals))
-        tms <- seq(index(obs)[1]-dt, along.with=vals, by=dt)
+        tms <- seq(index(obs)[1]-((fact-1)*dt), along.with=vals, by=dt)
         ## if the value is a rate then it should be applied to all of the values in
         ## the interval "as is". Otherwise each values needs to be divided across the
         ## smaller time steps so that the total across the original time intervals is the same

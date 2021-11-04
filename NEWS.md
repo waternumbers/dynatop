@@ -1,3 +1,7 @@
+# dynatop 0.2.1
+
+- Minor tidying for release to CRAN
+
 # dynatop 0.2.0.9101
 
 ## Breaking changes

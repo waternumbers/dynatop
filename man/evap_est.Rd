@@ -53,7 +53,7 @@ hour_ts <- seq(st,fn,by=1*60*60)
 hpet <- evap_est(hour_ts,0,1)
 
 ## the totals should eb the same...
-stopifnot(sum(hpet)==sum(dpet))
+stopifnot(all.equal(sum(hpet), sum(dpet)))
 }
 \references{
 Beven, K. J. (2012). Rainfall-runoff modelling : the primer. Chichester, UK, Wiley-Blackwell.

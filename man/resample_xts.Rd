@@ -30,14 +30,17 @@ Because of the methods used the results:
 
 }
 \examples{
-# Resample Brompton rainfall to 15 minute intervals
+# Resample Swindale Rainfall to hourly intervals
 require(dynatop)
 data("Swindale")
-
-obs <- resample_xts(Swindale$obs, dt=60*60) # hourly data
+obs <- Swindale$obs
+cobs <- resample_xts(obs, dt=60*60) # hourly data
+dobs <- resample_xts(cobs,dt=15*60) # back to 15 minute data
+cdobs <- resample_xts(dobs,dt=60*60) # back to hourly data - checks time stamp conversion
+obs <- obs[zoo::index(obs)<=max(zoo::index(cobs)),]
 
 # check totals
-sum(obs$Rainfall*15/60, na.rm=TRUE)
-sum(Swindale$obs$Rainfall, na.rm=TRUE)
-
+stopifnot( all.equal(sum(obs),sum(cobs)) )
+stopifnot( all.equal(sum(obs),sum(dobs)) )
+stopifnot( all.equal(cobs,cdobs) )
 }
