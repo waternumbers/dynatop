@@ -12,6 +12,8 @@ vignette: >
   %\VignetteIndexEntry{The Hillslope HRU}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+resource_files:
+  - Hillslope_HRU.png
 ---
 
 # Conceptual model
@@ -33,9 +35,11 @@ passes water between HRUs and drains to the root zone. The root zone characteris
 the interactions between evapotranspiration and precipitation and when full spills to
 the unsaturated zone. This drains to the saturated zone which also interacts
 with other HRUs. The behaviour of the saturated zone is modelled using a kinematic wave
-approximation.
+approximation. The zones and variables used below are shown in the schematic diagram.
 
-*TODO: Add figure from training course - add figure of conceptual dimensions*
+```{r, echo=FALSE, purl=FALSE, out.width="75%", fig.align="center", fig.cap="Schematic of the Hill slope HRU"}
+knitr::include_graphics("./Hillslope_HRU.png")
+```
 
 In the following section the governing equations of the hillslope HRU are
 given in a finite volume form. Approximating equations for the solution of the
@@ -142,6 +146,7 @@ Since $\Delta x = A/w^{+}$ and $l_{sf}^{-} = q_{sf}^{-}/w^{+}$ re arranging give
 \begin{equation}
 \frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} - l_{sf}^{+}\right) - \bar{r}_{sf \rightarrow rz}
 \end{equation}
+
 This equation represents the evolution in time of $\bar{s}_{sf}$ expressed in
 terms of the unit width fluxes and an effective length $A/w^+$
 
@@ -229,7 +234,7 @@ spatial averaged values gives
 
 Rearranging this gives
 \begin{equation}
-\frac{d\bar{s}_{sz}}{dt} = \frac{1}{\Delta x}\left(\frac{l_{sz}^{+} - l_{sz}^{-}\right) - \bar{r}_{uz \rightarrow sz}
+\frac{d\bar{s}_{sz}}{dt} = \frac{1}{\Delta x}\left(l_{sz}^{+} - l_{sz}^{-}\right) - \bar{r}_{uz \rightarrow sz}
 \end{equation}
 
 The Kinematic approximation then depends upon the specification of a relationship
