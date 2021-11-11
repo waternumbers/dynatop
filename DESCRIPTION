@@ -1,6 +1,6 @@
 Package: dynatop
 Title: An Implementation of Dynamic TOPMODEL Hydrological Model in R
-Version: 0.2.1
+Version: 0.2.0.9200
 Authors@R: 
 	   c(person(given = "Paul",
            	family = "Smith",
