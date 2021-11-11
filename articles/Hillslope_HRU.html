@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9102</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9200</span>
       </span>
     </div>
 
@@ -125,8 +125,13 @@ passes water between HRUs and drains to the root zone. The root zone characteris
 the interactions between evapotranspiration and precipitation and when full spills to
 the unsaturated zone. This drains to the saturated zone which also interacts
 with other HRUs. The behaviour of the saturated zone is modelled using a kinematic wave
-approximation.</p>
-<p><em>TODO: Add figure from training course - add figure of conceptual dimensions</em></p>
+approximation. The zones and variables used below are shown in the schematic diagram.</p>
+<div class="figure" style="text-align: center">
+<span style="display:block;" id="fig:unnamed-chunk-1"></span>
+<img src="Hillslope_HRU.png" alt="Schematic of the Hill slope HRU" width="75%"><p class="caption">
+Figure 1: Schematic of the Hill slope HRU
+</p>
+</div>
 <p>In the following section the governing equations of the hillslope HRU are
 given in a finite volume form. Approximating equations for the solution of the
 governing equations are then derived with associated implicit and semi-implicit numerical
@@ -341,8 +346,8 @@ A\frac{d \bar{s}_{sf}}{dt} = q_{sf}^{-} - q_{sf}^{+} - A\bar{r}_{sf \rightarrow 
 <p>Since <span class="math inline">\(\Delta x = A/w^{+}\)</span> and <span class="math inline">\(l_{sf}^{-} = q_{sf}^{-}/w^{+}\)</span> re arranging gives
 <span class="math display">\[\begin{equation}
 \frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} - l_{sf}^{+}\right) - \bar{r}_{sf \rightarrow rz}
-\end{equation}\]</span>
-This equation represents the evolution in time of <span class="math inline">\(\bar{s}_{sf}\)</span> expressed in
+\end{equation}\]</span></p>
+<p>This equation represents the evolution in time of <span class="math inline">\(\bar{s}_{sf}\)</span> expressed in
 terms of the unit width fluxes and an effective length <span class="math inline">\(A/w^+\)</span></p>
 <p>To complete the formulation assume that <span class="math inline">\(l_{sf}^{+} = c_{sf}\bar{s}_{sf}\)</span>
 which gives
@@ -418,7 +423,7 @@ spatial averaged values gives
 \end{equation}\]</span></p>
 <p>Rearranging this gives
 <span class="math display">\[\begin{equation}
-\frac{d\bar{s}_{sz}}{dt} = \frac{1}{\Delta x}\left(\frac{l_{sz}^{+} - l_{sz}^{-}\right) - \bar{r}_{uz \rightarrow sz}
+\frac{d\bar{s}_{sz}}{dt} = \frac{1}{\Delta x}\left(l_{sz}^{+} - l_{sz}^{-}\right) - \bar{r}_{uz \rightarrow sz}
 \end{equation}\]</span></p>
 <p>The Kinematic approximation then depends upon the specification of a relationship
 between <span class="math inline">\(\bar{s}_{sz}\)</span> and <span class="math inline">\(l_{sz}^{+}\)</span>. This usually termed the transmissivity

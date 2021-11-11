@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9102</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9200</span>
       </span>
     </div>
 
@@ -129,7 +129,7 @@
 <span class="co">#&gt;  [1] "options"        "map"            "channel"        "hillslope"     </span>
 <span class="co">#&gt;  [5] "flow_direction" "gauge"          "point_inflow"   "diffuse_inflow"</span>
 <span class="co">#&gt;  [9] "precip_input"   "pet_input"</span></code></pre></div>
-<p>which are described in <a href="The_Model_Object.html">associated vignette</a>. The <a href="https://waternumbers.github.io/dynatopGIS">dynatopGIS</a> package can be used for constructing models.</p>
+<p>which are described in <a href="The_Model_Object.html">associated vignette</a>. The <a href="https://waternumbers.github.io/dynatopGIS/">dynatopGIS</a> package can be used for constructing models.</p>
 </div>
 <div id="setting-map-locations" class="section level1">
 <h1 class="hasAnchor">
@@ -157,10 +157,24 @@
 <span class="co">#&gt; 2009-11-18 17:00:00 3.02    2e-04 0.000000e+00</span>
 <span class="co">#&gt; 2009-11-18 17:15:00 3.15    2e-04 0.000000e+00</span></code></pre></div>
 <p>Note the discharge is in m<span class="math inline">\(^{3}\)</span>/s while the precipitation and PET are in m accumulated over the time step.</p>
-<p>To use the data with the model we need to set the names of the time series within the model.</p>
+<p>To use the data with the model we need to set the names of the time series inputs within the model. In this case this is already done as can be seen by insepcting the <code>precip_input</code> and <code>pet_input</code> tables</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">swindale_model</span><span class="op">$</span><span class="va">hillslope</span><span class="op">[</span>,<span class="st">'precip'</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">swindale_model</span><span class="op">$</span><span class="va">channel</span><span class="op">[</span>,<span class="st">'precip'</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"Rainfall"</span>
-<span class="va">swindale_model</span><span class="op">$</span><span class="va">hillslope</span><span class="op">[</span>,<span class="st">'pet'</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">swindale_model</span><span class="op">$</span><span class="va">channel</span><span class="op">[</span>,<span class="st">'pet'</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="st">"PET"</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">swindale_model</span><span class="op">$</span><span class="va">precip_input</span><span class="op">)</span>
+<span class="co">#&gt;       name id frc</span>
+<span class="co">#&gt; 1 Rainfall  2   1</span>
+<span class="co">#&gt; 2 Rainfall 17   1</span>
+<span class="co">#&gt; 3 Rainfall 11   1</span>
+<span class="co">#&gt; 4 Rainfall  7   1</span>
+<span class="co">#&gt; 5 Rainfall  6   1</span>
+<span class="co">#&gt; 6 Rainfall 12   1</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">swindale_model</span><span class="op">$</span><span class="va">pet_input</span><span class="op">)</span>
+<span class="co">#&gt;   name id frc</span>
+<span class="co">#&gt; 1  PET  2   1</span>
+<span class="co">#&gt; 2  PET 17   1</span>
+<span class="co">#&gt; 3  PET 11   1</span>
+<span class="co">#&gt; 4  PET  7   1</span>
+<span class="co">#&gt; 5  PET  6   1</span>
+<span class="co">#&gt; 6  PET 12   1</span></code></pre></div>
 </div>
 <div id="altering-parameters" class="section level1">
 <h1 class="hasAnchor">
