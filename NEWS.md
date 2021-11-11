@@ -1,3 +1,10 @@
+# dynatop 0.2.9200
+
+- Fix so using a ingle channel works correctly
+- Fix so fluxes passed correctly during initialisation
+- Fix bug in get_states() so returns correctly when recrods=FALSE
+- Tidying for release to CRAN
+
 # dynatop 0.2.0.9101
 
 ## Breaking changes

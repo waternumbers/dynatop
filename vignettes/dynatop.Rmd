@@ -43,7 +43,7 @@ names(swindale_model)
 ```
 which are described in [associated
 vignette](The_Model_Object.html). The
-[dynatopGIS](https://waternumbers.github.io/dynatopGIS) package
+[dynatopGIS](https://waternumbers.github.io/dynatopGIS/) package
 can be used for constructing models. 
 
 # Setting map locations
@@ -80,10 +80,11 @@ Note the discharge is in m$^{3}$/s while the precipitation and PET are in m
 accumulated over the time step.
 
 To use the data with the model we need to set the names of the time series
-within the model. 
+inputs within the model. In this case this is already done as can be seen by
+insepcting the `precip_input` and `pet_input` tables
 ```{r, set_obs_names}
-swindale_model$hillslope[,'precip'] <- swindale_model$channel[,'precip'] <- "Rainfall"
-swindale_model$hillslope[,'pet'] <- swindale_model$channel[,'pet'] <- "PET"
+head(swindale_model$precip_input)
+head(swindale_model$pet_input)
 ```
 
 # Altering parameters

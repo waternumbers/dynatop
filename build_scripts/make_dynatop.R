@@ -16,33 +16,34 @@ pkgdown::clean_site(pacPath)
 ## build, populate drat
 ## linux
 dratPath <- "~/Documents/Software/drat"
-tmp <- devtools::build(pacPath)
-install.packages(tmp)
-drat::insertPackage(tmp,dratPath)#,action="prune")
+buildFile <- devtools::build(pacPath)
+install.packages(buildFile)
+drat::insertPackage(buildFile,dratPath)#,action="prune")
 
 ## mac and windows
 rhub::validate_email() # for first time that session
-pkgName <- sub('\\.tar.gz$', '', basename(tmp)) 
+pkgName <- sub('\\.tar.gz$', '', basename(buildFile)) 
 ## rhub::platforms()[,1] # lists platforms
-mch <- rhub::check(path = tmp,
-                   platform = c("macos-highsierra-release-cran","windows-x86_64-release"))
 
-tmp <- paste0(pkgName,".tgz")
-ftmp <- file.path("../..",tmp)
-download.file(file.path(mch$urls()$artifacts[1],tmp),ftmp)
-drat::insertPackage(ftmp,dratPath,action="prune")
 
-tmp <- paste0(pkgName,".zip")
-ftmp <- file.path("../..",tmp)
-##download.file(file.path(mch$urls()$artifacts[3],tmp),ftmp)
-##drat::insertPackage(ftmp,dratPath,action="prune")
-download.file(file.path(mch$urls()$artifacts[2],tmp),ftmp)
-drat::insertPackage(ftmp,dratPath,action="prune")
+mch <- rhub::check(path = buildFile,
+                   platform = c("macos-highsierra-release-cran","windows-x86_64-release",
+                                "macos-m1-bigsur-release"))
+ext <- c(".tgz",".zip",".tgz")
+outPath <- dirname(buildFile)
+for(ii in 1:2){ ## m1 not fixed yet in drat
+    tmp <- paste0(pkgName,ext[ii])
+    outFile <- file.path(outPath,tmp)
+    download.file(file.path(mch$urls()$artifacts[ii],tmp),outFile)
+    drat::insertPackage(outFile,dratPath)
+}
 
 ## tidy up drat
 drat::pruneRepo(dratPath,pkg="dynatop",remove="git")## this only does source files
 
-
+## prior to submission
+mch <- rhub::check_for_cran(path = buildFile)
+mch <- rhub::check_with_valgrind(path = buildFile)
 
 
 ###########################################################################
