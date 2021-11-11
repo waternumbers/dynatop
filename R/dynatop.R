@@ -217,11 +217,12 @@ dynatop <- R6Class(
         #' @description Return states
         #' @param record logical TRUE if the record should be returned. Otherwise the current states returned
         get_states = function(record=FALSE){
+            
             if( record ){
                 return( setNames(private$time_series$state_record,
                                  private$time_series$index) )
             }else{
-                nm <- private$model_description[["hillslope"]]$name[private$model_description[["hillslope"]]$role=="state"]
+                nm <- c("s_sf","s_rz","s_uz","s_sz")
                 return( private$model$hillslope[,c("id",nm)] )
             }
        },
@@ -259,7 +260,7 @@ dynatop <- R6Class(
     ),
     private = list(
         ## stores of data
-        version = "0.2.0.9030",
+        version = "0.2.1",
         model = list(), # storage for model object
         summary = list(), # storage for intermediate computed values used in code
         time_series = list(),
@@ -754,6 +755,7 @@ dynatop <- R6Class(
         ## ###########################################
         ## Initialise the states
         init_hs = function(tol,max_it){
+            
             dt_init(private$model$hillslope,
                     private$model$channel,
                     private$model$flow_direction,
@@ -835,6 +837,7 @@ dynatop <- R6Class(
         },
         ## #############################
         init_ch = function(){
+
             channel <- private$model$channel
             gauge <- private$model$gauge
             point_inflow <- private$model$point_inflow
@@ -883,8 +886,8 @@ dynatop <- R6Class(
                 rownames(pnt) <- point_inflow$name ## rename
 
                 ## trim locations that don't go to that gauge
-                df <- df[is.finite(df[,"min_time"])&is.finite(df[,"max_time"]),]
-                pnt <- pnt[is.finite(pnt[,"min_time"])&is.finite(pnt[,"max_time"]),]
+                df <- df[is.finite(df[,"min_time"])&is.finite(df[,"max_time"]),,drop=FALSE]
+                pnt <- pnt[is.finite(pnt[,"min_time"])&is.finite(pnt[,"max_time"]),,drop=FALSE]
 
                 linear_time[[gnm]] <- list(diffuse=df,point=pnt)
             }
@@ -960,7 +963,7 @@ dynatop <- R6Class(
             
             ## Loop gauges
             for(gnm in names(private$summary$channel$linear_time)){
-
+ 
                 ## initialise the point - set to 0
                 out[,gnm] <- 0
 

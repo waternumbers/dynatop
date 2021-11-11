@@ -131,6 +131,10 @@ void hillslope_hru::init(double& s_rz_0, double& r_uz_sz_0, double& tol, int& ma
     break;
   }
   s_uz = std::min( s_sz, r_uz_sz*t_d*s_sz ); // compute unsaturated zone storage
+
+  // compute the outflow
+  q_sf_out = width*c_sf*s_sf;
+  q_sz_out = width*l_sz;
 }
 
 void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, double& tol, int& max_it)
@@ -148,7 +152,7 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
   l_sz_in = q_sz_in / width;
   l_sf_in = q_sf_in / width;
 
-  // set ration of Dt_Dx used
+  // set ratio of Dt_Dx used
   Dt_Dx = Dt/Dx;
 
 
@@ -166,13 +170,6 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
 
   // initialise the bands for the search
   double lwr(0.0), upr(D);
-
-  // Rcpp::Rcout << "Start:" << id << " : " << lwr << " " << fsz(lwr,Dt) << " : " << upr << " " <<fsz(upr,Dt) << std::endl;
-  // Rcpp::Rcout << "r_uz_sz_max " <<  r_uz_sz_max << std::endl;
-  // Rcpp::Rcout << "v_rz_uz " <<  v_rz_uz << std::endl;
-  // Rcpp::Rcout << "l_sz_in " << l_sz_in << std::endl;
-  // Rcpp::Rcout << "s_uz " << s_uz << std::endl;
-  // Rcpp::Rcout << "t_d " << t_d << std::endl;
 
     
   // test for saturation
@@ -264,7 +261,8 @@ double hillslope_hru::flz(double& x){ // compute saturated zone outflow
     l = c_sz*(D-x);
     break;
   case 3: // bounded exponential
-    l = l_sz_max * ( std::exp(-x*cosbeta_m) - std::exp( -D*cosbeta_m ) );
+    l = l_sz_max * ( (std::exp(-x*cosbeta_m) - std::exp( -D*cosbeta_m )) /
+		     (1 - std::exp( -D*cosbeta_m ) ) );
     break;
   case 4: // double exponential
     l = l_sz_max * ( omega*std::exp(-x*cosbeta_m) + (1-omega)* std::exp( -x*cosbeta_m_2 ) );
