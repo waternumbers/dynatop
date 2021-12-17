@@ -1,5 +1,5 @@
 pandoc: 2.7.3
-pkgdown: 1.6.1
+pkgdown: 2.0.1
 pkgdown_sha: ~
 articles:
   Channel_HRU: Channel_HRU.html
@@ -8,5 +8,5 @@ articles:
   Selected_References: Selected_References.html
   The_Model_Object: The_Model_Object.html
   dynatop: dynatop.html
-last_built: 2021-11-11T11:51Z
+last_built: 2021-12-17T16:42Z
 

@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,18 +33,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9200</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../articles/dynatop.html">Get started</a>
 </li>
@@ -79,7 +75,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/waternumbers/dynatop/">
+  <a href="https://github.com/waternumbers/dynatop/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -94,13 +90,13 @@
 
       
 
-      </header><script src="The_Model_Object_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>The Model Object</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/vignettes/The_Model_Object.Rmd"><code>vignettes/The_Model_Object.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/HEAD/vignettes/The_Model_Object.Rmd" class="external-link"><code>vignettes/The_Model_Object.Rmd</code></a></small>
       <div class="hidden name"><code>The_Model_Object.Rmd</code></div>
 
     </div>
@@ -109,7 +105,7 @@
     
 <p>The purpose of this vignette is to document the structure of a Dynamic
 TOPMODEL model ‘object’; that is the structure of the model that can be generated in
-the <a href="https://waternumbers.github.io/dynatopGIS/">dynatopGIS</a> package and is
+the <a href="https://waternumbers.github.io/dynatopGIS/" class="external-link">dynatopGIS</a> package and is
 used in calls to the <code>dynatop</code> function in the current package. Currently
 the model is stored as an R variable of the list class.</p>
 <p>This should be read alongside the <a href="dynatop.html">“Getting
@@ -118,12 +114,12 @@ of a model object.</p>
 <p>The model structure will be documented with reference to the model in the test
 catchment data supplied with the package. This can be loaded with</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://waternumbers.github.io/dynatop/">dynatop</a></span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="st">"Swindale"</span><span class="op">)</span>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://waternumbers.github.io/dynatop/" class="external-link">dynatop</a></span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"Swindale"</span><span class="op">)</span>
 <span class="va">model</span> <span class="op">&lt;-</span> <span class="va">Swindale</span><span class="op">$</span><span class="va">model</span></code></pre></div>
 <p>The top level of the model contains the following elements:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span>
 <span class="co">#&gt;  [1] "options"        "map"            "channel"        "hillslope"     </span>
 <span class="co">#&gt;  [5] "flow_direction" "gauge"          "point_inflow"   "diffuse_inflow"</span>
 <span class="co">#&gt;  [9] "precip_input"   "pet_input"</span></code></pre></div>
@@ -195,9 +191,9 @@ below.</p>
 </tr>
 </tbody>
 </table>
-<div id="options" class="section level2">
-<h2 class="hasAnchor">
-<a href="#options" class="anchor"></a>Options</h2>
+<div class="section level2">
+<h2 id="options">Options<a class="anchor" aria-label="anchor" href="#options"></a>
+</h2>
 <p>The options vector is a named character vector. Two named variables are used:</p>
 <ul>
 <li>
@@ -213,12 +209,12 @@ and
 <a href="Channel_HRU.html">channel</a>
 vignettes for further details.</p>
 </div>
-<div id="hillslope-hru-table" class="section level2">
-<h2 class="hasAnchor">
-<a href="#hillslope-hru-table" class="anchor"></a>Hillslope HRU table</h2>
+<div class="section level2">
+<h2 id="hillslope-hru-table">Hillslope HRU table<a class="anchor" aria-label="anchor" href="#hillslope-hru-table"></a>
+</h2>
 <p>Each row of the hillslope table describes a single hillslope HRU. In this example it looks like:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">hillslope</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">hillslope</span><span class="op">)</span>
 <span class="co">#&gt;   id      area   atb_bar      s_bar min_dst width s_sf s_rz s_uz s_sz</span>
 <span class="co">#&gt; 1 20  1451.820  9.121463 0.28916356       1    40   NA   NA   NA   NA</span>
 <span class="co">#&gt; 2 21  5911.932  9.598746 0.36701868       1   160   NA   NA   NA   NA</span>
@@ -399,12 +395,12 @@ vignettes for further details.</p>
 </tbody>
 </table>
 </div>
-<div id="channel-hru-table" class="section level2">
-<h2 class="hasAnchor">
-<a href="#channel-hru-table" class="anchor"></a>Channel HRU table</h2>
+<div class="section level2">
+<h2 id="channel-hru-table">Channel HRU table<a class="anchor" aria-label="anchor" href="#channel-hru-table"></a>
+</h2>
 <p>Each row of the channel HRU table describes a single channel HRU. In this example it looks like:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">channel</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">channel</span><span class="op">)</span>
 <span class="co">#&gt;                  name1                           identifier</span>
 <span class="co">#&gt; 0        Hawthorn Gill 16D0AC09-E0B6-4727-83B8-567E8DE9C533</span>
 <span class="co">#&gt; 1 Little Mosedale Beck 643017BB-01BC-4738-898F-1C62B84164BF</span>
@@ -480,9 +476,9 @@ data. The columns required are documented in Table <a href="#tab:channel-table">
 </tbody>
 </table>
 </div>
-<div id="gauge-locations" class="section level2">
-<h2 class="hasAnchor">
-<a href="#gauge-locations" class="anchor"></a>Gauge locations</h2>
+<div class="section level2">
+<h2 id="gauge-locations">Gauge locations<a class="anchor" aria-label="anchor" href="#gauge-locations"></a>
+</h2>
 <p>Gauge locations can be specified on the channel HRUs as outlined in Table
 <a href="#tab:gauge-table">4</a>. Gauges are taken to be at the outlet of the channel length.</p>
 <table class="table">
@@ -521,9 +517,9 @@ data. The columns required are documented in Table <a href="#tab:channel-table">
 <span class="co">#&gt;        name id</span>
 <span class="co">#&gt; 1 channel_1  1</span></code></pre></div>
 </div>
-<div id="point-inflows" class="section level2">
-<h2 class="hasAnchor">
-<a href="#point-inflows" class="anchor"></a>Point Inflows</h2>
+<div class="section level2">
+<h2 id="point-inflows">Point Inflows<a class="anchor" aria-label="anchor" href="#point-inflows"></a>
+</h2>
 <p>The point_inflow data frame allows the specification for point inflow which
 are added to the inflow at the head of the channel length.</p>
 <table class="table">
@@ -556,9 +552,9 @@ are added to the inflow at the head of the channel length.</p>
 <span class="co">#&gt; [1] name id  </span>
 <span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></code></pre></div>
 </div>
-<div id="diffuse-inflows" class="section level2">
-<h2 class="hasAnchor">
-<a href="#diffuse-inflows" class="anchor"></a>Diffuse Inflows</h2>
+<div class="section level2">
+<h2 id="diffuse-inflows">Diffuse Inflows<a class="anchor" aria-label="anchor" href="#diffuse-inflows"></a>
+</h2>
 <p>The diffuse_inflow data frame allows the specification of diffuse inputs to
 the channel. These are presumed to occur uniformly along the channel length.</p>
 <table class="table">
@@ -591,9 +587,9 @@ the channel. These are presumed to occur uniformly along the channel length.</p>
 <span class="co">#&gt; [1] name id  </span>
 <span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></code></pre></div>
 </div>
-<div id="flow-direction" class="section level2">
-<h2 class="hasAnchor">
-<a href="#flow-direction" class="anchor"></a>Flow direction</h2>
+<div class="section level2">
+<h2 id="flow-direction">Flow direction<a class="anchor" aria-label="anchor" href="#flow-direction"></a>
+</h2>
 <p>The flow_direction data frame describes the connections between the HRUs.</p>
 <table class="table">
 <caption>
@@ -633,7 +629,7 @@ the channel. These are presumed to occur uniformly along the channel length.</p>
 </table>
 <p>The start of the data frame in the current example is:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">flow_direction</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">flow_direction</span><span class="op">)</span>
 <span class="co">#&gt;        from   to       frc</span>
 <span class="co">#&gt; 18502  1853 1850 0.3033095</span>
 <span class="co">#&gt; 185110 1853 1851 0.4704486</span>
@@ -642,9 +638,9 @@ the channel. These are presumed to occur uniformly along the channel length.</p>
 <span class="co">#&gt; 18501  1852 1850 0.4736997</span>
 <span class="co">#&gt; 1851   1852 1851 0.1481338</span></code></pre></div>
 </div>
-<div id="precipitation-input" class="section level2">
-<h2 class="hasAnchor">
-<a href="#precipitation-input" class="anchor"></a>Precipitation input</h2>
+<div class="section level2">
+<h2 id="precipitation-input">Precipitation input<a class="anchor" aria-label="anchor" href="#precipitation-input"></a>
+</h2>
 <p>The precip_input data frame describes the precipitation series to use for each
 HRU. Each row contains a HRU id, the series to use and the fraction of the HRU
 to which this series should be applied. From this an average precipitation
@@ -687,7 +683,7 @@ for each HRU is derived.</p>
 </table>
 <p>In the current example there is a single precipitation series being used:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">precip_input</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">precip_input</span><span class="op">)</span>
 <span class="co">#&gt;       name id frc</span>
 <span class="co">#&gt; 1 Rainfall  2   1</span>
 <span class="co">#&gt; 2 Rainfall 17   1</span>
@@ -696,9 +692,9 @@ for each HRU is derived.</p>
 <span class="co">#&gt; 5 Rainfall  6   1</span>
 <span class="co">#&gt; 6 Rainfall 12   1</span></code></pre></div>
 </div>
-<div id="pet-input" class="section level2">
-<h2 class="hasAnchor">
-<a href="#pet-input" class="anchor"></a>PET input</h2>
+<div class="section level2">
+<h2 id="pet-input">PET input<a class="anchor" aria-label="anchor" href="#pet-input"></a>
+</h2>
 <p>The pet_input data frame describes the potential evapotranspiration series to use for each
 HRU. Each row contains a HRU id, the series to use and the fraction of the HRU
 to which this series should be applied. From this an average PET value
@@ -741,7 +737,7 @@ for each HRU is derived.</p>
 </table>
 <p>In the current example there is a single PET series being used:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">pet_input</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">pet_input</span><span class="op">)</span>
 <span class="co">#&gt;   name id frc</span>
 <span class="co">#&gt; 1  PET  2   1</span>
 <span class="co">#&gt; 2  PET 17   1</span>
@@ -763,11 +759,13 @@ for each HRU is derived.</p>
 
 
       <footer><div class="copyright">
-  <p>Developed by Paul Smith, Peter Metcalfe.</p>
+  <p></p>
+<p>Developed by Paul Smith, Peter Metcalfe.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -775,6 +773,8 @@ for each HRU is derived.</p>
 
   
 
+
+  
 
   </body>
 </html>

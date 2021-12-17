@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,18 +33,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9200</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../articles/dynatop.html">Get started</a>
 </li>
@@ -79,7 +75,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/waternumbers/dynatop/">
+  <a href="https://github.com/waternumbers/dynatop/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -94,13 +90,13 @@
 
       
 
-      </header><script src="Channel_HRU_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Channel HRU</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/vignettes/Channel_HRU.Rmd"><code>vignettes/Channel_HRU.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/HEAD/vignettes/Channel_HRU.Rmd" class="external-link"><code>vignettes/Channel_HRU.Rmd</code></a></small>
       <div class="hidden name"><code>Channel_HRU.Rmd</code></div>
 
     </div>
@@ -113,9 +109,9 @@ returns the inflow to the channel reachs specified in the model.
 This vignette documents the formulation and the numerical solution used to
 route these channel inflows, along with other diffuse and point inputs to the
 model.</p>
-<div id="notation-and-nomenclature" class="section level1">
-<h1 class="hasAnchor">
-<a href="#notation-and-nomenclature" class="anchor"></a>Notation and nomenclature</h1>
+<div class="section level1">
+<h1 id="notation-and-nomenclature">Notation and nomenclature<a class="anchor" aria-label="anchor" href="#notation-and-nomenclature"></a>
+</h1>
 <p>Table @ref(tab:ch-notation} outlines the notation used in this document.</p>
 <table class="table">
 <caption>
@@ -169,9 +165,9 @@ section of the hillslope HRU</caption>
 </tbody>
 </table>
 </div>
-<div id="inputs-to-a-channel-hru" class="section level1">
-<h1 class="hasAnchor">
-<a href="#inputs-to-a-channel-hru" class="anchor"></a>Inputs to a Channel HRU</h1>
+<div class="section level1">
+<h1 id="inputs-to-a-channel-hru">Inputs to a Channel HRU<a class="anchor" aria-label="anchor" href="#inputs-to-a-channel-hru"></a>
+</h1>
 <p>A Channel HRU is considered as representing a channel reach of length
 <span class="math inline">\(L\)</span>. Each Channel HRU has two types of inflow, labelled diffuse
 and point. Diffuse inflows are external inputs which occur at a
@@ -181,9 +177,9 @@ table.</p>
 <p>Point inflows are considered to occur at the head of the channel reach. These
 consist of the inflow from upstream channel HRUs and time series specified in the <code>point_inputs</code> table.</p>
 </div>
-<div id="time-delay-channel-routing" class="section level1">
-<h1 class="hasAnchor">
-<a href="#time-delay-channel-routing" class="anchor"></a>Time Delay Channel Routing</h1>
+<div class="section level1">
+<h1 id="time-delay-channel-routing">Time Delay Channel Routing<a class="anchor" aria-label="anchor" href="#time-delay-channel-routing"></a>
+</h1>
 <p>The time delay channel routing is selected by setting the <code>channel_solver</code>
 value in the model options vector to <code>histogram</code>. The method offers a basic representation of the movement of
 water in which a constant velocity to assigned to each channel reach.</p>
@@ -438,14 +434,14 @@ d_{\left(i-r_{0}\right)\Delta t} +
 \left(\tau_{)} + \tau_{L}/2 - r_{0}\Delta t\right)
 d_{\left(i-r_{0}-1\right)\Delta t}
 \]</span></p>
-<div id="examples" class="section level2">
-<h2 class="hasAnchor">
-<a href="#examples" class="anchor"></a>Examples</h2>
+<div class="section level2">
+<h2 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a>
+</h2>
 <p>In this section some example histograms are generated based upon the length,
 velocity and <span class="math inline">\(\tau_0\)</span> of the Channel HRU alond with the time step <span class="math inline">\(\Delta t\)</span>.</p>
-<div id="point-input" class="section level3">
-<h3 class="hasAnchor">
-<a href="#point-input" class="anchor"></a>Point input</h3>
+<div class="section level3">
+<h3 id="point-input">Point input<a class="anchor" aria-label="anchor" href="#point-input"></a>
+</h3>
 <p>First a function for defining the histrogram for a point inflow can be coded
 as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -455,12 +451,12 @@ as follows:</p>
 <span class="co">## tau0 is the time delay between the gauge and foot of the reach</span>
 <span class="va">fp</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span>,<span class="va">vch</span>,<span class="va">Dt</span>,<span class="va">tau0</span><span class="op">)</span><span class="op">{</span>
   <span class="va">tauL</span> <span class="op">&lt;-</span> <span class="va">L</span><span class="op">/</span><span class="va">vch</span>
-  <span class="va">rL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">floor</a></span><span class="op">(</span><span class="op">(</span><span class="va">tau0</span><span class="op">+</span><span class="va">tauL</span><span class="op">)</span><span class="op">/</span><span class="va">Dt</span><span class="op">)</span>
+  <span class="va">rL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="op">(</span><span class="va">tau0</span><span class="op">+</span><span class="va">tauL</span><span class="op">)</span><span class="op">/</span><span class="va">Dt</span><span class="op">)</span>
   <span class="va">irL</span> <span class="op">&lt;-</span> <span class="va">rL</span><span class="op">+</span><span class="fl">1</span> <span class="co">## index in vector since R starts at 1 not zero</span>
-  <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0</span>,<span class="va">irL</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span>
+  <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>,<span class="va">irL</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span>
   <span class="va">b</span><span class="op">[</span><span class="va">irL</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="op">(</span><span class="va">rL</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span><span class="op">*</span><span class="va">Dt</span> <span class="op">-</span> <span class="va">tau0</span><span class="op">-</span><span class="va">tauL</span><span class="op">)</span><span class="op">/</span><span class="va">Dt</span>
   <span class="va">b</span><span class="op">[</span><span class="va">irL</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">tau0</span><span class="op">+</span><span class="va">tauL</span> <span class="op">-</span> <span class="va">rL</span><span class="op">*</span><span class="va">Dt</span><span class="op">)</span><span class="op">/</span><span class="va">Dt</span>
-  <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
+  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
 <span class="op">}</span></code></pre></div>
 <p>For the first example all the input should occur with one time step delay
 (second element in output vector) since <span class="math inline">\(L/v_ch\)</span> exactly matches the time step
@@ -480,19 +476,19 @@ non-zero elements are the 4th and 5th, but with the 4th being larger then the 5t
 <code class="sourceCode R"><span class="fu">fp</span><span class="op">(</span>L<span class="op">=</span><span class="fl">100</span>,vch<span class="op">=</span><span class="fl">1.5</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">600</span><span class="op">)</span>
 <span class="co">#&gt; [1] 0.0000000 0.0000000 0.0000000 0.6666667 0.3333333</span></code></pre></div>
 </div>
-<div id="diffuse-inflow" class="section level3">
-<h3 class="hasAnchor">
-<a href="#diffuse-inflow" class="anchor"></a>Diffuse inflow</h3>
+<div class="section level3">
+<h3 id="diffuse-inflow">Diffuse inflow<a class="anchor" aria-label="anchor" href="#diffuse-inflow"></a>
+</h3>
 <p>The function for the difuse inflow is more complex since the special cases
 have to be handled:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fd</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span>,<span class="va">vch</span>,<span class="va">Dt</span>,<span class="va">tau0</span><span class="op">)</span><span class="op">{</span>
   <span class="va">tauL</span> <span class="op">&lt;-</span> <span class="va">L</span><span class="op">/</span><span class="va">vch</span>
-  <span class="va">r0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">floor</a></span><span class="op">(</span><span class="va">tau0</span><span class="op">/</span><span class="va">Dt</span><span class="op">)</span>
+  <span class="va">r0</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="va">tau0</span><span class="op">/</span><span class="va">Dt</span><span class="op">)</span>
   <span class="va">ir0</span> <span class="op">&lt;-</span> <span class="va">r0</span><span class="op">+</span><span class="fl">1</span> <span class="co">## index in vector since R starts at 1 not zero</span>
-  <span class="va">rL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html">floor</a></span><span class="op">(</span><span class="op">(</span><span class="va">tau0</span><span class="op">+</span><span class="va">tauL</span><span class="op">)</span><span class="op">/</span><span class="va">Dt</span><span class="op">)</span>
+  <span class="va">rL</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">floor</a></span><span class="op">(</span><span class="op">(</span><span class="va">tau0</span><span class="op">+</span><span class="va">tauL</span><span class="op">)</span><span class="op">/</span><span class="va">Dt</span><span class="op">)</span>
   <span class="va">irL</span> <span class="op">&lt;-</span> <span class="va">rL</span><span class="op">+</span><span class="fl">1</span> <span class="co">## index in vector since R starts at 1 not zero</span>
-  <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html">rep</a></span><span class="op">(</span><span class="fl">0</span>,<span class="va">irL</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span>
+  <span class="va">b</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>,<span class="va">irL</span><span class="op">+</span><span class="fl">1</span><span class="op">)</span>
   
   <span class="kw">if</span><span class="op">(</span><span class="va">rL</span><span class="op">&gt;</span><span class="va">r0</span><span class="op">)</span><span class="op">{</span>
     <span class="va">b</span><span class="op">[</span><span class="va">ir0</span><span class="op">:</span><span class="op">(</span><span class="va">irL</span><span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">Dt</span> <span class="co"># inital values valid unless over written</span>
@@ -509,48 +505,48 @@ have to be handled:</p>
     <span class="va">b</span><span class="op">[</span><span class="va">ir0</span><span class="op">+</span><span class="fl">1</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">tauL</span><span class="op">/</span><span class="va">Dt</span><span class="op">)</span><span class="op">*</span><span class="op">(</span><span class="va">tau0</span> <span class="op">+</span> <span class="op">(</span><span class="va">tauL</span><span class="op">/</span><span class="fl">2</span><span class="op">)</span> <span class="op">-</span> <span class="va">r0</span><span class="op">*</span><span class="va">Dt</span> <span class="op">)</span>
   <span class="op">}</span>
   
-  <span class="kw"><a href="https://rdrr.io/r/base/function.html">return</a></span><span class="op">(</span><span class="va">b</span><span class="op">*</span><span class="va">vch</span><span class="op">/</span><span class="va">L</span><span class="op">)</span>
+  <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">b</span><span class="op">*</span><span class="va">vch</span><span class="op">/</span><span class="va">L</span><span class="op">)</span>
 <span class="op">}</span></code></pre></div>
 <p>In the first example there is no advective time delay and
 <span class="math inline">\(L/v_{ch} = \Delta t\)</span>. This results in time delay historgram in which the
 first two values equal 0.5. This is an example of the case <span class="math inline">\(r_{L}=r_{0}+1\)</span></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">fd</span><span class="op">(</span>L<span class="op">=</span><span class="fl">200</span>,vch<span class="op">=</span><span class="fl">1</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">0</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
 <span class="co">#&gt; [1] 1</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
 <p><img src="Channel_HRU_files/figure-html/unnamed-chunk-7-1.png"><!-- --></p>
 <p>Extending the previous example the velocity now altered to that
 <span class="math inline">\(r_{L}=r_{0}\)</span>. The resulting non-negative histogram values are now the first
 two in the vector.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">fd</span><span class="op">(</span>L<span class="op">=</span><span class="fl">200</span>,vch<span class="op">=</span><span class="fl">1.5</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">0</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
 <span class="co">#&gt; [1] 1</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
 <p><img src="Channel_HRU_files/figure-html/unnamed-chunk-8-1.png"><!-- --></p>
 <p>In contrast decreasing the channel velocity produces a more delayed
 histogram. In this case <span class="math inline">\(r_{L}&gt;r_{0}+1\)</span>.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">fd</span><span class="op">(</span>L<span class="op">=</span><span class="fl">200</span>,vch<span class="op">=</span><span class="fl">0.5</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">0</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
 <span class="co">#&gt; [1] 1</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
 <p><img src="Channel_HRU_files/figure-html/unnamed-chunk-9-1.png"><!-- --></p>
 <p>Finally we look at two cases where <span class="math inline">\(\tau_0\)</span> is posisitve; being either a
 direct multiple of the time step</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">fd</span><span class="op">(</span>L<span class="op">=</span><span class="fl">600</span>,vch<span class="op">=</span><span class="fl">1</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">800</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
 <span class="co">#&gt; [1] 1</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
 <p><img src="Channel_HRU_files/figure-html/unnamed-chunk-10-1.png"><!-- --></p>
 <p>or not</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">fd</span><span class="op">(</span>L<span class="op">=</span><span class="fl">600</span>,vch<span class="op">=</span><span class="fl">1</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">850</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/sum.html">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span>
 <span class="co">#&gt; [1] 1</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
 <p><img src="Channel_HRU_files/figure-html/unnamed-chunk-11-1.png"><!-- --></p>
 </div>
 </div>
@@ -568,11 +564,13 @@ direct multiple of the time step</p>
 
 
       <footer><div class="copyright">
-  <p>Developed by Paul Smith, Peter Metcalfe.</p>
+  <p></p>
+<p>Developed by Paul Smith, Peter Metcalfe.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -580,6 +578,8 @@ direct multiple of the time step</p>
 
   
 
+
+  
 
   </body>
 </html>

@@ -19,6 +19,8 @@
 <![endif]-->
 </head>
 <body data-spy="scroll" data-target="#toc">
+    
+
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,18 +33,12 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.2.0.9200</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
       </span>
     </div>
 
     <div id="navbar" class="navbar-collapse collapse">
       <ul class="nav navbar-nav">
-<li>
-  <a href="../index.html">
-    <span class="fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
 <li>
   <a href="../articles/dynatop.html">Get started</a>
 </li>
@@ -79,7 +75,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/waternumbers/dynatop/">
+  <a href="https://github.com/waternumbers/dynatop/" class="external-link">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -100,7 +96,7 @@
       <h1 data-toc-skip>Using Dynamic TOPMODEL</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/master/vignettes/dynatop.Rmd"><code>vignettes/dynatop.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/waternumbers/dynatop/blob/HEAD/vignettes/dynatop.Rmd" class="external-link"><code>vignettes/dynatop.Rmd</code></a></small>
       <div class="hidden name"><code>dynatop.Rmd</code></div>
 
     </div>
@@ -110,44 +106,44 @@
 <p>The purpose of this vignette is to provide an outline of the steps needed to perform a Dynamic TOPMODEL simulation and introduce the formats of the data input and returned.</p>
 <p>The data used in this example comes from Swindale and is contained within the package and can be loaded with</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://waternumbers.github.io/dynatop/">dynatop</a></span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/data.html">data</a></span><span class="op">(</span><span class="st">"Swindale"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://waternumbers.github.io/dynatop/" class="external-link">dynatop</a></span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"Swindale"</span><span class="op">)</span></code></pre></div>
 <p>which returns a variable <code>Swindale</code> with the following components:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">Swindale</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">Swindale</span><span class="op">)</span>
 <span class="co">#&gt; [1] "model" "obs"</span></code></pre></div>
 <p>For better comparison with a likely analysis we separate these into a model and observed data variables</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">swindale_model</span> <span class="op">&lt;-</span> <span class="va">Swindale</span><span class="op">$</span><span class="va">model</span>
 <span class="va">swindale_obs</span> <span class="op">&lt;-</span> <span class="va">Swindale</span><span class="op">$</span><span class="va">obs</span></code></pre></div>
-<div id="the-model-structure" class="section level1">
-<h1 class="hasAnchor">
-<a href="#the-model-structure" class="anchor"></a>The model structure</h1>
+<div class="section level1">
+<h1 id="the-model-structure">The model structure<a class="anchor" aria-label="anchor" href="#the-model-structure"></a>
+</h1>
 <p>A dynamic TOPMODEL is described in a list object. The list has the following elements</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">swindale_model</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">swindale_model</span><span class="op">)</span>
 <span class="co">#&gt;  [1] "options"        "map"            "channel"        "hillslope"     </span>
 <span class="co">#&gt;  [5] "flow_direction" "gauge"          "point_inflow"   "diffuse_inflow"</span>
 <span class="co">#&gt;  [9] "precip_input"   "pet_input"</span></code></pre></div>
-<p>which are described in <a href="The_Model_Object.html">associated vignette</a>. The <a href="https://waternumbers.github.io/dynatopGIS/">dynatopGIS</a> package can be used for constructing models.</p>
+<p>which are described in <a href="The_Model_Object.html">associated vignette</a>. The <a href="https://waternumbers.github.io/dynatopGIS/" class="external-link">dynatopGIS</a> package can be used for constructing models.</p>
 </div>
-<div id="setting-map-locations" class="section level1">
-<h1 class="hasAnchor">
-<a href="#setting-map-locations" class="anchor"></a>Setting map locations</h1>
+<div class="section level1">
+<h1 id="setting-map-locations">Setting map locations<a class="anchor" aria-label="anchor" href="#setting-map-locations"></a>
+</h1>
 <p>While not required for simulations if the locations of the files containing the locations of the HRU’s are provided the states can be visualised within dynatop.</p>
 <p>The locations of the files are set in the <code>map</code> element of the model. For this example the maps are located within the <code>extdata</code> directory of the package and can be set using commands</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">swindale_model</span><span class="op">$</span><span class="va">map</span><span class="op">$</span><span class="va">hillslope</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,<span class="st">"Swindale.tif"</span>,package<span class="op">=</span><span class="st">"dynatop"</span>,mustWork<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
-<span class="va">swindale_model</span><span class="op">$</span><span class="va">map</span><span class="op">$</span><span class="va">channel</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,<span class="st">"channel.shp"</span>,package<span class="op">=</span><span class="st">"dynatop"</span>,mustWork<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
-<span class="va">swindale_model</span><span class="op">$</span><span class="va">map</span><span class="op">$</span><span class="va">channel_id</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,<span class="st">"channel_id.tif"</span>,package<span class="op">=</span><span class="st">"dynatop"</span>,mustWork<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">swindale_model</span><span class="op">$</span><span class="va">map</span><span class="op">$</span><span class="va">hillslope</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,<span class="st">"Swindale.tif"</span>,package<span class="op">=</span><span class="st">"dynatop"</span>,mustWork<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
+<span class="va">swindale_model</span><span class="op">$</span><span class="va">map</span><span class="op">$</span><span class="va">channel</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,<span class="st">"channel.shp"</span>,package<span class="op">=</span><span class="st">"dynatop"</span>,mustWork<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span>
+<span class="va">swindale_model</span><span class="op">$</span><span class="va">map</span><span class="op">$</span><span class="va">channel_id</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>,<span class="st">"channel_id.tif"</span>,package<span class="op">=</span><span class="st">"dynatop"</span>,mustWork<span class="op">=</span><span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="preparing-input-data" class="section level1">
-<h1 class="hasAnchor">
-<a href="#preparing-input-data" class="anchor"></a>Preparing input data</h1>
-<p>The input to the model is expected to take the form of an <code>xts</code> object with constant time step whose column names are found in the ‘precip’ and ‘pet’ columns of the HRU tables in the model. Helpful functions for creating and manipulating <code>xts</code> objects can be found <a href="http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html">here</a>, see also the <code>resample_xts</code> function in this package.</p>
+<div class="section level1">
+<h1 id="preparing-input-data">Preparing input data<a class="anchor" aria-label="anchor" href="#preparing-input-data"></a>
+</h1>
+<p>The input to the model is expected to take the form of an <code>xts</code> object with constant time step whose column names are found in the ‘precip’ and ‘pet’ columns of the HRU tables in the model. Helpful functions for creating and manipulating <code>xts</code> objects can be found <a href="http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html" class="external-link">here</a>, see also the <code>resample_xts</code> function in this package.</p>
 <p>The discharge, precipitation and potential evapotranspiration (PET) inputs for Swindale are contained with <code>swindale_obs</code> on a 15 minute time step.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">swindale_obs</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">swindale_obs</span><span class="op">)</span>
 <span class="co">#&gt; Warning: timezone of object (GMT) is different than current timezone (UTC).</span>
 <span class="co">#&gt;                     Flow Rainfall          PET</span>
 <span class="co">#&gt; 2009-11-18 16:00:00 2.78    4e-04 8.878467e-06</span>
@@ -159,7 +155,7 @@
 <p>Note the discharge is in m<span class="math inline">\(^{3}\)</span>/s while the precipitation and PET are in m accumulated over the time step.</p>
 <p>To use the data with the model we need to set the names of the time series inputs within the model. In this case this is already done as can be seen by insepcting the <code>precip_input</code> and <code>pet_input</code> tables</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">swindale_model</span><span class="op">$</span><span class="va">precip_input</span><span class="op">)</span>
+<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">swindale_model</span><span class="op">$</span><span class="va">precip_input</span><span class="op">)</span>
 <span class="co">#&gt;       name id frc</span>
 <span class="co">#&gt; 1 Rainfall  2   1</span>
 <span class="co">#&gt; 2 Rainfall 17   1</span>
@@ -167,7 +163,7 @@
 <span class="co">#&gt; 4 Rainfall  7   1</span>
 <span class="co">#&gt; 5 Rainfall  6   1</span>
 <span class="co">#&gt; 6 Rainfall 12   1</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/head.html">head</a></span><span class="op">(</span><span class="va">swindale_model</span><span class="op">$</span><span class="va">pet_input</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">swindale_model</span><span class="op">$</span><span class="va">pet_input</span><span class="op">)</span>
 <span class="co">#&gt;   name id frc</span>
 <span class="co">#&gt; 1  PET  2   1</span>
 <span class="co">#&gt; 2  PET 17   1</span>
@@ -176,9 +172,9 @@
 <span class="co">#&gt; 5  PET  6   1</span>
 <span class="co">#&gt; 6  PET 12   1</span></code></pre></div>
 </div>
-<div id="altering-parameters" class="section level1">
-<h1 class="hasAnchor">
-<a href="#altering-parameters" class="anchor"></a>Altering parameters</h1>
+<div class="section level1">
+<h1 id="altering-parameters">Altering parameters<a class="anchor" aria-label="anchor" href="#altering-parameters"></a>
+</h1>
 <p>The parameter values are stored within the table describing the hillslope and channel HRUs. Which parameters are present depends upon the options selected for the transmissivity and channel solution. Details can be found in the <a href="Hillslope_HRU.html">Hillslope</a> and <a href="Channel_HRU.html">Channel</a> Vignettes.</p>
 <p>Altering parameter values requires changing their values in the HRU tables. For this catchment all HRU have the same parameter values. For this simulation we change the parameter vectors to be more representative of the catchment</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
@@ -192,9 +188,9 @@
 
 <span class="va">swindale_model</span><span class="op">$</span><span class="va">channel</span><span class="op">$</span><span class="va">v_ch</span> <span class="op">&lt;-</span> <span class="fl">0.8</span></code></pre></div>
 </div>
-<div id="creating-the-dynatop-object" class="section level1">
-<h1 class="hasAnchor">
-<a href="#creating-the-dynatop-object" class="anchor"></a>Creating the dynatop Object</h1>
+<div class="section level1">
+<h1 id="creating-the-dynatop-object">Creating the dynatop Object<a class="anchor" aria-label="anchor" href="#creating-the-dynatop-object"></a>
+</h1>
 <p>Simulations are performed by embedding the model and the observed data into a <code>dynatop</code> object. First the object is created using the model in list form</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ctch_mdl</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/dynatop.html">dynatop</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">swindale_model</span><span class="op">)</span></code></pre></div>
@@ -202,9 +198,9 @@
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">add_data</span><span class="op">(</span><span class="va">swindale_obs</span><span class="op">)</span></code></pre></div>
 </div>
-<div id="running-dynamic-topmodel" class="section level1">
-<h1 class="hasAnchor">
-<a href="#running-dynamic-topmodel" class="anchor"></a>Running dynamic TOPMODEL</h1>
+<div class="section level1">
+<h1 id="running-dynamic-topmodel">Running dynamic TOPMODEL<a class="anchor" aria-label="anchor" href="#running-dynamic-topmodel"></a>
+</h1>
 <p>The model currently consists of two types of HRU; hillslope and channel. These can be run individually with the <code>sim_hillslope</code> and <code>sim_channel</code> methods or sequentially with the <code>sim</code> method. The individual methods check that suitable input data is available, but not how it was generated.</p>
 <p>The initial states of the simulations can be specified in the model object. If, as in the case of this example, the states are not specified then any attempt to perform a simulation will fail.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -229,8 +225,6 @@
 <p>Note that the states of the system are now those at the end of the simulation for example:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">plot_state</span><span class="op">(</span><span class="st">"s_sz"</span><span class="op">)</span>
-<span class="co">#&gt; Warning in showSRID(SRS_string, format = "PROJ", multiline = "NO", prefer_proj =</span>
-<span class="co">#&gt; prefer_proj): Discarded datum OSGB 1936 in Proj4 definition</span>
 <span class="co">#&gt; Warning in OGRSpatialRef(dsn, layer, morphFromESRI = morphFromESRI, dumpSRS =</span>
 <span class="co">#&gt; dumpSRS, : Discarded datum OSGB_1936 in Proj4 definition: +proj=tmerc +lat_0=49</span>
 <span class="co">#&gt; +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +units=m +no_defs</span></code></pre></div>
@@ -242,18 +236,18 @@
 <span class="co">#&gt; Suggest maximum sub step is: 63.11seconds</span>
 <span class="co">#&gt; Warning in private$sim_hs(keep_states, sub_step[1], tol, max_it): Courant number for saturated zone is over 0.7</span>
 <span class="co">#&gt; Suggest maximum sub step is: 0.2seconds</span>
-<span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html">merge</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html">merge</a></span><span class="op">(</span><span class="va">swindale_obs</span>,<span class="va">sim1</span><span class="op">)</span>,<span class="va">sim2</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">swindale_obs</span><span class="op">)</span>,<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span><span class="va">out</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">'Flow'</span>,<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span><span class="op">)</span><span class="op">]</span>, main<span class="op">=</span><span class="st">"Discharge"</span>,ylab<span class="op">=</span><span class="st">"m3/s"</span>,legend.loc<span class="op">=</span><span class="st">"topright"</span><span class="op">)</span></code></pre></div>
+<span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">swindale_obs</span>,<span class="va">sim1</span><span class="op">)</span>,<span class="va">sim2</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">swindale_obs</span><span class="op">)</span>,<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">out</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'Flow'</span>,<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span><span class="op">)</span><span class="op">]</span>, main<span class="op">=</span><span class="st">"Discharge"</span>,ylab<span class="op">=</span><span class="st">"m3/s"</span>,legend.loc<span class="op">=</span><span class="st">"topright"</span><span class="op">)</span></code></pre></div>
 <p><img src="dynatop_files/figure-html/sim2-1.png" width="700"></p>
 </div>
-<div id="mass-balance" class="section level1">
-<h1 class="hasAnchor">
-<a href="#mass-balance" class="anchor"></a>Mass balance</h1>
+<div class="section level1">
+<h1 id="mass-balance">Mass balance<a class="anchor" aria-label="anchor" href="#mass-balance"></a>
+</h1>
 <p>It is possible to output the mass balance check for each time step of the simulation using the <code>get_mass_errors</code> method. The returned matrix gives the volumes in the states at the start and end of the time step along with the other fluxes as volumes. This can easily be used to plot the errors as shown below.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">mb</span> <span class="op">&lt;-</span> <span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">get_mass_errors</span><span class="op">(</span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html">plot</a></span><span class="op">(</span> <span class="va">mb</span><span class="op">[</span>,<span class="fl">6</span><span class="op">]</span> , main<span class="op">=</span><span class="st">"Mass Error"</span>, ylab<span class="op">=</span><span class="st">"[m^3]"</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span> <span class="va">mb</span><span class="op">[</span>,<span class="fl">6</span><span class="op">]</span> , main<span class="op">=</span><span class="st">"Mass Error"</span>, ylab<span class="op">=</span><span class="st">"[m^3]"</span><span class="op">)</span></code></pre></div>
 <p><img src="dynatop_files/figure-html/mass_check-1.png" width="700"></p>
 </div>
   </div>
@@ -269,11 +263,13 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Paul Smith, Peter Metcalfe.</p>
+  <p></p>
+<p>Developed by Paul Smith, Peter Metcalfe.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p></p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
 </div>
 
       </footer>
@@ -281,6 +277,8 @@
 
   
 
+
+  
 
   </body>
 </html>
