@@ -1,4 +1,8 @@
-# dynatop 0.2.9200
+# dynatop 0.2.1
+
+- Release for CRAN
+
+# dynatop 0.2.0.9200
 
 - Fix so using a ingle channel works correctly
 - Fix so fluxes passed correctly during initialisation

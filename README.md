@@ -2,7 +2,7 @@
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/waternumbers/dynatop/workflows/R-CMD-check/badge.svg)](https://github.com/waternumbers/dynatop/actions)
-[![codecov](https://app.codecov.io/gh/waternumbers/dynatop/branch/master/graph/badge.svg?token=XzqU2C6K8i)](https://app.codecov.io/gh/waternumbers/dynatop)
+[![codecov](https://img.shields.io/codecov/c/gh/waternumbers/dynatop/master)](https://app.codecov.io/gh/waternumbers/dynatop)
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/waternumbers/dynatop?branch=master&svg=true)](https://ci.appveyor.com/project/waternumbers/dynatop)
 <!-- badges: end -->
 
