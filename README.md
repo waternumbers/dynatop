@@ -5,7 +5,6 @@
 [![codecov](https://img.shields.io/codecov/c/gh/waternumbers/dynatop/master)](https://app.codecov.io/gh/waternumbers/dynatop)
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/waternumbers/dynatop?branch=master&svg=true)](https://ci.appveyor.com/project/waternumbers/dynatop)
 <!-- badges: end -->
-/codecov/c/:vcsName/:user/:repo/:branch?flag=flag_name&token=a1b2c3d4e5
 
 This R package contains the core code to perform a dynamic TOPMODEL
 simulation. A related package for processing GIS data to set up dynamic TOPMODEL
