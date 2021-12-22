@@ -25,7 +25,6 @@ rhub::validate_email() # for first time that session
 pkgName <- sub('\\.tar.gz$', '', basename(buildFile)) 
 ## rhub::platforms()[,1] # lists platforms
 
-
 mch <- rhub::check(path = buildFile,
                    platform = c("macos-highsierra-release-cran","windows-x86_64-release",
                                 "macos-m1-bigsur-release"))
@@ -42,8 +41,13 @@ for(ii in 1:2){ ## m1 not fixed yet in drat
 drat::pruneRepo(dratPath,pkg="dynatop",remove="git")## this only does source files
 
 ## prior to submission
-mch <- rhub::check_for_cran(path = buildFile)
-mch <- rhub::check_with_valgrind(path = buildFile)
+## submit to win-builder (release and devel) and macbuilder
+## run locally with R CMD check --as-cran --use-valgrind ...
+## run locally with r-devel and ASAN build
+
+## tmp <- devtools::check_win_devel(pkg = buildFile)
+## devtools::check_win(pkg = buildFile)
+## devtools::check_mac(pkg = buildFile)
 
 
 ###########################################################################

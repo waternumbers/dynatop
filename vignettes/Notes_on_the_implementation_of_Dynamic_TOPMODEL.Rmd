@@ -40,7 +40,7 @@ for 'similar' areas of hill slope the catchment a each time step.
 The second termed "channel" represents a length of river channel in a
 simplified manner allowing the extraction of the inflow from the
 hill slope. The solutions for each of these HRU types are presented in the
-[hillslope](hillslope_hru) and [channel](channel) vignettes.
+[hillslope](Hillslope_HRU.html) and [channel](Channel_HRU.html) vignettes.
 
 The aim of this document is to outline
 

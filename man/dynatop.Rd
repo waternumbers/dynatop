@@ -8,6 +8,15 @@ R6 Class for Dynamic TOPMODEL
 
 R6 Class for Dynamic TOPMODEL
 }
+\examples{
+## the vignettes contains further details of the method calls.
+
+data("Swindale") ## example data
+ctch_mdl <- dynatop$new(Swindale$model) ## create with model
+ctch_mdl$add_data(Swindale$obs) ## add observations
+ctch_mdl$initialise() ## initialise model
+ctch_mdl$sim() ## simulate model
+}
 \section{Methods}{
 \subsection{Public methods}{
 \itemize{

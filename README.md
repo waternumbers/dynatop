@@ -22,7 +22,8 @@ please raise an [issue](https://github.com/waternumbers/dynatop/issues)
 maintainers directly in the first instance.
 
 Over time there have been numerous variations on and applications of the R
-versions of dynamic TOPMODEL, selected references can be found [here](articles/Selected_References.html).
+versions of dynamic TOPMODEL, selected references can be found in the Selected
+References vignette or [here](https://waternumbers.github.io/dynatop/articles/Selected_References.html)
 
 Thanks goes to:
 * Peter Metcalfe who developed the original port of Dynamic TOPMODEL to R
