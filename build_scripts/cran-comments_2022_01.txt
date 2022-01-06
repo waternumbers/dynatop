@@ -9,18 +9,18 @@ Found the following (possibly) invalid file URIs ..
 *Current submission*
 
 Checked without warnings or errors on:
-R-patched (OpenSUSE)
+R-patched (OpenSUSE with flags --use-valgrind --as-cran)
 win-builder release
 win-builder devel
 macbuilder
 
-Remaining NOTES on spelling:
+Remaining NOTES concern spelling:
 
 Beven (12:133) - authors name
 
-Hydrological (2:46) - standard English word relating to the study of water on the earth
+Hydrological (2:46) - standard English word relating to the study of water on the Earth
 
 TOPMODEL (2:37, 12:65) - The name given to a set of hydrological modelling
 concepts, usually capitalised. Usage is consistent with the 'dynatopmodel' package and clarified in text.
 
-hydrological (12:91) - standard English word relating to the study of water on the earth
+hydrological (12:91) - standard English word relating to the study of water on the Earth

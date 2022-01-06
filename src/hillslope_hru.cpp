@@ -12,7 +12,8 @@ hillslope_hru::hillslope_hru(int& id_, double& s_sf_,double& s_rz_,double& s_uz_
 			     int const& opt_
 			     ):
   id(id_), s_sf(s_sf_), s_rz(s_rz_), s_uz(s_uz_), s_sz(s_sz_),
-  s_bar(s_bar_), area(area_), width(width_),
+  //s_bar(s_bar_), area(area_), width(width_),
+  width(width_),
   q_sf_in(q_sf_in_), q_sf_out(q_sf_out_),
   q_sz_in(q_sz_in_), q_sz_out(q_sz_out_),
   e_a(e_a_),
@@ -145,8 +146,6 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
   double l_sz, l_sf_in;
   //double r_sf_rz;
   double v_sf_rz; //, v_rz_uz;
-    
-  std::pair<double, double> opt_res; // solution for output of optimiser
   
   // standardise inflows by width
   l_sz_in = q_sz_in / width;

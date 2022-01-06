@@ -10,7 +10,8 @@ class hillslope_hru {
   // these are references to values stored with in the class
   int& id; // hru id
   double& s_sf; double& s_rz; double& s_uz; double& s_sz; // states
-  double const& s_bar; double const& area; double const& width; // physical properties
+  //double const& s_bar; double const& area;
+  double const& width; // physical properties
   double& q_sf_in; double& q_sf_out; double& q_sz_in; double& q_sz_out;// fluxes in and out of surface and saturated zones
   double& e_a; // actual evapotranspiration as a rate [m/s]
   double const& r_sf_max; double const& c_sf; // surface store parameters
