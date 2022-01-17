@@ -183,7 +183,9 @@ dynatop <- R6Class(
                 }
                 plot(x,main="Channel Inflow",legend.loc=lloc)
             }else{
-                x11();par(mfrow=c(2,1))
+                oldpar <- par(no.readonly = TRUE)
+                on.exit(par(oldpar))
+                par(mfrow=c(2,1))
                 plot(x$surface,main="Channel Inflow: surface",legend.loc=lloc)
                 plot(x$saturated,main="Channel Inflow: saturated",legend.loc=lloc)
             }
@@ -244,12 +246,12 @@ dynatop <- R6Class(
            if(!(state%in%colnames(private$model$hillslope))){
                stop("Model state does not exist")
            }
+
            
-           if( !("raster" %in% rownames(installed.packages())) ){
+           if( !requireNamespace("raster",quietly=TRUE) ){
                stop( "The raster package is required for plotting the maps of states - please install or add to libPath" )
            }
            
-           ## x <- private$unpack$hillslope$state[,state]
            rst <- raster::raster(private$model$map$hillslope)
            rst <- raster::subs(rst, private$model$hillslope[,c("id",state)])
            

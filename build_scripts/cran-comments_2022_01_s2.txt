@@ -1,0 +1,38 @@
+Resubmission
+
+Thanks to Gregor Seyer for the constructive feedback.
+
+*Response to previous comments*
+
+Please make sure that you do not change the user's options, par or
+working directory...
+
+- where previously the plotting code used `par(mfrow=c(2,1))` this is replaced by 
+...
+oldpar <- par(no.readonly = TRUE)
+on.exit(par(oldpar))
+par(mfrow=c(2,1))
+...
+
+You are using installed.packages()
+
+- this has been replaced by a call to `requireNamepspace("<package_name>",quiet=TRUE)` to check for availablilty of a suggested package
+
+*Current submission*
+
+Checked without warnings or errors on:
+R-patched (OpenSUSE with flags --use-valgrind --as-cran)
+win-builder release
+win-builder devel
+macbuilder
+
+Remaining NOTES concern spelling:
+
+Beven (12:133) - authors name
+
+Hydrological (2:46) - standard English word relating to the study of water on the Earth
+
+TOPMODEL (2:37, 12:65) - The name given to a set of hydrological modelling
+concepts, usually capitalised. Usage is consistent with the 'dynatopmodel' package and clarified in text.
+
+hydrological (12:91) - standard English word relating to the study of water on the Earth
