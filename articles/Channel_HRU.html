@@ -109,9 +109,9 @@ returns the inflow to the channel reachs specified in the model.
 This vignette documents the formulation and the numerical solution used to
 route these channel inflows, along with other diffuse and point inputs to the
 model.</p>
-<div class="section level1">
-<h1 id="notation-and-nomenclature">Notation and nomenclature<a class="anchor" aria-label="anchor" href="#notation-and-nomenclature"></a>
-</h1>
+<div class="section level2">
+<h2 id="notation-and-nomenclature">Notation and nomenclature<a class="anchor" aria-label="anchor" href="#notation-and-nomenclature"></a>
+</h2>
 <p>Table @ref(tab:ch-notation} outlines the notation used in this document.</p>
 <table class="table">
 <caption>
@@ -165,9 +165,9 @@ section of the hillslope HRU</caption>
 </tbody>
 </table>
 </div>
-<div class="section level1">
-<h1 id="inputs-to-a-channel-hru">Inputs to a Channel HRU<a class="anchor" aria-label="anchor" href="#inputs-to-a-channel-hru"></a>
-</h1>
+<div class="section level2">
+<h2 id="inputs-to-a-channel-hru">Inputs to a Channel HRU<a class="anchor" aria-label="anchor" href="#inputs-to-a-channel-hru"></a>
+</h2>
 <p>A Channel HRU is considered as representing a channel reach of length
 <span class="math inline">\(L\)</span>. Each Channel HRU has two types of inflow, labelled diffuse
 and point. Diffuse inflows are external inputs which occur at a
@@ -177,9 +177,9 @@ table.</p>
 <p>Point inflows are considered to occur at the head of the channel reach. These
 consist of the inflow from upstream channel HRUs and time series specified in the <code>point_inputs</code> table.</p>
 </div>
-<div class="section level1">
-<h1 id="time-delay-channel-routing">Time Delay Channel Routing<a class="anchor" aria-label="anchor" href="#time-delay-channel-routing"></a>
-</h1>
+<div class="section level2">
+<h2 id="time-delay-channel-routing">Time Delay Channel Routing<a class="anchor" aria-label="anchor" href="#time-delay-channel-routing"></a>
+</h2>
 <p>The time delay channel routing is selected by setting the <code>channel_solver</code>
 value in the model options vector to <code>histogram</code>. The method offers a basic representation of the movement of
 water in which a constant velocity to assigned to each channel reach.</p>
@@ -434,14 +434,14 @@ d_{\left(i-r_{0}\right)\Delta t} +
 \left(\tau_{)} + \tau_{L}/2 - r_{0}\Delta t\right)
 d_{\left(i-r_{0}-1\right)\Delta t}
 \]</span></p>
-<div class="section level2">
-<h2 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a>
-</h2>
+<div class="section level3">
+<h3 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a>
+</h3>
 <p>In this section some example histograms are generated based upon the length,
 velocity and <span class="math inline">\(\tau_0\)</span> of the Channel HRU alond with the time step <span class="math inline">\(\Delta t\)</span>.</p>
-<div class="section level3">
-<h3 id="point-input">Point input<a class="anchor" aria-label="anchor" href="#point-input"></a>
-</h3>
+<div class="section level4">
+<h4 id="point-input">Point input<a class="anchor" aria-label="anchor" href="#point-input"></a>
+</h4>
 <p>First a function for defining the histrogram for a point inflow can be coded
 as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -476,9 +476,9 @@ non-zero elements are the 4th and 5th, but with the 4th being larger then the 5t
 <code class="sourceCode R"><span class="fu">fp</span><span class="op">(</span>L<span class="op">=</span><span class="fl">100</span>,vch<span class="op">=</span><span class="fl">1.5</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">600</span><span class="op">)</span>
 <span class="co">#&gt; [1] 0.0000000 0.0000000 0.0000000 0.6666667 0.3333333</span></code></pre></div>
 </div>
-<div class="section level3">
-<h3 id="diffuse-inflow">Diffuse inflow<a class="anchor" aria-label="anchor" href="#diffuse-inflow"></a>
-</h3>
+<div class="section level4">
+<h4 id="diffuse-inflow">Diffuse inflow<a class="anchor" aria-label="anchor" href="#diffuse-inflow"></a>
+</h4>
 <p>The function for the difuse inflow is more complex since the special cases
 have to be handled:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -570,7 +570,7 @@ direct multiple of the time step</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>

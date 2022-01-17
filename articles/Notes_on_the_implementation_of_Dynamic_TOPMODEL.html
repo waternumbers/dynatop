@@ -126,9 +126,9 @@ hill slope. The solutions for each of these HRU types are presented in the
 <li>conventions for the input data</li>
 <li>other miscellaneous information that may help developers</li>
 </ul>
-<div class="section level1">
-<h1 id="the-solution-order-of-hrus-and-exchange-of-fluxes">The solution order of HRUs and exchange of fluxes<a class="anchor" aria-label="anchor" href="#the-solution-order-of-hrus-and-exchange-of-fluxes"></a>
-</h1>
+<div class="section level2">
+<h2 id="the-solution-order-of-hrus-and-exchange-of-fluxes">The solution order of HRUs and exchange of fluxes<a class="anchor" aria-label="anchor" href="#the-solution-order-of-hrus-and-exchange-of-fluxes"></a>
+</h2>
 <p>Each HRU has a unique reference number in the <code>id</code> variable. In principle the HRUs are
 solved in reverse order of <code>id</code>; that is from the largest <code>id</code> value to the
 smallest. Currently this not strictly enforced since the C++ code used for the
@@ -156,9 +156,9 @@ and
 <p>The values of <span class="math inline">\(f_{i,j}\)</span> are specified in the <code>flow_direction</code> data.frame of
 the model.</p>
 </div>
-<div class="section level1">
-<h1 id="input-series">Input Series<a class="anchor" aria-label="anchor" href="#input-series"></a>
-</h1>
+<div class="section level2">
+<h2 id="input-series">Input Series<a class="anchor" aria-label="anchor" href="#input-series"></a>
+</h2>
 <p>It is expected that the precipitation and potential evapotranspiration inputs series are
 given in <span class="math inline">\(m\)</span> accrued over the proceeding time step. So if the data has a time
 step <span class="math inline">\(\Delta t\)</span> the value given at <span class="math inline">\(t+\Delta t\)</span> is accrued in the interval between time <span class="math inline">\(t\)</span>
@@ -167,12 +167,12 @@ and time <span class="math inline">\(t+\Delta t\)</span>.</p>
 should be in <span class="math inline">\(m^3/s\)</span>. In the channel HRU solution the value given at time
 <span class="math inline">\(t+\Delta t\)</span> is presumed to be constant over the interval <span class="math inline">\(t\)</span> to <span class="math inline">\(t+\Delta t\)</span>.</p>
 </div>
-<div class="section level1">
-<h1 id="miscellaneous-coding-comments">Miscellaneous Coding comments<a class="anchor" aria-label="anchor" href="#miscellaneous-coding-comments"></a>
-</h1>
 <div class="section level2">
-<h2 id="relating-the-vignette-notation-and-code-variables">Relating the vignette notation and code variables<a class="anchor" aria-label="anchor" href="#relating-the-vignette-notation-and-code-variables"></a>
+<h2 id="miscellaneous-coding-comments">Miscellaneous Coding comments<a class="anchor" aria-label="anchor" href="#miscellaneous-coding-comments"></a>
 </h2>
+<div class="section level3">
+<h3 id="relating-the-vignette-notation-and-code-variables">Relating the vignette notation and code variables<a class="anchor" aria-label="anchor" href="#relating-the-vignette-notation-and-code-variables"></a>
+</h3>
 <p>To aid the readability of the code the variables are labelled consistently
 with regards to the vignettes. For example:</p>
 <ul>
@@ -185,9 +185,9 @@ with regards to the vignettes. For example:</p>
 or states (e.g. ) is dropped from the code where it can be inferred from
 the computational sequence (or comments)</p>
 </div>
-<div class="section level2">
-<h2 id="numerical-solutions">Numerical solutions<a class="anchor" aria-label="anchor" href="#numerical-solutions"></a>
-</h2>
+<div class="section level3">
+<h3 id="numerical-solutions">Numerical solutions<a class="anchor" aria-label="anchor" href="#numerical-solutions"></a>
+</h3>
 <p>Currently the code uses a purely implicit scheme for the solution of the
 hillslope HRUs. This requires a solving a <em>zero finding</em> problem for each HRU
 at each (sub)time step. Currently a simple bisection algorithm is used with a
@@ -216,7 +216,7 @@ algorithm) could be used.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>

@@ -103,9 +103,9 @@
 
     
     
-<div class="section level1">
-<h1 id="conceptual-model">Conceptual model<a class="anchor" aria-label="anchor" href="#conceptual-model"></a>
-</h1>
+<div class="section level2">
+<h2 id="conceptual-model">Conceptual model<a class="anchor" aria-label="anchor" href="#conceptual-model"></a>
+</h2>
 <p>One of the underlying principles of dynamic TOPMODEL is that the landscape can
 be broken up into hydrologically similar regions, or Hydrological Response
 Units (HRUs), where all the area within a HRU behaves in a hydrologically
@@ -138,9 +138,9 @@ vignette.</p>
 and an alternative derivation of the governing equations based on the
 infinitesimal vertical slab used in the original derivation of Dynamic TOPMODEL.</p>
 </div>
-<div class="section level1">
-<h1 id="notation">Notation<a class="anchor" aria-label="anchor" href="#notation"></a>
-</h1>
+<div class="section level2">
+<h2 id="notation">Notation<a class="anchor" aria-label="anchor" href="#notation"></a>
+</h2>
 <p>Table <a href="#tab:hs-x-notation">1</a> outlines the notation used for describing an
 infinitesimal slab across the hillslope HRU.</p>
 <p>The following conventions are used:</p>
@@ -314,14 +314,14 @@ section of the hillslope HRU</caption>
 </tbody>
 </table>
 </div>
-<div class="section level1">
-<h1 id="finite-volume-formulation">Finite Volume Formulation<a class="anchor" aria-label="anchor" href="#finite-volume-formulation"></a>
-</h1>
+<div class="section level2">
+<h2 id="finite-volume-formulation">Finite Volume Formulation<a class="anchor" aria-label="anchor" href="#finite-volume-formulation"></a>
+</h2>
 <p>In this section a finite volume formulation of the Dynamic TOPMODEL equations
 is derived.</p>
-<div class="section level2">
-<h2 id="surface-zone">Surface zone<a class="anchor" aria-label="anchor" href="#surface-zone"></a>
-</h2>
+<div class="section level3">
+<h3 id="surface-zone">Surface zone<a class="anchor" aria-label="anchor" href="#surface-zone"></a>
+</h3>
 <p>The storage in the surface zone satisfies <span class="math inline">\(s_{sf} \geq 0\)</span>.
 Surface storage is increased by lateral downslope flow from upslope HRUs.
 Water flows to the root zone at a constant rate <span class="math inline">\(k_{sf}\)</span>, unless limited by
@@ -351,9 +351,9 @@ which gives
 \frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} - c_{sf}\bar{s}_{sf}\right) - \bar{r}_{sf \rightarrow rz}
 \end{equation}\]</span></p>
 </div>
-<div class="section level2">
-<h2 id="root-zone">Root zone<a class="anchor" aria-label="anchor" href="#root-zone"></a>
-</h2>
+<div class="section level3">
+<h3 id="root-zone">Root zone<a class="anchor" aria-label="anchor" href="#root-zone"></a>
+</h3>
 <p>The root zone gains water from precipitation and the surface zone. It loses water through
 evaporation and to the unsaturated zone. Since
 all the veritcal fluxes are spatially uniform the evolution can be evaluated
@@ -382,9 +382,9 @@ so long as the unsaturated zone can receive the water. If <span class="math inli
 receive water, then <span class="math inline">\(\bar{r}_{sf\rightarrow rz}\)</span> is adjusted (potentially becoming
 negative) to ensure the equality is met.</p>
 </div>
-<div class="section level2">
-<h2 id="unsaturated-zone">Unsaturated Zone<a class="anchor" aria-label="anchor" href="#unsaturated-zone"></a>
-</h2>
+<div class="section level3">
+<h3 id="unsaturated-zone">Unsaturated Zone<a class="anchor" aria-label="anchor" href="#unsaturated-zone"></a>
+</h3>
 <p>The unsaturated zone acts as a non-linear tank subject to the constraint
 <span class="math display">\[\begin{equation} 0 \leq \bar{s}_{uz} \leq \bar{s}_{sz} \end{equation}\]</span></p>
 <p>The governing ODE is written as
@@ -404,9 +404,9 @@ this is the case <span class="math inline">\(\bar{r}_{uz \rightarrow sz}\)</span
 possible rate and <span class="math inline">\(\bar{r}_{rz \rightarrow uz}\)</span> is limited to ensure that
 <span class="math inline">\(\bar{s}_{uz} \leq \bar{s}_{sz}\)</span>.</p>
 </div>
-<div class="section level2">
-<h2 id="saturated-zone">Saturated Zone<a class="anchor" aria-label="anchor" href="#saturated-zone"></a>
-</h2>
+<div class="section level3">
+<h3 id="saturated-zone">Saturated Zone<a class="anchor" aria-label="anchor" href="#saturated-zone"></a>
+</h3>
 <p>For a HRU the alteration of the storage in the saturated zone is
 given by teh kinematic equation
 <span class="math display">\[\begin{equation}
@@ -448,9 +448,9 @@ lateral inflow is generated.</p>
 \end{equation}\]</span></p>
 </div>
 </div>
-<div class="section level1">
-<h1 id="approximating-equations">Approximating Equations<a class="anchor" aria-label="anchor" href="#approximating-equations"></a>
-</h1>
+<div class="section level2">
+<h2 id="approximating-equations">Approximating Equations<a class="anchor" aria-label="anchor" href="#approximating-equations"></a>
+</h2>
 <p>No analytical solution yet exists for simultaneous integration of the system of
 ODEs outlined above. In the following an implicit scheme, where fluxes
 between stores are considered constant over the time step and gradients are
@@ -461,9 +461,9 @@ the downward flow of water within each timestep of size <span class="math inline
 a <span class="math inline">\(\hat{}\)</span> the implicit approximations are stated in teh following sections using the unknown vertical fluxes
 <span class="math inline">\(\hat{r}_{\star \rightarrow \star}\)</span> which are then determined by maximising the
 downward flux.</p>
-<div class="section level2">
-<h2 id="surface-excess">Surface excess<a class="anchor" aria-label="anchor" href="#surface-excess"></a>
-</h2>
+<div class="section level3">
+<h3 id="surface-excess">Surface excess<a class="anchor" aria-label="anchor" href="#surface-excess"></a>
+</h3>
 <p>The implicit scheme gives</p>
 <p><span class="math display">\[\begin{equation}
 \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
@@ -495,9 +495,9 @@ t}{\Delta x} \hat{l}_{sf}^{-}
 \hat{q}_{sf}^{+} = w^{+}c_{sf} \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
 \end{equation}\]</span></p>
 </div>
-<div class="section level2">
-<h2 id="root-zone-1">Root Zone<a class="anchor" aria-label="anchor" href="#root-zone-1"></a>
-</h2>
+<div class="section level3">
+<h3 id="root-zone-1">Root Zone<a class="anchor" aria-label="anchor" href="#root-zone-1"></a>
+</h3>
 <p>The implicit formulation for the root zone gives
 <span class="math display">\[\begin{equation}
 \left. \bar{s}_{rz} \right.\rvert_{\Delta t} = 
@@ -520,9 +520,9 @@ p + \hat{r}_{sf \rightarrow rz} - e_{p} \right)
 \right)\right)
 \end{equation}\]</span></p>
 </div>
-<div class="section level2">
-<h2 id="unsaturated-zone-1">Unsaturated Zone<a class="anchor" aria-label="anchor" href="#unsaturated-zone-1"></a>
-</h2>
+<div class="section level3">
+<h3 id="unsaturated-zone-1">Unsaturated Zone<a class="anchor" aria-label="anchor" href="#unsaturated-zone-1"></a>
+</h3>
 <p>The expression for the unsaturated zone is given in terms of
 <span class="math inline">\(\left. \bar{s}_{uz} \right.\rvert_{\Delta t}\)</span> and
 <span class="math inline">\(\left. \bar{s}_{sz} \right.\rvert_{\Delta t}\)</span> as</p>
@@ -540,9 +540,9 @@ T_{d}\left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \Delta t}
 \end{equation}\]</span></p>
 <p>This condition also implies that <span class="math inline">\(\hat{r}_{uz \rightarrow sz} \leq  \frac{1}{T_d}\)</span></p>
 </div>
-<div class="section level2">
-<h2 id="saturated-zone-1">Saturated Zone<a class="anchor" aria-label="anchor" href="#saturated-zone-1"></a>
-</h2>
+<div class="section level3">
+<h3 id="saturated-zone-1">Saturated Zone<a class="anchor" aria-label="anchor" href="#saturated-zone-1"></a>
+</h3>
 <p>Initial evaluation and substitution of the flux from the unsaturated zone gives
 <span class="math display">\[\begin{equation}
 \left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 
@@ -564,9 +564,9 @@ problem with two unknowns a multiple solutions. A further condition, that the
 downward flux is maximised, is imposed to ensure a unique solution.</p>
 </div>
 </div>
-<div class="section level1">
-<h1 id="numerical-algorithm">Numerical Algorithm<a class="anchor" aria-label="anchor" href="#numerical-algorithm"></a>
-</h1>
+<div class="section level2">
+<h2 id="numerical-algorithm">Numerical Algorithm<a class="anchor" aria-label="anchor" href="#numerical-algorithm"></a>
+</h2>
 <p>An implementation of the approximating equations which is consistent with
 maximising the downward flux produces a fully implicit numeric scheme.</p>
 <p>The maximum downward flux from the surface is given by
@@ -635,9 +635,9 @@ fluxes.</li>
 </ol>
 <!-- ## Algorithm 2 --><!-- 1. Compute $\check{r}_{sf \rightarrow rz} = \min\left( k_{sf}, --><!-- \left. \bar{s}_{sf} \right\rvert_{0} + \frac{\Delta t \hat{q}_{sf}^{-}}{A} --><!-- \right)$ --><!-- 2. Compute $\check{r}_{rz \rightarrow uz} = \max\left(0, \frac{1}{\Delta t}\left( --><!-- \left. \bar{s}_{rz} \right.\rvert_{0} + \Delta t \left( p + \check{r}_{sf --><!--   \rightarrow rz} - e_{p} \right) - s_{rzmax} \right)\right)$ --><!-- 3. Test for saturation. If $f\left(0,\check{r}_{rz \rightarrow uz}\right) \geq --><!--    0$ then goto 4 else goto 5 --><!-- 4. Saturated. Set $\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0$ and --><!-- $\hat{r}_{rz \rightarrow uz} = \frac{1}{\Delta t}\left( --><!-- \left. \bar{s}_{sz}\right.\rvert_{0} + \Delta t \left( --><!-- \frac{w^{+}}{A}g\left(0,\Theta_{sz}\right) - --><!-- \frac{q_{sz}^{-}}{A}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)$, --><!-- Goto 7 --><!-- 5. Not saturated: find $\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ such that  --><!-- $f\left(\left. \bar{s}_{sz}\right.\rvert_{\Delta t},\check{r}_{rz \rightarrow --><!--   uz}\right) = 0$.  --><!-- 6. Set $\hat{r}_{rz \rightarrow uz} = \min\left(\check{r}_{rz \rightarrow uz},\frac{1}{\Delta t} \left( --><!-- \left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \frac{\Delta t}{T_d} - --><!--  \left. \bar{s}_{uz} \right.\rvert_{0}\right)\right)$. --><!-- 7. Compute $\hat{r}_{sf \rightarrow rz} = \min\left(\check{r}_{sf \rightarrow --><!--   rz}, \frac{1}{\Delta t}\left( s_{rzmax} -  --><!-- \left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p - \hat{r}_{rz --><!--   \rightarrow uz} \right) \right)\right)$ --><!-- 8. Solve for $\left. \bar{s}_{uz}\right.\rvert_{\Delta t}$, --><!-- $\left. \bar{s}_{rz}\right.\rvert_{\Delta t}$ and --><!-- $\left. \bar{s}_{sf}\right.\rvert_{\Delta t}$ using the computed vertical --><!-- fluxes. --><!-- The first two steps compute the maximum potential downward flux from the --><!-- surface and root zones. Steps 3-6 solve saturated zoneand adjust the fluz from --><!-- the root zone to the unsaturated zone accordingly. Step 7 adjusts the flux --><!-- from the surface zone in the case of upward flow from the unsaturated zone, --><!-- with Step 8 using the corrected vertical fluxes to solve for the new values of --><!-- the states. -->
 </div>
-<div class="section level1">
-<h1 id="transmissivity-profiles">Transmissivity Profiles<a class="anchor" aria-label="anchor" href="#transmissivity-profiles"></a>
-</h1>
+<div class="section level2">
+<h2 id="transmissivity-profiles">Transmissivity Profiles<a class="anchor" aria-label="anchor" href="#transmissivity-profiles"></a>
+</h2>
 <p>The solution and numerical scheme have been presented with a general
 transmissivity function <span class="math inline">\(g\left(\bar{s}_{sz},\Theta_{sz}\right)\)</span>. Table
 <a href="#tab:hs-transmissivity">2</a> present the transmissivity profiles present as options within the <code>dynatop</code>
@@ -747,9 +747,9 @@ required. The additional parameter and properties are defined in Table <a href="
 </tbody>
 </table>
 </div>
-<div class="section level1">
-<h1 id="appendix-a---monoticity-of-fleftzright">Appendix A - Monoticity of <span class="math inline">\(f\left(z\right)\)</span><a class="anchor" aria-label="anchor" href="#appendix-a---monoticity-of-fleftzright"></a>
-</h1>
+<div class="section level2">
+<h2 id="appendix-a---monoticity-of-fleftzright">Appendix A - Monoticity of <span class="math inline">\(f\left(z\right)\)</span><a class="anchor" aria-label="anchor" href="#appendix-a---monoticity-of-fleftzright"></a>
+</h2>
 <p>By definition <span class="math inline">\(\left. \bar{s}_{uz} \right.\rvert_{0}\)</span>, <span class="math inline">\(\Delta t\)</span>, <span class="math inline">\(\Delta X\)</span>,
 <span class="math inline">\(T_d\)</span>, <span class="math inline">\(\check{r}_{rz \rightarrow uz}\)</span> and <span class="math inline">\(z\)</span> are all greater or equal to 0. Rewrite the expression for <span class="math inline">\(f\left(z\right)\)</span> as
 <span class="math display">\[
@@ -881,12 +881,12 @@ equality possible when <span class="math inline">\(z=0\)</span>.</p>
 <!-- T_{d} z^2 + \left(\Delta t - \mu T_{d}\right)z + \pi - \mu \Delta t = 0 -->
 <!-- \] -->
 </div>
-<div class="section level1">
-<h1 id="appendix-b---comparision-to-the-infantesimal-slab-derivation">Appendix B - Comparision to the Infantesimal slab derivation<a class="anchor" aria-label="anchor" href="#appendix-b---comparision-to-the-infantesimal-slab-derivation"></a>
-</h1>
 <div class="section level2">
-<h2 id="surface-zone-1">Surface Zone<a class="anchor" aria-label="anchor" href="#surface-zone-1"></a>
+<h2 id="appendix-b---comparision-to-the-infantesimal-slab-derivation">Appendix B - Comparision to the Infantesimal slab derivation<a class="anchor" aria-label="anchor" href="#appendix-b---comparision-to-the-infantesimal-slab-derivation"></a>
 </h2>
+<div class="section level3">
+<h3 id="surface-zone-1">Surface Zone<a class="anchor" aria-label="anchor" href="#surface-zone-1"></a>
+</h3>
 <p>A similar expression for the evolution can be derived by considering the
 infinitesimal slab at the downslope end of the HRU. Taking a discrete
 approximation for the change of flow with length the governing ODE can be written as
@@ -902,23 +902,23 @@ approximation for the change of flow with length the governing ODE can be writte
 <span class="math inline">\(\Delta x = A/w^{+}\)</span> then this solution for <span class="math inline">\(s_{sf}^{+}\)</span> will evolve in a similar fashion to
 <span class="math inline">\(\bar{s}_{sf}\)</span></p>
 </div>
-<div class="section level2">
-<h2 id="root-zone-2">Root Zone<a class="anchor" aria-label="anchor" href="#root-zone-2"></a>
-</h2>
+<div class="section level3">
+<h3 id="root-zone-2">Root Zone<a class="anchor" aria-label="anchor" href="#root-zone-2"></a>
+</h3>
 <p>The same formulation follows for the infinitesimal slab at the bottom of the
 hillslope with the averaged terms (using <span class="math inline">\(\bar{}\)</span>) replaced with those valid
 at the bottom of the hillslope (using <span class="math inline">\(^{+}\)</span>).</p>
 </div>
-<div class="section level2">
-<h2 id="unsaturated-zone-2">Unsaturated Zone<a class="anchor" aria-label="anchor" href="#unsaturated-zone-2"></a>
-</h2>
+<div class="section level3">
+<h3 id="unsaturated-zone-2">Unsaturated Zone<a class="anchor" aria-label="anchor" href="#unsaturated-zone-2"></a>
+</h3>
 <p>The same formulation follows for the infinitesimal slab at the bottom of the
 hillslope with the averaged terms (using <span class="math inline">\(\bar{}\)</span>) replaced with those valid
 at the bottom of the hillsipe (using <span class="math inline">\(^{+}\)</span>).</p>
 </div>
-<div class="section level2">
-<h2 id="saturated-zone-2">Saturated Zone<a class="anchor" aria-label="anchor" href="#saturated-zone-2"></a>
-</h2>
+<div class="section level3">
+<h3 id="saturated-zone-2">Saturated Zone<a class="anchor" aria-label="anchor" href="#saturated-zone-2"></a>
+</h3>
 <p>Evaluating for the foot of the hillslope and taking a discrete approximation
 of the spatial gradient gives
 <span class="math display">\[\begin{equation}
@@ -948,7 +948,7 @@ should return the same results when <span class="math inline">\(\Delta x = A/w^{
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.1.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.2.</p>
 </div>
 
       </footer>
