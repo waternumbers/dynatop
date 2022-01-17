@@ -26,6 +26,7 @@ versions of dynamic TOPMODEL, selected references can be found in the Selected
 References vignette or [here](https://waternumbers.github.io/dynatop/articles/Selected_References.html)
 
 Thanks goes to:
+
 * Peter Metcalfe who developed the original port of Dynamic TOPMODEL to R
 during his PhD sponsored by the [JBA Trust](https://www.jbatrust.org).
 * The [NERC Q-NFM project (NE/R004722/1)](https://www.lancaster.ac.uk/lec/sites/qnfm/) at Lancaster University for supporting this update to dynatop.
