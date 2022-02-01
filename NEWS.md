@@ -1,3 +1,9 @@
+# dynatop 0.2.1.9000
+
+- Fixed missing timestep in some Courant number calculations
+- Fixed accounting of channel inflow in mass balance computations and added
+  matching test. Previously impacted simulations with a substep.
+
 # dynatop 0.2.1
 
 - Release for CRAN

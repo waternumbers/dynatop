@@ -52,16 +52,16 @@ std::pair<double, double> hillslope_hru::courant(double& Dt){
   cr.first = c_sf*Dt/Dx;
   switch (opt) {
   case 1: // exponential transmissivity
-    cr.second = std::exp(ln_t0)*std::sin(2.0*beta)/(2.0*m*Dx);
+    cr.second = Dt*std::exp(ln_t0)*std::sin(2.0*beta)/(2.0*m*Dx);
     break;
   case 2: // constant celerity
     cr.second = c_sz*Dt/Dx;
     break;
   case 3: // bounded exponential
-    cr.second = std::exp(ln_t0)*std::sin(2.0*beta)/(2.0*m*Dx);
+    cr.second = Dt*std::exp(ln_t0)*std::sin(2.0*beta)/(2.0*m*Dx);
     break;
   case 4: // double exponential
-    cr.second = (std::exp(ln_t0)*std::sin(2.0*beta)/(2*Dx))*( omega/m + (1.0-omega)/m_2 );
+    cr.second = Dt*(std::exp(ln_t0)*std::sin(2.0*beta)/(2*Dx))*( omega/m + (1.0-omega)/m_2 );
   }
   
   return cr;
