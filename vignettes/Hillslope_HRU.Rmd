@@ -418,7 +418,7 @@ Consider the psuedo-function
 \[
 f\left(z\right) = 
 z - 
-\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} -
+\left. \bar{s}_{sz}\right.\rvert_{0} -
 \frac{\Delta t}{\Delta x} \left(g\left(z,\Theta_{sz}\right) -
 l_{sz}^{-}\right) + \Delta t \min\left(\frac{1}{T_d},\frac{
 \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
@@ -429,7 +429,7 @@ adapted from the approximating equation for the saturated zone storage with the 
 ensuring the limit on the flux from the unsaturated zone. If $f(0) \geq 0$ the
 downward flux is enough to produce saturation in the subsurface and
 $\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0$. If  $f(0) < 0$ then
-$\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0$ is given by a solution of
+$\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ is given by a solution of
 $f(z) = 0$. In Appendix A it is
 shown that $f\left(z\right)$ is a monotonic increasing function of
 $z > 0$; hence if $f\left(0\right) \leq 0$ and $f\left(D\right) \geq 0$ a
@@ -437,7 +437,7 @@ unique solution for $\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ can be found.
 
 <!-- ### Algorithm 1 - Simple Implicit -->
 
-A direct implimnetation of the above results takes the form of 
+A direct implimentation of the above results takes the form of 
 
 1. Compute $\check{r}_{sf \rightarrow rz}$ and $\check{r}_{rz \rightarrow uz}$
 2. Test for saturation. If $f\left(0\right) \geq
