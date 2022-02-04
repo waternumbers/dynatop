@@ -138,7 +138,8 @@ Simulate the hillslope output of a dynatop object
   keep_states = NULL,
   sub_step = NULL,
   tol = 2 * .Machine$double.eps,
-  max_it = 1000
+  max_it = 1000,
+  ftol = Inf
 )}\if{html}{\out{</div>}}
 }
 
@@ -149,16 +150,22 @@ Simulate the hillslope output of a dynatop object
 
 \item{\code{sub_step}}{simulation timestep in seconds, default value of NULL results in data time step}
 
-\item{\code{tol}}{tolerance for the solution for the saturated zone}
+\item{\code{tol}}{tolerance on width of bounds in the solution for the saturated zone}
 
 \item{\code{max_it}}{maximum number of iterations to use in the solution of the saturated zone}
+
+\item{\code{ftol}}{tolerance in closeness to 0 in the solution for the saturated zone}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
 Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
+While ftol is implimented it is currently set to \code{Inf} to mimick the behaviour of previous versions. This will change in the future.
 }
 
+\subsection{Returns}{
+invisible(self) for chaining
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-sim_channel"></a>}}
@@ -183,7 +190,8 @@ Simulate the hillslope and channel componets of a dynatop object
   keep_states = NULL,
   sub_step = NULL,
   tol = 2 * .Machine$double.eps,
-  max_it = 1000
+  max_it = 1000,
+  ftol = Inf
 )}\if{html}{\out{</div>}}
 }
 
@@ -194,9 +202,11 @@ Simulate the hillslope and channel componets of a dynatop object
 
 \item{\code{sub_step}}{simulation timestep in seconds, default value of NULL results in data time step}
 
-\item{\code{tol}}{tolerance for the solution for the saturated zone}
+\item{\code{tol}}{tolerance on width of bounds in the solution for the saturated zone}
 
 \item{\code{max_it}}{maximum number of iterations to use in the solution of the saturated zone}
+
+\item{\code{ftol}}{tolerance in closeness to 0 in the solution for the saturated zone}
 
 \item{\code{mass_check}}{Flag indicating is a record of mass balance errors shuld be kept}
 }

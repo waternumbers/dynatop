@@ -138,7 +138,7 @@ void hillslope_hru::init(double& s_rz_0, double& r_uz_sz_0, double& tol, int& ma
   q_sz_out = width*l_sz;
 }
 
-void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, double& tol, int& max_it)
+void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, double& tol, int& max_it, double& ftol)
 {
   // NOTE: Throughout the vertical fluxes r_*_* are computed as volumes v_*_* = Dt*r_*_*
   // This stops constant rescaling and speeds up the code
@@ -154,7 +154,7 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
   // set ratio of Dt_Dx used
   Dt_Dx = Dt/Dx;
 
-
+  double mass_ballance = s_sf + s_rz + s_uz - s_sz + Dt*precip + Dt_Dx * (l_sz_in + l_sf_in);
   
 
   // compute first downward flux estimate from surface and root zone
@@ -171,14 +171,11 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
   double lwr(0.0), upr(D);
 
     
-  // test for saturation
-  double x(0.0); // declared here so can be passed into fsz to test for saturation
-  if( fsz(x,Dt) >= 0.0 ){
+  // compute flow estimate
+  double z(0.0); // declared here so can be passed into fsz to test for saturation
+  if( fsz(z,Dt) >= 0.0 ){
     // then saturated
     l_sz = l_sz_max;
-    //    r_rz_uz = ( s_sz + Dt_Dx*(l_sz - l_sz_in) - s_uz )/Dt;
-    v_rz_uz = ( s_sz + Dt_Dx*(l_sz - l_sz_in) - s_uz );
-    s_sz = 0.0;
   }else{
     // not saturated test to see if wetting or drying
     if( fsz(s_sz,Dt) >= 0.0 ){
@@ -199,29 +196,69 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
     }
 
     int it(0);
-    double e;
+    double e(2*ftol);
     
     //Rcpp::Rcout << "After bounding:" << lwr << " " << fsz(lwr,Dt) << " : " << upr << " " <<fsz(upr,Dt) << std::endl;
-    while( (it <= max_it) and ((upr-lwr)>tol) ){
-      x = (upr+lwr)/2.0;
-      e = fsz(x,Dt);
-      if(e<=0.0){ lwr=x; }
-      if(e>=0.0){ upr=x; }
+    //Rcpp::Rcout << "After bounding:" << lwr << " " << fsz(lwr,Dt) << " : " << upr << " " <<fsz(upr,Dt) << std::endl;
+    //Rcpp::Rcout << "After bounding:" << upr-lwr << " " << e << " : " << ftol << " " << std::abs(e) << std::endl;
+    while( (it <= max_it) and ( ((upr-lwr)>tol) or (std::abs(e)>=ftol) ) ){
+      z = (upr+lwr)/2.0;
+      e = fsz(z,Dt);
+      if(e<=0.0){ lwr=z; }
+      if(e>=0.0){ upr=z; }
       it +=1;
     }
     if(it >max_it){
       // Rcpp::Rcout << "ID: " << id << ". No root found within "<< max_it <<
       // 	" iterations. Difference between bounds is " << upr-lwr << std::endl;
-      Rcpp::warning("ID: %i. No root found within %i iterations. Difference between bounds is %d",
+      Rcpp::warning("ID: %i. No solution found within %i iterations. Difference between bounds is %d",
 		    id, max_it, upr-lwr);
     }
+    //Rcpp::Rcout << "After search:" << it << " " << max_it << " : " << upr-lwr << " " << tol << " : " << std::abs(e) << " " << ftol << std::endl;
+    //Rcpp::Rcout << "After search:" << lwr << " " << fsz(lwr,Dt) << " : " << upr << " " <<fsz(upr,Dt) << std::endl;
+    //Rcpp::Rcout << "After search:" << upr-lwr << " " << e << " : " << ftol << " " << std::abs(e) << std::endl;
+
+    
     //Rcpp::Rcout << "At end of opt: " << upr-lwr << " : " << lwr << " " << fsz(lwr,Dt) << " : " << upr << " " << fsz(upr,Dt) << std::endl;
-    s_sz = (upr+lwr)/2.0;
-    //r_rz_uz = std::min( r_rz_uz, (s_sz + Dt/t_d - s_uz)/Dt );
-    v_rz_uz = std::min( v_rz_uz, (s_sz + Dt/t_d - s_uz) );
-    l_sz = flz(s_sz);
+    z = (upr+lwr)/2.0;
+    l_sz = flz(z);
   }
-  //Rcpp::Rcout << "At end of sz choice: " << s_sz << " : " << v_rz_uz << " : " << l_sz << std::endl;
+
+  int mth = 0;
+  // solve for saturated zone storage and v_rz_uz
+  z = 0.0;
+  if( hsz(z,l_sz,Dt) >= 0.0 ){
+    mth=1;
+    // then saturated
+    v_rz_uz = ( s_sz + Dt_Dx*(l_sz - l_sz_in) - s_uz );
+    s_sz = 0.0;
+  }else{
+    z = D;
+    if( hsz(z,l_sz,Dt) >= 0.0 ){
+      // set z to be z_C in vignette
+      z = std::max(0.0,s_uz + v_rz_uz - (Dt/t_d));
+      if( hsz(z,l_sz,Dt) >= 0.0 ){
+	mth=2;
+	//Rcpp::Rcout << z << " : " << hz << std::endl;
+	z = s_sz + (Dt/Dx)*(l_sz - l_sz_in) - (Dt/t_d);
+      }else{
+	mth=3;
+	double bb = - ( s_sz + Dt_Dx*(l_sz - l_sz_in) - (Dt/t_d));
+	double cc = (Dt/t_d) * (s_uz + v_rz_uz - s_sz - Dt_Dx*(l_sz - l_sz_in));
+	z = ( -bb + std::sqrt( std::pow(bb,2.0) - 4*cc ) )/2.0;
+      }
+    }else{
+      // have reached D
+      mth=4;
+      z = D ;
+      l_sz = ( D - s_sz + Dt_Dx*l_sz_in + Dt*std::min((1/t_d),(s_uz + v_rz_uz) / (t_d*D +Dt)) )/ Dt_Dx ;
+    }
+    
+    s_sz = z;
+    v_rz_uz = std::min( v_rz_uz, (s_sz + Dt/t_d - s_uz) );
+  }
+  
+  //Rcpp::Rcout << "At end of sz choice: " << mth << " : " << s_sz << " : " << v_rz_uz << " : " << l_sz << std::endl;
   // solve unsaturated zone
   //s_uz = ( (t_d*s_sz)/(t_d*s_sz + Dt) ) * (s_uz+Dt*r_rz_uz);
   s_uz = ( (t_d*s_sz)/(t_d*s_sz + Dt) ) * (s_uz+v_rz_uz);
@@ -243,6 +280,18 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
   // compute actual pet loss
   e_a = pet*(s_rz/s_rz_max);
 
+  
+  mass_ballance = mass_ballance - Dt_Dx*(l_sz + c_sf*s_sf) - Dt*e_a;
+  mass_ballance = mass_ballance - (s_sf + s_rz + s_uz - s_sz);
+  
+  
+  if( std::abs(mass_ballance) > 1e-6){
+    //if(mth==1){
+      Rcpp::Rcout << "At end: " << mass_ballance << " : " << mth << std::endl;
+      Rcpp::Rcout << s_sf  << " : " << s_rz << " : " << s_uz << " : " << s_sz << " : " << l_sz << std::endl;
+      //}
+  }
+  
   // compute the outflow
   q_sf_out = width*c_sf*s_sf;
   q_sz_out = width*l_sz;
@@ -279,3 +328,9 @@ double hillslope_hru::fsz(double& x, double& Dt){ // compute for saturated zone 
   return x - s_sz - Dt_Dx*(l - l_sz_in) + Dt*r;
 }
 
+double hillslope_hru::hsz(double& x, double& l, double& Dt){ // compute for saturated zone function
+  //double l = l_sz_max*std::exp(-x*cosbeta_m);
+  double r = std::min( r_uz_sz_max , (s_uz + v_rz_uz)/(t_d*x + Dt) );
+  
+  return x - s_sz - Dt_Dx*(l - l_sz_in) + Dt*r;
+}

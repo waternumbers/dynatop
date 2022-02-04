@@ -17,7 +17,8 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
 		     double timestep,
 		     int n_sub_step,
 		     double tol,
-		     int max_it
+		     int max_it,
+		     double ftol
 		  ){
   
 
@@ -172,7 +173,7 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
 
 	// evolve hillslope
 	//int max_it = 10000;
-	hs_hru[ii].implicit_step(pet[cid], precip[cid], Dt, tol, max_it);
+	hs_hru[ii].implicit_step(pet[cid], precip[cid], Dt, tol, max_it, ftol);
 
 	
     	while( (link_from_id == cid) & (link_cntr<nlink) ){
