@@ -108,15 +108,3 @@ dt$plot_channel_inflow(total=TRUE,separate=TRUE)
 dt$plot_channel_inflow(total=FALSE,separate=FALSE)
 dt$plot_channel_inflow(total=FALSE,separate=TRUE)
 plot(dt$get_channel_inflow(total=T))
-
-
-graphics.off()
-x <- xts(cbind(1:10,10:1),order.by=as.POSIXct("2020-01-01") + seq(0,600,length=10))
-pf <- function(x){
-    #oldpar <- par(no.readonly = TRUE)
-    #on.exit(par(oldpar))
-    par(mfrow=c(2,1))
-    print(plot(x[,1]))
-    print(plot(x[,2],on=NA))
-}
-pf(x)
