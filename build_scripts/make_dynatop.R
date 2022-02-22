@@ -81,13 +81,18 @@ rm(list=ls())
 devtools::load_all("../")
 data("Swindale");
 for(ii in list.files(".",pattern="^Swindale.*\\.rds$")){
+    ##assign("last.warning", NULL, envir = baseenv())
     print(ii)
     mdl <- readRDS(ii)
     mdl$precip_input$name <- "Rainfall"
     mdl$pet_input$name <- "PET"
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)#[1:2,,drop=FALSE])
-    dt$initialise()$sim_hillslope()
-    print(range(dt$get_mass_errors()[,6]))
+    ##tryCatch({
+        dt$initialise()$sim_hillslope()
+        print(range(dt$get_mass_errors()[,6]))
+    ##},
+    ##warning = function(w){print(warnings())},
+    ##error = function(e){stop(e)})
     print(warnings())    
 }
 

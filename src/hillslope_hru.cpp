@@ -201,8 +201,8 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
       it +=1;
     }
     if(it >max_it){
-      Rcpp::warning("ID: %i. No solution found within %i iterations. Difference between bounds is %d",
-		    id, max_it, upr-lwr);
+      Rcpp::warning("ID: %i. No solution found within %i iterations. Difference between bounds is %d. Value of f(z) is %d",
+		    id, max_it, upr-lwr,e);
     }
     z = (upr+lwr)/2.0;
     l_sz = flz(z);
