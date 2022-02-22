@@ -17,7 +17,8 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
 		     double timestep,
 		     int n_sub_step,
 		     double tol,
-		     int max_it
+		     int max_it,
+		     double ftol
 		  ){
   
 
@@ -172,7 +173,7 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
 
 	// evolve hillslope
 	//int max_it = 10000;
-	hs_hru[ii].implicit_step(pet[cid], precip[cid], Dt, tol, max_it);
+	hs_hru[ii].implicit_step(pet[cid], precip[cid], Dt, tol, max_it, ftol);
 
 	
     	while( (link_from_id == cid) & (link_cntr<nlink) ){
@@ -203,7 +204,7 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
 
 	// mass balance contribution
       	mbv[2] += precip[cid]*channel_area[ii]*Dt; // rainfall into system 
-      	mbv[3] += ch_in_sf[ii]+ch_in_sz[ii]; // volume lost to channel
+      	mbv[3] += ( channel_area[ii]*precip[cid] + q_sf_in[cid] + q_sz_in[cid] ) * Dt; // volume lost to channel
       }
       // end of substep loop
     }

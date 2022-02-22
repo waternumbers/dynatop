@@ -5,8 +5,8 @@ dt_courant <- function(hillslope, courant, timestep, n_sub_step) {
     invisible(.Call(`_dynatop_dt_courant`, hillslope, courant, timestep, n_sub_step))
 }
 
-dt_implicit_sim <- function(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step, tol, max_it) {
-    invisible(.Call(`_dynatop_dt_implicit_sim`, hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step, tol, max_it))
+dt_implicit_sim <- function(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step, tol, max_it, ftol) {
+    invisible(.Call(`_dynatop_dt_implicit_sim`, hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step, tol, max_it, ftol))
 }
 
 dt_init <- function(hillslope, channel, flow_direction, tol, max_it) {

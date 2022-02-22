@@ -39,9 +39,10 @@ public:
 	    );
   std::pair<double, double> courant(double& Dt);
   void init(double& s_rz_0, double& r_uz_sz_0, double& tol, int& max_it);
-  void implicit_step(double& pet, double& precip, double& Dt, double& tol, int& max_it);
+  void implicit_step(double& pet, double& precip, double& Dt, double& tol, int& max_it, double& ftol);
   double fsz(double&, double&); //,double&,double&,double&);
   double flz(double&); //,double&,double&,double&);
+  double hsz(double&, double&, double&); //,double&,double&,double&);
 };
 
 #endif
