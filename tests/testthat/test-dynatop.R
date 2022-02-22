@@ -6,7 +6,7 @@ test_that("Dynatop mass errors for exponential profile are <1e-6", {
     testthat::expect_lt( tmp, 1e-6 )
 })
 
-test_that("Dynatop mass errors are correctyl computed for substeps and less then <1e-6", {
+test_that("Dynatop mass errors are correctly computed for substeps and less then <1e-6", {
     data(Swindale)
     dt <- dynatop$new(Swindale$model)$add_data(Swindale$obs)
     dt$initialise()$sim_hillslope(sub_step=300)
