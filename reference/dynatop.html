@@ -18,7 +18,7 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1.9999</span>
       </span>
     </div>
 
@@ -209,7 +209,8 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
   keep_states <span class="op">=</span> <span class="cn">NULL</span>,
   sub_step <span class="op">=</span> <span class="cn">NULL</span>,
   tol <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">.Machine</span><span class="op">$</span><span class="va">double.eps</span>,
-  max_it <span class="op">=</span> <span class="fl">1000</span>
+  max_it <span class="op">=</span> <span class="fl">1000</span>,
+  ftol <span class="op">=</span> <span class="cn">Inf</span>
 <span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
@@ -224,20 +225,29 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
 
 
 <dt><code>tol</code></dt>
-<dd><p>tolerance for the solution for the saturated zone</p></dd>
+<dd><p>tolerance on width of bounds in the solution for the saturated zone</p></dd>
 
 
 <dt><code>max_it</code></dt>
 <dd><p>maximum number of iterations to use in the solution of the saturated zone</p></dd>
 
 
+<dt><code>ftol</code></dt>
+<dd><p>tolerance in closeness to 0 in the solution for the saturated zone</p></dd>
+
+
 </dl><p></p></div>
 </div>
 <div class="section">
 <h4 id="details-2">Details<a class="anchor" aria-label="anchor" href="#details-2"></a></h4>
-<p>Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!</p>
+<p>Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
+While ftol is implimented it is currently set to <code>Inf</code> to mimick the behaviour of previous versions. This will change in the future.</p>
 </div>
 
+<div class="section">
+<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
+<p>invisible(self) for chaining</p>
+</div>
 
 </div><p></p><hr><a id="method-sim_channel"></a><div class="section">
 <h3 id="method-sim-channel-">Method <code>sim_channel()</code><a class="anchor" aria-label="anchor" href="#method-sim-channel-"></a></h3>
@@ -247,7 +257,7 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
 </div>
 
 <div class="section">
-<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
+<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
 <p>invisible(self) for chaining</p>
 </div>
 
@@ -259,7 +269,8 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
   keep_states <span class="op">=</span> <span class="cn">NULL</span>,
   sub_step <span class="op">=</span> <span class="cn">NULL</span>,
   tol <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">.Machine</span><span class="op">$</span><span class="va">double.eps</span>,
-  max_it <span class="op">=</span> <span class="fl">1000</span>
+  max_it <span class="op">=</span> <span class="fl">1000</span>,
+  ftol <span class="op">=</span> <span class="cn">Inf</span>
 <span class="op">)</span></code></pre></div><p></p></div>
 </div>
 
@@ -274,11 +285,15 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
 
 
 <dt><code>tol</code></dt>
-<dd><p>tolerance for the solution for the saturated zone</p></dd>
+<dd><p>tolerance on width of bounds in the solution for the saturated zone</p></dd>
 
 
 <dt><code>max_it</code></dt>
 <dd><p>maximum number of iterations to use in the solution of the saturated zone</p></dd>
+
+
+<dt><code>ftol</code></dt>
+<dd><p>tolerance in closeness to 0 in the solution for the saturated zone</p></dd>
 
 
 <dt><code>mass_check</code></dt>
@@ -293,7 +308,7 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
 </div>
 
 <div class="section">
-<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
 <p>invisible(self) for chaining</p>
 </div>
 
@@ -462,6 +477,8 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
 <span class="r-in"><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">sim</span><span class="op">(</span><span class="op">)</span> <span class="co">## simulate model</span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Courant number for surface zone is over 0.7</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> Suggest maximum sub step is: 252.42seconds</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Courant number for saturated zone is over 0.7</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> Suggest maximum sub step is: 18.14seconds</span>
 </code></pre></div>
     </div>
   </div>

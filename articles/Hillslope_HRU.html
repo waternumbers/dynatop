@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1.9999</span>
       </span>
     </div>
 
@@ -586,7 +586,7 @@ t}{\Delta x} \hat{l}_{sf}^{-}
 <span class="math display">\[
 f\left(z\right) = 
 z - 
-\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} -
+\left. \bar{s}_{sz}\right.\rvert_{0} -
 \frac{\Delta t}{\Delta x} \left(g\left(z,\Theta_{sz}\right) -
 l_{sz}^{-}\right) + \Delta t \min\left(\frac{1}{T_d},\frac{
 \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
@@ -596,13 +596,15 @@ l_{sz}^{-}\right) + \Delta t \min\left(\frac{1}{T_d},\frac{
 ensuring the limit on the flux from the unsaturated zone. If <span class="math inline">\(f(0) \geq 0\)</span> the
 downward flux is enough to produce saturation in the subsurface and
 <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0\)</span>. If <span class="math inline">\(f(0) &lt; 0\)</span> then
-<span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0\)</span> is given by a solution of
+<span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\)</span> is given by a solution of
 <span class="math inline">\(f(z) = 0\)</span>. In Appendix A it is
 shown that <span class="math inline">\(f\left(z\right)\)</span> is a monotonic increasing function of
 <span class="math inline">\(z &gt; 0\)</span>; hence if <span class="math inline">\(f\left(0\right) \leq 0\)</span> and <span class="math inline">\(f\left(D\right) \geq 0\)</span> a
 unique solution for <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\)</span> can be found.</p>
 <!-- ### Algorithm 1 - Simple Implicit -->
-<p>A direct implimnetation of the above results takes the form of</p>
+<p>A direct implimentation of the above results takes the form of Algorithm 1.</p>
+<hr>
+<p><em>Algorithm 1: Direct Implimentation</em></p>
 <ol style="list-style-type: decimal">
 <li>Compute <span class="math inline">\(\check{r}_{sf \rightarrow rz}\)</span> and <span class="math inline">\(\check{r}_{rz \rightarrow uz}\)</span>
 </li>
@@ -633,7 +635,151 @@ Goto Step 5.</li>
 <span class="math inline">\(\left. \bar{s}_{sf}\right.\rvert_{\Delta t}\)</span> using the computed vertical
 fluxes.</li>
 </ol>
-<!-- ## Algorithm 2 --><!-- 1. Compute $\check{r}_{sf \rightarrow rz} = \min\left( k_{sf}, --><!-- \left. \bar{s}_{sf} \right\rvert_{0} + \frac{\Delta t \hat{q}_{sf}^{-}}{A} --><!-- \right)$ --><!-- 2. Compute $\check{r}_{rz \rightarrow uz} = \max\left(0, \frac{1}{\Delta t}\left( --><!-- \left. \bar{s}_{rz} \right.\rvert_{0} + \Delta t \left( p + \check{r}_{sf --><!--   \rightarrow rz} - e_{p} \right) - s_{rzmax} \right)\right)$ --><!-- 3. Test for saturation. If $f\left(0,\check{r}_{rz \rightarrow uz}\right) \geq --><!--    0$ then goto 4 else goto 5 --><!-- 4. Saturated. Set $\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0$ and --><!-- $\hat{r}_{rz \rightarrow uz} = \frac{1}{\Delta t}\left( --><!-- \left. \bar{s}_{sz}\right.\rvert_{0} + \Delta t \left( --><!-- \frac{w^{+}}{A}g\left(0,\Theta_{sz}\right) - --><!-- \frac{q_{sz}^{-}}{A}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)$, --><!-- Goto 7 --><!-- 5. Not saturated: find $\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ such that  --><!-- $f\left(\left. \bar{s}_{sz}\right.\rvert_{\Delta t},\check{r}_{rz \rightarrow --><!--   uz}\right) = 0$.  --><!-- 6. Set $\hat{r}_{rz \rightarrow uz} = \min\left(\check{r}_{rz \rightarrow uz},\frac{1}{\Delta t} \left( --><!-- \left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \frac{\Delta t}{T_d} - --><!--  \left. \bar{s}_{uz} \right.\rvert_{0}\right)\right)$. --><!-- 7. Compute $\hat{r}_{sf \rightarrow rz} = \min\left(\check{r}_{sf \rightarrow --><!--   rz}, \frac{1}{\Delta t}\left( s_{rzmax} -  --><!-- \left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p - \hat{r}_{rz --><!--   \rightarrow uz} \right) \right)\right)$ --><!-- 8. Solve for $\left. \bar{s}_{uz}\right.\rvert_{\Delta t}$, --><!-- $\left. \bar{s}_{rz}\right.\rvert_{\Delta t}$ and --><!-- $\left. \bar{s}_{sf}\right.\rvert_{\Delta t}$ using the computed vertical --><!-- fluxes. --><!-- The first two steps compute the maximum potential downward flux from the --><!-- surface and root zones. Steps 3-6 solve saturated zoneand adjust the fluz from --><!-- the root zone to the unsaturated zone accordingly. Step 7 adjusts the flux --><!-- from the surface zone in the case of upward flow from the unsaturated zone, --><!-- with Step 8 using the corrected vertical fluxes to solve for the new values of --><!-- the states. -->
+<hr>
+<p>The challange with Algorithm 1 is that maintaining a water (mass) balance and
+correct limits on the state values
+depends upon the accuracy of the solution of <span class="math inline">\(f\left(z\right)=0\)</span>. Since
+finding <span class="math inline">\(z\)</span> requires multiple evaluations of the transmissivity profile it can
+rapidly become the most expensive part of the code.</p>
+<p>To limit the computational cost suppose that <span class="math inline">\(f\left(z\right)=0\)</span> is solved
+approximately to give <span class="math inline">\(\tilde{z}\)</span>
+such that for some numerical tolerence <span class="math inline">\(\epsilon\)</span> we have <span class="math inline">\(\left\lvert f\left(\tilde{z}\right) \right\rvert \leq \epsilon\)</span>. Using <span class="math inline">\(\tilde{z}\)</span> to
+evaluate the outward lateral flux from the saturated zone gives the
+pseudo-function
+<span class="math display">\[
+h\left(z\right) = 
+z - 
+\left. \bar{s}_{sz}\right.\rvert_{0} -
+\frac{\Delta t}{\Delta x} \left(g\left(\tilde{z},\Theta_{sz}\right) -
+l_{sz}^{-}\right) + \Delta t \min\left(\frac{1}{T_d},\frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} z + \Delta t}\right)
+\]</span></p>
+<p>Since <span class="math inline">\(h\left(z\right)\)</span> is a monotonic increasing function of
+<span class="math inline">\(z &gt; 0\)</span> the solution for <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\)</span> is
+similar to that using <span class="math inline">\(f\left(z\right)\)</span>. Taking <span class="math inline">\(z \in \left[0,D\right]\)</span> the
+solution for <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\)</span> is given by</p>
+<ul>
+<li>If <span class="math inline">\(h(0) \geq 0\)</span> the inward flux is enough to produce saturation in the subsurface and
+<span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0\)</span>.</li>
+<li>If <span class="math inline">\(h(z_{max}) &lt; 0\)</span> (poosible only due to the outflow flux approximation) then
+<span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = D\)</span> and the lateral outflow is
+adjusted such that
+<span class="math display">\[
+\frac{\Delta t}{\Delta x} l_{sz}^{+} = 
+D - 
+\left. \bar{s}_{sz}\right.\rvert_{0} +
+\frac{\Delta t}{\Delta x} l_{sz}^{-} + 
+\Delta t \min\left(\frac{1}{T_d},\frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} D + \Delta t}\right)
+\]</span>
+</li>
+<li>If <span class="math inline">\(h(0) &lt; 0\)</span> and If <span class="math inline">\(h(D) \geq 0\)</span> then with <span class="math inline">\(z_{C} = \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t\left( \check{r}_{rz \rightarrow uz} - \frac{1}{T_{d}}\right)\)</span>
+<ul>
+<li>If <span class="math inline">\(h\left( z_{C} \right) \geq 0\)</span> then the inflow from the unsaturated
+zone is <span class="math inline">\(1/T_{d}\)</span> and
+<span class="math display">\[
+\left. \bar{s}_{sz}\right.\rvert_{\Delta t} =
+\left. \bar{s}_{sz}\right.\rvert_{0} +
+\frac{\Delta t}{\Delta x} \left(g\left(\tilde{z},\Theta_{sz}\right) -
+l_{sz}^{-}\right) - \frac{\Delta t}{T_d}
+\]</span>
+</li>
+<li>else (see Appendix C)
+<span class="math display">\[
+z = \frac{1}{2}\left(-b + \sqrt{ b^2 - 4c }\right) \\
+= \frac{1}{2} \left( z_{C} - h\left(z_{C}\right) + \sqrt{
+\left(h\left(z_{C}\right)-z_{C}\right)^2 - 4 \frac{\Delta t}{T_{d}}
+h\left(z_{C}\right) } \right)
+\]</span>
+</li>
+</ul>
+</li>
+</ul>
+<p>The implimenation of this approach is presented in Algorithm 2. it can be seem
+that the exchange for decreasing the accuracy of the solution of the zero
+finding problem is a potential to evaluate a power and a square root.</p>
+<hr>
+<p><em>Algorithm 2: Stable Implimentation</em></p>
+<ol style="list-style-type: decimal">
+<li>Compute <span class="math inline">\(\check{r}_{sf \rightarrow rz}\)</span> and <span class="math inline">\(\check{r}_{rz \rightarrow uz}\)</span>
+</li>
+<li>Compute the lateral outflow
+<ul>
+<li>If <span class="math inline">\(f\left(0\right) \geq 0\)</span> then <span class="math inline">\(l_{sz}^{+} = l_{szmax}\)</span>
+</li>
+<li>else find <span class="math inline">\(\tilde{z}\)</span> such that <span class="math inline">\(\left\lvert f\left(\tilde{z}\right) \right\rvert \leq \epsilon\)</span>. Set <span class="math inline">\(l_{sz}^{+} = g\left(\tilde{z},\Theta\right)\)</span>
+</li>
+</ul>
+</li>
+<li>Solve for <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\)</span>
+<ul>
+<li>If <span class="math inline">\(h(0) \geq 0\)</span> then
+<span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0\)</span>.</li>
+<li>If <span class="math inline">\(h(z_{max}) &lt; 0\)</span> then <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = D\)</span> and
+<span class="math display">\[
+\frac{\Delta t}{\Delta x} l_{sz}^{+} = 
+D - 
+\left. \bar{s}_{sz}\right.\rvert_{0} +
+\frac{\Delta t}{\Delta x} l_{sz}^{-} + 
+\Delta t \min\left(\frac{1}{T_d},\frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} D + \Delta t}\right)
+\]</span>
+</li>
+<li>else with <span class="math inline">\(z_{C} = \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t\left( \check{r}_{rz \rightarrow uz} - \frac{1}{T_{d}}\right)\)</span>
+<ul>
+<li>If <span class="math inline">\(h\left( z_{C} \right) \geq 0\)</span> then
+<span class="math display">\[
+\left. \bar{s}_{sz}\right.\rvert_{\Delta t} =
+\left. \bar{s}_{sz}\right.\rvert_{0} +
+\frac{\Delta t}{\Delta x} \left(g\left(\tilde{z},\Theta_{sz}\right) -
+l_{sz}^{-}\right) - \frac{\Delta t}{T_d}
+\]</span>
+</li>
+<li>else
+<span class="math display">\[
+\left. \bar{s}_{sz}\right.\rvert_{\Delta t} =
+= \frac{1}{2} \left( z_{C} - h\left(z_{C}\right) + \sqrt{
+\left(h\left(z_{C}\right)-z_{C}\right)^2 - 4 \frac{\Delta t}{T_{d}}
+h\left(z_{C}\right) } \right)
+\]</span>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Solve for <span class="math inline">\(\hat{r}_{rz \rightarrow uz}\)</span>
+<ul>
+<li>If <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0\)</span> then
+<span class="math display">\[\hat{r}_{rz \rightarrow uz} = \frac{1}{\Delta t}\left(
+\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + 
+\frac{\Delta t}{\Delta x} \left(g\left(0,\Theta_{sz}\right) -
+l_{sz}^{-}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)
+\]</span>
+</li>
+<li>else
+<span class="math display">\[
+\hat{r}_{rz \rightarrow uz} = \min\left(\check{r}_{rz \rightarrow uz},\frac{1}{\Delta t} \left(
+\left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \frac{\Delta t}{T_d} -
+ \left. \bar{s}_{uz} \right.\rvert_{0}\right)\right)\]</span>
+</li>
+</ul>
+</li>
+<li>Compute
+<span class="math display">\[
+\hat{r}_{sf \rightarrow rz} = \min\left(\check{r}_{sf \rightarrow
+  rz}, \frac{1}{\Delta t}\left( s_{rzmax} - 
+\left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p - \hat{r}_{rz
+  \rightarrow uz} \right) \right)\right)\]</span>
+</li>
+<li>Solve for <span class="math inline">\(\left. \bar{s}_{uz}\right.\rvert_{\Delta t}\)</span>,
+<span class="math inline">\(\left. \bar{s}_{rz}\right.\rvert_{\Delta t}\)</span> and
+<span class="math inline">\(\left. \bar{s}_{sf}\right.\rvert_{\Delta t}\)</span> using the computed vertical
+fluxes.</li>
+</ol>
+<hr>
 </div>
 <div class="section level2">
 <h2 id="transmissivity-profiles">Transmissivity Profiles<a class="anchor" aria-label="anchor" href="#transmissivity-profiles"></a>
@@ -809,77 +955,6 @@ Using this relationship and the expression for the range of <span class="math in
 \]</span></p>
 <p>From this it can be seen that <span class="math inline">\(\frac{d}{dz} f\left(z\right) \geq 0\)</span> with
 equality possible when <span class="math inline">\(z=0\)</span>.</p>
-<!-- ### Solution of $f\left(z\right)$ for known $l_{sz}^{+}$ -->
-<!-- By definition $\left. \bar{s}_{uz} \right.\rvert_{0}$, $l_{sz}^{+}$, -->
-<!-- $l_{sz}^{-}$, $\Delta t$, $\Delta X$, -->
-<!-- $T_d$, $\check{r}_{rz -->
-<!-- \rightarrow uz}$ and $z$ are all greater or equal to 0. Rewrite the expression -->
-<!-- for $f\left(z\right)$ with known $l_{sz}^{+}$ as -->
-<!-- \[ -->
-<!-- \tilde{f}\left(z\right) = \left\{ \begin{array}{cl} -->
-<!-- z -  -->
-<!-- \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - -->
-<!-- \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} - -->
-<!-- l_{sz}^{-}\right) + \frac{\Delta t}{T_d} &  -->
-<!-- \frac{ -->
-<!-- \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} } -->
-<!-- { T_{d} z + \Delta t} \geq \frac{1}{T_d} \\ -->
-<!-- z -  -->
-<!-- \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - -->
-<!-- \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} - -->
-<!-- l_{sz}^{-}\right) + \Delta t \frac{ -->
-<!-- \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} } -->
-<!-- { T_{d} z + \Delta t} &  -->
-<!-- \frac{ -->
-<!-- \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} } -->
-<!-- { T_{d} z + \Delta t} < \frac{1}{T_d} -->
-<!-- \end{array}\right. -->
-<!-- \] -->
-<!-- Taking $z_{C} = \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t -->
-<!-- \check{r}_{rz \rightarrow uz} - \frac{\Delta t}{T_d}$ gives -->
-<!-- \[ -->
-<!-- \tilde{f}\left(z\right) = \left\{ \begin{array}{cl} -->
-<!-- z -  -->
-<!-- \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - -->
-<!-- \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} - -->
-<!-- l_{sz}^{-}\right) + \frac{\Delta t}{T_d}  -->
-<!-- & z_{C} \geq z \\ -->
-<!-- z -  -->
-<!-- \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - -->
-<!-- \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} - -->
-<!-- l_{sz}^{-}\right) + \Delta t \frac{ -->
-<!-- \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} } -->
-<!-- { T_{d} z + \Delta t}  -->
-<!-- & z_{C} < z  -->
-<!-- \end{array} \right. -->
-<!-- \] -->
-<!-- The monotonic properties of $\tilde{f}\left(z\right)$ are identical to those -->
-<!-- of $f\left(z\right)$. Consider the case that $\tilde{f}\left(z\right) < 0$, -->
-<!-- hence $\left. s_{sz} \right.\rvert_{\Delta t} > 0$. If $z_{C} > 0$ and -->
-<!-- $\tilde{f}\left(z_{C}\right) \geq 0$ then $0< \left. s_{sz} \right.\rvert_{\Delta -->
-<!-- t} \leq z_{C}$ and is given by -->
-<!-- \[ -->
-<!-- \left. s_{sz} \right.\rvert_{\Delta t} =  -->
-<!-- \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + -->
-<!-- \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} - -->
-<!-- l_{sz}^{-}\right) - \frac{\Delta t}{T_d}  -->
-<!-- \] -->
-<!-- Alternatively either $z_{C} \leq 0$ or $\tilde{f}\left(z_{C}\right) < 0$ for a -->
-<!-- $z_{C} > 0$. The solution for $\left. s_{sz} \right.\rvert_{\Delta -->
-<!-- t}$ in then a value of $z$ for which -->
-<!-- \[ -->
-<!-- z -  -->
-<!-- \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - -->
-<!-- \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} - -->
-<!-- l_{sz}^{-}\right) + \Delta t \frac{ -->
-<!-- \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} } -->
-<!-- { T_{d} z + \Delta t} =0 -->
-<!-- \] -->
-<!-- \[ -->
-<!-- z - \mu + \frac{\pi}{T_{d} z + \Delta t} =0 \\ -->
-<!-- T_{d} z^2 + z\Delta t - \mu T_{d}z - \mu \Delta t + \pi = 0\\ -->
-<!-- T_{d} z^2 + \left(\Delta t - \mu T_{d}\right)z + \pi - \mu \Delta t = 0 -->
-<!-- \] -->
 </div>
 <div class="section level2">
 <h2 id="appendix-b---comparision-to-the-infantesimal-slab-derivation">Appendix B - Comparision to the Infantesimal slab derivation<a class="anchor" aria-label="anchor" href="#appendix-b---comparision-to-the-infantesimal-slab-derivation"></a>
@@ -928,6 +1003,100 @@ of the spatial gradient gives
 subject to the evaluation of the temporal integral, the two formulations
 should return the same results when <span class="math inline">\(\Delta x = A/w^{+}\)</span></p>
 </div>
+</div>
+<div class="section level2">
+<h2 id="appendix-c-solution-to-hleftzright-when-h0-0-and-hd-geq-0">Appendix C Solution to <span class="math inline">\(h\left(z\right)\)</span> when <span class="math inline">\(h(0) &lt; 0\)</span> and <span class="math inline">\(h(D) \geq 0\)</span><a class="anchor" aria-label="anchor" href="#appendix-c-solution-to-hleftzright-when-h0-0-and-hd-geq-0"></a>
+</h2>
+<p>In this case we see that <span class="math inline">\(0 &lt; z &lt; D\)</span>. Taking <span class="math inline">\(z_{C} = \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t\left(  \check{r}_{rz \rightarrow uz} - \frac{1}{T_{d}}\right)\)</span> the function <span class="math inline">\(h\)</span> can
+be rewritten as
+<span class="math display">\[
+h\left(z\right) = \left\{ \begin{array}{cl}
+z -
+\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} -
+\frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
+l_{sz}^{-}\right) + \frac{\Delta t}{T_d}
+&amp; z_{C} \geq z \\
+z -
+\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} -
+\frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
+l_{sz}^{-}\right) + \Delta t \frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} z + \Delta t}
+&amp; z_{C} &lt; z
+\end{array} \right.
+\]</span></p>
+<p>Using the monoticity of <span class="math inline">\(h\left(z\right)\)</span> we solve each part
+seperatly. Firstly if <span class="math inline">\(h\left( z_{C} \right) \geq 0\)</span> then the inflow from the unsaturated
+zone is <span class="math inline">\(1/T_{d}\)</span> and
+<span class="math display">\[
+  \left. \bar{s}_{sz}\right.\rvert_{\Delta t} =
+  \left. \bar{s}_{sz}\right.\rvert_{0} +
+\frac{\Delta t}{\Delta x} \left(g\left(\tilde{z},\Theta_{sz}\right) -
+l_{sz}^{-}\right) - \frac{\Delta t}{T_d}
+  \]</span></p>
+<p>if <span class="math inline">\(h\left( z_{C} \right) &lt; 0\)</span> the value of <span class="math inline">\(z\)</span> satisfies
+<span class="math display">\[
+z -
+\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} -
+\frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
+l_{sz}^{-}\right) + \Delta t \frac{
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
+{ T_{d} z + \Delta t} =
+0
+\]</span>
+Rearrangement to a quadratic gives
+<span class="math display">\[
+0 = T_{d} z^2 - T_{d} z \left(\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} +
+    \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
+        l_{sz}^{-}\right) \right) +
+    \Delta t z -
+    \Delta t \left(\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} +
+        \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
+        l_{sz}^{-}\right) \right)
+         +
+\Delta t \left(
+\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz}
+\right)
+\]</span>
+<span class="math display">\[
+0 = z^2 - z \left(\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} +
+    \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
+        l_{sz}^{-}\right)  - \frac{\Delta t}{T_{d}}\right) +
+        \frac{\Delta t}{T_{d}} \left(
+        \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz
+        \rightarrow uz} -
+        \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - 
+        \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
+        l_{sz}^{-}\right) \right)
+\]</span></p>
+<p>The commonly quoted solution for the quadratic
+<span class="math display">\[
+0 = z^2 + bz +c
+\]</span>
+is
+<span class="math display">\[
+z = \frac{-b \pm\sqrt{ b^2 - 4c }}{2}
+\]</span>
+Comparing terms we see that
+<span class="math display">\[
+-b = \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} +
+    \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
+        l_{sz}^{-}\right)  - \frac{\Delta t}{T_{d}}
+\]</span></p>
+<p>and <em>THIS IS WRONG _ SHOULD NOT USE H(ZC)</em>
+<span class="math display">\[
+c = \frac{\Delta t}{T_{d}} h\left(z_{C}\right)
+\]</span>
+Since <span class="math inline">\(z_{C}&gt;0\)</span> and the solution is valid when <span class="math inline">\(h\left(z_{C}\right) &lt; 0\)</span> we
+see that <span class="math inline">\(-b &gt; 0\)</span> and
+<span class="math inline">\(\sqrt{b^2 - 4c} &gt; \left\lvert b \right\rvert\)</span>. Since <span class="math inline">\(z&gt;0\)</span> only one root of
+the quadratic is valid (as always positive) so
+<span class="math display">\[
+z = \frac{1}{2}\left(-b + \sqrt{ b^2 - 4c }\right) \\
+= \frac{1}{2} \left( z_{C} - h\left(z_{C}\right) + \sqrt{
+\left(h\left(z_{C}\right)-z_{C}\right)^2 - 4 \frac{\Delta t}{T_{d}}
+h\left(z_{C}\right) } \right)
+\]</span></p>
 </div>
   </div>
 
