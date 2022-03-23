@@ -95,7 +95,9 @@ for(ii in list.files(".",pattern="^Swindale.*\\.rds$")){
     ##},
     ##warning = function(w){print(warnings())},
     ##error = function(e){stop(e)})
+
     print(warnings())
+
 }
 
 ## ##############################
@@ -103,6 +105,7 @@ for(ii in list.files(".",pattern="^Swindale.*\\.rds$")){
 rm(list=ls())
 devtools::load_all("../")
 data("Swindale");
+
 ##ii <- list.files(".",pattern="^Swindale.*\\.rds$")[4]
 ##mdl <- readRDS(ii)
 ##mdl$precip_input$name <- "Rainfall"

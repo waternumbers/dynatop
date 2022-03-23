@@ -788,7 +788,7 @@ dynatop <- R6Class(
         ## ###############################
         ## function to perform simulations
         sim_hs = function(keep_states,sub_step,tol,max_it,ftol){
-
+          
             ## compute time substep
             if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
                 stop("sub_step should be a single finite value")

@@ -249,6 +249,7 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
   s_rz = ( s_rz + Dt*precip + v_sf_rz - v_rz_uz ) * ( s_rz_max / (s_rz_max + Dt*pet) );
 
   // solve for surface
+
   //s_sf = ( Dx / (Dx + Dt*c_sf) ) * ( s_sf + Dt_Dx*l_sf_in - v_sf_rz );
 
   
@@ -258,6 +259,7 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
     s_sf = ( Dx / (Dx + Dt*c_sf) ) * ( s_sf_tmp  + ((Dt_Dx*c_sf)-(Dt/t_raf))*s_raf );
   }
   
+
   // compute actual pet loss
   e_a = pet*(s_rz/s_rz_max);
 
