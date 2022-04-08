@@ -14,6 +14,7 @@ class hillslope_hru {
   double const& width; // physical properties
   double& q_sf_in; double& q_sf_out; double& q_sz_in; double& q_sz_out;// fluxes in and out of surface and saturated zones
   double& e_a; // actual evapotranspiration as a rate [m/s]
+  double const& s_raf; double const& t_raf; // runoff-attenuation storage and time constant
   double const& r_sf_max; double const& c_sf; // surface store parameters
   double const& s_rz_max; // root zone store parameters
   double const& t_d; // unsaturated zone parameters
@@ -31,6 +32,7 @@ public:
 		double&, double&, // surface zone lateral fluxes
 		double&, double&, // saturated zone lateral fluxes
 		double&, // actual evapotranspiration as a rate [m/s]
+		double const&, double const&, // runoff-attenuation feature parameters
 		double const&, double const&, // surface store parameters
 		double const&, // root zone store parameters
 		double const&, // unsaturated zone parameters

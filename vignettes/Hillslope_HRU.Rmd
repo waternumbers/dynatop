@@ -142,18 +142,31 @@ Integration over the hillslope length and substituting in the spatial averages g
 A\frac{d \bar{s}_{sf}}{dt} = q_{sf}^{-} - q_{sf}^{+} - A\bar{r}_{sf \rightarrow rz}
 \end{equation}
 
+The outflow comes from two sources; the runoff-attenuation feature
+(raf) and surface flow; giving
+
+\[
+q_{sf}^{+} = w^{+}l_{sf}^{+} + \frac{A}{t_{raf}}\min\left(s_{raf},\bar{s}_{sf}\right)
+\]
+
 Since $\Delta x = A/w^{+}$ and $l_{sf}^{-} = q_{sf}^{-}/w^{+}$ re arranging gives
 \begin{equation}
-\frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} - l_{sf}^{+}\right) - \bar{r}_{sf \rightarrow rz}
+\frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} -
+l_{sf}^{+}\right) - \frac{1}{t_{raf}}
+\min\left(s_{raf},\bar{s}_{sf}\right) - \bar{r}_{sf \rightarrow rz}
 \end{equation}
 
 This equation represents the evolution in time of $\bar{s}_{sf}$ expressed in
-terms of the unit width fluxes and an effective length $A/w^+$
+terms of the unit width fluxes, the runoff attenuation feature outflow and an effective length $A/w^+$
 
-To complete the formulation assume that $l_{sf}^{+} = c_{sf}\bar{s}_{sf}$
+To complete the formulation assume that 
+$l_{sf}^{+} = c_{sf}\max\left(0,\bar{s}_{sf} - s_{raf}\right)$.
 which gives
 \begin{equation}
-\frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} - c_{sf}\bar{s}_{sf}\right) - \bar{r}_{sf \rightarrow rz}
+\frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} -
+c_{sf}\max\left(0,\bar{s}_{sf}-s_{raf}\right)\right) 
+- \frac{1}{t_{raf}} \min\left(s_{raf},\bar{s}_{sf}\right)
+- \bar{r}_{sf \rightarrow rz}
 \end{equation}
 
 
@@ -290,19 +303,62 @@ The implicit scheme gives
 =
 \left. \bar{s}_{sf} \right\rvert_{0}
 + \frac{\Delta t}{\Delta x} \left(
-\hat{l}_{sf}^{-} - c_{sf} \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
+\hat{l}_{sf}^{-} - c_{sf} \max\left(0, \left. \bar{s}_{sf}
+\right\rvert_{\Delta t} - s_{raf}\right)
 \right) 
+- \frac{\Delta t}{t_{raf}} \min\left(s_{raf},\left. \bar{s}_{sf}
+\right\rvert_{\Delta t}\right)
 - \Delta t \hat{r}_{sf \rightarrow rz}
 \end{equation}
 
-or 
+To ensure that the surface storage does not become negative
+\begin{equation}
+\hat{r}_{sf \rightarrow rz} \leq \min\left( k_{sf},
+\left. \frac{1}{\Delta t}\left(\bar{s}_{sf} \right\rvert_{0} + \frac{\Delta
+t}{\Delta x} \hat{l}_{sf}^{-}
+\right)\right)
+\end{equation}
 
+The surface outflow over the time step is evaluated as
+\begin{equation}
+\hat{q}_{sf}^{+} = w^{+}c_{sf} \max\left(0, \left. \bar{s}_{sf}
+\right\rvert_{\Delta t} -s_{raf}\right) + 
+\frac{A}{t_{raf}} \min\left(s_{raf},\left. \bar{s}_{sf}
+\right\rvert_{\Delta t}\right)
+\end{equation}
+
+The solution for $\left. \bar{s}_{sf}
+\right\rvert_{\Delta t}$ is conditional upon whichh side of $s_{raf}$
+it falls.
+If 
+\[
+s_{raf} \lt 
+\left. \bar{s}_{sf} \right\rvert_{0}
++ \frac{\Delta t}{\Delta x} \hat{l}_{sf}^{-}
+- \frac{\Delta t}{t_{raf}} s_{raf}
+  - \Delta t \hat{r}_{sf \rightarrow rz}
+\]
+
+then $\left. \bar{s}_{sf}
+\right\rvert_{\Delta t} \gt s_{raf}$ and is given by
 \begin{equation}
 \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
 = \left(1 + \frac{c_{sf}\Delta t}{\Delta x}\right)^{-1}
 \left( \left. \bar{s}_{sf} \right\rvert_{0}
-+  \frac{\Delta t}{\Delta x} \hat{l}_{sf}^{-} - 
-\Delta t \hat{r}_{sf \rightarrow rz}
++  \frac{\Delta t}{\Delta x} \hat{l}_{sf}^{-}
++ \frac{c_{sf}\Delta t}{\Delta x} s_{raf}
+- \frac{\Delta t}{t_{raf}} s_{raf}
+- \Delta t \hat{r}_{sf \rightarrow rz}
+\right)
+\end{equation}
+
+Otherwise 
+\begin{equation}
+\left. \bar{s}_{sf}  \right\rvert_{\Delta t}
+= \left(1 + \frac{\Delta t}{t_{raf}}\right)^{-1}
+\left( \left. \bar{s}_{sf} \right\rvert_{0}
++  \frac{\Delta t}{\Delta x} \hat{l}_{sf}^{-}
+- \Delta t \hat{r}_{sf \rightarrow rz}
 \right)
 \end{equation}
 
@@ -313,6 +369,7 @@ To ensure that the surface storage does not become negative
 t}{\Delta x} \hat{l}_{sf}^{-}
 \right)\right)
 \end{equation}
+
 
 The surface outflow over the time step is evaluated as
 \begin{equation}

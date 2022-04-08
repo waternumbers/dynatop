@@ -5,6 +5,7 @@ hillslope_hru::hillslope_hru(int& id_, double& s_sf_,double& s_rz_,double& s_uz_
 			     double& q_sf_in_, double& q_sf_out_, // surface zone lateral fluxes
 			     double& q_sz_in_, double& q_sz_out_, // saturated zone lateral fluxes
 			     double& e_a_, // actual evapotranspiration as a rate [m/s]
+			     double const& s_raf_, double const& t_raf_, // runoff attentuation feature
 			     double const& r_sf_max_, double const& c_sf_, // surface store parameters
 			     double const& s_rz_max_, // root zone store parameters
 			     double const& t_d_, // unsaturated zone parameters
@@ -17,6 +18,7 @@ hillslope_hru::hillslope_hru(int& id_, double& s_sf_,double& s_rz_,double& s_uz_
   q_sf_in(q_sf_in_), q_sf_out(q_sf_out_),
   q_sz_in(q_sz_in_), q_sz_out(q_sz_out_),
   e_a(e_a_),
+  s_raf(s_raf_), t_raf(t_raf_),
   r_sf_max(r_sf_max_), c_sf(c_sf_),
   s_rz_max(s_rz_max_),
   t_d(t_d_),
@@ -247,7 +249,17 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
   s_rz = ( s_rz + Dt*precip + v_sf_rz - v_rz_uz ) * ( s_rz_max / (s_rz_max + Dt*pet) );
 
   // solve for surface
-  s_sf = ( Dx / (Dx + Dt*c_sf) ) * ( s_sf + Dt_Dx*l_sf_in - v_sf_rz );
+
+  //s_sf = ( Dx / (Dx + Dt*c_sf) ) * ( s_sf + Dt_Dx*l_sf_in - v_sf_rz );
+
+  
+  double s_sf_tmp = s_sf + Dt_Dx*l_sf_in - v_sf_rz; // tempory middle calc
+  s_sf = s_sf_tmp / (1 + (Dt/t_raf)) ; // ) * s_sf_tmp; // valid if new value of s_sf is less then s_raf
+  if ( (s_sf > s_raf) | (s_raf==0.0) ){  
+    s_sf = ( Dx / (Dx + Dt*c_sf) ) * ( s_sf_tmp  + ((Dt_Dx*c_sf)-(Dt/t_raf))*s_raf );
+  }
+  
+
   // compute actual pet loss
   e_a = pet*(s_rz/s_rz_max);
 
@@ -260,7 +272,7 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
   // }
   
   // compute the outflow
-  q_sf_out = width*c_sf*s_sf;
+  q_sf_out = width*(c_sf*std::max(0.0,s_sf-s_raf) + (Dx/t_raf)*std::min(s_raf,s_sf) ); //width*Dx = area
   q_sz_out = width*l_sz;
 
 }

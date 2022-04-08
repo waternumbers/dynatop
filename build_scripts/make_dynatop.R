@@ -22,7 +22,7 @@ drat::insertPackage(buildFile,dratPath)
 
 ## mac and windows
 rhub::validate_email() # for first time that session
-pkgName <- sub('\\.tar.gz$', '', basename(buildFile)) 
+pkgName <- sub('\\.tar.gz$', '', basename(buildFile))
 ## rhub::platforms()[,1] # lists platforms
 
 mch <- rhub::check(path = buildFile,
@@ -56,6 +56,8 @@ rm(list=ls())
 pacPath <- '../'
 devtools::load_all(pacPath)
 model <- readRDS("Swindale_exp.rds")
+model$hillslope$s_raf <- 0
+model$hillslope$t_raf <- Inf
 model$precip_input$name <- "Rainfall"
 model$pet_input$name <- "PET"
 
@@ -93,7 +95,9 @@ for(ii in list.files(".",pattern="^Swindale.*\\.rds$")){
     ##},
     ##warning = function(w){print(warnings())},
     ##error = function(e){stop(e)})
-    print(warnings())    
+
+    print(warnings())
+
 }
 
 ## ##############################
@@ -101,15 +105,29 @@ for(ii in list.files(".",pattern="^Swindale.*\\.rds$")){
 rm(list=ls())
 devtools::load_all("../")
 data("Swindale");
-ii <- list.files(".",pattern="^Swindale.*\\.rds$")[4]
-mdl <- readRDS(ii)
-mdl$precip_input$name <- "Rainfall"
-mdl$pet_input$name <- "PET"
+
+##ii <- list.files(".",pattern="^Swindale.*\\.rds$")[4]
+##mdl <- readRDS(ii)
+##mdl$precip_input$name <- "Rainfall"
+##mdl$pet_input$name <- "PET"
+mdl <- Swindale$model
 dt <- dynatop$new(mdl)$add_data(Swindale$obs)#[1:2,,drop=FALSE])
 dt$initialise()$sim_hillslope()
+
 dt$plot_channel_inflow()
 dt$plot_channel_inflow(total=TRUE,separate=FALSE)
 dt$plot_channel_inflow(total=TRUE,separate=TRUE)
 dt$plot_channel_inflow(total=FALSE,separate=FALSE)
 dt$plot_channel_inflow(total=FALSE,separate=TRUE)
 plot(dt$get_channel_inflow(total=T))
+
+mdl <- Swindale$model
+mdl$hillslope$s_raf <- 0.1
+mdl$hillslope$t_raf <- 10*60*60
+dt <- dynatop$new(mdl)$add_data(Swindale$obs)#[1:2,,drop=FALSE])
+dt$initialise()$sim_hillslope()
+x11(); dt$plot_channel_inflow(total=TRUE,separate=TRUE)
+mb <- dt$get_mass_errors()
+
+m <- dt$get_model()
+range(m$hillslope$s_sf)

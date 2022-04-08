@@ -32,6 +32,8 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
   Rcpp::NumericVector s_bar = hillslope["s_bar"]; // average gradient
   Rcpp::NumericVector area = hillslope["area"]; // surface area (plan)
   Rcpp::NumericVector width = hillslope["width"]; // contour length of outflow
+  Rcpp::NumericVector s_raf = hillslope["s_raf"]; // runoff-attenuation feature storage volume / HRU area
+  Rcpp::NumericVector t_raf = hillslope["t_raf"]; // runoff-attenuation feature time constant
   Rcpp::NumericVector r_sf_max = hillslope["r_sfmax"]; // max flux down from surface
   Rcpp::NumericVector s_rz_max = hillslope["s_rzmax"]; // max soil moisture depth
   Rcpp::NumericVector c_sf = hillslope["c_sf"]; // surface flow celerity
@@ -100,16 +102,17 @@ void dt_implicit_sim(Rcpp::DataFrame hillslope, // hillslope data frame
   for(int ii=0; ii<nhillslope; ++ii){
     cid = id[ii];
     hs_hru.push_back(hillslope_hru(id[ii],
-			       s_sf[ii], s_rz[ii], s_uz[ii], s_sz[ii],
-			       s_bar[ii],   area[ii],   width[ii],
-			       q_sf_in[cid], q_sf_out[cid], // surface zone lateral fluxes
-			       q_sz_in[cid], q_sz_out[cid], // saturated zone lateral fluxes
-			       e_a[cid], // actual evapotranspiration as a rate [m/s]
-			       r_sf_max[ii],   c_sf[ii], // surface store parameters
-			       s_rz_max[ii], // root zone store parameters
-			       t_d[ii], // unsaturated zone parameters
-			       ln_t0[ii], c_sz[ii], m[ii], D[ii], m_2[ii], omega[ii],// saturated zone parameters
-			       opt[ii]   ) //type of saturated zone
+				   s_sf[ii], s_rz[ii], s_uz[ii], s_sz[ii],
+				   s_bar[ii],   area[ii],   width[ii],
+				   q_sf_in[cid], q_sf_out[cid], // surface zone lateral fluxes
+				   q_sz_in[cid], q_sz_out[cid], // saturated zone lateral fluxes
+				   e_a[cid], // actual evapotranspiration as a rate [m/s]
+				   s_raf[ii], t_raf[ii], // RAF parameters
+				   r_sf_max[ii],   c_sf[ii], // surface store parameters
+				   s_rz_max[ii], // root zone store parameters
+				   t_d[ii], // unsaturated zone parameters
+				   ln_t0[ii], c_sz[ii], m[ii], D[ii], m_2[ii], omega[ii],// saturated zone parameters
+				   opt[ii]   ) //type of saturated zone
 		     );
   }
 
