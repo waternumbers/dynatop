@@ -46,7 +46,7 @@
   <a href="../reference/index.html">Reference</a>
 </li>
 <li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
     Articles
      
     <span class="caret"></span>
@@ -339,16 +339,27 @@ where <span class="math inline">\(r_{sf \rightarrow rz} \leq k_{sf}\)</span>.</p
 <span class="math display">\[\begin{equation}
 A\frac{d \bar{s}_{sf}}{dt} = q_{sf}^{-} - q_{sf}^{+} - A\bar{r}_{sf \rightarrow rz}
 \end{equation}\]</span></p>
+<p>The outflow comes from two sources; the runoff-attenuation feature
+(raf) and surface flow; giving</p>
+<p><span class="math display">\[
+q_{sf}^{+} = w^{+}l_{sf}^{+} + \frac{A}{t_{raf}}\min\left(s_{raf},\bar{s}_{sf}\right)
+\]</span></p>
 <p>Since <span class="math inline">\(\Delta x = A/w^{+}\)</span> and <span class="math inline">\(l_{sf}^{-} = q_{sf}^{-}/w^{+}\)</span> re arranging gives
 <span class="math display">\[\begin{equation}
-\frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} - l_{sf}^{+}\right) - \bar{r}_{sf \rightarrow rz}
+\frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} -
+l_{sf}^{+}\right) - \frac{1}{t_{raf}}
+\min\left(s_{raf},\bar{s}_{sf}\right) - \bar{r}_{sf \rightarrow rz}
 \end{equation}\]</span></p>
 <p>This equation represents the evolution in time of <span class="math inline">\(\bar{s}_{sf}\)</span> expressed in
-terms of the unit width fluxes and an effective length <span class="math inline">\(A/w^+\)</span></p>
-<p>To complete the formulation assume that <span class="math inline">\(l_{sf}^{+} = c_{sf}\bar{s}_{sf}\)</span>
+terms of the unit width fluxes, the runoff attenuation feature outflow and an effective length <span class="math inline">\(A/w^+\)</span></p>
+<p>To complete the formulation assume that
+<span class="math inline">\(l_{sf}^{+} = c_{sf}\max\left(0,\bar{s}_{sf} - s_{raf}\right)\)</span>.
 which gives
 <span class="math display">\[\begin{equation}
-\frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} - c_{sf}\bar{s}_{sf}\right) - \bar{r}_{sf \rightarrow rz}
+\frac{d \bar{s}_{sf}}{dt} = \frac{1}{\Delta x}\left(l_{sf}^{-} -
+c_{sf}\max\left(0,\bar{s}_{sf}-s_{raf}\right)\right) 
+- \frac{1}{t_{raf}} \min\left(s_{raf},\bar{s}_{sf}\right)
+- \bar{r}_{sf \rightarrow rz}
 \end{equation}\]</span></p>
 </div>
 <div class="section level3">
@@ -470,17 +481,55 @@ downward flux.</p>
 =
 \left. \bar{s}_{sf} \right\rvert_{0}
 + \frac{\Delta t}{\Delta x} \left(
-\hat{l}_{sf}^{-} - c_{sf} \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
+\hat{l}_{sf}^{-} - c_{sf} \max\left(0, \left. \bar{s}_{sf}
+\right\rvert_{\Delta t} - s_{raf}\right)
 \right) 
+- \frac{\Delta t}{t_{raf}} \min\left(s_{raf},\left. \bar{s}_{sf}
+\right\rvert_{\Delta t}\right)
 - \Delta t \hat{r}_{sf \rightarrow rz}
 \end{equation}\]</span></p>
-<p>or</p>
-<p><span class="math display">\[\begin{equation}
+<p>To ensure that the surface storage does not become negative
+<span class="math display">\[\begin{equation}
+\hat{r}_{sf \rightarrow rz} \leq \min\left( k_{sf},
+\left. \frac{1}{\Delta t}\left(\bar{s}_{sf} \right\rvert_{0} + \frac{\Delta
+t}{\Delta x} \hat{l}_{sf}^{-}
+\right)\right)
+\end{equation}\]</span></p>
+<p>The surface outflow over the time step is evaluated as
+<span class="math display">\[\begin{equation}
+\hat{q}_{sf}^{+} = w^{+}c_{sf} \max\left(0, \left. \bar{s}_{sf}
+\right\rvert_{\Delta t} -s_{raf}\right) + 
+\frac{A}{t_{raf}} \min\left(s_{raf},\left. \bar{s}_{sf}
+\right\rvert_{\Delta t}\right)
+\end{equation}\]</span></p>
+<p>The solution for <span class="math inline">\(\left. \bar{s}_{sf} \right\rvert_{\Delta t}\)</span> is conditional upon whichh side of <span class="math inline">\(s_{raf}\)</span>
+it falls.
+If
+<span class="math display">\[
+s_{raf} \lt 
+\left. \bar{s}_{sf} \right\rvert_{0}
++ \frac{\Delta t}{\Delta x} \hat{l}_{sf}^{-}
+- \frac{\Delta t}{t_{raf}} s_{raf}
+  - \Delta t \hat{r}_{sf \rightarrow rz}
+\]</span></p>
+<p>then <span class="math inline">\(\left. \bar{s}_{sf} \right\rvert_{\Delta t} \gt s_{raf}\)</span> and is given by
+<span class="math display">\[\begin{equation}
 \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
 = \left(1 + \frac{c_{sf}\Delta t}{\Delta x}\right)^{-1}
 \left( \left. \bar{s}_{sf} \right\rvert_{0}
-+  \frac{\Delta t}{\Delta x} \hat{l}_{sf}^{-} - 
-\Delta t \hat{r}_{sf \rightarrow rz}
++  \frac{\Delta t}{\Delta x} \hat{l}_{sf}^{-}
++ \frac{c_{sf}\Delta t}{\Delta x} s_{raf}
+- \frac{\Delta t}{t_{raf}} s_{raf}
+- \Delta t \hat{r}_{sf \rightarrow rz}
+\right)
+\end{equation}\]</span></p>
+<p>Otherwise
+<span class="math display">\[\begin{equation}
+\left. \bar{s}_{sf}  \right\rvert_{\Delta t}
+= \left(1 + \frac{\Delta t}{t_{raf}}\right)^{-1}
+\left( \left. \bar{s}_{sf} \right\rvert_{0}
++  \frac{\Delta t}{\Delta x} \hat{l}_{sf}^{-}
+- \Delta t \hat{r}_{sf \rightarrow rz}
 \right)
 \end{equation}\]</span></p>
 <p>To ensure that the surface storage does not become negative
