@@ -570,7 +570,7 @@ dynatop <- R6Class(
             idx <- tmpp %in% names(tmp)
             if(!all(idx)){
                 warning(paste0("The following HRUs do not receive precipitation and have area greater then 0: "),
-                        paste(ttmp[!idx],collapse=", "))
+                        paste(tmpp[!idx],collapse=", "))
             }
             ## sort - not needed but might help speed?
             model$precip_input <-

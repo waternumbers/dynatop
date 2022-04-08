@@ -87,29 +87,31 @@ over the length of the hillslope we find
     temporal average is of a spatial average the $\bar{}$ is dropped. For
     example the temporal average of the spatial average $\bar{y}$ over a time step is $\hat{y}$.
 	
-| Quantity type              | Symbol                  | Description                                                        | unit    |
-| ---                        | ---                     | ------                                                             | ---     |
-| Storage                    | $s_{sf}$                | Surface excess storage per unit width                              | m       |
-|                            | $s_{rz}$                | Root zone storage per unit width                                   | m       |
-|                            | $s_{uz}$                | Unsaturated zone storage per unit width                            | m       |
-|                            | $s_{sz}$                | Saturated zone storage deficit per unit width                      | m       |
-| Vertical fluxes            | $r_{sf \rightarrow rz}$ | Flow from the surface excess store to the root zone per unit width | m/s     |
-|                            | $r_{rz \rightarrow uz}$ | Flow from the root zone to the unsaturated zone per unit width     | m/s     |
-|                            | $r_{uz \rightarrow sz}$ | Flow from unsaturated to saturated zone per unit width             | m/s     |
-| Lateral fluxes             | $l_{sf}$                | Lateral flow in the surface zone per unit outflow width                    | m$^2$/s |
-|                            | $l_{sz}$                | Lateral flow in the saturated zone per unit outflow width                  | m$^2$/s |
-|                            | $q_{sf}$                | Lateral flow in the hillslope surface zone                         | m$^3$/s |
-|                            | $q_{sz}$                | Lateral inflow to the hillslope surface zone                       | m$^3$/s |
-| Vertical fluxes to the HRU | $p$                     | Precipitation rate                                                 | m/s     |
-|                            | $e_p$                   | Potential Evapotranspiration rate                                  | m/s     |
-| Other HRU properties       | $A$                     | Plan area                                                          | m$^3$   |
+| Quantity type              | Symbol                  | Description                                                              | unit    |
+|----------------------------|-------------------------|--------------------------------------------------------------------------|---------|
+| Storage                    | $s_{sf}$                | Surface excess storage per unit width                                    | m       |
+|                            | $s_{rz}$                | Root zone storage per unit width                                         | m       |
+|                            | $s_{uz}$                | Unsaturated zone storage per unit width                                  | m       |
+|                            | $s_{sz}$                | Saturated zone storage deficit per unit width                            | m       |
+| Vertical fluxes            | $r_{sf \rightarrow rz}$ | Flow from the surface excess store to the root zone per unit width       | m/s     |
+|                            | $r_{rz \rightarrow uz}$ | Flow from the root zone to the unsaturated zone per unit width           | m/s     |
+|                            | $r_{uz \rightarrow sz}$ | Flow from unsaturated to saturated zone per unit width                   | m/s     |
+| Lateral fluxes             | $l_{sf}$                | Lateral flow in the surface zone per unit outflow width                  | m$^2$/s |
+|                            | $l_{sz}$                | Lateral flow in the saturated zone per unit outflow width                | m$^2$/s |
+|                            | $q_{sf}$                | Lateral flow in the hillslope surface zone                               | m$^3$/s |
+|                            | $q_{sz}$                | Lateral inflow to the hillslope surface zone                             | m$^3$/s |
+| Vertical fluxes to the HRU | $p$                     | Precipitation rate                                                       | m/s     |
+|                            | $e_p$                   | Potential Evapotranspiration rate                                        | m/s     |
+| Other HRU properties       | $A$                     | Plan area                                                                | m$^3$   |
 |                            | $w$                     | Width of a hill slope cross section                                      | m       |
-|                            | $\Delta x$              | Effective length of the hillslope HRU (Area divided by outflow width)                                        | m       |
-|                            | $k_{sf}$                | Maximum flow rate from surface excess to root zone per unit width  | m/s     |
-|                            | $c_{sf}$                | Surface excess storage celerity                                    | m/s     |
-|                            | $s_{rzmax}$             | Maximum root zone storage depth                                    | m       |
-|                            | $T_d$                   | Unsaturated zone time constant per m of saturated storage deficit. | s/m     |
-|                            | $\Theta_{sz}$           | Further properties and parameters for the solution of the saturated zone | :-: |
+|                            | $\Delta x$              | Effective length of the hillslope HRU (Area divided by outflow width)    | m       |
+|                            | $k_{sf}$                | Maximum flow rate from surface excess to root zone per unit width        | m/s     |
+|                            | $c_{sf}$                | Surface excess storage celerity                                          | m/s     |
+|                            | $s_{raf}$               | Surface runoff attenuation feature storage                               | m       |
+|                            | $t_{raf}$               | Surface runoff attenuation feature time constant                         | s       |
+|                            | $s_{rzmax}$             | Maximum root zone storage depth                                          | m       |
+|                            | $T_d$                   | Unsaturated zone time constant per m of saturated storage deficit.       | s/m     |
+|                            | $\Theta_{sz}$           | Further properties and parameters for the solution of the saturated zone | :-:     |
                                                     
   Table: (\#tab:hs-x-notation) Outline of notation for describing a cross
   section of the hillslope HRU
