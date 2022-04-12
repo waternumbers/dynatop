@@ -280,7 +280,7 @@ dynatop <- R6Class(
     ),
     private = list(
         ## stores of data
-        version = "0.2.1",
+        version = "0.2.2",
         model = list(), # storage for model object
         summary = list(), # storage for intermediate computed values used in code
         time_series = list(),

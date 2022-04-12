@@ -36,3 +36,4 @@ Suggests:
     pkgdown,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
+SystemRequirements: C++11
