@@ -6,6 +6,7 @@ graphics.off()
 pacPath <- '../'
 Rcpp::compileAttributes(pacPath)
 devtools::document(pacPath)
+devtools::spell_check(pacPath,use_wordlist=TRUE)
 devtools::check(pacPath)
 
 ## check documentation build

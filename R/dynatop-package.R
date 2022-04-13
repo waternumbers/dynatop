@@ -1,6 +1,6 @@
 #' dynatop
 #'
-#' This package contains the core code for the R implimentation of dynamic TOPMODEL
+#' This package contains the core code for the R implementation of dynamic TOPMODEL
 #'
 #' @name dynatop-package
 #' @docType package

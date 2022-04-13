@@ -37,3 +37,4 @@ Suggests:
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 SystemRequirements: C++11
+Language: en-GB

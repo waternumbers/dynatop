@@ -20,7 +20,7 @@ dynatop <- R6Class(
         #'
         #' @return invisible(self) suitable for chaining
         #'
-        #' @details This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
+        #' @details This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistency of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
         initialize = function(model, use_states=FALSE, delta = 1e-13){
             ## digest model with checks - will fail if errors identified
             private$digest_model(model,use_states,delta)
@@ -47,7 +47,7 @@ dynatop <- R6Class(
             private$time_series <- list()
             private$info$ts <- list()
         },
-        #' @description Initialises a dynatop object in the simpliest way possible.
+        #' @description Initialises a dynatop object in the most simple way possible.
         #'
         #' @param tol tolerance for the solution for the saturated zone
         #' @param max_it maximum number of iterations to use in the solution of the saturated zone
@@ -67,7 +67,7 @@ dynatop <- R6Class(
         #' @param ftol tolerance in closeness to 0 in the solution for the saturated zone
         #'
         #' @details Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
-        #' While ftol is implimented it is currently set to \code{Inf} to mimick the behaviour of previous versions. This will change in the future.
+        #' While ftol is implemented it is currently set to \code{Inf} to mimic the behaviour of previous versions. This will change in the future.
         #'
         #' @return invisible(self) for chaining
         sim_hillslope = function(keep_states=NULL,sub_step=NULL,tol = 2*.Machine$double.eps, max_it = 1000, ftol= Inf){
@@ -135,9 +135,9 @@ dynatop <- R6Class(
 
             invisible(self)
         },
-        #' @description Simulate the hillslope and channel componets of a dynatop object
+        #' @description Simulate the hillslope and channel components of a dynatop object
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
-        #' @param mass_check Flag indicating is a record of mass balance errors shuld be kept
+        #' @param mass_check Flag indicating is a record of mass balance errors should be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
         #' @param tol tolerance on width of bounds in the solution for the saturated zone
         #' @param max_it maximum number of iterations to use in the solution of the saturated zone

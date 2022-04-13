@@ -11,12 +11,12 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 The following is a selected list of references relating to Dynamic TOPMODEL,
-in implimentation in R and interesting applications.
+in implementation in R and interesting applications.
 
 # The basis of Dynamic TOPMODEL
 [@Beven2001]
 
-# Implimentations in R
+# Implementations in R
 [@Metcalfe2015]
 
 # Applications

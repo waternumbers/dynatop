@@ -99,7 +99,7 @@ $t+\Delta t$ is presumed to be constant over the interval $t$ to $t+\Delta t$.
 To aid the readability of the code the variables are labelled consistently
 with regards to the vignettes. For example:
 
-- Single subscript: $l_{sz}$ becomes `l_sz`, $s_{uz}$ becomes `s_uz` etc
+- Single subscript: $l_{sz}$ becomes `l_sz`, $s_{uz}$ becomes `s_uz` etc.
 - Directional variables: $q_{rz \rightarrow uz}$ becomes `q_rz_uz`, etc.
 - Greek letters are spelt: $\lambda$ becomes `lambda`
 

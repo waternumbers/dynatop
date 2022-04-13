@@ -11,7 +11,7 @@ resample_xts(obs, dt, is.rate = FALSE)
 
 \item{dt}{New time interval in seconds}
 
-\item{is.rate}{If TRUE then these are rates i.e m/hr. Otherwise they are absolute values accumulated within the preceeding time interval. Values are scaled before returning so resampling is conservative.}
+\item{is.rate}{If TRUE then these are rates i.e m/h. Otherwise they are absolute values accumulated within the preceding time interval. Values are scaled before returning so resampling is conservative.}
 }
 \value{
 An xts object with the new timestep
@@ -24,8 +24,8 @@ Time series of observation data are often of different temporal resolutions, how
 
 Because of the methods used the results:
 
-- are not accurate when the input data does not have a constant timestep. The code issued a warnign and proceeds assuming the data are equally spaced with the modal timestep.
-- do not guarentee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.
+- are not accurate when the input data does not have a constant timestep. The code issues a warning and proceeds assuming the data are equally spaced with the modal timestep.
+- do not guarantee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.
 
 
 }
