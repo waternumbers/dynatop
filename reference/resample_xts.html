@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1.9999</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.2</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
 <dt>dt</dt>
 <dd><p>New time interval in seconds</p></dd>
 <dt>is.rate</dt>
-<dd><p>If TRUE then these are rates i.e m/hr. Otherwise they are absolute values accumulated within the preceeding time interval. Values are scaled before returning so resampling is conservative.</p></dd>
+<dd><p>If TRUE then these are rates i.e m/h. Otherwise they are absolute values accumulated within the preceding time interval. Values are scaled before returning so resampling is conservative.</p></dd>
 </dl></div>
     <div id="value">
     <h2>Value</h2>
@@ -98,8 +98,8 @@
     <h2>Details</h2>
     <p>Time series of observation data are often of different temporal resolutions, however the input to most hydrological models, as is the case with the Dynamic TOPMODEL, requires those data at the same interval. This provides a method to resample a collection of such data to a single interval.</p>
 <p>Because of the methods used the results:</p>
-<p>- are not accurate when the input data does not have a constant timestep. The code issued a warnign and proceeds assuming the data are equally spaced with the modal timestep.
-- do not guarentee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.</p>
+<p>- are not accurate when the input data does not have a constant timestep. The code issues a warning and proceeds assuming the data are equally spaced with the modal timestep.
+- do not guarantee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.</p>
 
 
     </div>

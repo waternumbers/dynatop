@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1.9999</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.2</span>
       </span>
     </div>
 
@@ -132,7 +132,7 @@ Figure 1: Schematic of the Hill slope HRU
 given in a finite volume form. Approximating equations for the solution of the
 governing equations are then derived with associated implicit and semi-implicit numerical
 schemes. These are valid for a wide range of transmissivity profiles,
-includign those present in the code and presented in the third sections of the
+including those present in the code and presented in the third sections of the
 vignette.</p>
 <p>Two appendices provide supporting information justifying the numerical schemes
 and an alternative derivation of the governing equations based on the
@@ -160,7 +160,7 @@ variable <span class="math inline">\(y\)</span> at time <span class="math inline
 over the length of the hillslope we find</p></li>
 </ul>
 <p><span class="math display">\[\begin{equation}
-\int wy dx = A\bar{y}
+\int w y dx = A\bar{y}
 \end{equation}\]</span></p>
 <ul>
 <li>Average values over a time step are denoted with a <span class="math inline">\(\hat{}\)</span>. If the
@@ -173,9 +173,9 @@ example the temporal average of the spatial average <span class="math inline">\(
 section of the hillslope HRU</caption>
 <colgroup>
 <col width="20%">
-<col width="20%">
-<col width="40%">
-<col width="20%">
+<col width="18%">
+<col width="54%">
+<col width="6%">
 </colgroup>
 <thead><tr class="header">
 <th>Quantity type</th>
@@ -295,6 +295,18 @@ section of the hillslope HRU</caption>
 </tr>
 <tr class="odd">
 <td></td>
+<td><span class="math inline">\(s_{raf}\)</span></td>
+<td>Surface runoff attenuation feature storage</td>
+<td>m</td>
+</tr>
+<tr class="even">
+<td></td>
+<td><span class="math inline">\(t_{raf}\)</span></td>
+<td>Surface runoff attenuation feature time constant</td>
+<td>s</td>
+</tr>
+<tr class="odd">
+<td></td>
 <td><span class="math inline">\(s_{rzmax}\)</span></td>
 <td>Maximum root zone storage depth</td>
 <td>m</td>
@@ -332,7 +344,7 @@ saturation storage deficits water may be returned from the root
 zone to the surface giving negative values of <span class="math inline">\(r_{sf \rightarrow rz}\)</span>.</p>
 <p>The governing ODE for a cross section of the hillslope can be written as
 <span class="math display">\[\begin{equation}
-\frac{dws_{sf}}{dt} = - \frac{dq_{sf}}{dx} - wr_{sf \rightarrow rz}
+\frac{dws_{sf}}{dt} = - \frac{dq_{sf}}{dx} - w r_{sf \rightarrow rz}
 \end{equation}\]</span>
 where <span class="math inline">\(r_{sf \rightarrow rz} \leq k_{sf}\)</span>.</p>
 <p>Integration over the hillslope length and substituting in the spatial averages gives
@@ -340,7 +352,7 @@ where <span class="math inline">\(r_{sf \rightarrow rz} \leq k_{sf}\)</span>.</p
 A\frac{d \bar{s}_{sf}}{dt} = q_{sf}^{-} - q_{sf}^{+} - A\bar{r}_{sf \rightarrow rz}
 \end{equation}\]</span></p>
 <p>The outflow comes from two sources; the runoff-attenuation feature
-(raf) and surface flow; giving</p>
+(RAF) and surface flow; giving</p>
 <p><span class="math display">\[
 q_{sf}^{+} = w^{+}l_{sf}^{+} + \frac{A}{t_{raf}}\min\left(s_{raf},\bar{s}_{sf}\right)
 \]</span></p>
@@ -367,8 +379,8 @@ c_{sf}\max\left(0,\bar{s}_{sf}-s_{raf}\right)\right)
 </h3>
 <p>The root zone gains water from precipitation and the surface zone. It loses water through
 evaporation and to the unsaturated zone. Since
-all the veritcal fluxes are spatially uniform the evolution can be evaluated
-in terms of the spatial averages. The root zone storage satifies</p>
+all the vertical fluxes are spatially uniform the evolution can be evaluated
+in terms of the spatial averages. The root zone storage satisfies</p>
 <p><span class="math display">\[\begin{equation} 0 \leq \bar{s}_{rz} \leq s_{rzmax} \end{equation}\]</span></p>
 <p>with the governing ODE
 <span class="math display">\[\begin{equation}
@@ -419,9 +431,9 @@ possible rate and <span class="math inline">\(\bar{r}_{rz \rightarrow uz}\)</spa
 <h3 id="saturated-zone">Saturated Zone<a class="anchor" aria-label="anchor" href="#saturated-zone"></a>
 </h3>
 <p>For a HRU the alteration of the storage in the saturated zone is
-given by teh kinematic equation
+given by the kinematic equation
 <span class="math display">\[\begin{equation}
-\frac{dw\left(D-s_{sz}\right)}{dt} = -\frac{dq_{sz}}{dx} + wr_{uz \rightarrow sz}
+\frac{dw\left(D-s_{sz}\right)}{dt} = -\frac{dq_{sz}}{dx} + w r_{uz \rightarrow sz}
 \end{equation}\]</span></p>
 <p>Integration over the length of the hillslope and substitution of the
 spatial averaged values gives
@@ -451,7 +463,7 @@ g\left(\bar{s}_{sz},\Theta_{sz}\right) \rightarrow 0 \quad \mathrm{as} \quad
 The first condition ensures a non negative celerity (wave speed) which is in
 keeping with the conceptualisation of the model. The first condition also implies
 that <span class="math inline">\(l_{sz}^{+}\)</span> decreases with increasing <span class="math inline">\(\bar{s}_{sz}\)</span>. This combined with
-the second condition ensures that the model respresents a state where no
+the second condition ensures that the model represents a state where no
 lateral inflow is generated.</p>
 <p>Using the relationship between <span class="math inline">\(l_{sz}^{+}\)</span> and <span class="math inline">\(\bar{s}_{sz}\)</span> gives
 <span class="math display">\[\begin{equation}
@@ -469,7 +481,7 @@ evaluated at the final state, is presented.</p>
 <p>The basis of the solution is that a gravity driven system will maximise
 the downward flow of water within each timestep of size <span class="math inline">\(\Delta t\)</span>.</p>
 <p>Recalling that the temporal and spatial average vertical fluxes are denoted with
-a <span class="math inline">\(\hat{}\)</span> the implicit approximations are stated in teh following sections using the unknown vertical fluxes
+a <span class="math inline">\(\hat{}\)</span> the implicit approximations are stated in the following sections using the unknown vertical fluxes
 <span class="math inline">\(\hat{r}_{\star \rightarrow \star}\)</span> which are then determined by maximising the
 downward flux.</p>
 <div class="section level3">
@@ -502,7 +514,7 @@ t}{\Delta x} \hat{l}_{sf}^{-}
 \frac{A}{t_{raf}} \min\left(s_{raf},\left. \bar{s}_{sf}
 \right\rvert_{\Delta t}\right)
 \end{equation}\]</span></p>
-<p>The solution for <span class="math inline">\(\left. \bar{s}_{sf} \right\rvert_{\Delta t}\)</span> is conditional upon whichh side of <span class="math inline">\(s_{raf}\)</span>
+<p>The solution for <span class="math inline">\(\left. \bar{s}_{sf} \right\rvert_{\Delta t}\)</span> is conditional upon which side of <span class="math inline">\(s_{raf}\)</span>
 it falls.
 If
 <span class="math display">\[
@@ -631,7 +643,7 @@ t}{\Delta x} \hat{l}_{sf}^{-}
 \left. \bar{s}_{rz} \right.\rvert_{0} + \Delta t \left( p + \check{r}_{sf
 \rightarrow rz} - e_{p} \right) - s_{rzmax} \right)\right)
 \]</span></p>
-<p>Consider the psuedo-function
+<p>Consider the pseudo-function
 <span class="math display">\[
 f\left(z\right) = 
 z - 
@@ -651,27 +663,27 @@ shown that <span class="math inline">\(f\left(z\right)\)</span> is a monotonic i
 <span class="math inline">\(z &gt; 0\)</span>; hence if <span class="math inline">\(f\left(0\right) \leq 0\)</span> and <span class="math inline">\(f\left(D\right) \geq 0\)</span> a
 unique solution for <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\)</span> can be found.</p>
 <!-- ### Algorithm 1 - Simple Implicit -->
-<p>A direct implimentation of the above results takes the form of Algorithm 1.</p>
+<p>A direct implementation of the above results takes the form of Algorithm 1.</p>
 <hr>
-<p><em>Algorithm 1: Direct Implimentation</em></p>
+<p><em>Algorithm 1: Direct Implementation</em></p>
 <ol style="list-style-type: decimal">
 <li>Compute <span class="math inline">\(\check{r}_{sf \rightarrow rz}\)</span> and <span class="math inline">\(\check{r}_{rz \rightarrow uz}\)</span>
 </li>
-<li>Test for saturation. If <span class="math inline">\(f\left(0\right) \geq 0\)</span> then goto Step 3 else goto Step 4</li>
+<li>Test for saturation. If <span class="math inline">\(f\left(0\right) \geq 0\)</span> then go to Step 3 else go to Step 4</li>
 <li>Saturated. Set <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0\)</span> and
 <span class="math display">\[\hat{r}_{rz \rightarrow uz} = \frac{1}{\Delta t}\left(
 \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + 
 \frac{\Delta t}{\Delta x} \left(g\left(0,\Theta_{sz}\right) -
 l_{sz}^{-}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)
 \]</span>
-Goto Step 5.</li>
+Go to Step 5.</li>
 <li>Not saturated. Find <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\)</span> such that
 <span class="math inline">\(f\left(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\right) = 0\)</span> and take
 <span class="math display">\[
 \hat{r}_{rz \rightarrow uz} = \min\left(\check{r}_{rz \rightarrow uz},\frac{1}{\Delta t} \left(
 \left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \frac{\Delta t}{T_d} -
  \left. \bar{s}_{uz} \right.\rvert_{0}\right)\right)\]</span>
-Goto Step 5.</li>
+Go to Step 5.</li>
 <li>Compute
 <span class="math display">\[
 \hat{r}_{sf \rightarrow rz} = \min\left(\check{r}_{sf \rightarrow
@@ -685,14 +697,14 @@ Goto Step 5.</li>
 fluxes.</li>
 </ol>
 <hr>
-<p>The challange with Algorithm 1 is that maintaining a water (mass) balance and
+<p>The challenge with Algorithm 1 is that maintaining a water (mass) balance and
 correct limits on the state values
 depends upon the accuracy of the solution of <span class="math inline">\(f\left(z\right)=0\)</span>. Since
 finding <span class="math inline">\(z\)</span> requires multiple evaluations of the transmissivity profile it can
 rapidly become the most expensive part of the code.</p>
 <p>To limit the computational cost suppose that <span class="math inline">\(f\left(z\right)=0\)</span> is solved
 approximately to give <span class="math inline">\(\tilde{z}\)</span>
-such that for some numerical tolerence <span class="math inline">\(\epsilon\)</span> we have <span class="math inline">\(\left\lvert f\left(\tilde{z}\right) \right\rvert \leq \epsilon\)</span>. Using <span class="math inline">\(\tilde{z}\)</span> to
+such that for some numerical tolerance <span class="math inline">\(\epsilon\)</span> we have <span class="math inline">\(\left\lvert f\left(\tilde{z}\right) \right\rvert \leq \epsilon\)</span>. Using <span class="math inline">\(\tilde{z}\)</span> to
 evaluate the outward lateral flux from the saturated zone gives the
 pseudo-function
 <span class="math display">\[
@@ -711,7 +723,7 @@ solution for <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delt
 <ul>
 <li>If <span class="math inline">\(h(0) \geq 0\)</span> the inward flux is enough to produce saturation in the subsurface and
 <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0\)</span>.</li>
-<li>If <span class="math inline">\(h(z_{max}) &lt; 0\)</span> (poosible only due to the outflow flux approximation) then
+<li>If <span class="math inline">\(h(z_{max}) &lt; 0\)</span> (possible only due to the outflow flux approximation) then
 <span class="math inline">\(\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = D\)</span> and the lateral outflow is
 adjusted such that
 <span class="math display">\[
@@ -746,11 +758,11 @@ h\left(z_{C}\right) } \right)
 </ul>
 </li>
 </ul>
-<p>The implimenation of this approach is presented in Algorithm 2. it can be seem
+<p>The implementation of this approach is presented in Algorithm 2. it can be seem
 that the exchange for decreasing the accuracy of the solution of the zero
 finding problem is a potential to evaluate a power and a square root.</p>
 <hr>
-<p><em>Algorithm 2: Stable Implimentation</em></p>
+<p><em>Algorithm 2: Stable Implementation</em></p>
 <ol style="list-style-type: decimal">
 <li>Compute <span class="math inline">\(\check{r}_{sf \rightarrow rz}\)</span> and <span class="math inline">\(\check{r}_{rz \rightarrow uz}\)</span>
 </li>
@@ -841,7 +853,7 @@ in the model options vector and the additional parameters or properties
 required. The additional parameter and properties are defined in Table <a href="#tab:hs-transmissivity-param">3</a>.</p>
 <table style="width:100%;" class="table">
 <caption>
-<span id="tab:hs-transmissivity">Table 2: </span> Transmissivity profiles avaiable with the
+<span id="tab:hs-transmissivity">Table 2: </span> Transmissivity profiles available with the
 <code>dynatop</code> package.</caption>
 <colgroup>
 <col width="16%">
@@ -862,7 +874,7 @@ required. The additional parameter and properties are defined in Table <a href="
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>Exponental</td>
+<td>Exponential</td>
 <td><span class="math inline">\(T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)\)</span></td>
 <td><span class="math inline">\(\frac{\cos\beta}{m}g\left(\bar{s}_{sz},\Theta_{sz}\right)\)</span></td>
 <td><span class="math inline">\(T_0,\beta,m\)</span></td>
@@ -899,7 +911,7 @@ required. The additional parameter and properties are defined in Table <a href="
 </table>
 <table class="table">
 <caption>
-<span id="tab:hs-transmissivity-param">Table 3: </span> Additional paraemters used in the transmissivity profiles.</caption>
+<span id="tab:hs-transmissivity-param">Table 3: </span> Additional parameters used in the transmissivity profiles.</caption>
 <thead><tr class="header">
 <th>Symbol</th>
 <th>Description</th>
@@ -908,7 +920,7 @@ required. The additional parameter and properties are defined in Table <a href="
 <tbody>
 <tr class="odd">
 <td><span class="math inline">\(T_0\)</span></td>
-<td>Transmissiviy at saturation</td>
+<td>Transmissivity at saturation</td>
 <td>m<span class="math inline">\(^2\)</span>/s</td>
 </tr>
 <tr class="even">
@@ -943,7 +955,7 @@ required. The additional parameter and properties are defined in Table <a href="
 </table>
 </div>
 <div class="section level2">
-<h2 id="appendix-a---monoticity-of-fleftzright">Appendix A - Monoticity of <span class="math inline">\(f\left(z\right)\)</span><a class="anchor" aria-label="anchor" href="#appendix-a---monoticity-of-fleftzright"></a>
+<h2 id="appendix-a---monotonicity-of-fleftzright">Appendix A - Monotonicity of <span class="math inline">\(f\left(z\right)\)</span><a class="anchor" aria-label="anchor" href="#appendix-a---monotonicity-of-fleftzright"></a>
 </h2>
 <p>By definition <span class="math inline">\(\left. \bar{s}_{uz} \right.\rvert_{0}\)</span>, <span class="math inline">\(\Delta t\)</span>, <span class="math inline">\(\Delta X\)</span>,
 <span class="math inline">\(T_d\)</span>, <span class="math inline">\(\check{r}_{rz \rightarrow uz}\)</span> and <span class="math inline">\(z\)</span> are all greater or equal to 0. Rewrite the expression for <span class="math inline">\(f\left(z\right)\)</span> as
@@ -1006,7 +1018,7 @@ Using this relationship and the expression for the range of <span class="math in
 equality possible when <span class="math inline">\(z=0\)</span>.</p>
 </div>
 <div class="section level2">
-<h2 id="appendix-b---comparision-to-the-infantesimal-slab-derivation">Appendix B - Comparision to the Infantesimal slab derivation<a class="anchor" aria-label="anchor" href="#appendix-b---comparision-to-the-infantesimal-slab-derivation"></a>
+<h2 id="appendix-b---comparison-to-the-infinitesimal-slab-derivation">Appendix B - Comparison to the Infinitesimal slab derivation<a class="anchor" aria-label="anchor" href="#appendix-b---comparison-to-the-infinitesimal-slab-derivation"></a>
 </h2>
 <div class="section level3">
 <h3 id="surface-zone-1">Surface Zone<a class="anchor" aria-label="anchor" href="#surface-zone-1"></a>
@@ -1021,7 +1033,7 @@ approximation for the change of flow with length the governing ODE can be writte
 <span class="math display">\[\begin{equation}
 \frac{ds_{sf}^{+}}{dt} = \frac{q_{sf}^{-}/w^{+} - l_{sf}^{+}}{\Delta x} - r_{sf \rightarrow rz}^{+}
 \end{equation}\]</span></p>
-<p>Note the similaties between this and the finite volume solution. Infact if
+<p>Note the similarities between this and the finite volume solution. In fact if
 <span class="math inline">\(r_{sf \rightarrow rz}\)</span> is taken to be spatially uniform and
 <span class="math inline">\(\Delta x = A/w^{+}\)</span> then this solution for <span class="math inline">\(s_{sf}^{+}\)</span> will evolve in a similar fashion to
 <span class="math inline">\(\bar{s}_{sf}\)</span></p>
@@ -1038,7 +1050,7 @@ at the bottom of the hillslope (using <span class="math inline">\(^{+}\)</span>)
 </h3>
 <p>The same formulation follows for the infinitesimal slab at the bottom of the
 hillslope with the averaged terms (using <span class="math inline">\(\bar{}\)</span>) replaced with those valid
-at the bottom of the hillsipe (using <span class="math inline">\(^{+}\)</span>).</p>
+at the bottom of the hillslope (using <span class="math inline">\(^{+}\)</span>).</p>
 </div>
 <div class="section level3">
 <h3 id="saturated-zone-2">Saturated Zone<a class="anchor" aria-label="anchor" href="#saturated-zone-2"></a>
@@ -1066,7 +1078,7 @@ z -
 l_{sz}^{-}\right) + \frac{\Delta t}{T_d}
 &amp; z_{C} \geq z \\
 z -
-\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} -
+\left. \bar{s}_{sz}\right.\rvert_{0} -
 \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
 l_{sz}^{-}\right) + \Delta t \frac{
 \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
@@ -1074,8 +1086,8 @@ l_{sz}^{-}\right) + \Delta t \frac{
 &amp; z_{C} &lt; z
 \end{array} \right.
 \]</span></p>
-<p>Using the monoticity of <span class="math inline">\(h\left(z\right)\)</span> we solve each part
-seperatly. Firstly if <span class="math inline">\(h\left( z_{C} \right) \geq 0\)</span> then the inflow from the unsaturated
+<p>Using the monotonicity of <span class="math inline">\(h\left(z\right)\)</span> we solve each part
+separately. Firstly if <span class="math inline">\(h\left( z_{C} \right) \geq 0\)</span> then the inflow from the unsaturated
 zone is <span class="math inline">\(1/T_{d}\)</span> and
 <span class="math display">\[
   \left. \bar{s}_{sz}\right.\rvert_{\Delta t} =
@@ -1086,7 +1098,7 @@ l_{sz}^{-}\right) - \frac{\Delta t}{T_d}
 <p>if <span class="math inline">\(h\left( z_{C} \right) &lt; 0\)</span> the value of <span class="math inline">\(z\)</span> satisfies
 <span class="math display">\[
 z -
-\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} -
+\left. \bar{s}_{sz}\right.\rvert_{0} -
 \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
 l_{sz}^{-}\right) + \Delta t \frac{
 \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
@@ -1095,11 +1107,11 @@ l_{sz}^{-}\right) + \Delta t \frac{
 \]</span>
 Rearrangement to a quadratic gives
 <span class="math display">\[
-0 = T_{d} z^2 - T_{d} z \left(\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} +
+0 = T_{d} z^2 - T_{d} z \left(\left. \bar{s}_{sz}\right.\rvert_{0} +
     \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
         l_{sz}^{-}\right) \right) +
     \Delta t z -
-    \Delta t \left(\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} +
+    \Delta t \left(\left. \bar{s}_{sz}\right.\rvert_{0} +
         \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
         l_{sz}^{-}\right) \right)
          +
@@ -1108,19 +1120,19 @@ Rearrangement to a quadratic gives
 \right)
 \]</span>
 <span class="math display">\[
-0 = z^2 - z \left(\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} +
+0 = z^2 - z \left(\left. \bar{s}_{sz}\right.\rvert_{0} +
     \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
         l_{sz}^{-}\right)  - \frac{\Delta t}{T_{d}}\right) +
         \frac{\Delta t}{T_{d}} \left(
         \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz
         \rightarrow uz} -
-        \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - 
+        \left. \bar{s}_{sz}\right.\rvert_{0} - 
         \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
         l_{sz}^{-}\right) \right)
 \]</span></p>
 <p>The commonly quoted solution for the quadratic
 <span class="math display">\[
-0 = z^2 + bz +c
+0 = z^2 + b z +c
 \]</span>
 is
 <span class="math display">\[
@@ -1128,23 +1140,36 @@ z = \frac{-b \pm\sqrt{ b^2 - 4c }}{2}
 \]</span>
 Comparing terms we see that
 <span class="math display">\[
--b = \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} +
+-b = \left. \bar{s}_{sz}\right.\rvert_{0} +
     \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
         l_{sz}^{-}\right)  - \frac{\Delta t}{T_{d}}
 \]</span></p>
-<p>and <em>THIS IS WRONG _ SHOULD NOT USE H(ZC)</em>
+<p>and
 <span class="math display">\[
-c = \frac{\Delta t}{T_{d}} h\left(z_{C}\right)
+c = 
+        \frac{\Delta t}{T_{d}} \left(
+        \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz
+        \rightarrow uz} -
+        \left. \bar{s}_{sz}\right.\rvert_{0} - 
+        \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
+        l_{sz}^{-}\right) \right)
+\]</span></p>
+<p>Since <span class="math inline">\(-b = z_{C} - h\left(z_{C}\right)\)</span> gives <span class="math inline">\(-b &gt; 0\)</span>.
+Since <span class="math inline">\(z &gt; z_{C}\)</span> the subsurface (<span class="math inline">\(s_{uz}\)</span> and
+<span class="math inline">\(s_{sz}\)</span>) does not fill so
+<span class="math display">\[
+\left. \bar{s}_{sz}\right.\rvert_{0} - \left. \bar{s}_{uz}
+\right.\rvert_{0} \gt
+\Delta t \check{r}_{rz \rightarrow uz} -
+\frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
+        l_{sz}^{-}\right)
 \]</span>
-Since <span class="math inline">\(z_{C}&gt;0\)</span> and the solution is valid when <span class="math inline">\(h\left(z_{C}\right) &lt; 0\)</span> we
-see that <span class="math inline">\(-b &gt; 0\)</span> and
+and <span class="math inline">\(c &lt; 0\)</span></p>
+<p>Combining these conditions results in
 <span class="math inline">\(\sqrt{b^2 - 4c} &gt; \left\lvert b \right\rvert\)</span>. Since <span class="math inline">\(z&gt;0\)</span> only one root of
 the quadratic is valid (as always positive) so
 <span class="math display">\[
-z = \frac{1}{2}\left(-b + \sqrt{ b^2 - 4c }\right) \\
-= \frac{1}{2} \left( z_{C} - h\left(z_{C}\right) + \sqrt{
-\left(h\left(z_{C}\right)-z_{C}\right)^2 - 4 \frac{\Delta t}{T_{d}}
-h\left(z_{C}\right) } \right)
+z = \frac{1}{2}\left(-b + \sqrt{ b^2 - 4c }\right)
 \]</span></p>
 </div>
   </div>

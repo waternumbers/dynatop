@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1.9999</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.2</span>
       </span>
     </div>
 
@@ -105,7 +105,7 @@
     
 <p>The <code>dynatop</code> function in the dynamic TOPMODEL R package implements a set of numerical solutions to the
 governing equations of the dynamic TOPMODEL hillslope formulation. This
-returns the inflow to the channel reachs specified in the model.
+returns the inflow to the channel reaches specified in the model.
 This vignette documents the formulation and the numerical solution used to
 route these channel inflows, along with other diffuse and point inputs to the
 model.</p>
@@ -131,17 +131,17 @@ section of the hillslope HRU</caption>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td>Dischage from a reach at time <span class="math inline">\(t\)</span>
+<td>Discharge from a reach at time <span class="math inline">\(t\)</span>
 </td>
 <td align="center"><span class="math inline">\(q\left(t\right)\)</span></td>
-<td>Instananeous discharge</td>
+<td>Instantaneous discharge</td>
 <td align="center">m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="even">
-<td>Dischage from a reach at time <span class="math inline">\(t\)</span>
+<td>Discharge from a reach at time <span class="math inline">\(t\)</span>
 </td>
 <td align="center"><span class="math inline">\(g\left(t\right)\)</span></td>
-<td>Instananeous discharge</td>
+<td>Instantaneous discharge</td>
 <td align="center">m<span class="math inline">\(^3\)</span>/s</td>
 </tr>
 <tr class="odd">
@@ -159,7 +159,7 @@ section of the hillslope HRU</caption>
 <tr class="odd">
 <td>Velocity</td>
 <td align="center"><span class="math inline">\(v_{ch}\)</span></td>
-<td>Effective velocity of water convience within the Channel HRUnetwork</td>
+<td>Effective velocity of water conveyance within the Channel HRU network</td>
 <td align="center">m/s</td>
 </tr>
 </tbody>
@@ -207,7 +207,7 @@ p\left(t - \tau_{L}\right)
 <p>Since the action on the point inputs is purely advective the flow at a gauged
 location can be written as the summation of the diffuse and external point
 inflows to the Channel
-HRUs (reachs) above the location. For the <span class="math inline">\(k\)</span>th Channel HRU above the gauge let
+HRUs (reaches) above the location. For the <span class="math inline">\(k\)</span>th Channel HRU above the gauge let
 <span class="math inline">\(\tau_{0}^{\left[k\right]}\)</span> be the advective time delay between water leaving the reach and
 arriving at the gauge. This is readily computed from the channel HRU
 connectivity, reach lengths and velocities. The gauged flow can thus be
@@ -221,11 +221,11 @@ g\left(t\right) = \sum_{k}
 \]</span></p>
 <p>To solve for the gauge flow on a discrete time step <span class="math inline">\(\Delta t\)</span> suppose that
 <span class="math inline">\(t = i\Delta t\)</span> and that the flow index by the time subscript is valid over
-the preceeding time step; for example
+the preceding time step; for example
 <span class="math display">\[
 d\left(t\right) = d_{i\Delta t} \quad \left(i-1\right)\Delta t \leq t &lt;i\Delta t
 \]</span></p>
-<p>Then to evaluate <span class="math inline">\(g_{i\Delta t}\)</span> while maintaing mass
+<p>Then to evaluate <span class="math inline">\(g_{i\Delta t}\)</span> while maintaining mass
 conservation in the formulation, the gauged flows must be integrated over the
 time period. Consider one of the contributing
 HRUs, then (dropping the superscript <span class="math inline">\(k\)</span>) the contribution of the point inflow
@@ -256,7 +256,7 @@ d_{\left(i-1-r_{\tau}\right)\Delta t}
 \]</span>
 where <span class="math inline">\(r_\tau\)</span> is the largest integer for which
 <span class="math inline">\(r_{\tau}\Delta t \leq \tau\)</span>.
-Next consider the integral of the difuse inflows over <span class="math inline">\(\tau\)</span>; that is
+Next consider the integral of the diffuse inflows over <span class="math inline">\(\tau\)</span>; that is
 <span class="math display">\[
 \int\limits_{\tau_{0}}^{\tau_{0} +
   \tau_{L}}
@@ -438,11 +438,11 @@ d_{\left(i-r_{0}-1\right)\Delta t}
 <h3 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a>
 </h3>
 <p>In this section some example histograms are generated based upon the length,
-velocity and <span class="math inline">\(\tau_0\)</span> of the Channel HRU alond with the time step <span class="math inline">\(\Delta t\)</span>.</p>
+velocity and <span class="math inline">\(\tau_0\)</span> of the Channel HRU along with the time step <span class="math inline">\(\Delta t\)</span>.</p>
 <div class="section level4">
 <h4 id="point-input">Point input<a class="anchor" aria-label="anchor" href="#point-input"></a>
 </h4>
-<p>First a function for defining the histrogram for a point inflow can be coded
+<p>First a function for defining the histogram for a point inflow can be coded
 as follows:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co">## L is length of channel</span>
@@ -479,7 +479,7 @@ non-zero elements are the 4th and 5th, but with the 4th being larger then the 5t
 <div class="section level4">
 <h4 id="diffuse-inflow">Diffuse inflow<a class="anchor" aria-label="anchor" href="#diffuse-inflow"></a>
 </h4>
-<p>The function for the difuse inflow is more complex since the special cases
+<p>The function for the diffuse inflow is more complex since the special cases
 have to be handled:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">fd</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">L</span>,<span class="va">vch</span>,<span class="va">Dt</span>,<span class="va">tau0</span><span class="op">)</span><span class="op">{</span>
@@ -508,7 +508,7 @@ have to be handled:</p>
   <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="va">b</span><span class="op">*</span><span class="va">vch</span><span class="op">/</span><span class="va">L</span><span class="op">)</span>
 <span class="op">}</span></code></pre></div>
 <p>In the first example there is no advective time delay and
-<span class="math inline">\(L/v_{ch} = \Delta t\)</span>. This results in time delay historgram in which the
+<span class="math inline">\(L/v_{ch} = \Delta t\)</span>. This results in time delay histogram in which the
 first two values equal 0.5. This is an example of the case <span class="math inline">\(r_{L}=r_{0}+1\)</span></p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">fd</span><span class="op">(</span>L<span class="op">=</span><span class="fl">200</span>,vch<span class="op">=</span><span class="fl">1</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">0</span><span class="op">)</span>
@@ -533,7 +533,7 @@ histogram. In this case <span class="math inline">\(r_{L}&gt;r_{0}+1\)</span>.</
 <span class="co">#&gt; [1] 1</span>
 <span class="fu"><a href="https://rdrr.io/r/graphics/barplot.html" class="external-link">barplot</a></span><span class="op">(</span><span class="va">b</span><span class="op">)</span></code></pre></div>
 <p><img src="Channel_HRU_files/figure-html/unnamed-chunk-9-1.png"><!-- --></p>
-<p>Finally we look at two cases where <span class="math inline">\(\tau_0\)</span> is posisitve; being either a
+<p>Finally we look at two cases where <span class="math inline">\(\tau_0\)</span> is positive; being either a
 direct multiple of the time step</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">b</span> <span class="op">&lt;-</span> <span class="fu">fd</span><span class="op">(</span>L<span class="op">=</span><span class="fl">600</span>,vch<span class="op">=</span><span class="fl">1</span>,Dt<span class="op">=</span><span class="fl">200</span>,tau0<span class="op">=</span><span class="fl">800</span><span class="op">)</span>

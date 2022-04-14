@@ -18,7 +18,7 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.1.9999</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.2</span>
       </span>
     </div>
 
@@ -132,7 +132,7 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
 </div>
 <div class="section">
 <h4 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h4>
-<p>This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.</p>
+<p>This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistency of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.</p>
 </div>
 
 <div class="section">
@@ -179,7 +179,7 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
 
 </div><p></p><hr><a id="method-initialise"></a><div class="section">
 <h3 id="method-initialise-">Method <code>initialise()</code><a class="anchor" aria-label="anchor" href="#method-initialise-"></a></h3>
-<p>Initialises a dynatop object in the simpliest way possible.</p><div class="section">
+<p>Initialises a dynatop object in the most simple way possible.</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">dynatop</span><span class="op">$</span><span class="fu">initialise</span><span class="op">(</span>tol <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> <span class="va">.Machine</span><span class="op">$</span><span class="va">double.eps</span>, max_it <span class="op">=</span> <span class="fl">1000</span><span class="op">)</span></code></pre></div><p></p></div>
 </div>
@@ -241,7 +241,7 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
 <div class="section">
 <h4 id="details-2">Details<a class="anchor" aria-label="anchor" href="#details-2"></a></h4>
 <p>Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
-While ftol is implimented it is currently set to <code>Inf</code> to mimick the behaviour of previous versions. This will change in the future.</p>
+While ftol is implemented it is currently set to <code>Inf</code> to mimic the behaviour of previous versions. This will change in the future.</p>
 </div>
 
 <div class="section">
@@ -263,7 +263,7 @@ While ftol is implimented it is currently set to <code>Inf</code> to mimick the 
 
 </div><p></p><hr><a id="method-sim"></a><div class="section">
 <h3 id="method-sim-">Method <code>sim()</code><a class="anchor" aria-label="anchor" href="#method-sim-"></a></h3>
-<p>Simulate the hillslope and channel componets of a dynatop object</p><div class="section">
+<p>Simulate the hillslope and channel components of a dynatop object</p><div class="section">
 <h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span class="va">dynatop</span><span class="op">$</span><span class="fu">sim</span><span class="op">(</span>
   keep_states <span class="op">=</span> <span class="cn">NULL</span>,
@@ -297,7 +297,7 @@ While ftol is implimented it is currently set to <code>Inf</code> to mimick the 
 
 
 <dt><code>mass_check</code></dt>
-<dd><p>Flag indicating is a record of mass balance errors shuld be kept</p></dd>
+<dd><p>Flag indicating is a record of mass balance errors should be kept</p></dd>
 
 
 </dl><p></p></div>
