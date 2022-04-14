@@ -1,6 +1,6 @@
 Package: dynatop
 Title: An Implementation of Dynamic TOPMODEL Hydrological Model in R
-Version: 0.2.1.9999
+Version: 0.2.2
 Authors@R: 
 	   c(person(given = "Paul",
            	family = "Smith",
@@ -36,3 +36,5 @@ Suggests:
     pkgdown,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
+SystemRequirements: C++11
+Language: en-GB

@@ -49,7 +49,7 @@ can be used for constructing models.
 # Setting map locations
 
 While not required for simulations if the locations of the files containing
-the locations of the HRU's are provided the states can be visualised within
+the locations of the HRUs are provided the states can be visualised within
 dynatop.
 
 The locations of the files are set in the `map` element of the model. For this
@@ -81,7 +81,7 @@ accumulated over the time step.
 
 To use the data with the model we need to set the names of the time series
 inputs within the model. In this case this is already done as can be seen by
-insepcting the `precip_input` and `pet_input` tables
+inspecting the `precip_input` and `pet_input` tables
 ```{r, set_obs_names}
 head(swindale_model$precip_input)
 head(swindale_model$pet_input)

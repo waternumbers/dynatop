@@ -5,5 +5,5 @@
 \alias{dynatop-package}
 \title{dynatop}
 \description{
-This package contains the core code for the R implimentation of dynamic TOPMODEL
+This package contains the core code for the R implementation of dynamic TOPMODEL
 }

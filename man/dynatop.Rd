@@ -62,7 +62,7 @@ Creates a dynatop class object from the a list based model description as genera
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
+This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistency of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
 }
 
 \subsection{Returns}{
@@ -110,7 +110,7 @@ invisible(self) suitable for chaining
 \if{html}{\out{<a id="method-initialise"></a>}}
 \if{latex}{\out{\hypertarget{method-initialise}{}}}
 \subsection{Method \code{initialise()}}{
-Initialises a dynatop object in the simpliest way possible.
+Initialises a dynatop object in the most simple way possible.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dynatop$initialise(tol = 2 * .Machine$double.eps, max_it = 1000)}\if{html}{\out{</div>}}
 }
@@ -160,7 +160,7 @@ Simulate the hillslope output of a dynatop object
 }
 \subsection{Details}{
 Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
-While ftol is implimented it is currently set to \code{Inf} to mimick the behaviour of previous versions. This will change in the future.
+While ftol is implemented it is currently set to \code{Inf} to mimic the behaviour of previous versions. This will change in the future.
 }
 
 \subsection{Returns}{
@@ -184,7 +184,7 @@ invisible(self) for chaining
 \if{html}{\out{<a id="method-sim"></a>}}
 \if{latex}{\out{\hypertarget{method-sim}{}}}
 \subsection{Method \code{sim()}}{
-Simulate the hillslope and channel componets of a dynatop object
+Simulate the hillslope and channel components of a dynatop object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dynatop$sim(
   keep_states = NULL,
@@ -208,7 +208,7 @@ Simulate the hillslope and channel componets of a dynatop object
 
 \item{\code{ftol}}{tolerance in closeness to 0 in the solution for the saturated zone}
 
-\item{\code{mass_check}}{Flag indicating is a record of mass balance errors shuld be kept}
+\item{\code{mass_check}}{Flag indicating is a record of mass balance errors should be kept}
 }
 \if{html}{\out{</div>}}
 }

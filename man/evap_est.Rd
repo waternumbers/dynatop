@@ -2,7 +2,7 @@
 % Please edit documentation in R/evap.R
 \name{evap_est}
 \alias{evap_est}
-\title{Create sinsuiodal time series of potential evapotranspiration input}
+\title{Create sinusoidal time series of potential evapotranspiration input}
 \usage{
 evap_est(ts, eMin = 0, eMax = 0)
 }
@@ -14,7 +14,7 @@ evap_est(ts, eMin = 0, eMax = 0)
 \item{eMax}{Maximum daily PE total (m or mm)}
 }
 \value{
-Time series (xts) of potential evapotranspiration totals for the timesteps geven in same units as eMin and eMax
+Time series (xts) of potential evapotranspiration totals for the time steps given in same units as eMin and eMax
 }
 \description{
 Generate series of potential evapotranspiration
@@ -23,7 +23,7 @@ Generate series of potential evapotranspiration
 Dynamic TOPMODEL requires a time series of potential
   evapotranspiration in order to calculate and remove actual
   evapotranspiration from the root zone during a run. Many sophisticated
-  physical models have been developed for estimating PE and AE, including the
+  physical models have been developed for estimating potential and actual evapotranspiration, including the
   Priestly-Taylor (Priestley and Taylor, 1972) and Penman-Monteith (Montieth,
   1965) methods. These, however, require detailed meteorological data such as
   radiation input and relative humidities that are, in general, difficult to

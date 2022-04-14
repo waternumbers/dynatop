@@ -1,4 +1,4 @@
-#' Create sinsuiodal time series of potential evapotranspiration input
+#' Create sinusoidal time series of potential evapotranspiration input
 #'
 #' @description Generate series of potential evapotranspiration
 #'
@@ -9,7 +9,7 @@
 #' @details Dynamic TOPMODEL requires a time series of potential
 #'   evapotranspiration in order to calculate and remove actual
 #'   evapotranspiration from the root zone during a run. Many sophisticated
-#'   physical models have been developed for estimating PE and AE, including the
+#'   physical models have been developed for estimating potential and actual evapotranspiration, including the
 #'   Priestly-Taylor (Priestley and Taylor, 1972) and Penman-Monteith (Montieth,
 #'   1965) methods. These, however, require detailed meteorological data such as
 #'   radiation input and relative humidities that are, in general, difficult to
@@ -24,7 +24,7 @@
 #'   hours allows the daily maximum to be calculated and thus a sub-daily series
 #'   generated.
 #' 
-#' @return Time series (xts) of potential evapotranspiration totals for the timesteps geven in same units as eMin and eMax
+#' @return Time series (xts) of potential evapotranspiration totals for the time steps given in same units as eMin and eMax
 #'
 #' @references Beven, K. J. (2012). Rainfall-runoff modelling : the primer. Chichester, UK, Wiley-Blackwell.
 #' @references Calder, I. R. (1986). A stochastic model of rainfall interception. Journal of Hydrology, 89(1), 65-71.

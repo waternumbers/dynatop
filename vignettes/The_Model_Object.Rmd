@@ -86,7 +86,7 @@ Each row of the hillslope table describes a single hillslope HRU. In this exampl
 head(model$hillslope)
 ```
 
-The individual columns are documented in Table \@ref(tab:hillslope-table). Not all the parameters are revelent for each option. See the Hillslope HRU vignette for details.
+The individual columns are documented in Table \@ref(tab:hillslope-table). Not all the parameters are relevant for each option. See the Hillslope HRU vignette for details.
 
 | Name    | Class   | Unit  | Description                                                                                                                              |
 | ---     | ---     | ---   | -----                                                                                                                                    |
@@ -100,7 +100,7 @@ The individual columns are documented in Table \@ref(tab:hillslope-table). Not a
 | s_rz | numeric | m | Root Zone storage volume per unit area (state) |
 | s_uz | numeric | m | Unsaturated Zone storage volume per unit area (state) |
 | s_sz | numeric | m | Saturated Zone storage deficit per unit area (state) |
-| cls_*   | integer | -   | Classification of HRU in each of the classes used in its definition. The extra part fo the name matches the class name given in dynatopGIS                                                      |
+| cls_*   | integer | -   | Classification of HRU in each of the classes used in its definition. The extra part of the name matches the class name given in dynatopGIS                                                      |
 | opt   | character | - | Option controlling the type of Hillslope HRU. Currently defines the transmissivity profile.                                                       |
 | r_sfmax | numeric | m/s | Maximum flow rate from surface to root zone (parameter)                                                                                  |
 | c_sf    | numeric | m/s | Celerity of the surface excess storage (parameter)                                                                                       |

@@ -1,8 +1,9 @@
-# dynatop 0.2.1.9000
+# dynatop 0.2.2
 
-- Fixed missing timestep in some Courant number calculations
+- Fixed missing time step in some Courant number calculations
 - Fixed accounting of channel inflow in mass balance computations and added
-  matching test. Previously impacted simulations with a substep.
+  matching test. Previously impacted simulations with a sub step.
+- Added Runoff Attenuation Feature (RAF) representation to surface of Hillslope HRU
 
 # dynatop 0.2.1
 
@@ -10,9 +11,9 @@
 
 # dynatop 0.2.0.9200
 
-- Fix so using a ingle channel works correctly
+- Fix so using a single channel works correctly
 - Fix so fluxes passed correctly during initialisation
-- Fix bug in get_states() so returns correctly when recrods=FALSE
+- Fix bug in get_states() so returns correctly when record=FALSE
 - Tidying for release to CRAN
 
 # dynatop 0.2.0.9101
@@ -20,11 +21,11 @@
 ## Breaking changes
 
 - New model structure allowing for the transmissivity profile to be specified per HRU
-- New transmissivity profile (double exponential) meaning additional parameter columnes (m_2, omega) in the model
+- New transmissivity profile (double exponential) meaning additional parameter columns (m_2, omega) in the model
 
 ## Other changes
 
-- dropping of Boost bisection algorithm for direct implimentation with user
+- dropping of Boost bisection algorithm for direct implementation with user
   specified tolerance and maximum iterations
 - C++ code refactored for speed improvements, making use of a single hillslope_hru class
 - Refinements to the vignettes and documentation to reflect changes 
@@ -38,7 +39,7 @@
 
 - Adapted R and C++ code to pass data frames of hillslope and channel properties
 - tidy up of C++ code
-- Fix bug in hillslope HRU solution which was indexing incorrect PET value - this will only impact simulations with multiple PET series, if constant then results shoudl be identical to v0.2.0.9030.
+- Fix bug in hillslope HRU solution which was indexing incorrect PET value - this will only impact simulations with multiple PET series, if constant then results should be identical to v0.2.0.9030.
 - Revert Channel routing to compute average flux over the time step
 
 ## New features
@@ -52,17 +53,17 @@
 # dynatop 0.2.0.9030
 
 - Adapted hillslope solution to Finite Volume to address mass balance issues in v0.2.0.9020
-- Improved mass balance checkign and output
+- Improved mass balance checking and output
 
 ## New features
 
-- Addition of two further transmissivity profiles - these implimentations should be considered **experimental**
+- Addition of two further transmissivity profiles - these implementations should be considered **experimental**
 
 ## Breaking Changes
 
-- Alterations to model sturcture
+- Alterations to model structure
     - Two new data.frames added for defining Precipitation and PET inputs. These can now be specified as weighted sums of observed series.
-    - The parameter vector `$param` is dropped. Numeric parameters are now stored in the `$hillslope` and `$channel` data.frames. This is to allow for cleaner code and future development of different model stroage less dependent of `*.rds` files.
+    - The parameter vector `$param` is dropped. Numeric parameters are now stored in the `$hillslope` and `$channel` data.frames. This is to allow for cleaner code and future development of different model storage less dependent of `*.rds` files.
 
 
 # dynatop 0.2.0.9020
@@ -81,15 +82,15 @@
 
 ## New features
 
-- C++ implimentation of hillslope simulation code can now return states and is
-  fully feature compatable with R implimentation.
-- R implimentation of hillslope simulations will be depreciated in a future release.
+- C++ implementation of hillslope simulation code can now return states and is
+  fully feature compatible with R implementation.
+- R implementation of hillslope simulations will be depreciated in a future release.
 
 # dynatop 0.12
 
 ## New features
 
-- Main hydrological simulation code implimented in C++ usign Rcpp for better performance. 
+- Main hydrological simulation code implemented in C++ using Rcpp for better performance. 
 - The R version of the code can be used instead by setting the use_R input parameter to TRUE. This will be depreciated in a later version.
 - Currently C++ code does not return intermediate states, use the R version if these are required
 
@@ -100,7 +101,7 @@
 
 - improved calculations within the saturated zone
 - improved mass_check
-- more complet vignette - model equation and coding notes
+- more complete vignette - model equation and coding notes
 
 # dynatop 0.1
 
@@ -111,7 +112,7 @@
 - Input format of model changed to reflect `dynatopGIS` v0.1
 - Removal of banding functions since these are now in dynatopGIS
 - All units now in m and seconds
-- Precipitation and PET inputs now expected to be metres accured over the timestep rather then m per hour
+- Precipitation and PET inputs now expected to be metres accrued over the time step rather then m per hour
 
 ## New Features
 
@@ -124,19 +125,19 @@
 ## Breaking changes
 - New solutions to the surface and saturated zone means models for previous
   versions of dynatop will not work. See the model description and the
-  `dynatopGIS` package (0.0.4) for a method of generating models int he
+  `dynatopGIS` package (0.0.4) for a method of generating models in the
   revised format
 
 ## Other changes
-- The surface store, previously labeled $s_{ex}$ has been relabelled $s_{sf}$
+- The surface store, previously labelled $s_{ex}$ has been relabelled $s_{sf}$
   since this is felt to be more logical.
 - The `Matrix` package is allowing the use of sparse matrices.
 - Computation bands have been introduced for the surface and saturated
   zones. These allow the revised solutions below. See the associated vignette
   on banding HSUs
-- A revised approximation to the surface water movement has been implimented
+- A revised approximation to the surface water movement has been implemented
   allowing for larger numbers of HSUs without the performance overhead of
-  computing large matrix exponentials.
+  computing large matrix exponential.
 - A four point kinematic wave solution to the saturated zone is utilised. This
   is both more performant and has better representation of hillslope length
   then the numerical ODE solution used in v0.0.3.
@@ -157,7 +158,7 @@
   object vignette. If using dynatopGIS then rerun create_model.
   
 ## Other changes
-- Fixed minor formating issues in the vignettes
+- Fixed minor formatting issues in the vignettes
 - Added vignette on checking mass balances
 
 # dynatop 0.0.2
@@ -187,10 +188,10 @@ tools for preparing models from GIS data.
 
 ## New Features
 - New definition of a dynamic TOPMODEL 'object'
-      - seperates out GIS data for more compact size
+      - separates out GIS data for more compact size
 	  - introduces the concept of Hydrological Response Unit (HRU) types
 	  - Altered HRU definition table to allow for more transparent and easy
-        reparameterisation
+        reparametrisation
 	  - Altered HRU definition table to allow for more transparent use of
         multiple input series (referenced by name, not input column)
 - Altered input of time series data to a single xts object containing names
@@ -199,7 +200,7 @@ columns
       - model object, with final states of the system
 	  - xts object of flows to channel HRUs
 - Rewritten initialisation and main execution loop of dynamic TOPMODEL so that
-      - Chanels are handled explicily not as 'special cases' (parameterisations) of hillslope units
+      - Channels are handled explicitly not as 'special cases' (parametrisations) of hillslope units
       - Analytical solution of root zone can handle case where both pet and
         precip are positive
 	  - Initialisation does not return a new workspace
@@ -207,12 +208,12 @@ columns
       - use of dynamic TOPMODEL
 	  - Equations and solution methodology
 	  - Performance of code for larger simulations
-- 'Hard' checks are now implimented, previously code was performaing various
+- 'Hard' checks are now implemented, previously code was performing various
   'corrections' sometimes without warning.
 - Model simulation can be initialised by passed in states allowing for
   chinking of the longer simulations.
 
 ## Regressions of note
 - Plotting functions and performance calculations have not been replicated
-- The time delay historgram method for river routing is not implimented
+- The time delay histogram method for river routing is not implemented
 - Model no longer outputs states and fluxes at every time step

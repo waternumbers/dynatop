@@ -3,7 +3,7 @@
 #' @description Takes an xts time series object and resamples then to a new time step.
 #' @param obs A times series (xts) object with a POSIXct index.
 #' @param dt New time interval in seconds
-#' @param is.rate If TRUE then these are rates i.e m/hr. Otherwise they are absolute values accumulated within the preceeding time interval. Values are scaled before returning so resampling is conservative.
+#' @param is.rate If TRUE then these are rates i.e m/h. Otherwise they are absolute values accumulated within the preceding time interval. Values are scaled before returning so resampling is conservative.
 #'
 #' @return An xts object with the new timestep
 #'
@@ -11,8 +11,8 @@
 #'
 #' Because of the methods used the results:
 #' 
-#' - are not accurate when the input data does not have a constant timestep. The code issued a warnign and proceeds assuming the data are equally spaced with the modal timestep.
-#' - do not guarentee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.
+#' - are not accurate when the input data does not have a constant timestep. The code issues a warning and proceeds assuming the data are equally spaced with the modal timestep.
+#' - do not guarantee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.
 #'
 #' @details
 #'

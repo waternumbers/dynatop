@@ -45,7 +45,7 @@ In the following section the governing equations of the hillslope HRU are
 given in a finite volume form. Approximating equations for the solution of the
 governing equations are then derived with associated implicit and semi-implicit numerical
 schemes. These are valid for a wide range of transmissivity profiles,
-includign those present in the code and presented in the third sections of the
+including those present in the code and presented in the third sections of the
 vignette.
 
 Two appendices provide supporting information justifying the numerical schemes
@@ -80,36 +80,38 @@ The following conventions are used:
 over the length of the hillslope we find
 
 \begin{equation}
-\int wy dx = A\bar{y}
+\int w y dx = A\bar{y}
 \end{equation}
 
 -   Average values over a time step are denoted with a $\hat{}$. If the
     temporal average is of a spatial average the $\bar{}$ is dropped. For
     example the temporal average of the spatial average $\bar{y}$ over a time step is $\hat{y}$.
 	
-| Quantity type              | Symbol                  | Description                                                        | unit    |
-| ---                        | ---                     | ------                                                             | ---     |
-| Storage                    | $s_{sf}$                | Surface excess storage per unit width                              | m       |
-|                            | $s_{rz}$                | Root zone storage per unit width                                   | m       |
-|                            | $s_{uz}$                | Unsaturated zone storage per unit width                            | m       |
-|                            | $s_{sz}$                | Saturated zone storage deficit per unit width                      | m       |
-| Vertical fluxes            | $r_{sf \rightarrow rz}$ | Flow from the surface excess store to the root zone per unit width | m/s     |
-|                            | $r_{rz \rightarrow uz}$ | Flow from the root zone to the unsaturated zone per unit width     | m/s     |
-|                            | $r_{uz \rightarrow sz}$ | Flow from unsaturated to saturated zone per unit width             | m/s     |
-| Lateral fluxes             | $l_{sf}$                | Lateral flow in the surface zone per unit outflow width                    | m$^2$/s |
-|                            | $l_{sz}$                | Lateral flow in the saturated zone per unit outflow width                  | m$^2$/s |
-|                            | $q_{sf}$                | Lateral flow in the hillslope surface zone                         | m$^3$/s |
-|                            | $q_{sz}$                | Lateral inflow to the hillslope surface zone                       | m$^3$/s |
-| Vertical fluxes to the HRU | $p$                     | Precipitation rate                                                 | m/s     |
-|                            | $e_p$                   | Potential Evapotranspiration rate                                  | m/s     |
-| Other HRU properties       | $A$                     | Plan area                                                          | m$^3$   |
+| Quantity type              | Symbol                  | Description                                                              | unit    |
+|----------------------------|-------------------------|--------------------------------------------------------------------------|---------|
+| Storage                    | $s_{sf}$                | Surface excess storage per unit width                                    | m       |
+|                            | $s_{rz}$                | Root zone storage per unit width                                         | m       |
+|                            | $s_{uz}$                | Unsaturated zone storage per unit width                                  | m       |
+|                            | $s_{sz}$                | Saturated zone storage deficit per unit width                            | m       |
+| Vertical fluxes            | $r_{sf \rightarrow rz}$ | Flow from the surface excess store to the root zone per unit width       | m/s     |
+|                            | $r_{rz \rightarrow uz}$ | Flow from the root zone to the unsaturated zone per unit width           | m/s     |
+|                            | $r_{uz \rightarrow sz}$ | Flow from unsaturated to saturated zone per unit width                   | m/s     |
+| Lateral fluxes             | $l_{sf}$                | Lateral flow in the surface zone per unit outflow width                  | m$^2$/s |
+|                            | $l_{sz}$                | Lateral flow in the saturated zone per unit outflow width                | m$^2$/s |
+|                            | $q_{sf}$                | Lateral flow in the hillslope surface zone                               | m$^3$/s |
+|                            | $q_{sz}$                | Lateral inflow to the hillslope surface zone                             | m$^3$/s |
+| Vertical fluxes to the HRU | $p$                     | Precipitation rate                                                       | m/s     |
+|                            | $e_p$                   | Potential Evapotranspiration rate                                        | m/s     |
+| Other HRU properties       | $A$                     | Plan area                                                                | m$^3$   |
 |                            | $w$                     | Width of a hill slope cross section                                      | m       |
-|                            | $\Delta x$              | Effective length of the hillslope HRU (Area divided by outflow width)                                        | m       |
-|                            | $k_{sf}$                | Maximum flow rate from surface excess to root zone per unit width  | m/s     |
-|                            | $c_{sf}$                | Surface excess storage celerity                                    | m/s     |
-|                            | $s_{rzmax}$             | Maximum root zone storage depth                                    | m       |
-|                            | $T_d$                   | Unsaturated zone time constant per m of saturated storage deficit. | s/m     |
-|                            | $\Theta_{sz}$           | Further properties and parameters for the solution of the saturated zone | :-: |
+|                            | $\Delta x$              | Effective length of the hillslope HRU (Area divided by outflow width)    | m       |
+|                            | $k_{sf}$                | Maximum flow rate from surface excess to root zone per unit width        | m/s     |
+|                            | $c_{sf}$                | Surface excess storage celerity                                          | m/s     |
+|                            | $s_{raf}$               | Surface runoff attenuation feature storage                               | m       |
+|                            | $t_{raf}$               | Surface runoff attenuation feature time constant                         | s       |
+|                            | $s_{rzmax}$             | Maximum root zone storage depth                                          | m       |
+|                            | $T_d$                   | Unsaturated zone time constant per m of saturated storage deficit.       | s/m     |
+|                            | $\Theta_{sz}$           | Further properties and parameters for the solution of the saturated zone | :-:     |
                                                     
   Table: (\#tab:hs-x-notation) Outline of notation for describing a cross
   section of the hillslope HRU
@@ -133,7 +135,7 @@ zone to the surface giving negative values of $r_{sf \rightarrow rz}$.
 
 The governing ODE for a cross section of the hillslope can be written as
 \begin{equation}
-\frac{dws_{sf}}{dt} = - \frac{dq_{sf}}{dx} - wr_{sf \rightarrow rz}
+\frac{dws_{sf}}{dt} = - \frac{dq_{sf}}{dx} - w r_{sf \rightarrow rz}
 \end{equation}
 where $r_{sf \rightarrow rz} \leq k_{sf}$.
 
@@ -143,7 +145,7 @@ A\frac{d \bar{s}_{sf}}{dt} = q_{sf}^{-} - q_{sf}^{+} - A\bar{r}_{sf \rightarrow 
 \end{equation}
 
 The outflow comes from two sources; the runoff-attenuation feature
-(raf) and surface flow; giving
+(RAF) and surface flow; giving
 
 \[
 q_{sf}^{+} = w^{+}l_{sf}^{+} + \frac{A}{t_{raf}}\min\left(s_{raf},\bar{s}_{sf}\right)
@@ -174,8 +176,8 @@ c_{sf}\max\left(0,\bar{s}_{sf}-s_{raf}\right)\right)
 
 The root zone gains water from precipitation and the surface zone. It loses water through
 evaporation and to the unsaturated zone. Since
-all the veritcal fluxes are spatially uniform the evolution can be evaluated
-in terms of the spatial averages. The root zone storage satifies
+all the vertical fluxes are spatially uniform the evolution can be evaluated
+in terms of the spatial averages. The root zone storage satisfies
 
 \begin{equation} 0 \leq \bar{s}_{rz} \leq s_{rzmax} \end{equation}
 
@@ -234,9 +236,9 @@ $\bar{s}_{uz} \leq \bar{s}_{sz}$.
 ## Saturated Zone
 
 For a HRU the alteration of the storage in the saturated zone is
-given by teh kinematic equation
+given by the kinematic equation
 \begin{equation}
-\frac{dw\left(D-s_{sz}\right)}{dt} = -\frac{dq_{sz}}{dx} + wr_{uz \rightarrow sz}
+\frac{dw\left(D-s_{sz}\right)}{dt} = -\frac{dq_{sz}}{dx} + w r_{uz \rightarrow sz}
 \end{equation}
 
 Integration over the length of the hillslope and substitution of the
@@ -270,7 +272,7 @@ g\left(\bar{s}_{sz},\Theta_{sz}\right) \rightarrow 0 \quad \mathrm{as} \quad
 The first condition ensures a non negative celerity (wave speed) which is in
 keeping with the conceptualisation of the model. The first condition also implies
 that $l_{sz}^{+}$ decreases with increasing $\bar{s}_{sz}$. This combined with
- the second condition ensures that the model respresents a state where no
+ the second condition ensures that the model represents a state where no
  lateral inflow is generated.
 
 Using the relationship between $l_{sz}^{+}$ and $\bar{s}_{sz}$ gives
@@ -290,7 +292,7 @@ the downward flow of water within each timestep of size $\Delta t$.
 
 
 Recalling that the temporal and spatial average vertical fluxes are denoted with
-a $\hat{}$ the implicit approximations are stated in teh following sections using the unknown vertical fluxes
+a $\hat{}$ the implicit approximations are stated in the following sections using the unknown vertical fluxes
 $\hat{r}_{\star \rightarrow \star}$ which are then determined by maximising the
 downward flux.
 
@@ -328,7 +330,7 @@ The surface outflow over the time step is evaluated as
 \end{equation}
 
 The solution for $\left. \bar{s}_{sf}
-\right\rvert_{\Delta t}$ is conditional upon whichh side of $s_{raf}$
+\right\rvert_{\Delta t}$ is conditional upon which side of $s_{raf}$
 it falls.
 If 
 \[
@@ -471,7 +473,7 @@ which results in a maximum downward flux from the root zone of
 \]
 
 
-Consider the psuedo-function 
+Consider the pseudo-function 
 \[
 f\left(z\right) = 
 z - 
@@ -494,28 +496,28 @@ unique solution for $\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ can be found.
 
 <!-- ### Algorithm 1 - Simple Implicit -->
 
-A direct implimentation of the above results takes the form of Algorithm 1.
+A direct implementation of the above results takes the form of Algorithm 1.
 
 ***
-*Algorithm 1: Direct Implimentation*
+*Algorithm 1: Direct Implementation*
 
 1. Compute $\check{r}_{sf \rightarrow rz}$ and $\check{r}_{rz \rightarrow uz}$
 2. Test for saturation. If $f\left(0\right) \geq
-   0$ then goto Step 3 else goto Step 4
+   0$ then go to Step 3 else go to Step 4
 3. Saturated. Set $\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0$ and
 \[\hat{r}_{rz \rightarrow uz} = \frac{1}{\Delta t}\left(
 \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + 
 \frac{\Delta t}{\Delta x} \left(g\left(0,\Theta_{sz}\right) -
 l_{sz}^{-}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)
 \]
-Goto Step 5.
+Go to Step 5.
 4. Not saturated. Find $\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ such that 
 $f\left(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\right) = 0$ and take 
 \[
 \hat{r}_{rz \rightarrow uz} = \min\left(\check{r}_{rz \rightarrow uz},\frac{1}{\Delta t} \left(
 \left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \frac{\Delta t}{T_d} -
  \left. \bar{s}_{uz} \right.\rvert_{0}\right)\right)\]
- Goto Step 5.
+ Go to Step 5.
 5. Compute 
 \[
 \hat{r}_{sf \rightarrow rz} = \min\left(\check{r}_{sf \rightarrow
@@ -529,7 +531,7 @@ fluxes.
 
 ***
 
-The challange with Algorithm 1 is that maintaining a water (mass) balance and
+The challenge with Algorithm 1 is that maintaining a water (mass) balance and
 correct limits on the state values
 depends upon the accuracy of the solution of $f\left(z\right)=0$. Since
 finding $z$ requires multiple evaluations of the transmissivity profile it can
@@ -537,7 +539,7 @@ rapidly become the most expensive part of the code.
 
 To limit the computational cost suppose that $f\left(z\right)=0$ is solved
 approximately to give $\tilde{z}$
-such that for some numerical tolerence $\epsilon$ we have $\left\lvert
+such that for some numerical tolerance $\epsilon$ we have $\left\lvert
 f\left(\tilde{z}\right) \right\rvert \leq \epsilon$. Using $\tilde{z}$ to
 evaluate the outward lateral flux from the saturated zone gives the
 pseudo-function
@@ -558,7 +560,7 @@ solution for $\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ is given by
 
 - If $h(0) \geq 0$ the inward flux is enough to produce saturation in the subsurface and
 $\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0$.
-- If $h(z_{max}) < 0$ (poosible only due to the outflow flux approximation) then
+- If $h(z_{max}) < 0$ (possible only due to the outflow flux approximation) then
 $\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = D$ and the lateral outflow is
 adjusted such that
 \[
@@ -588,12 +590,12 @@ z = \frac{1}{2}\left(-b + \sqrt{ b^2 - 4c }\right) \\
 h\left(z_{C}\right) } \right)
 \]
 
-The implimenation of this approach is presented in Algorithm 2. it can be seem
+The implementation of this approach is presented in Algorithm 2. it can be seem
 that the exchange for decreasing the accuracy of the solution of the zero
 finding problem is a potential to evaluate a power and a square root.
 
 ***
-*Algorithm 2: Stable Implimentation*
+*Algorithm 2: Stable Implementation*
 
 1. Compute $\check{r}_{sf \rightarrow rz}$ and $\check{r}_{rz \rightarrow uz}$
 2. Compute the lateral outflow
@@ -666,18 +668,18 @@ required. The additional parameter and properties are defined in Table \@ref(tab
 
 | Name                | $g\left(\bar{s}_{sz},\Theta_{sz}\right)$                                                                                       | Celerity                                                      | $\Theta_{sz}$     |  `transmissivity_profile` value    | Notes                                                        |
 | ----                | ----                                                                                                                           | ----                                                        | ----              | ----            | ----                                                         |
-| Exponental          | $T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)$                                                       | $\frac{\cos\beta}{m}g\left(\bar{s}_{sz},\Theta_{sz}\right)$ | $T_0,\beta,m$ | `"exp"` | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |
+| Exponential          | $T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)$                                                       | $\frac{\cos\beta}{m}g\left(\bar{s}_{sz},\Theta_{sz}\right)$ | $T_0,\beta,m$ | `"exp"` | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |
 | Bounded Exponential | $T_{0}\sin\left(\beta\right)\left(\exp\left(-\frac{\cos\beta}{m}s_{sz}\right) - \exp\left(-\frac{\cos\beta}{m}D\right)\right)$ | $\frac{cos \beta}{m}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)$ | $T_0,\beta,m,D$ | `"bexp"` | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |
 | Constant Celerity  | $c_{sz}\left(D-s_{sz}\right)$ | $c_{sz}$ | $c_{sz},D$ | `"cnst"` |   |   |
 | Double Exponential | $T_{0}\sin\left(\beta\right)\left( \omega\exp\left(-\frac{\cos\beta}{m}s_{sz}\right) + \left(1-\omega\right)\exp\left(\frac{\cos\beta}{m_2}s_{sz}\right)\right)$                               | $\omega\frac{cos \beta}{m}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right) + \left(1-\omega \right)\frac{cos \beta}{m_2}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m_2}s_{sz}\right)$ | $T_0,\beta,m,m_2,\omega$    | "dexp"             |   |
                                                     
-  Table: (\#tab:hs-transmissivity) Transmissivity profiles avaiable with the
+  Table: (\#tab:hs-transmissivity) Transmissivity profiles available with the
   `dynatop` package.
 
 
 | Symbol   | Description                             | unit     |
 |----------|-----------------------------------------|----------|
-| $T_0$    | Transmissiviy at saturation             | m$^2$/s  |
+| $T_0$    | Transmissivity at saturation             | m$^2$/s  |
 | $m$,$m_2$ | Exponential transmissivity constants    | m$^{-1}$ |
 | $\beta$  | Angle of hill slope                     | rad      |
 | $c_{sz}$ | Saturated zone celerity                 | m/s      |
@@ -685,10 +687,10 @@ required. The additional parameter and properties are defined in Table \@ref(tab
 | $\omega$ | weighting parameter                     | -        |
 
 
-  Table: (\#tab:hs-transmissivity-param) Additional paraemters used in the transmissivity profiles.
+  Table: (\#tab:hs-transmissivity-param) Additional parameters used in the transmissivity profiles.
 
 
-# Appendix A - Monoticity of $f\left(z\right)$
+# Appendix A - Monotonicity of $f\left(z\right)$
 
 By definition $\left. \bar{s}_{uz} \right.\rvert_{0}$, $\Delta t$, $\Delta X$,
 $T_d$, $\check{r}_{rz
@@ -754,7 +756,7 @@ Using this relationship and the expression for the range of $z$ gives
 From this it can be seen that $\frac{d}{dz} f\left(z\right) \geq 0$ with
 equality possible when $z=0$.
 
-# Appendix B - Comparision to the Infantesimal slab derivation
+# Appendix B - Comparison to the Infinitesimal slab derivation
 
 ## Surface Zone
 
@@ -770,7 +772,7 @@ Dividing through by $w^{+}$ gives
 \frac{ds_{sf}^{+}}{dt} = \frac{q_{sf}^{-}/w^{+} - l_{sf}^{+}}{\Delta x} - r_{sf \rightarrow rz}^{+}
 \end{equation}
 
-Note the similaties between this and the finite volume solution. Infact if
+Note the similarities between this and the finite volume solution. In fact if
 $r_{sf \rightarrow rz}$ is taken to be spatially uniform and 
 $\Delta x = A/w^{+}$ then this solution for $s_{sf}^{+}$ will evolve in a similar fashion to
 $\bar{s}_{sf}$
@@ -785,7 +787,7 @@ at the bottom of the hillslope (using $^{+}$).
 
 The same formulation follows for the infinitesimal slab at the bottom of the
 hillslope with the averaged terms (using $\bar{}$) replaced with those valid
-at the bottom of the hillsipe (using $^{+}$).
+at the bottom of the hillslope (using $^{+}$).
 
 ## Saturated Zone
 
@@ -812,7 +814,7 @@ z -
 l_{sz}^{-}\right) + \frac{\Delta t}{T_d}
 & z_{C} \geq z \\
 z -
-\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} -
+\left. \bar{s}_{sz}\right.\rvert_{0} -
 \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
 l_{sz}^{-}\right) + \Delta t \frac{
 \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
@@ -821,8 +823,8 @@ l_{sz}^{-}\right) + \Delta t \frac{
 \end{array} \right.
 \]
 
-Using the monoticity of $h\left(z\right)$ we solve each part
-seperatly. Firstly if $h\left( z_{C} \right) \geq 0$ then the inflow from the unsaturated
+Using the monotonicity of $h\left(z\right)$ we solve each part
+separately. Firstly if $h\left( z_{C} \right) \geq 0$ then the inflow from the unsaturated
   zone is $1/T_{d}$ and 
   \[
   \left. \bar{s}_{sz}\right.\rvert_{\Delta t} =
@@ -834,7 +836,7 @@ l_{sz}^{-}\right) - \frac{\Delta t}{T_d}
 if $h\left( z_{C} \right) < 0$ the value of $z$ satisfies
 \[
 z -
-\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} -
+\left. \bar{s}_{sz}\right.\rvert_{0} -
 \frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
 l_{sz}^{-}\right) + \Delta t \frac{
 \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
@@ -843,11 +845,11 @@ l_{sz}^{-}\right) + \Delta t \frac{
 \]
 Rearrangement to a quadratic gives
 \[
-0 = T_{d} z^2 - T_{d} z \left(\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} +
+0 = T_{d} z^2 - T_{d} z \left(\left. \bar{s}_{sz}\right.\rvert_{0} +
 	\frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
 		l_{sz}^{-}\right) \right) +
 	\Delta t z -
-	\Delta t \left(\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} +
+	\Delta t \left(\left. \bar{s}_{sz}\right.\rvert_{0} +
 		\frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
 		l_{sz}^{-}\right) \right)
 		 +
@@ -856,20 +858,20 @@ Rearrangement to a quadratic gives
 \right)
 \]
 \[
-0 = z^2 - z \left(\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} +
+0 = z^2 - z \left(\left. \bar{s}_{sz}\right.\rvert_{0} +
 	\frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
 		l_{sz}^{-}\right)  - \frac{\Delta t}{T_{d}}\right) +
 		\frac{\Delta t}{T_{d}} \left(
 		\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz
 		\rightarrow uz} -
-		\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} - 
+		\left. \bar{s}_{sz}\right.\rvert_{0} - 
 		\frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
 		l_{sz}^{-}\right) \right)
 \]
 
 The commonly quoted solution for the quadratic
 \[
-0 = z^2 + bz +c
+0 = z^2 + b z +c
 \]
 is 
 \[
@@ -877,23 +879,38 @@ z = \frac{-b \pm\sqrt{ b^2 - 4c }}{2}
 \]
 Comparing terms we see that 
 \[
--b = \left. \bar{s}_{sz}\right.\rvert_{\Delta 0} +
+-b = \left. \bar{s}_{sz}\right.\rvert_{0} +
 	\frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
 		l_{sz}^{-}\right)  - \frac{\Delta t}{T_{d}}
 \]
 
-and *THIS IS WRONG _ SHOULD NOT USE H(ZC)*
+and
 \[
-c = \frac{\Delta t}{T_{d}} h\left(z_{C}\right)
+c = 
+		\frac{\Delta t}{T_{d}} \left(
+		\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz
+		\rightarrow uz} -
+		\left. \bar{s}_{sz}\right.\rvert_{0} - 
+		\frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
+		l_{sz}^{-}\right) \right)
 \]
-Since $z_{C}>0$ and the solution is valid when $h\left(z_{C}\right) < 0$ we
-see that $-b > 0$ and
+
+Since $-b = z_{C} - h\left(z_{C}\right)$ gives $-b > 0$.
+Since $z > z_{C}$ the subsurface ($s_{uz}$ and
+$s_{sz}$) does not fill so
+\[
+\left. \bar{s}_{sz}\right.\rvert_{0} - \left. \bar{s}_{uz}
+\right.\rvert_{0} \gt
+\Delta t \check{r}_{rz \rightarrow uz} -
+\frac{\Delta t}{\Delta x} \left(l_{sz}^{+} -
+		l_{sz}^{-}\right)
+\]
+and $c < 0$
+
+Combining these conditions results in 
 $\sqrt{b^2 - 4c} > \left\lvert b \right\rvert$. Since $z>0$ only one root of
 the quadratic is valid (as always positive) so
 \[
-z = \frac{1}{2}\left(-b + \sqrt{ b^2 - 4c }\right) \\
-= \frac{1}{2} \left( z_{C} - h\left(z_{C}\right) + \sqrt{
-\left(h\left(z_{C}\right)-z_{C}\right)^2 - 4 \frac{\Delta t}{T_{d}}
-h\left(z_{C}\right) } \right)
+z = \frac{1}{2}\left(-b + \sqrt{ b^2 - 4c }\right)
 \]
 

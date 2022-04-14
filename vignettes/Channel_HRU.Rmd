@@ -22,7 +22,7 @@ knitr::opts_chunk$set(
 ```
 The `dynatop` function in the dynamic TOPMODEL R package implements a set of numerical solutions to the
 governing equations of the dynamic TOPMODEL hillslope formulation. This
-returns the inflow to the channel reachs specified in the model. 
+returns the inflow to the channel reaches specified in the model. 
 This vignette documents the formulation and the numerical solution used to
 route these channel inflows, along with other diffuse and point inputs to the
 model.
@@ -34,11 +34,11 @@ Table \@ref(tab:ch-notation} outlines the notation used in this document.
 
 | Quantity type                     | Symbol            | Description                                                             | unit    |
 | -------                           | :---:             | -----------------------------                                           | :---:   |
-| Dischage from a reach at time $t$ | $q\left(t\right)$ | Instananeous discharge                                                  | m$^3$/s |
-| Dischage from a reach at time $t$ | $g\left(t\right)$ | Instananeous discharge                                                  | m$^3$/s |
+| Discharge from a reach at time $t$ | $q\left(t\right)$ | Instantaneous discharge                                                  | m$^3$/s |
+| Discharge from a reach at time $t$ | $g\left(t\right)$ | Instantaneous discharge                                                  | m$^3$/s |
 | Diffuse inflow                    | $d\left(t\right)$ | Instantaneous inflow from diffuse inputs to the channel HRU             | m$^3$/s |
 | Point inflow                      | $p\left(t\right)$ | Instantaneous inflow from a point source to the head of the Channel HRU | m$^3$/s |
-| Velocity                          | $v_{ch}$          | Effective velocity of water convience within the Channel HRUnetwork     | m/s     |
+| Velocity                          | $v_{ch}$          | Effective velocity of water conveyance within the Channel HRU network     | m/s     |
   
   Table: (\#tab:ch-notation) Outline of notation for describing the Channel HRU
   section of the hillslope HRU
@@ -87,7 +87,7 @@ p\left(t - \tau_{L}\right)
 Since the action on the point inputs is purely advective the flow at a gauged
 location can be written as the summation of the diffuse and external point
 inflows to the Channel
-HRUs (reachs) above the location. For the $k$th Channel HRU above the gauge let
+HRUs (reaches) above the location. For the $k$th Channel HRU above the gauge let
 $\tau_{0}^{\left[k\right]}$ be the advective time delay between water leaving the reach and
 arriving at the gauge. This is readily computed from the channel HRU
 connectivity, reach lengths and velocities. The gauged flow can thus be
@@ -104,12 +104,12 @@ g\left(t\right) = \sum_{k}
 
 To solve for the gauge flow on a discrete time step $\Delta t$ suppose that 
 $t = i\Delta t$ and that the flow index by the time subscript is valid over
-the preceeding time step; for example
+the preceding time step; for example
 \[
 d\left(t\right) = d_{i\Delta t} \quad \left(i-1\right)\Delta t \leq t <i\Delta t
 \]
 
-Then to evaluate $g_{i\Delta t}$ while maintaing mass
+Then to evaluate $g_{i\Delta t}$ while maintaining mass
 conservation in the formulation, the gauged flows must be integrated over the
 time period. Consider one of the contributing
 HRUs, then (dropping the superscript $k$) the contribution of the point inflow
@@ -141,7 +141,7 @@ d_{\left(i-1-r_{\tau}\right)\Delta t}
 \]
 where $r_\tau$ is the largest integer for which 
 $r_{\tau}\Delta t \leq \tau$.
-Next consider the integral of the difuse inflows over $\tau$; that is
+Next consider the integral of the diffuse inflows over $\tau$; that is
 \[
 \int\limits_{\tau_{0}}^{\tau_{0} +
   \tau_{L}}
@@ -267,11 +267,11 @@ d_{\left(i-r_{0}-1\right)\Delta t}
 ## Examples
 
 In this section some example histograms are generated based upon the length,
-velocity and $\tau_0$ of the Channel HRU alond with the time step $\Delta t$.
+velocity and $\tau_0$ of the Channel HRU along with the time step $\Delta t$.
 
 ### Point input
 
-First a function for defining the histrogram for a point inflow can be coded
+First a function for defining the histogram for a point inflow can be coded
 as follows:
 ```{r}
 ## L is length of channel
@@ -311,7 +311,7 @@ fp(L=100,vch=1.5,Dt=200,tau0=600)
 
 ### Diffuse inflow
 
-The function for the difuse inflow is more complex since the special cases
+The function for the diffuse inflow is more complex since the special cases
 have to be handled:
 ```{r}
 fd <- function(L,vch,Dt,tau0){
@@ -342,7 +342,7 @@ fd <- function(L,vch,Dt,tau0){
 ```
 
 In the first example there is no advective time delay and 
-$L/v_{ch} = \Delta t$. This results in time delay historgram in which the
+$L/v_{ch} = \Delta t$. This results in time delay histogram in which the
 first two values equal 0.5. This is an example of the case $r_{L}=r_{0}+1$
 
 ```{r}
@@ -370,7 +370,7 @@ sum(b)
 barplot(b)
 ```
 
-Finally we look at two cases where $\tau_0$ is posisitve; being either a
+Finally we look at two cases where $\tau_0$ is positive; being either a
 direct multiple of the time step
 
 ```{r}
