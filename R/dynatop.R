@@ -237,13 +237,18 @@ dynatop <- R6Class(
         #' @description Return states
         #' @param record logical TRUE if the record should be returned. Otherwise the current states returned
         get_states = function(record=FALSE){
-
+            
             if( record ){
-                return( setNames(private$time_series$state_record,
-                                 private$time_series$index) )
+                tmp <- setNames(private$time_series$state_record,
+                                private$time_series$index)
+                idx <- lapply(tmp, function(x){length(x)>0})
+                return(tmp[idx])
+##                return( setNames(private$time_series$state_record,
+##                                 private$time_series$index) )
             }else{
                 nm <- c("s_sf","s_rz","s_uz","s_sz")
-                return( private$model$hillslope[,c("id",nm)] )
+                tmp <- private$model$hillslope[,c("id",nm)] + 0## need to modify to force change of memory...
+                return( tmp )
             }
        },
        #' @description Plot a current state of the system
@@ -544,9 +549,9 @@ dynatop <- R6Class(
                      paste(names(to_outlet)[!to_outlet],serp=", "))
             }
             ## sort flow direction - this is required
-            private$model$flow_direction <-
+            model$flow_direction <-
                 model$flow_direction[order(model$flow_direction$from,decreasing=TRUE),]
-
+            
             ## #############################################
             ## Check precip_input
             ## #############################################
@@ -561,7 +566,7 @@ dynatop <- R6Class(
             tmp <- tapply(model$precip_input$frc,model$precip_input$id,sum)
             idx <- abs(tmp-1)<delta
             if(!all(idx)){
-                stop("Precipitation input fractions for the following HRU id's do not sum to 1: ",
+                stop("PET input fractions for the following HRU id's do not sum to 1: ",
                      paste(names(tmp[!idx]),collapse=", "))
             }
             ## check all non-zero areas receive rainfall
@@ -569,7 +574,7 @@ dynatop <- R6Class(
                             model$hillslope$id[model$hillslope$area>0]))
             idx <- tmpp %in% names(tmp)
             if(!all(idx)){
-                warning(paste0("The following HRUs do not receive precipitation and have area greater then 0: "),
+                warning(paste0("The following HRUs do not receive PET and have area greater then 0: "),
                         paste(tmpp[!idx],collapse=", "))
             }
             ## sort - not needed but might help speed?
@@ -604,7 +609,7 @@ dynatop <- R6Class(
                         paste(ttmp[!idx],collapse=", "))
             }
             ## sort - not needed but might help speed?
-            model$per_input <-
+            model$pet_input <-
                 model$pet_input[order(model$pet_input$id,decreasing=TRUE),]
             ## set required names
             req_names$data_series[["pet_input"]] <- unique(model$pet_input$name)
@@ -839,7 +844,7 @@ dynatop <- R6Class(
             colnames(private$time_series$channel_inflow$surface) <-
                 colnames(private$time_series$channel_inflow$saturated) <-
                 private$model$channel$id
-
+            
             dt_implicit_sim(private$model$hillslope,
                             private$model$channel,
                             private$model$flow_direction,

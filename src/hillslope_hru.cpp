@@ -187,6 +187,7 @@ void hillslope_hru::implicit_step(double& pet, double& precip, double& Dt, doubl
       upr = 2.0*s_sz + 0.01;
       double fupr = fsz(upr,Dt);
       while( (fupr < 0.0) & (upr < D)){
+	lwr = upr;
 	upr += upr;
 	fupr = fsz(upr,Dt);
       }
