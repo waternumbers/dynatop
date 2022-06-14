@@ -14,8 +14,6 @@
 #' - are not accurate when the input data does not have a constant timestep. The code issues a warning and proceeds assuming the data are equally spaced with the modal timestep.
 #' - do not guarantee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.
 #'
-#' @details
-#'
 #' @export
 #' @examples
 #' # Resample Swindale Rainfall to hourly intervals
