@@ -9,7 +9,7 @@ output:
 pkgdown:
   as_is: true
 vignette: >
-  %\VignetteIndexEntry{The Hillslope HRU}
+  %\VignetteIndexEntry{The HRU}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 resource_files:
@@ -99,13 +99,10 @@ over the length of the hillslope we find
 |                            | $e_p$                   | Potential Evapotranspiration rate                                        | m/s     |
 | Other HRU properties       | $A$                     | Plan area                                                                | m$^3$   |
 |                            | $w$                     | Width of a hill slope cross section                                      | m       |
-|                            | $\Delta x$              | Effective length of the hillslope HRU (Area divided by outflow width)    | m       |
-|                            | $k_{sf}$                | Maximum flow rate from surface excess to root zone                       | m/s     |
-|                            | $c_{sf}$                | Surface excess storage celerity                                          | m/s     |
-|                            | $s_{raf}$               | Surface runoff attenuation feature storage                               | m       |
-|                            | $t_{raf}$               | Surface runoff attenuation feature time constant                         | s       |
-|                            | $s_{rzmax}$             | Maximum root zone storage depth                                          | m       |
-|                            | $T_d$                   | Unsaturated zone time constant per m of saturated storage deficit.       | s/m     |
+|                            | $\Delta x$              | Effective length of the hillslope HRU (\Delta x = A/w$)                  | m       |
+|                            | $\Theta_{sf}$           | Further properties and parameters for the solution of the surface zone   | :-:     |
+|                            | $\Theta_{rz}$           | Further properties and parameters for the solution of the root zone      | :-:     |
+|                            | $\Theta_{uz}$           | Further properties and parameters for the solution of the saturated zone | :-:     |
 |                            | $\Theta_{sz}$           | Further properties and parameters for the solution of the saturated zone | :-:     |
                                                     
   Table: (\#tab:hs-x-notation) Outline of notation for describing a cross
@@ -128,8 +125,10 @@ In cases where lateral flows in the saturated zone produce
 saturation storage deficits water may be returned from the root
 zone to the surface giving negative values of $r_{sf \rightarrow rz}$.
 
+
 The governing ODE for a cross section of the hillslope can be written as a
 variable parameter muskingham model (see Appendix A)
+
 
 \begin{equation}
 \frac{dw\bar{s}_{sf}}{dt} = - \frac{dq_{sf}}{dx} - w r_{sf \rightarrow rz}
@@ -685,6 +684,206 @@ required. The additional parameter and properties are defined in Table \@ref(tab
 
 
   Table: (\#tab:hs-transmissivity-param) Additional parameters used in the transmissivity profiles.
+
+# Appendix A - Variable Parameter Muskingham
+
+Muskingham routing can be derived in a numer of ways. Consistent with the
+wedge derivation the evolution of the storage $s$ in a reach of length $\Delta
+x$ can be expressed in terms of the inflow $q^{-}$,
+outflow $q^{+}$ and lateral inflow per unit area $r$ along with the two
+parameters $\eta$ and $\kappa$ as
+
+\[
+\frac{ds}{dt} = q^{-} + Ar - q^{+} \\
+s = \kappa\left(\eta q^{-} + \left(1-\eta\right) q^{+} \right)
+\]
+
+subsitution gives the ODE
+\[
+\frac{ds}{dt} = \frac{1}{1-\eta} q^{-} + Ar -
+\frac{1}{\kappa\left(1-\eta\right)} s 
+\]
+
+Assuming $\eta$ and $\kappa$ are constant over the time window $\delta t$ this
+gives the solution
+
+\[
+\left. s \right.\rvert_{t + \delta t} = 
+
+
+\]
+By derivation this scheme is mass conservative. To maintain positive flows and
+storage requires $\kappa >0$ and $1 \geq \eta \geq 0$. Further requirements
+upon $\kappa$ and $\eta$ result from maintaining a positive value of
+$o_{t}$. Sufficent, but not nessecary, conditions are that
+\[
+\frac{\Delta t}{2} \geq \kappa_{t}\eta_{t}
+\]
+and 
+\[
+\kappa_{t-1} \left(1-\eta_{t-1}\right) \geq \frac{\Delta t}{2} \\
+\kappa_{t-1} - \frac{\Delta t}{2} \geq \kappa_{t-1}\eta_{t-1}
+\]
+
+
+## Approximating Tank Models
+
+A tank model with possibly varying time constant $T$ takes $o =
+\frac{1}{T}s$. This is a special case of the Muskingham solution with $\eta=0$
+and $\kappa = T$.
+
+Subsitution into the solution gives
+
+\[
+\left( 1 + \frac{\Delta t}{2T_{t}} \right) s_{t} = 
+s_{t-1}
++ \frac{\Delta t}{2} \left(i_{t} + i_{t-1}\right) +
+\left( 1 - \frac{\Delta t}{2T_{t-1}} \right) s_{t-1}
++ l_{t} \Delta x \Delta t
+\]
+
+
+## Approximating Diffusion Wave Routing
+
+Diffuse routing with lateral inflow can be expressed as the parabolic
+equation \footnote{doi:10.1016/j.advwatres.2005.08.008}
+
+\[
+\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl - D \frac{dl}{dx}
+\]
+
+where $l$ is lateral inflow per unit reach length. Simplify this by
+considering, as in the muskingham derivation, a constant lateral inflow along the reach so that $\frac{dl}{dx}=0$ to give
+
+\[
+\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl
+\]
+
+Let us relate this to the Muskingham Solution using the relationship
+\[
+q = \eta i + \left(1-\eta\right)o
+\]
+
+By the wedge approximation with reach length $\Delta x$ the flux $q$ occurs at
+$\eta \Delta x$
+
+Taking Taylor series expansions for $i$ and $o$ based on $q$ gives
+
+\[
+o \approx q + \left(1-\eta\right)\Delta x \frac{dq}{dx} + \frac{1}{2}\left(1-\eta\right)^2\Delta x^2 \frac{d^2 q}{dx^2}
+\]
+and
+\[
+i \approx q - \eta \Delta x \frac{dq}{dx} + \frac{1}{2}\eta^2 \Delta x^2 \frac{d^2 q}{dx^2}
+\]
+
+Subtracting the expression for $i$ from that for $o$ gives
+
+\[
+o - i \approx
+\left(1-\eta\right)\Delta x \frac{dq}{dx} + \eta \Delta x \frac{dq}{dx} +
+\frac{1}{2}\left(1-\eta\right)^2\Delta x^2 \frac{d^2 q}{dx^2} -
+\frac{1}{2}\eta^2 \Delta x^2 \frac{d^2 q}{dx^2} \\
+\approx \Delta x \frac{dq}{dx} + \frac{1}{2}\left(1-2\eta\right)\Delta x^2 \frac{d^2 q}{dx^2}
+\]
+
+From the mass balance condition of the Muskingham routing
+\[
+o - i = - \frac{ds}{dt} + \Delta x l
+\]
+
+Subsituting this and rearranging gives
+
+\[
+\frac{dq}{dx} \approx
+- \frac{1}{\Delta x} \frac{ds}{dt} + l -
+\frac{1}{2}\left(1-2\eta\right)\Delta x \frac{d^2 q}{dx^2}
+\]
+
+Since $q = \frac{s}{\kappa}$ the chain rule gives
+
+\[
+\frac{dq}{dt} = \frac{1}{\kappa}\frac{ds}{dt} - \frac{s}{\kappa^2}\frac{d\kappa}{dt}
+\]
+
+Allowing for $\kappa$ to be an unknown function of $s$ results in
+\[
+\frac{dq}{dt} = \frac{1}{\kappa}\frac{ds}{dt}
+\left(1 - \frac{s}{\kappa^2}\frac{d\kappa}{ds}\right)
+\]
+ 
+Subsituting these into the orginal diffuse routing equation gives
+
+\[
+\frac{1}{\kappa}\left(1 - \frac{s}{\kappa^2}\frac{d\kappa}{ds}\right)\frac{ds}{dt} - 
+\frac{c}{\Delta x} \frac{ds}{dt} +
+cl -
+\frac{1}{2}\left(1-2\eta\right)c\Delta x \frac{d^2 q}{dx^2}
+- D \frac{d^2 q}{dx^2} \approx cl
+\]
+
+The terms involving the lateral inflow cancel. Equating the terms to remove
+$\frac{d^2 q}{dx^2}$ and $\frac{d s}{dt}$ give
+
+\[
+\frac{c\Delta x}{2}\left(2\eta -1\right) = D 
+\]
+
+and
+
+\[
+\frac{1}{\kappa}\left(1 - \frac{s}{\kappa^2}\frac{d\kappa}{ds}\right) = \frac{c}{\Delta x}
+\]
+
+respectively. 
+
+<!-- The value of $\kappa$ is valid for any $c>0$.  -->
+
+The value of $\eta$ is limited. Firstly $\eta = 1/2$ gives no dispersion; that
+is the Kinematic wave equation. Taking  $\eta=1$ produces the maxium
+dispersion of $D = \frac{c\Delta x}{2}$. This imposes a relationship between reach length,
+dispersion and celerity that can represented.
+
+## Constant Celerity and Diffusivity
+
+If $c$ and $D$ are constant it is imediatly apparent that 
+
+\[
+\eta = \left( \frac{2D}{c\Delta x} + 1\right) \frac{1}{2}
+\]
+
+Rearrangment of the equation for $\kappa$ gives
+
+\[
+\frac{d\kappa}{ds}
+= \frac{\kappa^2}{s}\left( 1 - \frac{c \kappa}{\Delta x}\right)
+\]
+
+From this the constant parameter Muskingham method given in <TODO ref>
+can be retreived by nooting that $\frac{d\kappa}{ds} = 0$ hence
+$\kappa = \frac{\Delta x}{c}$
+
+While this solution is known to be unconditionally stable and seconf
+order accurate <TODO ref> it can display osscilatory behaviour. <TODO
+ref> show how by limiting the enforcing a relationship between $\Delta
+t$ and $\Delta x$ this can be avoided.
+
+Cosidering the physical interpretaion of $\kappa$ in terms of the
+water velocity $v$ as
+\[
+\kappa = \frac{\Delta x}{v}
+\]
+it is clear that the constant parameter Muskingham formulation
+cofounds the wave speed $c$ with the water velocity $v$, in effect
+producing a constant celerity forumation by imposing a constant
+velocity.
+
+relationship between
+
+
+
+
+
 
 
 # Appendix A - Monotonicity of $f\left(z\right)$
