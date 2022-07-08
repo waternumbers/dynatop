@@ -690,11 +690,11 @@ required. The additional parameter and properties are defined in Table \@ref(tab
 Muskingham routing can be derived in a numer of ways. Consistent with the
 wedge derivation the evolution of the storage $s$ in a reach of length $\Delta
 x$ can be expressed in terms of the inflow $q^{-}$,
-outflow $q^{+}$ and lateral inflow per unit area $r$ along with the two
-parameters $\eta$ and $\kappa$ as
+outflow $q^{+}$ and lateral inflow $r$ along with the two possibly state or
+time varying parameters $\eta$ and $\kappa$ as
 
 \[
-\frac{ds}{dt} = q^{-} + Ar - q^{+} \\
+\frac{ds}{dt} = q^{-} + r - q^{+} \\
 s = \kappa\left(\eta q^{-} + \left(1-\eta\right) q^{+} \right)
 \]
 
@@ -703,6 +703,91 @@ subsitution gives the ODE
 \frac{ds}{dt} = \frac{1}{1-\eta} q^{-} + Ar -
 \frac{1}{\kappa\left(1-\eta\right)} s 
 \]
+
+## Approximating Tank Models
+
+A tank model with possibly varying time constant $T$ takes $q^{+} =
+\frac{1}{T}s$. This is a special case of the Muskingham solution with $\eta=0$
+and $\kappa = T$.
+
+
+## Approximating Diffusion Wave Routing
+
+Diffuse routing with lateral inflow can be expressed as the parabolic
+equation \footnote{doi:10.1016/j.advwatres.2005.08.008}
+
+\[
+\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl - D \frac{dl}{dx}
+\]
+
+where $l$ is lateral inflow per unit length. Simplify this by
+considering, the area is rectangular and the lateral inflow $r$ uniuformly
+distributed so that $l=\frac{r}{Delta x}$ and $\frac{dl}{dx}=0$ to give
+
+\[
+\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl
+\]
+
+Let us relate this to the Muskingham Solution using the relationship
+\[
+q = \eta i + \left(1-\eta\right)o
+\]
+
+By the wedge approximation with reach length $\Delta x$ the flux $q$ occurs at
+$\eta \Delta x$
+
+Taking Taylor series expansions for $i$ and $o$ based on $q$ gives
+
+\[
+o \approx q + \eta \Delta x \frac{dq}{dx} + \frac{1}{2}\eta^2\Delta x^2 \frac{d^2 q}{dx^2}
+\]
+and
+\[
+i \approx q - \left(1-\eta\right) \Delta x \frac{dq}{dx} + \frac{1}{2}\left(1-\eta\right)^2 \Delta x^2 \frac{d^2 q}{dx^2}
+\]
+
+Subtracting the expression for $i$ from that for $o$ gives
+
+\[
+i - o \approx
+-\Delta x \frac{dq}{dx} +
+\frac{1}{2}\left(1-2\eta\right)^2\Delta x^2 \frac{d^2 q}{dx^2}
+\]
+
+From the mass balance condition
+\[
+\frac{ds}{dt} \approx \Delta x l -\Delta x \frac{dq}{dx} +
+\frac{1}{2}\left(1-2\eta\right)^2\Delta x^2 \frac{d^2 q}{dx^2} 
+\]
+
+Since $q = \frac{s}{\kappa}$ the chain rule and rearranging gives
+
+\[
+\kappa \frac{dq}{dt} + \Delta x \frac{dq}{dx} -
+\frac{1}{2}\left(1-2\eta\right)^2\Delta x^2 \frac{d^2 q}{dx^2}
+\approx \Delta x l
+\]
+
+Comparision to the orginal diffuse routing equation shows that
+\[
+\kappa = \frac{\Delta x}{c}
+\]
+and
+\[
+\eta = \frac{1}{2} - \frac{D}{c \Delta x}
+\]
+
+The value of $\eta$ is limited. Firstly $\eta = 1/2$ results from $D=0$; that
+is the Kinematic wave equation. Taking  $\eta=0$ produces the maxium
+dispersion of $D = \frac{c\Delta x}{2}$. This imposes a relationship between reach length,
+dispersion and celerity that can represented. In the case of $\eta=0$ the
+system acts as a linear tank with $T = \frac{\Delta x}{c}$.
+
+## Numerical Solution
+
+
+
+
 
 Assuming $\eta$ and $\kappa$ are constant over the time window $\delta t$ this
 gives the solution
@@ -726,11 +811,6 @@ and
 \]
 
 
-## Approximating Tank Models
-
-A tank model with possibly varying time constant $T$ takes $o =
-\frac{1}{T}s$. This is a special case of the Muskingham solution with $\eta=0$
-and $\kappa = T$.
 
 Subsitution into the solution gives
 
