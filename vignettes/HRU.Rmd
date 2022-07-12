@@ -115,7 +115,12 @@ is derived.
 
 ## Surface zone
 
-The storage in the surface zone satisfies $s_{sf} \geq 0$.
+The storage in the surface zone satisfies is split into two components. The
+first compoent, identified by the super script $\left[1\right]$ receives the
+lateral inflows, but has a maxium storage volume at which it spills to the
+second component (identified by the super script $\left[2\right]$)
+
+generates lateral outflow and drainf$s_{sf} \geq 0$.
 Surface storage is increased by lateral downslope flow from upslope HRUs. 
 Water flows to the root zone at a constant rate $r_{sf \rightarrow rz}$, unless limited by
 the available storage at the surface or the ability of the root zone to
@@ -128,13 +133,13 @@ zone to the surface giving negative values of $r_{sf \rightarrow rz}$.
 The governing ODE for a cross section of the hillslope can be written as a
 variable parameter muskingham model (see Appendix A) as
 \[
-\frac{ds_{sf}}{dt} = \frac{1}{1-\eta_{sf}} q^{-} 
+\frac{ds_{sf}}{dt} = \frac{1}{1-\eta_{sf}} q^{-}_{sf} 
 - r_{sf \rightarrow rz} 
-- \frac{\kappa_{sf}}{1 - \eta_{sf}} s_{sf}
+- \frac{1}{\kappa_{sf}\left(1 - \eta_{sf}\right)} s_{sf}
 \]
 
 Several interpretations of the scheme suiitable for the surface zone
-are given in Table \@ref(tab:hs-sf-notation).
+are given in Table \@ref(tab:hs-sf-type).
 
 | Type     | Description                                                      | Parameters              | Equations |
 |----------|------------------------------------------------------------------|-------------------------|-----------|
@@ -217,29 +222,38 @@ given by the kinematic equation implimented through the muskingham
 approximation (see Appendix A) which gives
 
 \begin{equation}
-\frac{d \left(D-s_{sz}\right)}{dt} = \frac{1}{2} q^{-} 
+\frac{d \left(D-s_{sz}\right)}{dt} = 2q^{-}_{sz} 
 + r_{uz \rightarrow sz} 
-- \frac{\kappa_{sz}}{2} \left(D-s_{sz}\right)
+- \frac{2}{\kappa_{sz}} \left(D-s_{sz}\right)
 \end{equation}
 
-or treating $D$ as constant and subsituting in the expression for
-$r_{uz \rightarrow sz}$
+or treating $D$ as constant and subsituting in the expressions for
+$r_{uz \rightarrow sz}$ and $\kappa_{sz}$
 
 \[
-\frac{d s_{sz}}{dt} = -\frac{1}{2} q^{-} 
-- \frac[s_{uz}{T_{d}s_{sz}} 
-+ \frac{\kappa_{sz}}{2} \left(D-s_{sz}\right)
+\frac{d s_{sz}}{dt} = -2q^{-}_{sz} 
+- \frac{s_{uz}}{T_{d}s_{sz}} 
++ \frac{2c_{sz}}{\Delta x} \left(D-s_{sz}\right)
 \]
 
 
-The Kinematic approximation then depends upon the specification of a
- relationship between lateral flow and storage deficit on a given
- cross section expressed as a height $h_sz$.
- This usually termed the transmissivity
- profile and defines a relationship through a one-to-one, continuously differentiable function 
-$g: \mathcal{R^{+}}\rightarrow \mathcal{R}^{+}$ which returns the lateral flow on
+The Kinematic approximation then requires a relationship between $q_{sz}$ and
+ the cross sectionsal flow area, given in terms of the cross sectional storage
+ defict $h_{sz}$ as $A_{sz} = w\left(D-h_{sz}\right)$.
+ This relationship is the transmissivity
+ profile which defines a relationship through a one-to-one, continuously differentiable function 
+$g: \left[0,D\right] \rightarrow \mathcal{R}^{+}$ which returns the lateral flow on
 a unit width such that $q_{sz} = w g\left(h_{sz},\Theta_{sz}\right)
- \geq 0$ which satisfies
+ \geq 0$. 
+ The celerity is computed as
+ \[
+ \frac{dq_{sz}}{dA_{sz}} = \frac{dq_{sz}}{dh_{sz}}\left(\frac{dA_{sz}}{dh_{sz}}\right)^{-1} =
+ -\frac{d}{dh_{sz}}g\left(h_{sz},\Theta_{sz}\right)
+ \]
+ 
+ 
+ 
+ Since which satisfies
 \begin{equation}
 -\frac{dq_{sz}}{dh_{sz}} = -w\frac{d}{dh_{sz}}g\left(h_{sz},\Theta_{sz}\right) \geq 0
 \end{equation}
@@ -687,7 +701,7 @@ s = \kappa\left(\eta q^{-} + \left(1-\eta\right) q^{+} \right)
 
 subsitution gives the ODE
 \[
-\frac{ds}{dt} = \frac{1}{1-\eta} q^{-} + Ar -
+\frac{ds}{dt} = \frac{1}{1-\eta} q^{-} + r -
 \frac{1}{\kappa\left(1-\eta\right)} s 
 \]
 
