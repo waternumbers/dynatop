@@ -1,96 +1,123 @@
 #include "helpers.h"
 
-std::vector<hru> makeHRUs(Rcpp::DataFrame mdl,
-			  std::vector<double> &s_sf, std::vector<double> &s_rz, std::vector<double> &s_uz, std::vector<double> &s_sz, std::vector<double> &q_sz, std::vector<double> &q_sf,
-			  std::vector<double> &precip, std::vector<double> &pet,
-			  std::vector<double> &q_sf_in, std::vector<double> &q_sz_in, std::vector<double> &q_sf_in_prev, std::vector<double> &q_sz_in_prev, 
-			  std::vector<double> &r_sf_rz, std::vector<double> &r_rz_uz, std::vector<double> &r_uz_sz, std::vector<double> &e_a,
-			  double const &Dt, double const &vtol, double const &qtol, int const &max_it){
-  int nhru = mdl.nrows(); // number of HRUs
+std::vector<hru> makeHRUs(Rcpp::List mdl){
+  int nhru = mdl.size(); // number of HRUs
   std::vector<hru> hrus;
-  Rcpp::NumericVector s_bar = mdl["s_bar"]; // average gradient
-  Rcpp::NumericVector area = mdl["area"]; // surface area (plan)
-  Rcpp::NumericVector width = mdl["width"]; // contour length of outflow
-  Rcpp::List sf_desc = mdl["sf_cpp"]; // descriptions and parameters for surface store
-  Rcpp::List sp_desc = mdl["sp_cpp"]; // descriptions and parameters for spill store
-  Rcpp::List rz_desc = mdl["sf_cpp"]; // descriptions and parameters for root zone
-  Rcpp::List uz_desc = mdl["sf_cpp"]; // descriptions and parameters for unsaturated zone
-  Rcpp::List sz_desc = mdl["sz_cpp"]; // descriptions and parameters for saturated zone
+  
   for(int ii=0; ii<nhru; ++ii){
-    Rcpp::List tmp_sf = sf_desc[ii];
-    Rcpp::List tmp_sz = sz_desc[ii];
-    hrus.push_back( hru(s_sf[ii],s_rz[ii],s_uz[ii],s_sz[ii], // states passed - references
-			q_sf[ii],q_sz[ii], q_sf_in[ii], q_sz_in[ii], // external fluxes - references
-			precip[ii], pet[ii], e_a[ii], // external fluxes - references
-			r_sf_sp[ii], r_sf_rz[ii], r_sp_rz[ii], r_rz_uz[ii], r_uz_sz[ii], // vertical fluxes - references
-			tmp_sf["type_int"], tmp_sf["param"], // surface type and parameters passed explicitly
-			tmp_sp["type_int"], tmp_sp["param"], // spill type and parameters passed explicitly
-			tmp_rz["type_int"], tmp_rz["param"], // root zone type and parameters passed explicitly
-			tmp_uz["type_int"], tmp_uz["param"], // unsaturated zone type and parameters passed explicitly
-			tmp_sz["type_int"], tmp_sz["param"], // saturated zone type and parameters passed explicitly
-			Dt, vtol,qtol,max_it) ); // simulation parameters passed as references
+    Rcpp::List m = mdl[ii];
+    Rcpp::NumericVector svec = m["states"];
+    Rcpp::NumericVector pvec = m["properties"];
+    Rcpp::List sf_list = m["sf"];
+    Rcpp::List rz_list = m["rz"];
+    Rcpp::List uz_list = m["uz"];
+    Rcpp::List sz_list = m["sz"];
+    Rcpp::List pcp_list = m["precip"];
+    Rcpp::List pet_list = m["pet"];
+    Rcpp::List q_sf_list = m["sf_links"];
+    Rcpp::List q_sz_list = m["sz_links"];
+    int id = m["id"];
+    
+    // hrus.push_back( hru( id, //m["id"], // id passed explicitly
+    // 			 svec["s_sf"], svec["s_rz"], svec["s_uz"], svec["s_sz"], // states passed explicitly
+    // 			 pvec["area"], pvec["s_bar"], pvec["width"], // properties passed explicity
+    // 			 sf_list["type"], sf_list["parameters"], // surface type and parameters passed explicitly
+    // 			 rz_list["parameters"], // root zone type and parameters passed explicitly
+    // 			 uz_list["parameters"], // unsaturated zone type and parameters passed explicitly
+    // 			 sz_list["type"], sz_list["parameters"], // saturated zone type and parameters passed explicitly
+    // 			 pcp_list["id"], pcp_list["fraction"], // precipiataion inputs
+    // 			 pet_list["id"], pet_list["fraction"], // pet inputs
+    // 			 q_sf_list["id"], q_sf_list["fraction"], // surface zone redistribution
+    // 			 q_sz_list["id"], q_sz_list["fraction"] // saturated zone redistribution
+    // 			 )
+    // 		    );
+    hrus.push_back( hru( id, //m["id"], // id passed explicitly
+			 Rcpp::as<double>(svec["s_sf"]), Rcpp::as<double>(svec["s_rz"]), Rcpp::as<double>(svec["s_uz"]), Rcpp::as<double>(svec["s_sz"]), // states passed explicitly
+			 Rcpp::as<double>(pvec["area"]), Rcpp::as<double>(pvec["s_bar"]), Rcpp::as<double>(pvec["width"]), // properties passed explicity
+			 Rcpp::as<int>(sf_list["type"]), Rcpp::as<std::vector<double>>(sf_list["parameters"]), // surface type and parameters passed explicitly
+			 rz_list["parameters"], // root zone type and parameters passed explicitly
+			 uz_list["parameters"], // unsaturated zone type and parameters passed explicitly
+			 Rcpp::as<int>(sz_list["type"]), Rcpp::as<std::vector<double>>(sz_list["parameters"]), // saturated zone type and parameters passed explicitly
+			 Rcpp::as<std::vector<int>>(pcp_list["id"]), Rcpp::as<std::vector<double>>(pcp_list["fraction"]), // precipiataion inputs
+			 Rcpp::as<std::vector<int>>(pet_list["id"]), Rcpp::as<std::vector<double>>(pet_list["fraction"]), // pet inputs
+			 Rcpp::as<std::vector<int>>(q_sf_list["id"]), Rcpp::as<std::vector<double>>(q_sf_list["fraction"]), // surface zone redistribution
+			 Rcpp::as<std::vector<int>>(q_sz_list["id"]), Rcpp::as<std::vector<double>>(q_sz_list["fraction"]) // saturated zone redistribution
+			 )
+		    );
+    
   }
-  return( hrus );
-}
+  
+  return(hrus);
+};
+
+Rcpp::List makeStateList(std::vector<hru> &hrus){
+  int nhru = hrus.size(); // number of HRUs
+  Rcpp::List state_list;
+  for(int ii=0; ii<nhru; ++ii){
+    Rcpp::NumericVector s = Rcpp::NumericVector::create(
+							Rcpp::Named("s_sf", hrus[ii].s_sf),
+							Rcpp::Named("s_rz", hrus[ii].s_rz),
+							Rcpp::Named("s_uz", hrus[ii].s_uz),
+							Rcpp::Named("s_sz", hrus[ii].s_sz));
+    Rcpp::List L = Rcpp::List::create(Rcpp::Named("id") = hrus[ii].id , Rcpp::Named("states") = s);
+    state_list.push_back(L);
+  }
+  return( state_list );
+};
+
 
 
 outFlux::outFlux(std::vector<int> out_idx_, std::vector<int> idx_, std::vector<int> flux_type_):
   out_idx(out_idx_), idx(idx_), flux_type(flux_type_)
 {};
 
-void outFlux::apply(std::vector<double> &out, double &sc,
-		    std::vector<double> &precip, std::vector<double> &pet, std::vector<double> &a_e,
-		    std::vector<double> &q_sf, std::vector<double> &q_sf_in,
-		    std::vector<double> &q_sz, std::vector<double> &q_sz_in,
-		    std::vector<double> &s_sf, std::vector<double> &s_rz,
-		    std::vector<double> &s_uz, std::vector<double> &s_sz,
-		    std::vector<double> &r_sf_rz, std::vector<double> &r_rz_uz, std::vector<double> &r_uz_sz){
+void outFlux::apply(std::vector<hru> &hrus, std::vector<double> &out, double nstep){
   for(uint ii=0; ii<out_idx.size(); ++ii){
     int &oi = out_idx[ii];
     int &i = idx[ii];
     int &fl = flux_type[ii];
     switch (fl) {
     case 1: // precip
-      out[oi] += precip[i] / sc;
+      out[oi] += hrus[i].precip * hrus[i].area / nstep;
       break;
     case 2: // pet
-      out[oi] += pet[i] / sc;
+      out[oi] += hrus[i].pet  * hrus[i].area / nstep;
       break;
     case 3: // aet
-      out[oi] += a_e[i] / sc;
+      out[oi] += hrus[i].aet  * hrus[i].area / nstep;
       break;
     case 4: // q_sf
-      out[oi] += q_sf[i] / sc;
+      out[oi] += hrus[i].q_sf * hrus[i].area / nstep;
       break;
     case 5: // q_sf_in
-      out[oi] += q_sf_in[i] / sc;
+      out[oi] += hrus[i].q_sf_in * hrus[i].area / nstep;
       break;
     case 6: // q_sz
-      out[oi] += q_sz[i] / sc;
+      out[oi] += hrus[i].q_sz  * hrus[i].area/ nstep;
       break;
     case 7: // q_sz_in
-      out[oi] += q_sz_in[i] / sc;
+      out[oi] += hrus[i].q_sz_in * hrus[i].area / nstep;
       break;
     case 8: // s_sf
-      out[oi] = s_sf[i];
+      out[oi] = hrus[i].s_sf * hrus[i].area / nstep;
       break;
     case 9: // s_rz
-      out[oi] = s_rz[i];
+      out[oi] = hrus[i].s_rz * hrus[i].area / nstep;
       break;
     case 10: // s_uz
-      out[oi] = s_uz[i];
+      out[oi] = hrus[i].s_uz  * hrus[i].area / nstep;
       break;
     case 11: // s_sz
-      out[oi] = s_sz[i];
+      out[oi] = hrus[i].s_sz  * hrus[i].area / nstep;
       break;
     case 12: // r_sf_rz
-      out[oi] += r_sf_rz[i] / sc;
+      out[oi] += hrus[i].r_sf_rz  * hrus[i].area / nstep;
       break;
     case 13: // r_rz_uz
-      out[oi] += r_rz_uz[i] / sc;
+      out[oi] += hrus[i].r_rz_uz  * hrus[i].area / nstep;
       break;
-    case 14: // q_uz_sz
-      out[oi] += r_uz_sz[i] / sc;
+    case 14: // r_uz_sz
+      out[oi] += hrus[i].r_uz_sz  * hrus[i].area / nstep;
       break;
     }
   }

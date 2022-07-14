@@ -7,23 +7,16 @@
 #include "hru.h"
 #include "Rcpp.h" // this is included since data types are used
 
-std::vector<hru> makeHRUs(Rcpp::DataFrame,
-			  std::vector<double>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, std::vector<double>&, std::vector<double>&,
-			  std::vector<double>&, std::vector<double>&,
-			  std::vector<double>&, std::vector<double>&,std::vector<double>&, std::vector<double>&,
-			  std::vector<double>&, std::vector<double>&, std::vector<double>&, std::vector<double>&,
-			  double const&, double const&, double const&, int const&);
+std::vector<hru> makeHRUs(Rcpp::List);
+
+Rcpp::List makeStateList(std::vector<hru>&);
 
 class outFlux {
  protected: 
   std::vector<int> out_idx, idx, flux_type;
  public:
   outFlux(std::vector<int>, std::vector<int>, std::vector<int>);
-  void apply(std::vector<double>&, double &,
-	     std::vector<double> &, std::vector<double>&, std::vector<double>&,
-	     std::vector<double> &, std::vector<double>&, std::vector<double>&, std::vector<double>&,
-	     std::vector<double> &, std::vector<double>&, std::vector<double>&, std::vector<double>&,
-	     std::vector<double> &, std::vector<double>&, std::vector<double>&);
+  void apply(std::vector<hru>&, std::vector<double>&, double);
 };
 
 #endif
