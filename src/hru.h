@@ -5,6 +5,7 @@
 #include <utility>
 #include <cmath>
 #include <memory>
+#include <limits>
 #include "Rcpp.h" // this is included just to get warning messages out!
 #include "sf.h"
 #include "sz.h"

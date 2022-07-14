@@ -107,10 +107,10 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
     q_sf = q_sf_in;
     q_sz_in = vec_q_sz_in[id] / area;
     q_sz = q_sz_in; 
-    s_sf = 0.0;
-    s_rz = 0.0;
-    s_uz = 0.0;
-    s_sz = 0.0;
+    s_sf = std::numeric_limits<double>::quiet_NaN();
+    s_rz = std::numeric_limits<double>::quiet_NaN();
+    s_uz = std::numeric_limits<double>::quiet_NaN();
+    s_sz = std::numeric_limits<double>::quiet_NaN();
     lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
     return;
   }

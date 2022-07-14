@@ -38,8 +38,8 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
 			 rz_list["parameters"], // root zone type and parameters passed explicitly
 			 uz_list["parameters"], // unsaturated zone type and parameters passed explicitly
 			 Rcpp::as<int>(sz_list["type"]), Rcpp::as<std::vector<double>>(sz_list["parameters"]), // saturated zone type and parameters passed explicitly
-			 Rcpp::as<std::vector<int>>(pcp_list["id"]), Rcpp::as<std::vector<double>>(pcp_list["fraction"]), // precipiataion inputs
-			 Rcpp::as<std::vector<int>>(pet_list["id"]), Rcpp::as<std::vector<double>>(pet_list["fraction"]), // pet inputs
+			 Rcpp::as<std::vector<int>>(pcp_list["idx"]), Rcpp::as<std::vector<double>>(pcp_list["fraction"]), // precipiataion inputs
+			 Rcpp::as<std::vector<int>>(pet_list["idx"]), Rcpp::as<std::vector<double>>(pet_list["fraction"]), // pet inputs
 			 Rcpp::as<std::vector<int>>(q_sf_list["id"]), Rcpp::as<std::vector<double>>(q_sf_list["fraction"]), // surface zone redistribution
 			 Rcpp::as<std::vector<int>>(q_sz_list["id"]), Rcpp::as<std::vector<double>>(q_sz_list["fraction"]) // saturated zone redistribution
 			 )

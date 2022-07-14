@@ -85,7 +85,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   std::vector<hru> hrus = makeHRUs(mdl);
   
   // create output flux object
-  outFlux out_flux(out_dfn["name_idx"], out_dfn["id_idx"], out_dfn["flux_int"]);
+  outFlux out_flux(out_dfn["name_idx"], out_dfn["id"], out_dfn["flux_int"]);
   
   // start loop of time steps
   for(int tt = 0; tt < obs_matrix.nrow(); ++tt) {
@@ -107,8 +107,10 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     
     // compute the mass balance initial storage
     for(int ii=0; ii<nhru; ++ii){
-      mbv[0] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_rz) * hrus[ii].area; // initial state volume
-      mbv[1] += hrus[ii].precip * hrus[ii].area; // precip volume
+      if( hrus[ii].area > 0.0){
+	mbv[0] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_rz) * hrus[ii].area; // initial state volume
+	mbv[1] += hrus[ii].precip * hrus[ii].area; // precip volume
+      }
     }
     mbv[1] = mbv[1] * timestep;
     
@@ -124,14 +126,15 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
       //Rcpp::Rcout << "cleared flux" << std::endl;
   
       // start loop of hrus
-      for(int ii=0; ii<nhru; ++ii){
+      for(int ii= nhru-1; ii >= 0; --ii){
   	//Rcpp::Rcout << "hru " << ii << " at timestep " << tt << std::endl;
   	hrus[ii].step(q_sf_in,q_sz_in,vtol,etol,max_it,Dt);
 
 	// mass balance components
-	mbv[2] += hrus[ii].aet * hrus[ii].area * Dt ; // actual evapotranspiration
-	mbv[3] += Dt * (hrus[ii].q_sf + hrus[ii].q_sz - q_sf_in[ii] - q_sz_in[ii]) ; // net lateral flux
-	
+	if( hrus[ii].area > 0.0){
+	  mbv[2] += hrus[ii].aet * hrus[ii].area * Dt ; // actual evapotranspiration
+	  mbv[3] += Dt * (hrus[ii].q_sf + hrus[ii].q_sz - q_sf_in[ii] - q_sz_in[ii]) ; // net lateral flux
+	}
       }
       
 
@@ -142,7 +145,9 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
 
     // finish off mass balance at end of step
     for(int ii=0; ii<nhru; ++ii){
-      mbv[4] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_rz) * hrus[ii].area; // final state volume
+      if( hrus[ii].area > 0.0){
+	mbv[4] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_rz) * hrus[ii].area; // final state volume
+      }
     }
     mbv[5] = mbv[0] + mbv[1] - mbv[2] - mbv[3] - mbv[4];
     for(unsigned int ii=0;  ii<6; ++ii){
