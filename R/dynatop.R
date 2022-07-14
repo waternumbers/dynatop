@@ -92,15 +92,11 @@ dynatop <- R6Class(
             }
             max_it <- as.integer(max_it)
             if(max_it < 10){stop("Please use at least 10 iterations")}
-             
+
             ## check presence of finite states
-            sv <- c("s_sf","s_rz","s_uz","s_sz","q_sf","q_sz")
-            idx <- private$model$hru$area > 0 ## don;t expect valid storage values for HRU with no area
-            has_vol <- all( sapply(private$model$hru[idx, c("s_sf","s_rz","s_uz","s_sz")],  function(x){all(!is.na(x))} ))
-            has_flux <- all( sapply(private$model$hru[, c("q_sf","q_sz")],  function(x){all(!is.na(x))} ))
-            
-            if( !(has_flux & has_vol) ){
-                stop("Model states are either not initialised or have non-finite values")
+            tmp <- sapply(private$model, function(x){ x$properties["area"]==0 | all(is.finite(x$states)) })
+            if( !all(tmp) ){
+                stop("Model states have non-finite values")
             }
 
             if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
@@ -128,41 +124,28 @@ dynatop <- R6Class(
         ## Functions for extracting and plotting data
         #' @description Return channel inflow as an xts series or list of xts series
         #' @param name one or more output series to return
-        get_output = function(name=colnames(private$time_series$output_flux)){
-            name <- match.arg(name, colnames(private$time_series$output_flux), several.ok=TRUE)
-            x <- xts::xts(private$time_series$output_flux[,name,drop=FALSE],
+        get_output = function(name=colnames(private$time_series$output)){
+            name <- match.arg(name, colnames(private$time_series$output), several.ok=TRUE)
+            x <- xts::xts(private$time_series$output[,name,drop=FALSE],
                           order.by=private$time_series$index)
             return(x)
         },
         #' @description Plot the channel inflow
         #' @param total logical if total inflow is to be plotted
         #' @param separate logical logical if the surface and saturated zone inflows should be plotted separately
-        plot_output = function(total=FALSE,separate=FALSE){
-            x <- self$get_channel_inflow(total,separate)
-            if(total){
-                if(separate){
-                    x <- merge(x$surface,x$saturated)
-                    names(x) = c("surface","saturated")
-                    lloc <- "topright"
-                    plot(x,main="Channel Inflow",legend.loc=lloc)
-                }else{
-                    lloc <- NULL
-                    plot(x,main="Channel Inflow",legend.loc=lloc)
+        plot_output = function(name=colnames(private$time_series$output),seperate=FALSE){
+            x <- self$get_output(total,separate)
+            if(seperate){
+                oldpar <- par(no.readonly = TRUE)
+                on.exit(par(oldpar))
+                nc <- floor(sqrt(length(name)))
+                nr <- ceiling( length(name)/nc )
+                par(mfrow=c(nr,nc))
+                for(ii in name){
+                    plot(x[,ii])
                 }
             }else{
-                if(separate){
-                    lloc <- "topright"
-                    oldpar <- par(no.readonly = TRUE)
-                    on.exit(par(oldpar))
-                    par(mfrow=c(2,1))
-                    ## print seems to make this work....
-                    print(plot(x$surface,main="Channel Inflow: surface",legend.loc=lloc,on=1))
-                    print(plot(x$saturated,main="Channel Inflow: saturated",legend.loc=lloc,on=2))
-                }else{
-                    lloc <- "topright"
-                    plot(x,main="Channel Inflow",legend.loc=lloc)
-                }
-                
+                plot(x)
             }
         },
         #' @description Get the observed data
@@ -190,32 +173,22 @@ dynatop <- R6Class(
                 return( setNames(private$time_series$state_record,
                                  private$time_series$index) )
             }else{
-                nm <- c("s_sf","s_rz","s_uz","s_sz","q_sf","q_sz")
-                return( private$model$hru[,c("id",nm)] )
+                tmp <- do.call(rbind, lapply(private$model, function(x){ c(id=x$id, x$states) }))
+                return( as.data.frame(tmp) )
             }
        },
        #' @description Plot a current state of the system
        #' @param state the name of the state to be plotted
        # #' @param add_channel Logical indicating if the channel should be added to the plot
-       plot_state = function(state){ #,add_channel=TRUE){
+       plot_state = function(state=c("s_sf","s_rz","s_uz","s_sz")){ #,add_channel=TRUE){
+           state <- match.arg(state)
            
            if( is.null(private$model$map) | ( length(private$model$map)==0) ){
                stop("The model contains no map of HRU locations")
            }
-           if( !file.exists(private$model$map) ){ stop("The HRU map file is missing") }
-           ## if( add_channel & !file.exists(private$model$map$channel) ){ warnings("File containing the channel network does not exist") }
-           
-           if(!(state%in%colnames(private$model$hru))){
-               stop("Model state does not exist")
-           }
 
-           
-           if( !requireNamespace("terra",quietly=TRUE) ){
-               stop( "The terra package is required for plotting maps - please install or add to libPath" )
-           }
-           
-           rst <- terra::rast(private$model$map)[["hru"]]
-           rst <- terra::subst(rst, private$model$hru$id, private$model$hru[[state]]/private$model$hru$area)
+           x <- self$get_states()
+           rst <- terra::subst(private$map[["hru"]], x$id, x[[state]])
            
            terra::plot(rst)
            ## if( add_channel & file.exists(private$model$map$channel) ){
@@ -233,8 +206,11 @@ dynatop <- R6Class(
         map  = NULL, # storage for map object
         output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
-        info = list(sf_types = setNames(as.integer(1:3),c("cnst","dummy","dummy2")),
-                    sz_types = setNames(as.integer(1:3),c("cnst","dummy","dummy2")),
+        info = list(sf = setNames(as.integer(1:3),c("cnst","dummy","dummy2")),
+                    rz = setNames(as.integer(1),c("orig")),
+                    uz = setNames(as.integer(1),c("orig")),
+                    sz = setNames(as.integer(1:2),c("bexp","cnst")),
+                    
                     output_flux_types = setNames(1:14, c("precip","pet","aet",
                                                          "q_sf","q_sf_in","q_sz","q_sz_in",
                                                          "s_sf","s_rz","s_uz","s_sz",
@@ -254,8 +230,8 @@ dynatop <- R6Class(
             
             ## check properties
             if("properties" %in% names(h)){
-                if( !is.numeric(h$properites) ){ etxt <- c( ext, paste0(h$id, ": properties should be a numeric vector") ) }
-                if( all(c("area","s_bar","width") %in% names(h$properties)) ){
+                if( !is.numeric(h$properties) ){ etxt <- c( etxt, paste0(h$id, ": properties should be a numeric vector") ) }
+                if( all(c("area","gradient","width") %in% names(h$properties)) ){
                     if( !all( h$properties[c("area","gradient","width")] >=0 ) ){
                         etxt <- c( etxt, paste0(h$id, ": some properties are negative") )
                     }
@@ -268,12 +244,8 @@ dynatop <- R6Class(
                 
             ## check states
             if("states" %in% names(h)){
-                if( !is.numeric(h$properites) ){ etxt <- paste(etxt, paste0(h$id, ": states should be a numeric vector"), sep="\n") }
-                if( all(c("s_sf","s_rz","s_uz","s_sz") %in% names(h$states)) ){
-                    if( !all( h$states[c("s_sf","s_rz","s_uz","s_sz")] >=0 ) ){
-                        etxt <- c(etxt, paste0(h$id, ": some states are negative") )
-                    }
-                }else{
+                if( !is.numeric(h$states) ){ etxt <- paste(etxt, paste0(h$id, ": states should be a numeric vector"), sep="\n") }
+                if( !all(c("s_sf","s_rz","s_uz","s_sz") %in% names(h$states)) ){
                     etxt <- c(etxt, paste0(h$id, ": states is missing named values"))
                 }
             }else{
@@ -291,18 +263,19 @@ dynatop <- R6Class(
                     next
                 }
                 if( length( h[[ii]]$type ) >1 ){
-                    etxt <- c(ext, paste0(h$id[1], ": ", ii, " type should be of length 1"))
+                    etxt <- c(etxt, paste0(h$id[1], ": ", ii, " type should be of length 1"))
                     next
                 }
-                if( !( h[[ii]]$type %in% private$info[[ii]]) ){
-                    etxt <- c(ext, paste0(h$id[1], ": ", ii, " type is not valid"))
+                
+                if( !( h[[ii]]$type %in% names(private$info[[ii]])) ){
+                    etxt <- c(etxt, paste0(h$id[1], ": ", ii, " type is not valid"))
                     next
                 }
                 pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
                               "sf_cnst" = c("c_sf")
                               )
                 if( !is.numeric( h[[ii]]$parameters )){
-                    etxt <- c(ext, paste0(h$id[1], ": ", ii, " parameters should be a numeric vector"))
+                    etxt <- c(etxt, paste0(h$id[1], ": ", ii, " parameters should be a numeric vector"))
                     next
                 }
                 if( !all( pnm %in% names(h[[ii]]$parameters)) ){
@@ -340,7 +313,7 @@ dynatop <- R6Class(
             }
 
             ## check lateral flow
-            for(ii in c("q_sf","q_sz")){
+            for(ii in c("sf_flow_direction","sz_flow_direction")){
                 if( !all(c("id","fraction") %in% names(h[[ii]])) ){
                     etxt <- c(etxt, paste0(h$id, ": ", ii, " should contain ids and fractions"))
                     next
@@ -361,10 +334,12 @@ dynatop <- R6Class(
                     etxt <- c(etxt, paste0(h$id, ": ", ii, " id value be less then current id"))
                     next
                 }
-                if( any(h[[ii]]$fraction < 0) | ( abs( sum(h[[ii]]$fraction) -1) > delta) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " fractions should be positive and sum to 1"))
-                    next
-                }             
+                if( length(h[[ii]]$fraction)>0 ){
+                    if( any(h[[ii]]$fraction < 0) | ( abs( sum(h[[ii]]$fraction) -1) > delta) ){
+                        etxt <- c(etxt, paste0(h$id, ": ", ii, " fractions should be positive and sum to 1"))
+                        next
+                    }
+                }
             }
 
             ## fail if errors
@@ -413,7 +388,7 @@ dynatop <- R6Class(
         ## convert the form the internal storage to that input
         ## we presume the model has been checked!!
         reform_model = function(){            
-            return( lapply( provate$model, private$regurge_hru) )
+            return( lapply( private$model, private$regurge_hru) )
         },        
         ## check and add observations
         digest_obs = function(obs){
@@ -428,7 +403,7 @@ dynatop <- R6Class(
             }
             
             ## check all values are finite
-            if( !all(is.finite(obs[,req_series])) ){
+            if( !all(is.finite(obs)) ){
                 stop("There are non finite values in the required time series")
             }
 

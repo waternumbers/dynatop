@@ -107,28 +107,40 @@ rm(list=ls())
 devtools::load_all("../")
 data("Swindale");
 
-##ii <- list.files(".",pattern="^Swindale.*\\.rds$")[4]
-##mdl <- readRDS(ii)
-##mdl$precip_input$name <- "Rainfall"
-##mdl$pet_input$name <- "PET"
 mdl <- Swindale$model
-dt <- dynatop$new(mdl)$add_data(Swindale$obs)#[1:2,,drop=FALSE])
-dt$initialise()$sim_hillslope()
 
-dt$plot_channel_inflow()
-dt$plot_channel_inflow(total=TRUE,separate=FALSE)
-dt$plot_channel_inflow(total=TRUE,separate=TRUE)
-dt$plot_channel_inflow(total=FALSE,separate=FALSE)
-dt$plot_channel_inflow(total=FALSE,separate=TRUE)
-plot(dt$get_channel_inflow(total=T))
+## temp fix to get correct model form
+odfn <- data.frame(name="outlet",id=0,flux="q_sf")
+h <- list()
+for(ii in 1:nrow(mdl$hru)){
+    tmp <- list()
+    tmp$id <- as.integer( mdl$hru$id[ii]-1 )
+    tmp$states <- setNames(as.numeric(rep(NA,4)), c("s_sf","s_rz","s_uz","s_sz"))
+    tmp$properties <- c(width = mdl$hru$width[ii], area = mdl$hru$area[ii], gradient = mdl$hru$s_bar[ii])
+    tmp$sf <- list(type = mdl$hru$sf[[ii]]$type,
+                   parameters = c("c_sf" = 0.1))
+    tmp$sz <- list(type = "bexp",
+                   parameters = c(mdl$hru$sz[[ii]]$param, "D" = 5))
+    tmp$precip <- mdl$hru$precip[[ii]]
+    names(tmp$precip) <- c("name","fraction")
+    tmp$pet <- mdl$hru$precip[[ii]]
+    names(tmp$pet) <- c("name","fraction")
+    tmp$rz <- list(type="orig", parameters = c("s_rzmax" = mdl$hru$s_rzmax[ii]))
+    tmp$uz <- list(type="orig", parameters = c("t_d" = mdl$hru$t_d[ii]))
+    tmp$sf_flow_direction <- list(id = as.integer(mdl$hru$sf_flow_direction[[ii]]$id - 1),
+                                  fraction = mdl$hru$sf_flow_direction[[ii]]$frc)
+    tmp$sz_flow_direction <- list(id = as.integer(mdl$hru$sz_flow_direction[[ii]]$id - 1),
+                                  fraction = mdl$hru$sz_flow_direction[[ii]]$frc)
+    tmp$initialisation <- c("s_rz_0" = mdl$hru$s_rz0[ii], "r_uz_sz_0" = mdl$hru$r_uz_sz0[ii])
+    h[[ii]] <- tmp
+}
 
-mdl <- Swindale$model
-mdl$hillslope$s_raf <- 0.1
-mdl$hillslope$t_raf <- 10*60*60
-dt <- dynatop$new(mdl)$add_data(Swindale$obs)#[1:2,,drop=FALSE])
-dt$initialise()$sim_hillslope()
-x11(); dt$plot_channel_inflow(total=TRUE,separate=TRUE)
-mb <- dt$get_mass_errors()
+hh <- h
+hh[[1]]$id <- hh[[1]]$id + 0
+dt <- dynatop$new(h)
 
-m <- dt$get_model()
-range(m$hillslope$s_sf)
+dt$add_data(Swindale$obs)
+dt$initialise()
+
+dt$sim()
+

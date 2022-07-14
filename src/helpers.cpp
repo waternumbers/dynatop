@@ -14,26 +14,13 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
     Rcpp::List sz_list = m["sz"];
     Rcpp::List pcp_list = m["precip"];
     Rcpp::List pet_list = m["pet"];
-    Rcpp::List q_sf_list = m["sf_links"];
-    Rcpp::List q_sz_list = m["sz_links"];
+    Rcpp::List q_sf_list = m["sf_flow_direction"];
+    Rcpp::List q_sz_list = m["sz_flow_direction"];
     int id = m["id"];
-    
-    // hrus.push_back( hru( id, //m["id"], // id passed explicitly
-    // 			 svec["s_sf"], svec["s_rz"], svec["s_uz"], svec["s_sz"], // states passed explicitly
-    // 			 pvec["area"], pvec["s_bar"], pvec["width"], // properties passed explicity
-    // 			 sf_list["type"], sf_list["parameters"], // surface type and parameters passed explicitly
-    // 			 rz_list["parameters"], // root zone type and parameters passed explicitly
-    // 			 uz_list["parameters"], // unsaturated zone type and parameters passed explicitly
-    // 			 sz_list["type"], sz_list["parameters"], // saturated zone type and parameters passed explicitly
-    // 			 pcp_list["id"], pcp_list["fraction"], // precipiataion inputs
-    // 			 pet_list["id"], pet_list["fraction"], // pet inputs
-    // 			 q_sf_list["id"], q_sf_list["fraction"], // surface zone redistribution
-    // 			 q_sz_list["id"], q_sz_list["fraction"] // saturated zone redistribution
-    // 			 )
-    // 		    );
+
     hrus.push_back( hru( id, //m["id"], // id passed explicitly
 			 Rcpp::as<double>(svec["s_sf"]), Rcpp::as<double>(svec["s_rz"]), Rcpp::as<double>(svec["s_uz"]), Rcpp::as<double>(svec["s_sz"]), // states passed explicitly
-			 Rcpp::as<double>(pvec["area"]), Rcpp::as<double>(pvec["s_bar"]), Rcpp::as<double>(pvec["width"]), // properties passed explicity
+			 Rcpp::as<double>(pvec["area"]), Rcpp::as<double>(pvec["gradient"]), Rcpp::as<double>(pvec["width"]), // properties passed explicity
 			 Rcpp::as<int>(sf_list["type"]), Rcpp::as<std::vector<double>>(sf_list["parameters"]), // surface type and parameters passed explicitly
 			 rz_list["parameters"], // root zone type and parameters passed explicitly
 			 uz_list["parameters"], // unsaturated zone type and parameters passed explicitly

@@ -24,7 +24,7 @@ void dt_init(Rcpp::List mdl, // hru data frame
   std::vector<hru> hrus = makeHRUs(mdl);
 
   // start loop of hrus
-  for(int ii=0; ii<nhru; ++ii){
+  for(int ii=nhru-1; ii>=0; --ii){
     //Rcpp::Rcout << "hru " << ii << std::endl;
     Rcpp::List L = mdl[ii];
     Rcpp::NumericVector ivec = L["initialisation"];
