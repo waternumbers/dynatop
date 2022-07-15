@@ -141,6 +141,7 @@ invisible(self) suitable for chaining
 Simulate the hillslope and channel componets of a dynatop object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dynatop$sim(
+  output_defn,
   keep_states = NULL,
   sub_step = NULL,
   vtol = sqrt(.Machine$double.eps),
@@ -180,7 +181,7 @@ invisible(self) for chaining
 \subsection{Method \code{get_output()}}{
 Return channel inflow as an xts series or list of xts series
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$get_output(name = colnames(private$time_series$output_flux))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$get_output(name = colnames(private$time_series$output))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -197,7 +198,10 @@ Return channel inflow as an xts series or list of xts series
 \subsection{Method \code{plot_output()}}{
 Plot the channel inflow
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_output(total = FALSE, separate = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_output(
+  name = colnames(private$time_series$output),
+  seperate = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -263,7 +267,7 @@ Return states
 \subsection{Method \code{plot_state()}}{
 Plot a current state of the system
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_state(state)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_state(state = c("s_sf", "s_rz", "s_uz", "s_sz"))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{

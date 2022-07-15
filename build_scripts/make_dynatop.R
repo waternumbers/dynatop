@@ -117,6 +117,7 @@ for(ii in 1:nrow(mdl$hru)){
     tmp$id <- as.integer( mdl$hru$id[ii]-1 )
     tmp$states <- setNames(as.numeric(rep(NA,4)), c("s_sf","s_rz","s_uz","s_sz"))
     tmp$properties <- c(width = mdl$hru$width[ii], area = mdl$hru$area[ii], gradient = mdl$hru$s_bar[ii])
+    if( tmp$properties["width"] ==0 ){ tmp$properties["width"] <- 10 }
     tmp$sf <- list(type = mdl$hru$sf[[ii]]$type,
                    parameters = c("c_sf" = 0.1))
     tmp$sz <- list(type = "bexp",
@@ -137,10 +138,10 @@ for(ii in 1:nrow(mdl$hru)){
 
 hh <- h
 hh[[1]]$id <- hh[[1]]$id + 0
-dt <- dynatop$new(h)
+system.time({dt <- dynatop$new(h)
 
 dt$add_data(Swindale$obs)
 dt$initialise()
 
-dt$sim()
+dt$sim(odfn)})
 

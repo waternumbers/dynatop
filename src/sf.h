@@ -6,7 +6,7 @@
 #include <cmath>
 #include "Rcpp.h" // this is included just to get warning messages out!
 
-// generic class for the saturated zone flow
+// generic class
 class sfc {
  public:
   // initialisation
@@ -16,10 +16,10 @@ class sfc {
   virtual void solve (double&, double&, double&, double&, double const&);
 };
 
-// constant celerity
+// constant celerity kinematic wave
 class sfc_cnst: public sfc {
  protected:
-  double celerity, Dx;
+  double kappa, eta;
  public:
   sfc_cnst(std::vector<double> const&, double const& ,double const&);
   void init(double&, double&, double&, double&);

@@ -82,7 +82,7 @@ dynatop <- R6Class(
         #' @details Calls the sim_hillslope and sim_channel in sequence. Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
         #'
         #' @return invisible(self) for chaining
-        sim = function(keep_states=NULL,sub_step=NULL,
+        sim = function(output_defn,keep_states=NULL,sub_step=NULL,
                        vtol=sqrt(.Machine$double.eps),ftol=sqrt(.Machine$double.eps), max_it=1000){
             
             ## check the solver options
@@ -93,6 +93,9 @@ dynatop <- R6Class(
             max_it <- as.integer(max_it)
             if(max_it < 10){stop("Please use at least 10 iterations")}
 
+            ## check digest output defn
+            private$digest_output_defn(output_defn)
+            
             ## check presence of finite states
             tmp <- sapply(private$model, function(x){ x$properties["area"]==0 | all(is.finite(x$states)) })
             if( !all(tmp) ){
@@ -125,6 +128,7 @@ dynatop <- R6Class(
         #' @description Return channel inflow as an xts series or list of xts series
         #' @param name one or more output series to return
         get_output = function(name=colnames(private$time_series$output)){
+            
             name <- match.arg(name, colnames(private$time_series$output), several.ok=TRUE)
             x <- xts::xts(private$time_series$output[,name,drop=FALSE],
                           order.by=private$time_series$index)
@@ -211,10 +215,10 @@ dynatop <- R6Class(
                     uz = setNames(as.integer(1),c("orig")),
                     sz = setNames(as.integer(1:2),c("bexp","cnst")),
                     
-                    output_flux_types = setNames(1:14, c("precip","pet","aet",
-                                                         "q_sf","q_sf_in","q_sz","q_sz_in",
-                                                         "s_sf","s_rz","s_uz","s_sz",
-                                                         "r_sf_rz","r_rz_uz","r_uz_sz"))
+                    output = setNames(1:14, c("precip","pet","aet",
+                                              "q_sf","q_sf_in","q_sz","q_sz_in",
+                                              "s_sf","s_rz","s_uz","s_sz",
+                                              "r_sf_rz","r_rz_uz","r_uz_sz"))
                     ),
         digest_hru = function(h, use_states, delta){ ## check HRU returns a text string of errors
             etxt = character(0)
@@ -232,9 +236,13 @@ dynatop <- R6Class(
             if("properties" %in% names(h)){
                 if( !is.numeric(h$properties) ){ etxt <- c( etxt, paste0(h$id, ": properties should be a numeric vector") ) }
                 if( all(c("area","gradient","width") %in% names(h$properties)) ){
-                    if( !all( h$properties[c("area","gradient","width")] >=0 ) ){
-                        etxt <- c( etxt, paste0(h$id, ": some properties are negative") )
+                    if( !all( h$properties[c("gradient","width")] >0 ) ){
+                        etxt <- c( etxt, paste0(h$id, ": gradient and width but be greater then 0") )
                     }
+                    if( h$properties["area"] < 0 ){
+                        etxt <- c( etxt, paste0(h$id, ": area must not be negative"))
+                    }
+                    
                 }else{
                     etxt <- c(etxt, paste0(h$id, ": properties is missing named values") )
                 }
@@ -418,7 +426,7 @@ dynatop <- R6Class(
                 }
                 h
             }
-            private$model <- lapply( private$model, faddobs,nm = setNames(1:ncol(obs),colnames(obs)) )
+            private$model <- lapply( private$model, faddobs,nm = setNames(0:(ncol(obs)-1),colnames(obs)) )
             private$time_series$obs_data <- as.matrix(obs)
             private$time_series$index <- index(obs)
         },
@@ -432,8 +440,7 @@ dynatop <- R6Class(
             defn$flux <- as.character(defn$flux)
             unm <- unique(defn$name)
             defn$name_idx <- setNames(0:(length(unm)-1),unm)[ defn$name ]
-            defn$flux_int <- private$info$output_type[ defn$flux ]
-
+            defn$flux_int <- private$info$output[ defn$flux ]
             private$output_defn <- defn
             private$time_series$output <- matrix(as.numeric(NA), length(private$time_series$index), length(unm))
             colnames( private$time_series$output ) <- unm
@@ -491,7 +498,7 @@ dynatop <- R6Class(
                    private$time_series$mass_balance,
                    private$time_series$output,
                    private$time_series$state_record,
-                   ts$step,
+                   as.double(ts$step),
                    ts$n_sub_step,
                    as.double(vtol),
                    as.double(etol),

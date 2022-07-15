@@ -25,13 +25,14 @@ void dt_init(Rcpp::List mdl, // hru data frame
 
   // start loop of hrus
   for(int ii=nhru-1; ii>=0; --ii){
-    //Rcpp::Rcout << "hru " << ii << std::endl;
+    // Rcpp::Rcout << "hru " << ii << std::endl;
     Rcpp::List L = mdl[ii];
     Rcpp::NumericVector ivec = L["initialisation"];
     
     hrus[ii].init(q_sf_in,q_sz_in,ivec["s_rz_0"], ivec["r_uz_sz_0"], vtol, etol, max_it);
   }
-  
+
+  // Rcpp::Rcout << "copying back states" << std::endl;
   // copy back states
   for(int ii=0; ii<nhru; ++ii){
     Rcpp::List tmp = mdl[ii];
@@ -63,7 +64,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
 	    double const etol,
 	    int const max_it
 	    ){
-  
+  // Rcpp::Rcout << "Entered function" << std::endl;
   // dimensions
   int nhru = mdl.size(); // number of HRUs
 
@@ -83,9 +84,11 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   
   // make HRUs
   std::vector<hru> hrus = makeHRUs(mdl);
+  // Rcpp::Rcout << "Made HRUs" << std::endl;
   
   // create output flux object
   outFlux out_flux(out_dfn["name_idx"], out_dfn["id"], out_dfn["flux_int"]);
+  // Rcpp::Rcout << "Made outFlux" << std::endl;
   
   // start loop of time steps
   for(int tt = 0; tt < obs_matrix.nrow(); ++tt) {
@@ -104,11 +107,13 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     for(int ii=0; ii<nhru; ++ii){
       hrus[ii].update_met(obs);
     }
+
+    // Rcpp::Rcout << hrus[0].s_sf << " " << hrus[0].s_rz << " " << hrus[0].s_uz << " " << hrus[0].s_sz << std::endl;
     
     // compute the mass balance initial storage
     for(int ii=0; ii<nhru; ++ii){
       if( hrus[ii].area > 0.0){
-	mbv[0] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_rz) * hrus[ii].area; // initial state volume
+	mbv[0] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz) * hrus[ii].area; // initial state volume
 	mbv[1] += hrus[ii].precip * hrus[ii].area; // precip volume
       }
     }
@@ -133,7 +138,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
 	// mass balance components
 	if( hrus[ii].area > 0.0){
 	  mbv[2] += hrus[ii].aet * hrus[ii].area * Dt ; // actual evapotranspiration
-	  mbv[3] += Dt * (hrus[ii].q_sf + hrus[ii].q_sz - q_sf_in[ii] - q_sz_in[ii]) ; // net lateral flux
+	  mbv[3] += Dt * (hrus[ii].q_sf + hrus[ii].q_sz - hrus[ii].q_sf_in - hrus[ii].q_sz_in) * hrus[ii].area ; // net lateral flux
 	}
       }
       
@@ -143,24 +148,28 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
       // end loop of substeps
     }
 
+    // Rcpp::Rcout << hrus[0].s_sf << " " << hrus[0].s_rz << " " << hrus[0].s_uz << " " << hrus[0].s_sz << std::endl;
+    // Rcpp::Rcout << hrus[0].r_sf_rz << " " << hrus[0].r_rz_uz << " " << hrus[0].r_uz_sz << std::endl;
+    // Rcpp::Rcout << hrus[0].q_sf_in << " " << hrus[0].q_sf << " " << hrus[0].q_sz_in << " " << hrus[0].q_sz << std::endl;
+    
     // finish off mass balance at end of step
     for(int ii=0; ii<nhru; ++ii){
       if( hrus[ii].area > 0.0){
-	mbv[4] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_rz) * hrus[ii].area; // final state volume
+	mbv[4] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz) * hrus[ii].area; // final state volume
       }
     }
     mbv[5] = mbv[0] + mbv[1] - mbv[2] - mbv[3] - mbv[4];
     for(unsigned int ii=0;  ii<6; ++ii){
       mass_balance(tt,ii) = mbv[ii];
     }
-    //Rcpp::Rcout << "finished mass balance" << std::endl;
+    // Rcpp::Rcout << "finished mass balance" << std::endl;
     
     // copy across output
     //Rcpp::Rcout << "Copying " << outt.size() << " outputs" << std::endl;
     for(unsigned int ii=0;  ii<out.size(); ++ii){
       out_matrix(tt,ii) = out[ii];
     }
-    //Rcpp::Rcout << "copied output" << std::endl;
+    // Rcpp::Rcout << "copied output" << std::endl;
     
     // keep states if required
     //Rcpp::Rcout << "keep states" << std::endl;

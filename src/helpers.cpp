@@ -60,9 +60,11 @@ outFlux::outFlux(std::vector<int> out_idx_, std::vector<int> idx_, std::vector<i
 
 void outFlux::apply(std::vector<hru> &hrus, std::vector<double> &out, double nstep){
   for(uint ii=0; ii<out_idx.size(); ++ii){
+    
     int &oi = out_idx[ii];
     int &i = idx[ii];
     int &fl = flux_type[ii];
+    
     switch (fl) {
     case 1: // precip
       out[oi] += hrus[i].precip * hrus[i].area / nstep;
