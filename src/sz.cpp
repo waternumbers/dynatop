@@ -4,7 +4,7 @@ szc::szc(){}; //std::vector<double> const &param, double const &grd, double cons
 double szc::fD(){ return(-9999.9); };
 double szc::fq_szmax(){ return(-9999.9); };
 double szc::fc(double& s){ return(-9999.9); };
-void szc::init(double &s, double &q, double &qin, double &r){ };
+void szc::init(double &s, double &q, double &qin, double &r, double &Dx){ };
 
 // bounded exponential
 szc_bexp::szc_bexp(std::vector<double> const &param, double const &grd, double const &A, double const &w){
@@ -26,15 +26,59 @@ double szc_bexp::fc(double& s){
   return( kappa * omega *  std::exp(-s*kappa)  );
 };
 
-void szc_bexp::init(double &s, double &q, double &qin, double &r){
+void szc_bexp::init(double &s, double &q, double &qin, double &r, double &Dx){
   q = qin + r;
-  if( q >= qmax ){
-    s = 0;
-    r = qmax - q;
-    q = qmax;
+  // bounds for search of of state
+  std::pair<double,double> bnd(0.0,D), fbnd(0.0,0.0);
+  double k = Dx / fc(bnd.first);
+  fbnd.first = bnd.first + k*(qin+q)/2.0 - D;
+  k = Dx / fc(bnd.second);
+  fbnd.second = bnd.first + k*(qin+q)/2.0 - D;
+  
+  if( fbnd.first >= 0.0 ){
+    // then saturated
+    s = 0.0;
+    q = std::max( (2*D)/k - qin, 0.0 );
   }else{
-    s = -std::log( (q/omega) + std::exp(-kappa*D)) / kappa;
+    if(fbnd.second <= 0.0){
+      // then fully drained
+      s = D;
+      
+    }else{
+      // bisection
+      double z = (bnd.first + bnd.second) / 2.0;
+      k = Dx / fc(z);
+      double e = z + k*(qin+q)/2.0 - D;
+      int it(0.0);
+      while( (it <= 1000) and ( (bnd.second - bnd.first)>1e-10 ) and (std::abs(e)>1e-10) ){
+	if(e<=0.0){ bnd.first = z; fbnd.first = e;}
+	if(e>=0.0){ bnd.second = z; fbnd.second = e;}
+	//e = fbnd.first / (fbnd.second - fbnd.first);
+	//z = (bnd.first * (1 + e)) - (e * bnd.second);
+	z = (bnd.second + bnd.first)/ 2.0 ;
+	k = Dx / fc(z);
+	e = z + k*(qin+q)/2.0 - D;
+	it +=1;
+      }
+      if(it > 1000){
+	Rcpp::warning("No solution found within %i iterations. Difference between bounds is %d. Value of f(z) is %d",
+		      1000, bnd.second - bnd.first,e);
+      }
+      s=z;
+    }
+    // update values cased on uz formulationa and mass balance ;
+    // Rcpp::Rcout << "after bisection..." << std::endl;
+    // Rcpp::Rcout << bnd.first << " " << bnd.second << " " << z << std::endl;
+    // Rcpp::Rcout << fbnd.first << " " << fbnd.second << " " << std::endl;
   }
+  
+  if( (s < 0) | (s > D) ){
+    Rcpp::Rcout << "HRU " << ": s_sz value " << s << " out of bounds" << std::endl;
+  }
+  if( (q < 0) ){
+    Rcpp::Rcout << "HRU " << ": q_sz value " << q << " is less then 0" << std::endl;
+  }
+  
 };
 
 // // bounded double exponential

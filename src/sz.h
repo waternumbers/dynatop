@@ -14,7 +14,7 @@ class szc {
   virtual double fD();
   virtual double fq_szmax();
   virtual double fc(double&);
-  virtual void init(double&, double&, double&, double&);
+  virtual void init(double&, double&, double&, double&, double&);
 };
 
 // bounded exponential
@@ -26,7 +26,7 @@ class szc_bexp: public szc {
   double fD();
   double fq_szmax();
   double fc(double&);
-  void init(double&, double&, double&, double&);
+  void init(double&, double&, double&, double&, double&);
 };
 
 /* // double exponential */

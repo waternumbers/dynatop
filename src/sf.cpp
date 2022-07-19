@@ -14,7 +14,7 @@ sfc_cnst::sfc_cnst(std::vector<double> const &param, double const &A, double con
 void sfc_cnst::init(double &s, double &q, double &qin, double &r){
   // revise s and q on basis of known inflwo qin and outflow r assuming steady state
   q = qin - r;
-  s = kappa*q;
+  s = (kappa/2)*(q+qin);
 };
 
 double sfc_cnst::max_down(double &s, double &qin, double const &Dt){

@@ -11,7 +11,7 @@ mdl <- list(list(
     sf = list( type="cnst", parameters = c(c_sf = 0.1)),
     rz = list( type="orig", parameters = c(s_rzmax = 0.05)),
     uz = list( type="orig", parameters = c(t_d = 3600)),
-    sz = list( type="bexp", parameters = c(t_0=0.001,m=0.01,D=5.0)),
+    sz = list( type="bexp", parameters = c(t_0=1,m=0.01,D=5.0)),
     initialisation = c(s_rz_0 = 0.75,r_uz_sz_0 = 1e-3),
     sf_flow_direction = list(id=integer(0),fraction=numeric(0)),
     sz_flow_direction = list(id=integer(0),fraction=numeric(0)),
@@ -27,7 +27,7 @@ s_rz","s_uz","s_sz","r_sf_rz","r_rz_uz","r_uz_sz","precip","pet","aet"),
 dt <- dynatop$new(mdl)
 #obs[,"precip"] <- 0
 #obs[,"pet"] <- 0
-dt$add_data(obs[1:2,]) #[1:2,,drop=F])
+dt$add_data(obs)#;[1:2,]) #[1:2,,drop=F])
 dt$initialise()
 dt$get_states()
                                         #
