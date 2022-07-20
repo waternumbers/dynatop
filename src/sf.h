@@ -8,23 +8,23 @@
 
 // generic class
 class sfc {
- public:
+protected:
+  double kappa0, eta0;
+public:
   // initialisation
-  sfc(); //std::vector<double> const&, double const& ,double const&, double const&);
-  virtual void init(double&, double&, double&, double&);
-  virtual double max_down(double&, double&, double const&);
-  virtual void solve (double&, double&, double&, double&, double const&);
+  sfc();
+  virtual void fke(double&, double&, double const&);
 };
 
 // constant celerity kinematic wave
-class sfc_cnst: public sfc {
- protected:
-  double kappa, eta;
+class sfc_cnstC: public sfc {
  public:
-  sfc_cnst(std::vector<double> const&, double const& ,double const&);
-  void init(double&, double&, double&, double&);
-  double max_down(double&, double&, double const&);
-  void solve(double&, double&, double&, double&, double const&); 
+  sfc_cnstC(std::vector<double> const&, double const& ,double const&);
+};
+// constant celerity and diffusivity
+class sfc_cnstCD: public sfc {
+ public:
+  sfc_cnstCD(std::vector<double> const&, double const& ,double const&);
 };
 
 #endif

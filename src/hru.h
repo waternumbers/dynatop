@@ -30,10 +30,14 @@ class hru {
   std::vector<int> const sz_lnk_id;
   std::vector<double> const sz_lnk_frc;
 
-  double Dx, q_szmax, D_sz;
+  //double Dx, q_szmax, D_sz;
+  double kappa_sf, eta_sf, kappa_sz, eta_sz;
   
   void  lateral_redistribution(std::vector<double>&, std::vector<double>&);
   void  compute_met(std::vector<double>&);
+  void fz(double&, double&, double const&);
+  void fzi(double&, double&);
+
 public:
   // variables initialised
   int const id;
@@ -62,7 +66,6 @@ public:
   void init(std::vector<double>&, std::vector<double>&, double, double, double const&, double const&, int const&);
   void update_met(std::vector<double>&);
   void step(std::vector<double>&, std::vector<double>&, double const&, double const&, int const&, double const&);
-  double fz(double&, double const&);
 };
 
 #endif

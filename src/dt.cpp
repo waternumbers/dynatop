@@ -92,7 +92,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   
   // start loop of time steps
   for(int tt = 0; tt < obs_matrix.nrow(); ++tt) {
-    // Rcpp::Rcout << "Time step " << tt << std::endl;
+    Rcpp::Rcout << "Time step " << tt << std::endl;
 
     // copy obs values
     for(unsigned int ii=0; ii < obs.size(); ++ii){

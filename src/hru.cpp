@@ -26,8 +26,12 @@ hru::hru(int const id_,
   // initialise the surface flux object
   switch(sf_type_){
   case 1:
-    // constant velocity with raf tank:
-    sf = std::make_unique<sfc_cnst>( sf_param_, area, width_);
+    // constant celerity kinematic wave
+    sf = std::make_unique<sfc_cnstC>( sf_param_, area, width_);
+    break;
+  case 2:
+    // constant celerity and diffusivity diffuse wave
+    sf = std::make_unique<sfc_cnstCD>( sf_param_, area, width_);
     break;
   // case 2:
   //   // generic storage discharge
@@ -59,15 +63,11 @@ hru::hru(int const id_,
     break;
   case 3:
     //cnst
-    sz = std::make_unique<szc_cnst>( sz_param_, s_bar_, area, width_);
+    sz = std::make_unique<szc_cnst>( sz_param_, area, width_);
     //s_szmax = area*sz_param_[1];
     break;
   }
 
-  // compute properties
-  Dx = area/ width_;
-  q_szmax = sz -> fq_szmax();
-  D_sz = sz -> fD();
 };
 
 void hru::lateral_redistribution(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in){
@@ -101,6 +101,8 @@ void hru::update_met(std::vector<double> &obs){
 void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in,
 	       double s_rz_0, double r_uz_sz_0,
 	       double const &vtol, double const &etol, int const &max_it){
+
+  //Rcpp::Rcout << "id: " << id << std::endl;
   
   if(area == 0.0){ // if the HRU has no area just pass on flow and set states to 0
     q_sf_in = vec_q_sf_in[id] / area;
@@ -115,14 +117,20 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
     return;
   }
 
+  //Rcpp::Rcout << vec_q_sf_in[id] << " " << vec_q_sz_in[id] << " " << sz->q_szmax << std::endl;
   // redivide the inflow so q_sz_in is less then q_szmax
-  q_sz_in = std::min( vec_q_sz_in[id] / area, q_szmax) ;
-  q_sf_in = (vec_q_sz_in[id] / area) + (vec_q_sz_in[id] / area) - q_sz_in;
+  q_sz_in = std::min( vec_q_sz_in[id] / area, sz->q_szmax) ;
+  q_sf_in = (vec_q_sf_in[id] / area) + (vec_q_sz_in[id] / area) - q_sz_in;
 
   // Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
-  
-  // only water at surface so inflow can't be absorbed so max downward flux is
-  r_sf_rz = q_sf_in;
+  // Rcpp::Rcout << kappa_sf << " " << eta_sf << std::endl;
+  // Rcpp::Rcout << kappa_sz << " " << eta_sz << std::endl;
+  // Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
+  // Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
+  // Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
+
+  // only water at surface if inflow can't be absorbed so max downward flux is
+  r_sf_rz = q_sf_in/(1-eta_sf);
   
   // if steady state then passed downward flux straight to uz
   r_rz_uz = r_sf_rz;
@@ -130,47 +138,101 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // work out max flux from us to sz
   r_uz_sz = std::min( 1/t_d, r_rz_uz + r_uz_sz_0);
 
+  // Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
+  // Rcpp::Rcout << kappa_sf << " " << eta_sf << std::endl;
+  // Rcpp::Rcout << kappa_sz << " " << eta_sz << std::endl;
   // Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
+  // Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
+  // Rcpp::Rcout << q_sf << " " << q_sz << std::endl;
   
   // initialise saturated zone
-  Rcpp::Rcout << "Prior to call: " << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
-  sz -> init(s_sz, q_sz, q_sz_in, r_uz_sz, Dx); // revises s_sz, q_sz and possibly r_uz_sz (if saturated)
-  Rcpp::Rcout << "After call: " << r_uz_sz << std::endl;
-  Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
-  Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
+  // at steady state the grdient of d(D-s_sz)/dt is zero
+  std::pair<double,double> bnd(0.0,sz->D), fbnd(0.0,0.0);
+  fzi(bnd.first, fbnd.first); // changes kappa_sz and eta_sz
+  fzi(bnd.second, fbnd.second); // changes kappa_sz and eta_sz
   
-  // initialise unsaturated zone
+  // Rcpp::Rcout << "Initial bounds: " << bnd.first << " " << bnd.second << std::endl;
+  // Rcpp::Rcout << "Initial bounds values: " << fbnd.first << " " << fbnd.second << std::endl;			
+  if( fbnd.first >= 0.0 ){
+    // then saturated
+    s_sz = 0.0;
+    sz->fke( kappa_sz, eta_sz, s_sz);
+  }else{
+    if(fbnd.second <= 0.0){
+      // then fully drained
+      s_sz = bnd.second;
+      sz->fke( kappa_sz, eta_sz, s_sz);
+    }else{
+      
+      // bisection
+      s_sz = (bnd.first + bnd.second) /2.0;
+      double e;
+      fzi(s_sz, e);
+      int it(0.0);
+      while( (it <= max_it) and ( (bnd.second - bnd.first)>vtol ) and (std::abs(e)>etol) ){
+	if(e<=0.0){ bnd.first = s_sz; fbnd.first = e;}
+	if(e>=0.0){ bnd.second = s_sz; fbnd.second = e;}
+	//e = fbnd.first / (fbnd.second - fbnd.first);
+	//z = (bnd.first * (1 + e)) - (e * bnd.second);
+	s_sz = (bnd.second + bnd.first)/ 2.0 ;
+	fzi(s_sz, e);
+	it +=1;
+      }
+      if(it > max_it){
+	Rcpp::warning("No solution found within %i iterations. Difference between bounds is %d. Value of f(z) is %d",
+		      max_it, bnd.second - bnd.first,e);
+      }
+    }
+    // update values cased on uz formulationa and mass balance ;
+    // Rcpp::Rcout << "after bisection..." << std::endl;
+    // Rcpp::Rcout << bnd.first << " " << bnd.second << " " << z << std::endl;
+    // Rcpp::Rcout << fbnd.first << " " << fbnd.second << " " << std::endl;
+  }
+
+  // this point s_sz, kappa_sz and eta_sz are all updated
+  // Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
+  // Rcpp::Rcout << kappa_sf << " " << eta_sf << std::endl;
+  // Rcpp::Rcout << kappa_sz << " " << eta_sz << std::endl;
+  // Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
+  // Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
+  // Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
+  
+  // compute r_uz_sz
+  r_uz_sz =  (1.0/(kappa_sz*(1.0-eta_sz)))*(sz->D - s_sz) - q_sz_in/(1.0-eta_sz);
+  // compute s_uz
   s_uz = r_uz_sz * t_d * s_sz;
-
-  Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
-  
-  // correct flux from rz to uz
-  r_rz_uz = std::min( r_rz_uz, r_uz_sz - r_uz_sz_0 );
-  Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
-
-  // solve root zone
-  if( (r_rz_uz == 0) & ( r_sf_rz==0) ){
-    s_rz = s_rz_0 * s_rzmax;
+  // by mass balance
+  r_rz_uz = std::min(r_rz_uz, r_uz_sz);
+  r_sf_rz = r_rz_uz;
+  // for root zone
+  if( r_rz_uz == 0.0 ){
+    s_rz = s_rzmax*s_rz_0;
   }else{
     s_rz = s_rzmax;
-    r_sf_rz = r_rz_uz;
   }
-  Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
-  Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
-  Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
-  // initialise the surface zone
-  sf -> init(s_sf, q_sf, q_sf_in, r_sf_rz); // revises s_sf and q_sf
-  Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
+  // solve surface - assumes constant kappa and eta
+  sf->fke(kappa_sf,eta_sf,s_sf);
+  s_sf = kappa_sf*( q_sf_in - (1-eta_sf)*r_sf_rz );
+
+  // solve for lateral fluxes using mass balance
+  q_sf = q_sf_in - r_sf_rz;
+  q_sz = q_sz_in + r_uz_sz;
   
-  // repartition the outflows
+  // Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
+  // Rcpp::Rcout << kappa_sf << " " << eta_sf << std::endl;
+  // Rcpp::Rcout << kappa_sz << " " << eta_sz << std::endl;
+  // Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
+  // Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
+  // Rcpp::Rcout << q_sf << " " << q_sz << std::endl;
+  
+  // Repartition the outflows
   q_sf = q_sf + q_sz;
-  q_sz = std::min( q_sz, q_szmax) ;
+  q_sz = std::min( q_sz, sz->q_szmax) ;
   q_sf -= q_sz;
-  //Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
 
   // redistributed the flows
-  lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
-};
+  lateral_redistribution(vec_q_sf_in,vec_q_sz_in);  
+}
 
 
 void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in,
@@ -186,27 +248,27 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   }
 
   // redivide the inflow so q_sz_in is less then q_szmax
-  q_sz_in = std::min( vec_q_sz_in[id] / area, q_szmax) ;
-  q_sf_in = (vec_q_sz_in[id] / area) + (vec_q_sz_in[id] / area) - q_sz_in;
+  q_sz_in = std::min( vec_q_sz_in[id] / area, sz->q_szmax) ;
+  q_sf_in = (vec_q_sf_in[id] / area) + (vec_q_sz_in[id] / area) - q_sz_in;
 
-  // Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
-  // Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
-  // Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
-  
+  // update the kappa and eta values - so semi-implicit
+  sf->fke(kappa_sf,eta_sf,s_sf);
+  eta_sf = std::min( eta_sf, Dt/kappa_sf); // to ensure positive outflows
+  sz->fke(kappa_sz,eta_sz,s_sz);
+  eta_sz = std::min( eta_sz, Dt/kappa_sz); // to ensure positive outflows
+
   // single HRU mass balance for development
   double mass_ballance = s_sf + s_rz + s_uz - s_sz + Dt*( precip + q_sz_in + q_sf_in );
   
-
   // compute first downward flux estimate from surface zone and root zone
-  r_sf_rz = sf -> max_down(s_sf, q_sf_in, Dt);
-
+  r_sf_rz =  s_sf/Dt + q_sf_in*std::min( 1/(1.0 - eta_sf), 1.0 - (kappa_sf*eta_sf/Dt) );
+  
   // Rcpp::Rcout << "Max from sf" << std::endl;
   // Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
   // Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
   // Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
   
   // change r_rz_uz to present the maximum downward flux
-
   r_rz_uz = std::max(0.0 ,
 		     (s_rz - s_rzmax)/Dt  + precip - pet + r_sf_rz);
 
@@ -215,19 +277,15 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
   // Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
   
-  
-  // bounds for search of outflow
-  double z = sz -> fD(); // max storage volume
-  std::pair<double,double> bnd(0.0,z), fbnd(0.0,0.0);
-  fbnd.first = fz(bnd.first,Dt);
-  fbnd.second = fz(bnd.second,Dt);
-  
+  // bounds for search of s_sz
+  std::pair<double,double> bnd(0.0,sz->D), fbnd(0.0,0.0);
+  fz(bnd.first,fbnd.first,Dt);
+  fz(bnd.second,fbnd.second,Dt);
+
+  double z = s_sz;
   // Rcpp::Rcout << "Initial bounds: " << bnd.first << " " << bnd.second << std::endl;
-  // Rcpp::Rcout << "Initial bounds values: " << fbnd.first << " " << fbnd.second << std::endl;			
+  // Rcpp::Rcout << "Initial bounds values: " << fbnd.first << " " << fbnd.second << std::endl;
   
-  
-
-
   if( fbnd.first >= 0.0 ){
     // then saturated
     z = 0.0;
@@ -238,8 +296,8 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
     }else{
       
       // bisection
-      z = s_sz;
-      double e = fz(z,Dt);
+      double e;
+      fz(z,e,Dt);
       int it(0.0);
       while( (it <= max_it) and ( (bnd.second - bnd.first)>vtol ) and (std::abs(e)>etol) ){
 	if(e<=0.0){ bnd.first = z; fbnd.first = e;}
@@ -247,7 +305,7 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 	//e = fbnd.first / (fbnd.second - fbnd.first);
 	//z = (bnd.first * (1 + e)) - (e * bnd.second);
 	z = (bnd.second + bnd.first)/ 2.0 ;
-	e = fz(z,Dt);
+	fz(z,e,Dt);
 	it +=1;
       }
       if(it > max_it){
@@ -264,14 +322,14 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   r_uz_sz = std::min( 1/t_d , (s_uz + Dt*r_rz_uz) / ( (z*t_d) + Dt ) );
   q_sz = ( (z - s_sz) / Dt ) + r_uz_sz + q_sz_in;
   s_sz = z;
-
-  if( (s_sz < 0) | (s_sz > sz->fD()) ){
+  
+  if( (s_sz < 0) | (s_sz > sz->D) ){
     Rcpp::Rcout << "HRU " << id << ": s_sz value " << s_sz << " out of bounds" << std::endl;
   }
-  if( (q_sz < 0) ){
+  if( (q_sz < -1e-10) ){
     Rcpp::Rcout << "HRU " << id << ": q_sz value " << q_sz << " is less then 0" << std::endl;
   }
-    
+  
   // Rcpp::Rcout << "Solved sz" << std::endl;
   // Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
   // Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
@@ -292,19 +350,21 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   //z = ( s_rzmax / (s_rzmax + pet*Dt) ) * ( s_rz + Dt*(precip + r_sf_rz - r_rz_uz) );
   s_rz = ( s_rzmax / (s_rzmax + pet*Dt) ) * ( s_rz + Dt*(precip + r_sf_rz - r_rz_uz) );
   aet = pet * s_rz / s_rzmax;
-
+  
   // Rcpp::Rcout << "Solved rz" << std::endl;
   // Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
   // Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
   // Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
   
   // solve for surface
-  sf -> solve(s_sf, q_sf, q_sf_in, r_sf_rz, Dt); // changes q_sf and s_sf
-
-  if( (s_sf < 0) | (s_sz > sz->fD()) ){
+  z = ( (kappa_sf*(1-eta_sf)) / (kappa_sf*(1-eta_sf) + Dt) ) * ( s_sf + Dt*q_sf_in/(1-eta_sf) - Dt*r_sf_rz );
+  q_sf = (s_sf - z)/Dt + (q_sf_in - r_sf_rz);
+  s_sf = z;
+  	
+  if( (s_sf < 0) ){
     Rcpp::Rcout << "HRU " << id << ": s_sf value " << s_sf << " is less then 0" << std::endl;
   }
-  if( (q_sf < 0) ){
+  if( (q_sf < -1e-10) ){
     Rcpp::Rcout << "HRU " << id << ": q_sf value " << q_sf << " is less then 0" << std::endl;
   }
  
@@ -313,12 +373,13 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
   // Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
 
+  //Rcpp::Rcout << q_sf << " " << q_sz << std::endl;
   // repartition the outflows
   q_sf = q_sf + q_sz;
-  q_sz = std::min( q_sz, q_szmax) ;
+  q_sz = std::min( q_sz, sz->q_szmax) ;
   q_sf -= q_sz;
 
-  // Rcpp::Rcout << q_sf << " " << q_sz << std::endl;
+  //Rcpp::Rcout << q_sf << " " << q_sz << std::endl;
 
   // redistributed the flows
   lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
@@ -336,9 +397,15 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   }
 }
 
-double hru::fz(double& x, double const &Dt){ // compute for saturated zone function
-  double c = sz -> fc(x);
-  double eta = std::min(0.5, Dt*c/Dx); // to ensure non negative outflow
+void hru::fzi(double& x, double &e){ // compute for saturated zone function
+  // update using fke
+  sz->fke(kappa_sz,eta_sz,x);
+  e = q_sf_in/(1-eta_sz) + r_uz_sz - (sz->D-x)/(kappa_sz*(1.0-eta_sz));
+}
+ 
+
+
+void hru::fz(double& x, double &e, double const &Dt){ // compute for saturated zone function
   double r = std::min(  1 / t_d, (s_uz + Dt*r_rz_uz)/( (x*t_d) + Dt) );
-  return x - s_sz - Dt*( (c/(Dx*(1.0-eta)))*(D_sz-x) - q_sz_in/(1.0-eta) - r);
+  e = x - s_sz - Dt*( (1.0/(kappa_sz*(1.0-eta_sz)))*(sz->D - x) - q_sz_in/(1.0-eta_sz) - r);
 }

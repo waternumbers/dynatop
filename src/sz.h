@@ -8,25 +8,25 @@
 
 // generic class for the saturated zone flow
 class szc {
- public:
+protected:
+  double Dx;
+public:
+  double q_szmax, D;
   // initialisation
   szc(); //std::vector<double> const&, double const& ,double const&, double const&);
-  virtual double fD();
-  virtual double fq_szmax();
-  virtual double fc(double&);
-  virtual void init(double&, double&, double&, double&, double&);
+  virtual double fc(double const&);
+  virtual void fke(double&, double&, double const&);
 };
+
 
 // bounded exponential
 class szc_bexp: public szc {
  protected:
-  double qmax, kappa, omega, D;
+  double psi, omega;
  public:
   szc_bexp(std::vector<double> const&, double const& ,double const&, double const&);
-  double fD();
-  double fq_szmax();
-  double fc(double&);
-  void init(double&, double&, double&, double&, double&);
+  double fc(double const&);
+  void fke(double&, double&, double const&);
 };
 
 /* // double exponential */
@@ -42,13 +42,11 @@ class szc_bexp: public szc {
 // constant velocity
 class szc_cnst: public szc {
  protected:
-  double qmax, celerity, D;
+  double kappa0, eta0, celerity;
  public:
-  szc_cnst(std::vector<double> const&, double const& ,double const&, double const&);
-  double fD();
-  double fc(double&);
-  double fq_szmax();
-  void init(double&, double&, double&, double&);
+  szc_cnst(std::vector<double> const&, double const& , double const&);
+  double fc(double const&);
+  void fke(double&, double&, double const&);
 };
 
 #endif

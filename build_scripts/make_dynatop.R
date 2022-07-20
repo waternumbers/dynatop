@@ -124,6 +124,7 @@ for(ii in 1:nrow(mdl$hru)){
                    parameters = c("c_sf" = 0.8))
     tmp$sz <- list(type = "bexp",
                    parameters = c(t_0=exp(7.46),m=0.0063,D=0.5)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
+    if(tmp$id==0){ tmp$sz$parameters["t_0"] <- 0 }
     tmp$precip <- mdl$hru$precip[[ii]]
     names(tmp$precip) <- c("name","fraction")
     tmp$pet <- mdl$hru$pet[[ii]]
