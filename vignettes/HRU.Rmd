@@ -742,31 +742,30 @@ required. The additional parameter and properties are defined in Table \@ref(tab
 
   Table: (\#tab:hs-transmissivity-param) Additional parameters used in the transmissivity profiles.
 
-# Appendix A - Variable Parameter Muskingham
+# Appendix A - Variable Parameter Muskingham solution
 
 Muskingham routing can be derived in a numer of ways. Consistent with the
 wedge derivation the evolution of the storage $s$ in a reach of length $\Delta
-x$ can be expressed in terms of the inflow $q^{-}$,
-outflow $q^{+}$ and lateral inflow $r$ along with the two possibly state or
-time varying parameters $\eta$ and $\kappa$ as
-
+x$ can be expressed in terms of the cross sectional area of the inflow $a^{-}$
+and outflow $a^{+}$ and possibly state or time varying parameter $\eta$ as
 \[
-\frac{ds}{dt} = q^{-} + r - q^{+} \\
-s = \kappa\left(\eta q^{-} + \left(1-\eta\right) q^{+} \right)
+s = \Delta x \left(\eta a^{-} + \left(1-\eta\right) a^{+} \right)
 \]
+Taking flux to be a function of cross sectional area and lateral inflow $r$
+gives the mass balance
 
-subsitution gives the ODE
 \[
-\frac{ds}{dt} = \frac{1}{1-\eta} q^{-} + r -
-\frac{1}{\kappa\left(1-\eta\right)} s 
+\frac{ds}{dt} = q\left(a^{-}\right) + r - q\left(a^{+}\right)
 \]
 
 ## Approximating Tank Models
 
-A tank model with possibly varying time constant $T$ takes $q^{+} =
-\frac{1}{T}s$. This is a special case of the Muskingham solution with $\eta=0$
-and $\kappa = T$.
-
+A tank model with possibly varying time constant $T$ has 
+\[
+q\left(a^{+}\right) = \frac{1}{T}s
+\].
+This is a special case of the solution with $\eta=0$ so that 
+$s=a^{+} \Delta x$
 
 ## Approximating Diffusion Wave Routing
 
@@ -778,7 +777,7 @@ equation \footnote{doi:10.1016/j.advwatres.2005.08.008}
 \]
 
 where $l$ is lateral inflow per unit length. Simplify this by
-considering, the area is rectangular and the lateral inflow $r$ uniuformly
+considering that the lateral inflow $r$ uniformly
 distributed so that $l=\frac{r}{\Delta x}$ and $\frac{dl}{dx}=0$ to give
 
 \[
@@ -787,60 +786,178 @@ distributed so that $l=\frac{r}{\Delta x}$ and $\frac{dl}{dx}=0$ to give
 
 Let us relate this to the Muskingham Solution using the relationship
 \[
-q = \eta i + \left(1-\eta\right)o
+a = \eta a^{-} + \left(1-\eta\right) a^{+}
 \]
 
-By the wedge approximation with reach length $\Delta x$ the flux $q$ occurs at
-$\eta \Delta x$
-
-Taking Taylor series expansions for $i$ and $o$ based on $q$ gives
+Taking Taylor series expansions for $q\left(a^{-}\right)$ and
+$q\left(a^{+}\right)$ based on $a$ gives
 
 \[
-o \approx q + \eta \Delta x \frac{dq}{dx} + \frac{1}{2}\eta^2\Delta x^2 \frac{d^2 q}{dx^2}
+q\left(a^{+}\right) \approx q\left(a\right) + \eta \Delta x \frac{dq\left(a\right)}{dx} + \frac{1}{2}\eta^2\Delta x^2 \frac{d^2 q\left(a\right)}{dx^2}
 \]
 and
 \[
-i \approx q - \left(1-\eta\right) \Delta x \frac{dq}{dx} + \frac{1}{2}\left(1-\eta\right)^2 \Delta x^2 \frac{d^2 q}{dx^2}
+q\left(a^{-}\right) \approx q\left(a\right) - \left(1-\eta\right) \Delta x \frac{dq\left(a\right)}{dx} + \frac{1}{2}\left(1-\eta\right)^2 \Delta x^2 \frac{d^2 q\left(a\right)}{dx^2}
 \]
 
-Subtracting the expression for $i$ from that for $o$ gives
+Subtracting the expression for $q\left(a^{-}\right)$ from that for $q\left(a^{+}\right)$ gives
 
 \[
-i - o \approx
--\Delta x \frac{dq}{dx} +
-\frac{1}{2}\left(1-2\eta\right)^2\Delta x^2 \frac{d^2 q}{dx^2}
+q\left(a^{-}\right) - q\left(a^{+}\right) \approx
+-\Delta x \frac{dq\left(a\right)}{dx} +
+\frac{1}{2}\left(1-2\eta\right)^2\Delta x^2 \frac{d^2 q\left(a\right)}{dx^2}
 \]
 
 From the mass balance condition
 \[
-\frac{ds}{dt} \approx \Delta x l -\Delta x \frac{dq}{dx} +
-\frac{1}{2}\left(1-2\eta\right)\Delta x^2 \frac{d^2 q}{dx^2} 
+\frac{ds}{dt} \approx \Delta x l -\Delta x \frac{dq\left(a\right)}{dx} +
+\frac{1}{2}\left(1-2\eta\right)\Delta x^2 \frac{d^2 q\left(a\right)}{dx^2} 
 \]
 
-Since $q = \frac{s}{\kappa}$ the chain rule and rearranging gives
-
+Using the expression for storage and relationship between flow and area
 \[
-\kappa \frac{dq}{dt} + \Delta x \frac{dq}{dx} -
-\frac{1}{2}\left(1-2\eta\right)\Delta x^2 \frac{d^2 q}{dx^2}
-\approx \Delta x l
+\frac{dq}{dt} = \frac{dq}{da} \frac{da}{dt} = \frac{c}{\Delta x} \frac{ds}{dt}
+\]
+
+Then combinign this with the approximation produces
+\[
+\frac{dq\left(a\right)}{dt} + c\frac{dq\left(a\right)}{dx} -
+\frac{c}{2}\left(1-2\eta\right)\Delta x \frac{d^2 q\left(a\right)}{dx^2}
+\approx c l
 \]
 
 Comparision to the orginal diffuse routing equation shows that
 \[
-\kappa = \frac{\Delta x}{c}
-\]
-and
-\[
 \eta = \frac{1}{2} - \frac{D}{c \Delta x}
 \]
 
-The value of $\eta$ is limited. Firstly $\eta = 1/2$ results from $D=0$; that
-is the Kinematic wave equation. Taking  $\eta=0$ produces the maxium
-dispersion of $D = \frac{c\Delta x}{2}$. This imposes a relationship between reach length,
-dispersion and celerity that can represented. In the case of $\eta=0$ the
-system acts as a linear tank with $T = \frac{\Delta x}{c}$.
+The value of $\eta$ is limited to between 0 and $\frac{1}{2}$. Firstly $\eta =
+1/2$ results from $D=0$; that is the Kinematic wave equation. Taking  $\eta=0$
+produces the maxium dispersion of $D = \frac{c\Delta x}{2}$, which is given by
+the linear tank.
 
 ## Numerical Solution
+
+Consider first the case with:
+
+- a known constant value of $\eta$ 
+- a known positive inflow $q\left(a^{-}_{t+\Delta t}\right)$ giving a value of
+  $a^{-}_{t+\Delta t}$
+- a known function $q$ such that $\frac{dq\left(a\right)}{da}\geq 0$ and
+  $q\left(0\right)=0$
+  
+An implicit
+solution gives the joint equations
+\[
+s_{t+\Delta t} = \Delta x \left(\eta a^{-}_{t+\Delta t} + \left(1-\eta\right)
+a^{+}_{t+\Delta t} \right)
+\]
+and
+\[
+s_{t+\Delta t} = s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t} - q\left(a^{+}_{t+\Delta t}\right) \right)
+\]
+
+The unknown outflow crossection satisfies $a^{+}_{t+\Delta t} \geq 0$. The first
+expression for $s_{t+\Delta t}$ is strictly increasing with respect to
+$a^{+}_{t+\Delta t}$ while the second is decreasing, hence there is a unique
+solution for $a^{+}_{t+\Delta t}$ so long as
+\[
+\Delta x \eta a^{-}_{t+\Delta t} \leq s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t}\right)
+\]
+Failure of this condition represents a breakdown of the trapeziod
+approximation. This is handled by taking $q\left(a^{+}_{t+\Delta t}\right)=0$
+and
+\[
+s_{t+\Delta t} = s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t}\right)
+\]
+From this we see that
+\[
+-r \leq \frac{1}{\Delta t} s_{t} + q\left(a^{-}_{t+Δt}\right) - \frac{\Delta
+x}{\Delta t} \eta a^{-}_{t+\Delta t}
+\]
+
+A more general numeric scheme is the following
+process
+
+- select trial $\hat{s}$
+- compute $\hat{a} = \max\left(0, \frac{1}{\Delta x \left(1-\eta\right)} \left( \hat{s} -
+  \Delta x \eta a^{-}_{t+\Delta t}\right)\right)$
+- evaluate $e = \hat{s} - s_{t} - \Delta t \left(q\left(a^{-}_{t+\Delta t}\right) +
+  r_{t+\Delta t} - q\left(\hat{a}\right)\right)$
+
+then search to find $e=0$
+
+Note that $\frac{de}{d\hat{s}} = 1 + \frac{dq}{da}\frac{da}{d\hat{s}} > 0$ and
+$\hat{s}=0$ implies $\hat{a} = 0$ hence $e \leq 0$ so there is a single
+solution.
+
+
+## Solution for saturated zone
+
+Buildin on the above let the storage deficit be $z$ and area deficit be $v$ is
+is simple to see that
+solution gives the joint equations
+\[
+z_{t+\Delta t} = \Delta x \left(\eta v^{-}_{t+\Delta t} + \left(1-\eta\right)
+v^{+}_{t+\Delta t} \right)
+\]
+and
+\[
+z_{t+\Delta t} = z_{t} - \Delta t \left( q\left(v^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t} - q\left(v^{+}_{t+\Delta t}\right) \right)
+\]
+
+where now $q\left(v\right) \rightarrow 0$ as $v \rightarrow \infty$ and
+$\frac{dq}{dv} \leq 0$.
+
+Subsituting in the expression 
+\[
+r_{t+\Delta{ t}} = \min\left( \frac{1}/{T_{d}}, \frac{U}{T_{d}z_{t+\Delta t} +
+\Delta t} \right)
+\]
+
+Gives a similar numeric scheme to that previously
+
+- select trial $\hat{z}$
+- compute $\hat{v} = \max\left(0, \frac{1}{\Delta x \left(1-\eta\right)} \left( \hat{z} -
+  \Delta x \eta v^{-}_{t+\Delta t}\right)\right)$
+- compute $\hat{r} = \min\left( \frac{1}{T_{d}}, \frac{U}{T_{d}\hat{z} +
+\Delta t} \right)$
+- evaluate $e = \hat{z} - z_{t} +\Delta t \left(q\left(a^{-}_{t+\Delta t}\right) +
+  \hat{r} - q\left(\hat{v}\right)\right)$
+
+and search for $e=0$.
+
+The derivative $\frac{de}{d\hat{z}} = 1 + \frac{d\hat{r}}{dz -
+ }\frac{dq}{dv}\frac{dv}{d\hat{z}} > 0$. *TODO based on proof below*
+ For a unique solution $e \leq 0$ for $hat{s}=0$. if this is not the case need
+ to limit $\hat{r}$
+  \[
+ e = 0 - z_{t} +\Delta t \left(q\left(a^{-}_{t+\Delta t}\right) +
+  \hat{r} \right)$
+ 
+ 
+ and
+$\hat{s}=0$ implies $\hat{a} = 0$ hence $e \leq 0$ so there is a single
+solution.
+
+
+meaning that 
+\[ 
+s_{t+\Delta t} \geq \Delta x \eta a^{-}_{t+\Delta t}
+\]
+
+Letting $\frac{dq\left(a\right)}{da}\geq 0$ and $q\left(0\right)=0$ gives
+\[
+s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t}  \right) 
+\geq \Delta x \eta a^{-}_{t+\Delta t}
+\]
+
+
 
 Assuming $\eta$ and $\kappa$ are constant over the time window $\Delta t$ this
 gives the solution

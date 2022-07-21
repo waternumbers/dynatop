@@ -35,7 +35,8 @@ class hru {
   
   void  lateral_redistribution(std::vector<double>&, std::vector<double>&);
   void  compute_met(std::vector<double>&);
-  void fz(double&, double&, double&, double const&);
+  void fsz(double&, double const&);
+  void fsf(double&, double const&);
   void fzi(double&, double&);
 
 public:
