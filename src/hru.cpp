@@ -261,7 +261,7 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   double mass_ballance = s_sf + s_rz + s_uz - s_sz + Dt*( precip + q_sz_in + q_sf_in );
   
   // compute first downward flux estimate from surface zone and root zone
-  r_sf_rz =  s_sf/Dt + q_sf_in*std::min( 1/(1.0 - eta_sf), 1.0 - (kappa_sf*eta_sf/Dt) );
+  r_sf_rz =  s_sf/Dt + q_sf_in*( (Dt - kappa_sf*eta_sf)/Dt ); // std::min( 1/(1.0 - eta_sf), 1.0 - (kappa_sf*eta_sf/Dt) );
   
   // Rcpp::Rcout << "Max from sf" << std::endl;
   // Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
@@ -276,12 +276,17 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // Rcpp::Rcout << q_sf_in << " " << q_sz_in << std::endl;
   // Rcpp::Rcout << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
   // Rcpp::Rcout << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
-  
+
+  // max flow from unsaturated zone that acheives either q+ = qmax or s_sz=D
+  double rmax = std::min( sz->q_szmax, (sz->D - kappa_sz*eta_sz*q_sz_in) / (1-eta_sz) );
+  rmax = (kappa_sz*(1-eta_sz) + Dt)*rmax - ( (sz->D-s_sz)/Dt) - ((Dt - kappa_sz*eta_sz)/Dt)*q_sf_in;
+
   // bounds for search of s_sz
   std::pair<double,double> bnd(0.0,sz->D), fbnd(0.0,0.0);
-  fz(bnd.first,fbnd.first,Dt);
-  fz(bnd.second,fbnd.second,Dt);
+  fz(bnd.first,fbnd.first,rmax,Dt);
+  fz(bnd.second,fbnd.second,rmax,Dt);
 
+  
   double z = s_sz;
   // Rcpp::Rcout << "Initial bounds: " << bnd.first << " " << bnd.second << std::endl;
   // Rcpp::Rcout << "Initial bounds values: " << fbnd.first << " " << fbnd.second << std::endl;
@@ -297,7 +302,7 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
       
       // bisection
       double e;
-      fz(z,e,Dt);
+      fz(z,e,rmax,Dt);
       int it(0.0);
       while( (it <= max_it) and ( (bnd.second - bnd.first)>vtol ) and (std::abs(e)>etol) ){
 	if(e<=0.0){ bnd.first = z; fbnd.first = e;}
@@ -305,7 +310,7 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 	//e = fbnd.first / (fbnd.second - fbnd.first);
 	//z = (bnd.first * (1 + e)) - (e * bnd.second);
 	z = (bnd.second + bnd.first)/ 2.0 ;
-	fz(z,e,Dt);
+	fz(z,e,rmax,Dt);
 	it +=1;
       }
       if(it > max_it){
@@ -319,15 +324,15 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
     // Rcpp::Rcout << fbnd.first << " " << fbnd.second << " " << std::endl;
   }
   
-  r_uz_sz = std::min( 1/t_d , (s_uz + Dt*r_rz_uz) / ( (z*t_d) + Dt ) );
+  //r_uz_sz = std::min( 1/t_d , (s_uz + Dt*r_rz_uz) / ( (z*t_d) + Dt ) );
   q_sz = ( (z - s_sz) / Dt ) + r_uz_sz + q_sz_in;
   s_sz = z;
   
   if( (s_sz < 0) | (s_sz > sz->D) ){
     Rcpp::Rcout << "HRU " << id << ": s_sz value " << s_sz << " out of bounds" << std::endl;
   }
-  if( (q_sz < -1e-10) ){
-    Rcpp::Rcout << "HRU " << id << ": q_sz value " << q_sz << " is less then 0" << std::endl;
+  if( (q_sz < -1e-10) | (q_sz > sz->q_szmax) ){
+    Rcpp::Rcout << "HRU " << id << ": q_sz value " << q_sz << " is out of bounds" << std::endl;
   }
   
   // Rcpp::Rcout << "Solved sz" << std::endl;
@@ -405,7 +410,18 @@ void hru::fzi(double& x, double &e){ // compute for saturated zone function
  
 
 
-void hru::fz(double& x, double &e, double const &Dt){ // compute for saturated zone function
-  double r = std::min(  1 / t_d, (s_uz + Dt*r_rz_uz)/( (x*t_d) + Dt) );
-  e = x - s_sz - Dt*( (1.0/(kappa_sz*(1.0-eta_sz)))*(sz->D - x) - q_sz_in/(1.0-eta_sz) - r);
+void hru::fz(double& x, double &e, double &rmax, double const &Dt){ // compute for saturated zone function
+  r_uz_sz = std::min(  1 / t_d, (s_uz + Dt*r_rz_uz)/( (x*t_d) + Dt) );
+  q_sz = ( (sz->D - s_sz) + (Dt+kappa_sz*eta_sz)*q_sz_in + Dt*r_uz_sz ) /
+    (kappa_sz*(1-eta_sz)+Dt);
+  if(q_sz > sz->q_szmax){
+    // take off r_uz_sz component to q_sz
+    q_sz -= (Dt*r_uz_sz) /  (kappa_sz*(1-eta_sz)+Dt);
+    // work out new r_uz_sz
+    r_uz_sz = (kappa_sz*(1-eta_sz)+Dt) * ( sz->q_szmax - q_sz ) / Dt;
+    // set q_sz to maximum value
+    r_uz_sz = 
+  r_uz_sz = std::min(  r_uz_sz, rmax);
+  
+  e = x - s_sz - Dt*( (1.0/(kappa_sz*(1.0-eta_sz)))*(sz->D - x) - q_sz_in/(1.0-eta_sz) - r_uz_sz);
 }

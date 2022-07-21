@@ -43,7 +43,7 @@ output_flux = data.frame(name = c(paste0(v,"_0"), paste0(v,"_1")),
 dt <- dynatop$new(mdl)
 #obs[,"precip"] <- 0
 #obs[,"pet"] <- 0
-dt$add_data(obs[1:5,]) #[1:2,,drop=F])
+dt$add_data(obs)#[1:5,]) #[1:2,,drop=F])
 dt$initialise()
 dt$get_states()
                                         #

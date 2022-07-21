@@ -295,7 +295,32 @@ downward flux.
 
 ## Surface excess
 
-The implicit scheme gives
+Building on the generic solution in Appendix A the implicit scheme gives
+
+\[
+\left.q^{+}_{sf}\right.\rvert_{t + \Delta t} = 
+\frac{ 1 }{ \kappa\left(1-\eta\right) + \Delta t } 
+\left. s_{sf} \right.\rvert_{t} + 
+\frac{ \Delta t - \kappa\eta}{ \kappa\left(1-\eta\right) + \Delta t } 
+\left. q^{-}_{sf} \right.\rvert_{t + \Delta t} - 
+\frac{ \Delta t }{ \kappa\left(1-\eta\right) + \Delta t } 
+\left. r_{sf \rightarrow rz} \right.\rvert_{t + \Delta t}
+\]
+
+The maximum downward flux is that which minimises $\left. s_sf
+\right.\rvert_{t + \Delta t}$. Since for any positive lateral inflow there
+must be surface storage the maximum downward flux is that which sets
+$\left.q^{+}_{sf}\right.\rvert_{t + \Delta t} = 0$.
+
+This provides the condition
+\[
+\left. r_{sf \rightarrow rz} \right.\rvert_{t + \Delta t} \leq 
+\frac{ 1 }{ \Delta t } 
+\left. s_{sf} \right.\rvert_{t} + 
+\frac{ \Delta t - \kappa\eta}{ \Delta t } 
+\left. q^{-}_{sf} \right.\rvert_{t + \Delta t}
+\]
+
 
 \begin{equation}
 \left. \bar{s}_{sf}  \right\rvert_{\Delta t}
@@ -425,6 +450,37 @@ This condition also implies that $\hat{r}_{uz \rightarrow sz} \leq
 								  \frac{1}{T_d}$
 
 ## Saturated Zone
+
+Building on the generic solution in Appendix A the implicit scheme gives
+
+\[
+\left.q^{+}_{sz}\right.\rvert_{t + \Delta t} = 
+\frac{ 1 }{ \kappa\left(1-\eta\right) + \Delta t } 
+\left( D - \left. s_{sz} \right.\rvert_{t} \right) + 
+\frac{ \Delta t - \kappa\eta}{ \kappa\left(1-\eta\right) + \Delta t } 
+\left. q^{-}_{sz} \right.\rvert_{t + \Delta t} + 
+\frac{ \Delta t }{ \kappa\left(1-\eta\right) + \Delta t } 
+\left. r_{uz \rightarrow sz} \right.\rvert_{t + \Delta t}
+\]
+
+The maximum downward flux is that which minimises $\left. s_sf
+\right.\rvert_{t + \Delta t}$. Since for any positive lateral inflow there
+must be surface storage the maximum downward flux is that which sets
+$\left.q^{+}_{sf}\right.\rvert_{t + \Delta t} = 0$.
+
+This provides the condition
+\[
+\left. r_{sf \rightarrow rz} \right.\rvert_{t + \Delta t} \leq 
+\frac{ 1 }{ \Delta t } 
+\left. s_{sf} \right.\rvert_{t} + 
+\frac{ \Delta t - \kappa\eta}{ \Delta t } 
+\left. q^{-}_{sf} \right.\rvert_{t + \Delta t}
+\]
+
+
+
+
+
 
 Initial evaluation and substitution of the flux from the unsaturated zone gives
 \begin{equation}
@@ -758,14 +814,14 @@ i - o \approx
 From the mass balance condition
 \[
 \frac{ds}{dt} \approx \Delta x l -\Delta x \frac{dq}{dx} +
-\frac{1}{2}\left(1-2\eta\right)^2\Delta x^2 \frac{d^2 q}{dx^2} 
+\frac{1}{2}\left(1-2\eta\right)\Delta x^2 \frac{d^2 q}{dx^2} 
 \]
 
 Since $q = \frac{s}{\kappa}$ the chain rule and rearranging gives
 
 \[
 \kappa \frac{dq}{dt} + \Delta x \frac{dq}{dx} -
-\frac{1}{2}\left(1-2\eta\right)^2\Delta x^2 \frac{d^2 q}{dx^2}
+\frac{1}{2}\left(1-2\eta\right)\Delta x^2 \frac{d^2 q}{dx^2}
 \approx \Delta x l
 \]
 
@@ -811,20 +867,17 @@ Subsituting in the expression for $\left. s \right.\rvert_{t + \Delta t}$
 gives
 
 \[
-\Delta t \left.q^{+}\right.\rvert_{t + \Delta t} = 
-\frac{ \Delta t }{ \kappa\left(1-\eta\right) + \Delta t } 
+\left.q^{+}\right.\rvert_{t + \Delta t} = 
+\frac{ 1 }{ \kappa\left(1-\eta\right) + \Delta t } 
 \left. s \right.\rvert_{t} + 
 \frac{ \Delta t - \kappa\eta}{ \kappa\left(1-\eta\right) + \Delta t } 
-\Delta t \left. q^{-} \right.\rvert_{t + \Delta t} + 
+\left. q^{-} \right.\rvert_{t + \Delta t} + 
 \frac{ \Delta t }{ \kappa\left(1-\eta\right) + \Delta t } 
-\Delta t \left. r \right.\rvert_{t + \Delta t}
+\left. r \right.\rvert_{t + \Delta t}
 \]
 
 Further manipulations indicates that $\left.q^{+}\right.\rvert_{t + \Delta
-t} \geq 0$ requires $\Delta t  \geq \kappa\eta$.
-
-In the numeric scheme dispersion is introduced by altering $\eta4 such that
-above condition is met.
+t} \geq 0$ requires $\Delta t  \geq \kappa\eta$. *TODO - show these*
 
 
 # Appendix A - Monotonicity of $f\left(z\right)$
