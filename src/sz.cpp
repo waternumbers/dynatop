@@ -1,51 +1,57 @@
 #include "sz.h"
 
-szc::szc(){
-  Dx = -999.9;
-  D = -999.9;
-  q_szmax = -999.9;
-};
+szc::szc(){};
+double szc::fa(double &q){ return(-999.9); }
+double szc::fs(double &q, double &qin){
+  //return( (Dx/2.0)*(fa(qin) + fa(q)) );
+  return( (1.0/2.0)*(fa(qin) + fa(q)) );
+}
 
-void szc::fke(double &kappa, double &eta, double const &s){};
-double szc::fc(double const &s){ return(-9999.9); };
-
-
-// bounded exponential
-szc_bexp::szc_bexp(std::vector<double> const &param, double const &grd, double const &A, double const &w){
+// exponential
+szc_exp::szc_exp(std::vector<double> const &param, double const &grd, double const &A, double const &w){
   szc();
-  const double &t_0(param[0]), &m(param[1]);
-  D = param[2];
+  double const &t0(param[0]), &m(param[1]);
+  Dx = A/w;
+  double beta = std::atan(grd);
+  psi = std::cos(beta) / m ;
+  q_szmax = w*t0*std::sin(beta)/A; //in m/s
+};
+double szc_exp::fa(double &q){
+  Rcpp::Rcout << "computing a " << q << " " << q_szmax << " " << psi << " " <<-std::log(q/q_szmax)/psi << std::endl;
+  if( (q/q_szmax) < (1 / std::pow(10.0,300.0)) ){ return( 700.0/psi); }
+  return( -std::log(q/q_szmax)/psi );
+}
+  
+// bounded exponential
+szc_bexp::szc_bexp(std::vector<double> const &param, double const &grd, double const &A, double const &w)
+{
+  szc();
+  double const &t_0(param[0]), &m(param[1]), &D(param[2]);
   Dx = A/w;
   // Rcpp::Rcout << "D is " << D << std::endl;
   double beta = std::atan(grd);
   psi = std::cos(beta) / m ;
-  omega = t_0*std::sin(beta);
-  q_szmax = ( w * omega * ( 1 -  std::exp(-psi*D) ) ) / A ;
+  omega = w*t_0*std::sin(beta)/A;
+  kappa = std::exp(-psi*D);
+  q_szmax = omega * ( 1 -  kappa );
 };
-void szc_bexp::fke(double &kappa, double &eta, double const &s){
-  kappa  = Dx / fc(s);
-  eta = 0.5;
+double szc_bexp::fa(double &q){
+  return( -std::log((q/omega)+kappa)/psi );
 };
-double szc_bexp::fc(double const& s){
-  if(s > D){ return( 0.0 ); };
-  return( psi * omega *  std::exp(-s*psi)  );
-};
-
-
-// constant celerity/velocity
-szc_cnst::szc_cnst(std::vector<double> const &param, double const &A, double const &w){
-  szc();
-  //const double &vsz(param[0]), &maxH(param[1]);
-  celerity = param[0];
-  D = param[1];
-  kappa0 = A / (w*param[0]);
-  q_szmax = (w*D*param[0]) / A;
-};
-void szc_cnst::fke(double &kappa, double &eta, double const &s){
-  kappa = kappa0;
-  eta = 0.5;
-};
-double szc_cnst::fc(double const& s){
-  if(s > D){ return( 0.0 ); };
-  return( celerity );
-};
+// // constant celerity/velocity
+// szc_cnst::szc_cnst(std::vector<double> const &param, double const &A, double const &w){
+//   szc();
+//   //const double &vsz(param[0]), &maxH(param[1]);
+//   celerity = param[0];
+//   D = param[1];
+//   kappa0 = A / (w*param[0]);
+//   q_szmax = (w*D*param[0]) / A;
+// };
+// void szc_cnst::fke(double &kappa, double &eta, double const &s){
+//   kappa = kappa0;
+//   eta = 0.5;
+// };
+// double szc_cnst::fc(double const& s){
+//   if(s > D){ return( 0.0 ); };
+//   return( celerity );
+// };

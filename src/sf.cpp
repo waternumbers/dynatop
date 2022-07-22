@@ -1,28 +1,40 @@
 #include "sf.h"
 
 // solve 
-sfc::sfc(){
-  kappa0 = -999.9;
-  eta0 = -999.9;
-   };
-
-// the following are valid for constant kappa and eta
-void sfc::fke(double &kappa, double &eta, double const &s){
-  // compute 1-eta allowing for positive outflow condition
-  kappa = kappa0;
-  eta = eta0;
-};
+sfc::sfc(){};
+double sfc::fq(double &s, double &qin){ return(-999.9); }
+double sfc::finit(double &q, double &qin){ return(-999.9); }
 
 // constant celerity
 sfc_cnstC::sfc_cnstC(std::vector<double> const &param, double const &A, double const &w){
-  // param[0] is celerity
-  eta0 = 0.5;
-  kappa0 = A / (w* param[0]); // Dx / celerity
+  Dx = A/w;
+  celerity = param[0];
+  eta = 0.5;
 };
-// constant celerity
+double sfc_cnstC::fq(double &s, double &qin){
+  double a = qin/celerity; // inflow area
+  a = std::max(0.0, (s - (Dx*eta*a))/(Dx*(1-eta))); // outflow area
+  return( a*celerity );
+}
+double sfc_cnstC::finit(double &q, double &qin){
+  if( q==0.0 ){  return(0.0); }
+  return( (Dx/(2.0*celerity))*(q+qin) );
+  //return( (1.0/(2.0*celerity))*(q+qin) );
+}
+
+// constant celerity and difusivity
 sfc_cnstCD::sfc_cnstCD(std::vector<double> const &param, double const &A, double const &w){
-  // param[0] is celerity
-  double Dx = A/w;
-  kappa0 = Dx / param[0]; // Dx / celerity
-  eta0 = 0.5 - ( param[1] / (param[0]*Dx) );
-};
+  Dx = A/w;
+  celerity = param[0];
+  double D = param[1];
+  eta = std::max(0.0, 0.5 - D/(celerity*Dx));
+}
+double sfc_cnstCD::fq(double &s, double &qin){
+  double a = qin/celerity; // inflow area
+  a = std::max(0.0, (s - (Dx*eta*a))/(Dx*(1-eta))); // outflow area
+  return( a*celerity );
+}
+double sfc_cnstCD::finit(double &q, double &qin){
+  if( q==0.0 ){  return(0.0); }
+  return( (Dx/celerity)*( eta*qin + (1-eta)*q ) );
+}

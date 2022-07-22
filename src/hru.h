@@ -35,10 +35,8 @@ class hru {
   
   void  lateral_redistribution(std::vector<double>&, std::vector<double>&);
   void  compute_met(std::vector<double>&);
-  void fsz(double&, double const&);
-  void fsf(double&, double const&);
-  void fzi(double&, double&);
-
+  double fsz(double&, double const&);
+  double fsf(double&, double const&);
 public:
   // variables initialised
   int const id;

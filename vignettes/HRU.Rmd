@@ -915,15 +915,16 @@ $\frac{dq}{dv} \leq 0$.
 
 Subsituting in the expression 
 \[
-r_{t+\Delta{ t}} = \min\left( \frac{1}/{T_{d}}, \frac{U}{T_{d}z_{t+\Delta t} +
+r_{t+\Delta{ t}} = \min\left( \frac{1}{T_{d}}, \frac{U}{T_{d}z_{t+\Delta t} +
 \Delta t} \right)
 \]
 
 Gives a similar numeric scheme to that previously
 
-- select trial $\hat{z}$
-- compute $\hat{v} = \max\left(0, \frac{1}{\Delta x \left(1-\eta\right)} \left( \hat{z} -
-  \Delta x \eta v^{-}_{t+\Delta t}\right)\right)$
+- select trial $\hat{q}$
+- compute $\hat{v} = q^{-1}\left(\hat{q}\right)$
+- compute $hat{z} = \Delta x \left(\eta v^{-}_{t+\Delta t} + \left(1-\eta\right)
+\hat{v} \right)$
 - compute $\hat{r} = \min\left( \frac{1}{T_{d}}, \frac{U}{T_{d}\hat{z} +
 \Delta t} \right)$
 - evaluate $e = \hat{z} - z_{t} +\Delta t \left(q\left(a^{-}_{t+\Delta t}\right) +

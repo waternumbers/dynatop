@@ -10,24 +10,33 @@
 class szc {
 protected:
   double Dx;
+  virtual double fa(double&);
 public:
-  double q_szmax, D;
+  double q_szmax;
   // initialisation
   szc(); //std::vector<double> const&, double const& ,double const&, double const&);
-  virtual double fc(double const&);
-  virtual void fke(double&, double&, double const&);
+  virtual double fs(double&, double&);
 };
 
+// exponential
+class szc_exp: public szc {
+ protected:
+  //double const &t0, &m;
+  double psi;
+  double fa(double&);
+ public:
+  szc_exp(std::vector<double> const&, double const& ,double const&, double const&);
+};
 
 // bounded exponential
 class szc_bexp: public szc {
  protected:
-  double psi, omega;
+  double psi, omega, kappa;
+  double fa(double&);
  public:
   szc_bexp(std::vector<double> const&, double const& ,double const&, double const&);
-  double fc(double const&);
-  void fke(double&, double&, double const&);
 };
+
 
 /* // double exponential */
 /* class qsz_dexp: public qsz { */
@@ -39,15 +48,15 @@ class szc_bexp: public szc {
 /*   void init(double&, double&, double&, double&); */
 /* }; */
 
-// constant velocity
-class szc_cnst: public szc {
- protected:
-  double kappa0, eta0, celerity;
- public:
-  szc_cnst(std::vector<double> const&, double const& , double const&);
-  double fc(double const&);
-  void fke(double&, double&, double const&);
-};
+// // constant velocity
+// class szc_cnst: public szc {
+//  protected:
+//   double kappa0, eta0, celerity;
+//  public:
+//   szc_cnst(std::vector<double> const&, double const& , double const&);
+//   double fc(double const&);
+//   void fke(double&, double&, double const&);
+// };
 
 #endif
 
