@@ -24,6 +24,7 @@ ctch_mdl$sim() ## simulate model
 \item \href{#method-dynatop-add_data}{\code{dynatop$add_data()}}
 \item \href{#method-dynatop-clear_data}{\code{dynatop$clear_data()}}
 \item \href{#method-dynatop-initialise}{\code{dynatop$initialise()}}
+\item \href{#method-dynatop-initialise_channel}{\code{dynatop$initialise_channel()}}
 \item \href{#method-dynatop-sim_hillslope}{\code{dynatop$sim_hillslope()}}
 \item \href{#method-dynatop-sim_channel}{\code{dynatop$sim_channel()}}
 \item \href{#method-dynatop-sim}{\code{dynatop$sim()}}
@@ -124,6 +125,19 @@ Initialises a dynatop object in the most simple way possible.
 }
 \if{html}{\out{</div>}}
 }
+\subsection{Returns}{
+invisible(self) suitable for chaining
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-dynatop-initialise_channel"></a>}}
+\if{latex}{\out{\hypertarget{method-dynatop-initialise_channel}{}}}
+\subsection{Method \code{initialise_channel()}}{
+Initialises only the channel part of a dynatop object in the most simple way possible.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$initialise_channel()}\if{html}{\out{</div>}}
+}
+
 \subsection{Returns}{
 invisible(self) suitable for chaining
 }

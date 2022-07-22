@@ -59,6 +59,13 @@ dynatop <- R6Class(
             private$init_ch()
             invisible(self)
         },
+        #' @description Initialises only the channel part of a dynatop object in the most simple way possible.
+        #'
+        #' @return invisible(self) suitable for chaining
+        initialise_channel = function(){
+            private$init_ch()
+            invisible(self)
+        },
         #' @description Simulate the hillslope output of a dynatop object
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
