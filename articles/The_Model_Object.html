@@ -114,15 +114,15 @@ of a model object.</p>
 <p>The model structure will be documented with reference to the model in the test
 catchment data supplied with the package. This can be loaded with</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://waternumbers.github.io/dynatop/" class="external-link">dynatop</a></span><span class="op">)</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"Swindale"</span><span class="op">)</span>
-<span class="va">model</span> <span class="op">&lt;-</span> <span class="va">Swindale</span><span class="op">$</span><span class="va">model</span></code></pre></div>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://waternumbers.github.io/dynatop/" class="external-link">dynatop</a></span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/data.html" class="external-link">data</a></span><span class="op">(</span><span class="st">"Swindale"</span><span class="op">)</span></span>
+<span><span class="va">model</span> <span class="op">&lt;-</span> <span class="va">Swindale</span><span class="op">$</span><span class="va">model</span></span></code></pre></div>
 <p>The top level of the model contains the following elements:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span>
-<span class="co">#&gt;  [1] "options"        "map"            "channel"        "hillslope"     </span>
-<span class="co">#&gt;  [5] "flow_direction" "gauge"          "point_inflow"   "diffuse_inflow"</span>
-<span class="co">#&gt;  [9] "precip_input"   "pet_input"</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span>
+<span><span class="co">#&gt;  [1] "options"        "map"            "channel"        "hillslope"     </span></span>
+<span><span class="co">#&gt;  [5] "flow_direction" "gauge"          "point_inflow"   "diffuse_inflow"</span></span>
+<span><span class="co">#&gt;  [9] "precip_input"   "pet_input"</span></span></code></pre></div>
 <p>These are outlined in Table <a href="#tab:model-table">1</a> and described in more detail in the sections
 below.</p>
 <table class="table">
@@ -214,28 +214,28 @@ vignettes for further details.</p>
 </h2>
 <p>Each row of the hillslope table describes a single hillslope HRU. In this example it looks like:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">hillslope</span><span class="op">)</span>
-<span class="co">#&gt;   id      area   atb_bar      s_bar min_dst width s_sf s_rz s_uz s_sz</span>
-<span class="co">#&gt; 1 20  1451.820  9.121463 0.28916356       1    40   NA   NA   NA   NA</span>
-<span class="co">#&gt; 2 21  5911.932  9.598746 0.36701868       1   160   NA   NA   NA   NA</span>
-<span class="co">#&gt; 3 22 16356.278 10.264301 0.26385821       1   440   NA   NA   NA   NA</span>
-<span class="co">#&gt; 4 23 23625.880 10.824251 0.18010123       1   640   NA   NA   NA   NA</span>
-<span class="co">#&gt; 5 24 48632.930 11.497418 0.15906415       1  1320   NA   NA   NA   NA</span>
-<span class="co">#&gt; 6 25 75373.071 12.106720 0.09886103       1  2040   NA   NA   NA   NA</span>
-<span class="co">#&gt;   cls_atb_20_band cls_atb_20 cls_band opt r_sfmax c_sf s_rzmax  t_d ln_t0 c_sz</span>
-<span class="co">#&gt; 1               1          1        1 exp     Inf  0.1    0.05 7200    -2   NA</span>
-<span class="co">#&gt; 2               2          2        1 exp     Inf  0.1    0.05 7200    -2   NA</span>
-<span class="co">#&gt; 3               3          3        1 exp     Inf  0.1    0.05 7200    -2   NA</span>
-<span class="co">#&gt; 4               4          4        1 exp     Inf  0.1    0.05 7200    -2   NA</span>
-<span class="co">#&gt; 5               5          5        1 exp     Inf  0.1    0.05 7200    -2   NA</span>
-<span class="co">#&gt; 6               8          6        1 exp     Inf  0.1    0.05 7200    -2   NA</span>
-<span class="co">#&gt;      m  D m_2 omega s_rz0 r_uz_sz0 s_raf t_raf</span>
-<span class="co">#&gt; 1 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span>
-<span class="co">#&gt; 2 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span>
-<span class="co">#&gt; 3 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span>
-<span class="co">#&gt; 4 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span>
-<span class="co">#&gt; 5 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span>
-<span class="co">#&gt; 6 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">hillslope</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   id      area   atb_bar      s_bar min_dst width s_sf s_rz s_uz s_sz</span></span>
+<span><span class="co">#&gt; 1 20  1451.820  9.121463 0.28916356       1    40   NA   NA   NA   NA</span></span>
+<span><span class="co">#&gt; 2 21  5911.932  9.598746 0.36701868       1   160   NA   NA   NA   NA</span></span>
+<span><span class="co">#&gt; 3 22 16356.278 10.264301 0.26385821       1   440   NA   NA   NA   NA</span></span>
+<span><span class="co">#&gt; 4 23 23625.880 10.824251 0.18010123       1   640   NA   NA   NA   NA</span></span>
+<span><span class="co">#&gt; 5 24 48632.930 11.497418 0.15906415       1  1320   NA   NA   NA   NA</span></span>
+<span><span class="co">#&gt; 6 25 75373.071 12.106720 0.09886103       1  2040   NA   NA   NA   NA</span></span>
+<span><span class="co">#&gt;   cls_atb_20_band cls_atb_20 cls_band opt r_sfmax c_sf s_rzmax  t_d ln_t0 c_sz</span></span>
+<span><span class="co">#&gt; 1               1          1        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
+<span><span class="co">#&gt; 2               2          2        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
+<span><span class="co">#&gt; 3               3          3        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
+<span><span class="co">#&gt; 4               4          4        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
+<span><span class="co">#&gt; 5               5          5        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
+<span><span class="co">#&gt; 6               8          6        1 exp     Inf  0.1    0.05 7200    -2   NA</span></span>
+<span><span class="co">#&gt;      m  D m_2 omega s_rz0 r_uz_sz0 s_raf t_raf</span></span>
+<span><span class="co">#&gt; 1 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span><span class="co">#&gt; 2 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span><span class="co">#&gt; 3 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span><span class="co">#&gt; 4 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span><span class="co">#&gt; 5 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span>
+<span><span class="co">#&gt; 6 0.04 NA  NA    NA  0.75    1e-06     0   Inf</span></span></code></pre></div>
 <p>The individual columns are documented in Table <a href="#tab:hillslope-table">2</a>. Not all the parameters are relevant for each option. See the Hillslope HRU vignette for details.</p>
 <table class="table">
 <caption>
@@ -400,35 +400,35 @@ vignettes for further details.</p>
 </h2>
 <p>Each row of the channel HRU table describes a single channel HRU. In this example it looks like:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">channel</span><span class="op">)</span>
-<span class="co">#&gt;                  name1                           identifier</span>
-<span class="co">#&gt; 0        Hawthorn Gill 16D0AC09-E0B6-4727-83B8-567E8DE9C533</span>
-<span class="co">#&gt; 1 Little Mosedale Beck 643017BB-01BC-4738-898F-1C62B84164BF</span>
-<span class="co">#&gt; 2        Mosedale Beck D2C2703E-A32F-4D88-A022-4E27EA52FC5C</span>
-<span class="co">#&gt; 3                 &lt;NA&gt; 991D9896-CA0C-492F-A6EE-8BA3972DDA3C</span>
-<span class="co">#&gt; 4                 &lt;NA&gt; CC8639D7-00D2-4C26-9252-350E5A748D51</span>
-<span class="co">#&gt; 5                 &lt;NA&gt; ED03FEDD-0F4B-40C7-86E8-6F0EA8BAC182</span>
-<span class="co">#&gt;                              startNode                              endNode</span>
-<span class="co">#&gt; 0 730F01D2-0F4F-4E27-AF55-B1782F0F844B 72B1A40B-E106-42A9-A261-4B7720037ADB</span>
-<span class="co">#&gt; 1 9B06188C-F4C7-436C-8108-3956D5FFD5CD A19E0D3A-2FA1-4E6D-AEA4-472F91ABC2AC</span>
-<span class="co">#&gt; 2 B03DB3BD-0E33-4E10-A935-997832752609 D649B60C-E631-47FA-971E-CA388DBDDE63</span>
-<span class="co">#&gt; 3 D968F174-FB80-404A-A4A7-2862CC722482 1FDBFCFF-799C-41CF-A2CB-8A56368BD438</span>
-<span class="co">#&gt; 4 1FDBFCFF-799C-41CF-A2CB-8A56368BD438 7C251581-3764-4DEE-8031-EC98FABC1F87</span>
-<span class="co">#&gt; 5 D3A1AEA9-93A6-4ACF-9A11-363F9517723F 673269DF-9E48-4EA0-B439-3D565A023DD2</span>
-<span class="co">#&gt;          form         flow fictitious length name2 sinkdepth Shape_Leng width</span>
-<span class="co">#&gt; 0 inlandRiver in direction      false    431  &lt;NA&gt;        -1  431.30438     2</span>
-<span class="co">#&gt; 1 inlandRiver in direction      false    513  &lt;NA&gt;        -1  513.12806     2</span>
-<span class="co">#&gt; 2 inlandRiver in direction      false    740  &lt;NA&gt;        -1  739.76378     2</span>
-<span class="co">#&gt; 3 inlandRiver in direction      false    573  &lt;NA&gt;        -1  573.48312     2</span>
-<span class="co">#&gt; 4 inlandRiver in direction      false     29  &lt;NA&gt;        -1   29.18951     2</span>
-<span class="co">#&gt; 5 inlandRiver in direction      false    413  &lt;NA&gt;        -1  413.14877     2</span>
-<span class="co">#&gt;                             channel_id id area v_ch</span>
-<span class="co">#&gt; 0 16D0AC09-E0B6-4727-83B8-567E8DE9C533  2   24    1</span>
-<span class="co">#&gt; 1 643017BB-01BC-4738-898F-1C62B84164BF 17  255    1</span>
-<span class="co">#&gt; 2 D2C2703E-A32F-4D88-A022-4E27EA52FC5C 11  242    1</span>
-<span class="co">#&gt; 3 991D9896-CA0C-492F-A6EE-8BA3972DDA3C  7  126    1</span>
-<span class="co">#&gt; 4 CC8639D7-00D2-4C26-9252-350E5A748D51  6    6    1</span>
-<span class="co">#&gt; 5 ED03FEDD-0F4B-40C7-86E8-6F0EA8BAC182 12  168    1</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">channel</span><span class="op">)</span></span>
+<span><span class="co">#&gt;                  name1                           identifier</span></span>
+<span><span class="co">#&gt; 0        Hawthorn Gill 16D0AC09-E0B6-4727-83B8-567E8DE9C533</span></span>
+<span><span class="co">#&gt; 1 Little Mosedale Beck 643017BB-01BC-4738-898F-1C62B84164BF</span></span>
+<span><span class="co">#&gt; 2        Mosedale Beck D2C2703E-A32F-4D88-A022-4E27EA52FC5C</span></span>
+<span><span class="co">#&gt; 3                 &lt;NA&gt; 991D9896-CA0C-492F-A6EE-8BA3972DDA3C</span></span>
+<span><span class="co">#&gt; 4                 &lt;NA&gt; CC8639D7-00D2-4C26-9252-350E5A748D51</span></span>
+<span><span class="co">#&gt; 5                 &lt;NA&gt; ED03FEDD-0F4B-40C7-86E8-6F0EA8BAC182</span></span>
+<span><span class="co">#&gt;                              startNode                              endNode</span></span>
+<span><span class="co">#&gt; 0 730F01D2-0F4F-4E27-AF55-B1782F0F844B 72B1A40B-E106-42A9-A261-4B7720037ADB</span></span>
+<span><span class="co">#&gt; 1 9B06188C-F4C7-436C-8108-3956D5FFD5CD A19E0D3A-2FA1-4E6D-AEA4-472F91ABC2AC</span></span>
+<span><span class="co">#&gt; 2 B03DB3BD-0E33-4E10-A935-997832752609 D649B60C-E631-47FA-971E-CA388DBDDE63</span></span>
+<span><span class="co">#&gt; 3 D968F174-FB80-404A-A4A7-2862CC722482 1FDBFCFF-799C-41CF-A2CB-8A56368BD438</span></span>
+<span><span class="co">#&gt; 4 1FDBFCFF-799C-41CF-A2CB-8A56368BD438 7C251581-3764-4DEE-8031-EC98FABC1F87</span></span>
+<span><span class="co">#&gt; 5 D3A1AEA9-93A6-4ACF-9A11-363F9517723F 673269DF-9E48-4EA0-B439-3D565A023DD2</span></span>
+<span><span class="co">#&gt;          form         flow fictitious length name2 sinkdepth Shape_Leng width</span></span>
+<span><span class="co">#&gt; 0 inlandRiver in direction      false    431  &lt;NA&gt;        -1  431.30438     2</span></span>
+<span><span class="co">#&gt; 1 inlandRiver in direction      false    513  &lt;NA&gt;        -1  513.12806     2</span></span>
+<span><span class="co">#&gt; 2 inlandRiver in direction      false    740  &lt;NA&gt;        -1  739.76378     2</span></span>
+<span><span class="co">#&gt; 3 inlandRiver in direction      false    573  &lt;NA&gt;        -1  573.48312     2</span></span>
+<span><span class="co">#&gt; 4 inlandRiver in direction      false     29  &lt;NA&gt;        -1   29.18951     2</span></span>
+<span><span class="co">#&gt; 5 inlandRiver in direction      false    413  &lt;NA&gt;        -1  413.14877     2</span></span>
+<span><span class="co">#&gt;                             channel_id id area v_ch</span></span>
+<span><span class="co">#&gt; 0 16D0AC09-E0B6-4727-83B8-567E8DE9C533  2   24    1</span></span>
+<span><span class="co">#&gt; 1 643017BB-01BC-4738-898F-1C62B84164BF 17  255    1</span></span>
+<span><span class="co">#&gt; 2 D2C2703E-A32F-4D88-A022-4E27EA52FC5C 11  242    1</span></span>
+<span><span class="co">#&gt; 3 991D9896-CA0C-492F-A6EE-8BA3972DDA3C  7  126    1</span></span>
+<span><span class="co">#&gt; 4 CC8639D7-00D2-4C26-9252-350E5A748D51  6    6    1</span></span>
+<span><span class="co">#&gt; 5 ED03FEDD-0F4B-40C7-86E8-6F0EA8BAC182 12  168    1</span></span></code></pre></div>
 <p>Many of the columns are not needed and are passed through from the original
 data. The columns required are documented in Table <a href="#tab:channel-table">3</a>.</p>
 <table class="table">
@@ -513,9 +513,9 @@ data. The columns required are documented in Table <a href="#tab:channel-table">
 </table>
 <p>In this case there is a single gauge at the outlet:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">model</span><span class="op">$</span><span class="va">gauge</span>
-<span class="co">#&gt;        name id</span>
-<span class="co">#&gt; 1 channel_1  1</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="va">gauge</span></span>
+<span><span class="co">#&gt;        name id</span></span>
+<span><span class="co">#&gt; 1 channel_1  1</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="point-inflows">Point Inflows<a class="anchor" aria-label="anchor" href="#point-inflows"></a>
@@ -548,9 +548,9 @@ are added to the inflow at the head of the channel length.</p>
 </table>
 <p>In the current catchment there are no inflows so the table is left blank:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">model</span><span class="op">$</span><span class="va">point_inflow</span>
-<span class="co">#&gt; [1] name id  </span>
-<span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="va">point_inflow</span></span>
+<span><span class="co">#&gt; [1] name id  </span></span>
+<span><span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="diffuse-inflows">Diffuse Inflows<a class="anchor" aria-label="anchor" href="#diffuse-inflows"></a>
@@ -583,9 +583,9 @@ the channel. These are presumed to occur uniformly along the channel length.</p>
 </table>
 <p>In the current catchment there are no inflows so the table is left blank:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">model</span><span class="op">$</span><span class="va">diffuse_inflow</span>
-<span class="co">#&gt; [1] name id  </span>
-<span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="va">diffuse_inflow</span></span>
+<span><span class="co">#&gt; [1] name id  </span></span>
+<span><span class="co">#&gt; &lt;0 rows&gt; (or 0-length row.names)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="flow-direction">Flow direction<a class="anchor" aria-label="anchor" href="#flow-direction"></a>
@@ -629,14 +629,14 @@ the channel. These are presumed to occur uniformly along the channel length.</p>
 </table>
 <p>The start of the data frame in the current example is:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">flow_direction</span><span class="op">)</span>
-<span class="co">#&gt;        from   to       frc</span>
-<span class="co">#&gt; 18502  1853 1850 0.3033095</span>
-<span class="co">#&gt; 185110 1853 1851 0.4704486</span>
-<span class="co">#&gt; 1852   1853 1852 0.2262419</span>
-<span class="co">#&gt; 18492  1852 1849 0.3781666</span>
-<span class="co">#&gt; 18501  1852 1850 0.4736997</span>
-<span class="co">#&gt; 1851   1852 1851 0.1481338</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">flow_direction</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        from   to       frc</span></span>
+<span><span class="co">#&gt; 18502  1853 1850 0.3033095</span></span>
+<span><span class="co">#&gt; 185110 1853 1851 0.4704486</span></span>
+<span><span class="co">#&gt; 1852   1853 1852 0.2262419</span></span>
+<span><span class="co">#&gt; 18492  1852 1849 0.3781666</span></span>
+<span><span class="co">#&gt; 18501  1852 1850 0.4736997</span></span>
+<span><span class="co">#&gt; 1851   1852 1851 0.1481338</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="precipitation-input">Precipitation input<a class="anchor" aria-label="anchor" href="#precipitation-input"></a>
@@ -683,14 +683,14 @@ for each HRU is derived.</p>
 </table>
 <p>In the current example there is a single precipitation series being used:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">precip_input</span><span class="op">)</span>
-<span class="co">#&gt;       name id frc</span>
-<span class="co">#&gt; 1 Rainfall  2   1</span>
-<span class="co">#&gt; 2 Rainfall 17   1</span>
-<span class="co">#&gt; 3 Rainfall 11   1</span>
-<span class="co">#&gt; 4 Rainfall  7   1</span>
-<span class="co">#&gt; 5 Rainfall  6   1</span>
-<span class="co">#&gt; 6 Rainfall 12   1</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">precip_input</span><span class="op">)</span></span>
+<span><span class="co">#&gt;       name id frc</span></span>
+<span><span class="co">#&gt; 1 Rainfall  2   1</span></span>
+<span><span class="co">#&gt; 2 Rainfall 17   1</span></span>
+<span><span class="co">#&gt; 3 Rainfall 11   1</span></span>
+<span><span class="co">#&gt; 4 Rainfall  7   1</span></span>
+<span><span class="co">#&gt; 5 Rainfall  6   1</span></span>
+<span><span class="co">#&gt; 6 Rainfall 12   1</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="pet-input">PET input<a class="anchor" aria-label="anchor" href="#pet-input"></a>
@@ -737,14 +737,14 @@ for each HRU is derived.</p>
 </table>
 <p>In the current example there is a single PET series being used:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">pet_input</span><span class="op">)</span>
-<span class="co">#&gt;   name id frc</span>
-<span class="co">#&gt; 1  PET  2   1</span>
-<span class="co">#&gt; 2  PET 17   1</span>
-<span class="co">#&gt; 3  PET 11   1</span>
-<span class="co">#&gt; 4  PET  7   1</span>
-<span class="co">#&gt; 5  PET  6   1</span>
-<span class="co">#&gt; 6  PET 12   1</span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">model</span><span class="op">$</span><span class="va">pet_input</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   name id frc</span></span>
+<span><span class="co">#&gt; 1  PET  2   1</span></span>
+<span><span class="co">#&gt; 2  PET 17   1</span></span>
+<span><span class="co">#&gt; 3  PET 11   1</span></span>
+<span><span class="co">#&gt; 4  PET  7   1</span></span>
+<span><span class="co">#&gt; 5  PET  6   1</span></span>
+<span><span class="co">#&gt; 6  PET 12   1</span></span></code></pre></div>
 </div>
   </div>
 
@@ -765,7 +765,7 @@ for each HRU is derived.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.5.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
 </div>
 
       </footer>
