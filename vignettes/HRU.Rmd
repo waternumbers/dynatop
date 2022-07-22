@@ -86,17 +86,17 @@ over the length of the hillslope we find
 	
 | Quantity type              | Symbol                  | Description                                                              | unit    |
 |----------------------------|-------------------------|--------------------------------------------------------------------------|---------|
-| Storage                    | $s_{sf}$                | Surface excess storage                                                   | m   |
-|                            | $s_{rz}$                | Root zone storage                                                        | m   |
-|                            | $s_{uz}$                | Unsaturated zone storage                                                 | m   |
-|                            | $s_{sz}$                | Saturated zone storage deficit                                           | m   |
-| Vertical fluxes            | $r_{sf \rightarrow rz}$ | Flow from the surface excess store to the root zone                      | m/s |
-|                            | $r_{rz \rightarrow uz}$ | Flow from the root zone to the unsaturated zone                          | m/s |
-|                            | $r_{uz \rightarrow sz}$ | Flow from unsaturated to saturated zone                                  | m/s |
-| Lateral fluxes             | $q_{sf}$                | Lateral flow in the hillslope surface zone                               | m/s |
-|                            | $q_{sz}$                | Lateral inflow to the hillslope surface zone                             | m/s |
-| Vertical fluxes to the HRU | $p$                     | Precipitation rate                                                       | m/s     |
-|                            | $e_p$                   | Potential Evapotranspiration rate                                        | m/s     |
+| Storage                    | $s_{sf}$                | Surface excess storage                                                   | m$^3$   |
+|                            | $s_{rz}$                | Root zone storage                                                        | m$^3$   |
+|                            | $s_{uz}$                | Unsaturated zone storage                                                 | m$^3$   |
+|                            | $s_{sz}$                | Saturated zone storage deficit                                           | m$^3$   |
+| Vertical fluxes            | $r_{sf \rightarrow rz}$ | Flow from the surface excess store to the root zone                      | m$^3$/s |
+|                            | $r_{rz \rightarrow uz}$ | Flow from the root zone to the unsaturated zone                          | m$^3$/s |
+|                            | $r_{uz \rightarrow sz}$ | Flow from unsaturated to saturated zone                                  | m$^3$/s |
+| Lateral fluxes             | $q_{sf}$                | Lateral flow in the hillslope surface zone                               | m$^3$/s |
+|                            | $q_{sz}$                | Lateral inflow to the hillslope surface zone                             | m$^3$/s |
+| Vertical fluxes to the HRU | $p$                     | Precipitation rate                                                       | m$^3$/s     |
+|                            | $e_p$                   | Potential Evapotranspiration rate                                        | m$^3$/s     |
 | Other HRU properties       | $A$                     | Plan area                                                                | m$^2$   |
 |                            | $w$                     | Width of a hill slope cross section                                      | m       |
 |                            | $\Delta x$              | Effective length of the hillslope HRU (\Delta x = A/w$)                  | m       |
@@ -115,13 +115,13 @@ is derived.
 
 ## Surface zone
 
-The storage in the surface zone satisfies is split into two components. The
-first compoent, identified by the super script $\left[1\right]$ receives the
-lateral inflows, but has a maxium storage volume at which it spills to the
-second component (identified by the super script $\left[2\right]$)
+The storage in the surface zone satisfies the mass balance equation
 
-generates lateral outflow and drainf$s_{sf} \geq 0$.
-Surface storage is increased by lateral downslope flow from upslope HRUs. 
+\[
+\frac{ds_{sf}}{dt} = q^{-}_{sf} - r_{sf \rightarrow rz} - q^{+}_{sf} 
+\]
+
+where surface storage is increased by lateral downslope flow from upslope HRUs. 
 Water flows to the root zone at a constant rate $r_{sf \rightarrow rz}$, unless limited by
 the available storage at the surface or the ability of the root zone to
 receive water (for example if the saturation storage deficit is 0 and the root zone storage is full).
@@ -130,16 +130,19 @@ In cases where lateral flows in the saturated zone produce
 saturation storage deficits water may be returned from the root
 zone to the surface giving negative values of $r_{sf \rightarrow rz}$.
 
-The governing ODE for a cross section of the hillslope can be written as a
-variable parameter muskingham model (see Appendix A) as
+To determine the outflow $q^{+}_{sf}$ a second relationship between
+$q^{-}_{sf}$, $s_{sf}$ and $q^{+}_{sf}$ is required. This is developed using a
+Muskingham type approximation to the volume. Suppose the cross-sectional area
+$a$ and flow $q$ are related by a one-to-one invetable function $f$ such that
+$a = f\left(q, \Theta_{sf}\right)$. Using this the storage can be approximated by
 \[
-\frac{ds_{sf}}{dt} = \frac{1}{1-\eta_{sf}} q^{-}_{sf} 
-- r_{sf \rightarrow rz} 
-- \frac{1}{\kappa_{sf}\left(1 - \eta_{sf}\right)} s_{sf}
+s_{sf} = \Delta x \left( \eta_{sf} f\left(q^{-}_{sf}\right) +
+\left(1-\eta_{sf}\right) f\left(q^{+}_{sf}\right) \right)
 \]
 
-Several interpretations of the scheme suiitable for the surface zone
-are given in Table \@ref(tab:hs-sf-type).
+We consider only that case where $f$ is defined such that $f\left(0\right) = 0$
+and  $\frac{da}{dq} >0$. The role of $\eta_{sf}$ in considered futher in
+Appendix A which is summarised in Table \@ref(tab:hs-sf-type).and the numerical solution.
 
 | Type     | Description                                                      | Parameters              | Equations |
 |----------|------------------------------------------------------------------|-------------------------|-----------|
@@ -149,8 +152,8 @@ are given in Table \@ref(tab:hs-sf-type).
 | kinShlw  | Kinematic routing with shallow depth approx for wetted perimeter |                         |           |
 | DifConst | Diffuse routing with constant celerity and diffusivity           |                         |           |
                                                     
-  Table: (\#tab:hs-sf-type) Outline of notation for describing a cross
-  section of the hillslope HRU
+  Table: (\#tab:hs-sf-type) Outline formualtions between cross sectional area
+  and flow for the surface zone
 
 
 
@@ -775,7 +778,6 @@ equation \footnote{doi:10.1016/j.advwatres.2005.08.008}
 \[
 \frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl - D \frac{dl}{dx}
 \]
-
 where $l$ is lateral inflow per unit length. Simplify this by
 considering that the lateral inflow $r$ uniformly
 distributed so that $l=\frac{r}{\Delta x}$ and $\frac{dl}{dx}=0$ to give
@@ -837,6 +839,8 @@ produces the maxium dispersion of $D = \frac{c\Delta x}{2}$, which is given by
 the linear tank.
 
 ## Numerical Solution
+
+**SEARCH WITH $a^{+}$ **
 
 Consider first the case with:
 
