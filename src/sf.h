@@ -8,34 +8,33 @@
 
 // generic class
 class sfc {
-protected:
-  double Dx, eta;
 public:
+  double eta;
   // initialisation
   sfc();
-  virtual double fq(double&, double&);
-  virtual double finit(double&, double&);
+  virtual double fq(double&, double&); // outflow given storage and upslope crosssectional area
+  virtual double fa(double&); // x-sec are given discharge
 };
 
 // constant celerity kinematic wave
 class sfc_cnstC: public sfc {
 protected:
-  double celerity;
+  double const Dx, celerity;
 public:
-  sfc_cnstC(std::vector<double> const&, double const& ,double const&);
-  double fq(double&, double&);
-  double finit(double&, double&);
+  sfc_cnstC(std::vector<double> const&, double const&);
+  double fq(double&, double&); // outflow given storage and upslope crosssectional area
+  double fa(double&); // x-sec are given discharge
 };
 
 
 // constant celerity and diffusivity
 class sfc_cnstCD: public sfc {
 protected:
-  double celerity;
+  double const  &Dx, celerity;
 public:
-  sfc_cnstCD(std::vector<double> const&, double const& ,double const&);
-  double fq(double&, double&);
-  double finit(double&, double&);
+  sfc_cnstCD(std::vector<double> const&, double const&);
+  double fq(double&, double&); // outflow given storage and upslope crosssectional area
+  double fa(double&); // x-sec are given discharge
 };
 
 #endif

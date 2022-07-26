@@ -7,7 +7,7 @@ data("Swindale");
 mdl <- Swindale$model
 
 ## temp fix to get correct model form
-odfn <- data.frame(name="outlet",id=0,flux="q_sf")
+odfn <- data.frame(name=c("outlet","under_outlet"),id=c(0,0),flux=c("q_sf","q_sz"))
 h <- list()
 for(ii in 1:nrow(mdl$hru)){
     tmp <- list()
@@ -17,11 +17,11 @@ for(ii in 1:nrow(mdl$hru)){
 
     ## mdl$hru$width[ii], area = mdl$hru$area[ii], gradient = mdl$hru$s_bar[ii])
     ##if( tmp$properties["width"] ==0 ){ tmp$properties["width"] <- 1 }
-    tmp$sf <- list(type = mdl$hru$sf[[ii]]$type,
-                   parameters = c("c_sf" = 0.8))
-    tmp$sz <- list(type = "bexp",
-                   parameters = c(t_0=exp(7.46),m=0.0063,D=0.5)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
-    if(mdl$hru$is_channel[ii]){ tmp$sz$parameters["D"] <- 0 }
+    tmp$sf <- list(type = "cnstC", #mdl$hru$sf[[ii]]$type,
+                   parameters = c("c_sf" = 0.9))
+    tmp$sz <- list(type = "exp",
+                   parameters = c(t_0=exp(1.46),m=0.0063,D=0.5)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
+    if(mdl$hru$is_channel[ii]){ tmp$sz$parameters["t_0"] <- 1e-60 }
     tmp$precip <- mdl$hru$precip[[ii]]
     names(tmp$precip) <- c("name","fraction")
     tmp$pet <- mdl$hru$pet[[ii]]
@@ -42,7 +42,7 @@ hh[[1]]$id <- hh[[1]]$id + 0
 system.time({
     dt <- dynatop$new(h)
 
-    dt$add_data(Swindale$obs[1:10,])
+    dt$add_data(Swindale$obs)
     dt$initialise()
 
     tail(dt$get_states())
@@ -51,4 +51,5 @@ system.time({
 })
 
 plot(dt$get_output())
-plot(Swindale$obs$flow)
+lines(Swindale$obs$flow,col="red")
+#plot(Swindale$obs$flow,add=TRUE)

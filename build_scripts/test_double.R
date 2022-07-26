@@ -12,7 +12,7 @@ mdl <- list(
         sf = list( type="cnst", parameters = c(c_sf = 0.1)),
         rz = list( type="orig", parameters = c(s_rzmax = 0.05)),
         uz = list( type="orig", parameters = c(t_d = 3600)),
-        sz = list( type="bexp", parameters = c(t_0=0.01,m=0.001,D=0.50)),
+        sz = list( type="bexp", parameters = c(t_0=1,m=0.001,D=0.50)),
         initialisation = c(s_rz_0 = 0.75,r_uz_sz_0 = 1e-3),
         sf_flow_direction = list(id=integer(0),fraction=numeric(0)),
         sz_flow_direction = list(id=integer(0),fraction=numeric(0)),
@@ -26,7 +26,7 @@ mdl <- list(
         sf = list( type="cnst", parameters = c(c_sf = 0.1)),
         rz = list( type="orig", parameters = c(s_rzmax = 0.05)),
         uz = list( type="orig", parameters = c(t_d = 3600)),
-        sz = list( type="bexp", parameters = c(t_0=0.01,m=0.001,D=0.5)),
+        sz = list( type="bexp", parameters = c(t_0=1,m=0.001,D=0.5)),
         initialisation = c(s_rz_0 = 0.75,r_uz_sz_0 = 1e-3),
         sf_flow_direction = list(id=as.integer(0),fraction=as.numeric(1)),
         sz_flow_direction = list(id=as.integer(0),fraction=as.numeric(1)),
@@ -43,9 +43,9 @@ output_flux = data.frame(name = c(paste0(v,"_0"), paste0(v,"_1")),
 dt <- dynatop$new(mdl)
 #obs[,"precip"] <- 0
 #obs[,"pet"] <- 0
-dt$add_data(obs)#[1:5,]) #[1:2,,drop=F])
+dt$add_data(obs[1:5,]) #[1:2,,drop=F])
 dt$initialise()
-dt$get_states()
+istt <- dt$get_states()
                                         #
 dt$sim(output_flux)
 y <- dt$get_output()

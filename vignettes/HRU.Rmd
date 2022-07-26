@@ -134,14 +134,14 @@ To determine the outflow $q^{+}_{sf}$ a second relationship between
 $q^{-}_{sf}$, $s_{sf}$ and $q^{+}_{sf}$ is required. This is developed using a
 Muskingham type approximation to the volume. Suppose the cross-sectional area
 $a$ and flow $q$ are related by a one-to-one invetable function $f$ such that
-$a = f\left(q, \Theta_{sf}\right)$. Using this the storage can be approximated by
+$q = f\left(a, \Theta_{sf}\right)$. Using this the storage can be approximated by
 \[
-s_{sf} = \Delta x \left( \eta_{sf} f\left(q^{-}_{sf}\right) +
-\left(1-\eta_{sf}\right) f\left(q^{+}_{sf}\right) \right)
+s_{sf} = \Delta x \left( \eta_{sf} a^{-}_{sf} +
+\left(1-\eta_{sf}\right) a^{+}_{sf} \right)
 \]
 
 We consider only that case where $f$ is defined such that $f\left(0\right) = 0$
-and  $\frac{da}{dq} >0$. The role of $\eta_{sf}$ in considered futher in
+and  $\frac{dq}{da} >0$; that is positive celerity. The role of $\eta_{sf}$ in considered futher in
 Appendix A which is summarised in Table \@ref(tab:hs-sf-type).and the numerical solution.
 
 | Type     | Description                                                      | Parameters              | Equations |
@@ -204,7 +204,7 @@ The governing ODE is written as
 \end{equation}
 
 If water is able to pass freely to the saturated zone, then it flows at the rate
-$\frac{s_{uz}}{T_d s_{sz}}$. 
+$\frac{A s_{uz}}{T_d s_{sz}}$. 
 *TODO: not sure if needed* If $\bar{s}_{sz}=\bar{s}_{uz}=0$ this is interpreted to mean
 that the flow rate is $\frac{1}{T_d}$. 
 In this situation where $s_{sz}=s_{uz}$ the subsurface below
@@ -222,65 +222,41 @@ $s_{uz} \leq s_{sz}$.
 
 For a HRU the alteration of the storage in the saturated zone is
 given by the kinematic equation implimented through the muskingham
-approximation (see Appendix A) which gives
-
-\begin{equation}
-\frac{d \left(D-s_{sz}\right)}{dt} = 2q^{-}_{sz} 
-+ r_{uz \rightarrow sz} 
-- \frac{2}{\kappa_{sz}} \left(D-s_{sz}\right)
-\end{equation}
-
-or treating $D$ as constant and subsituting in the expressions for
-$r_{uz \rightarrow sz}$ and $\kappa_{sz}$
+approximation (see Appendix A). This gives similar equations to the Surface
+zone, but considered in terms of storage deficits; that is
 
 \[
-\frac{d s_{sz}}{dt} = -2q^{-}_{sz} 
-- \frac{s_{uz}}{T_{d}s_{sz}} 
-+ \frac{2c_{sz}}{\Delta x} \left(D-s_{sz}\right)
+\frac{ds_{sz}}{dt} = q^{+}_{sz} - r_{sf \rightarrow rz} - q^{-}_{sz} 
 \]
 
+and
+
+\[
+s_{sz} = \frac{\Delta x}{2} \left( a^{-}_{sz} + a^{+}_{sz} \right)
+\]
 
 The Kinematic approximation then requires a relationship between $q_{sz}$ and
  the cross sectionsal flow area, given in terms of the cross sectional storage
- defict $h_{sz}$ as $A_{sz} = w\left(D-h_{sz}\right)$.
- This relationship is the transmissivity
+ defict $a_{sz}$. This relationship is the transmissivity
  profile which defines a relationship through a one-to-one, continuously differentiable function 
 $g: \left[0,D\right] \rightarrow \mathcal{R}^{+}$ which returns the lateral flow on
-a unit width such that $q_{sz} = w g\left(h_{sz},\Theta_{sz}\right)
- \geq 0$. 
- The celerity is computed as
- \[
- \frac{dq_{sz}}{dA_{sz}} = \frac{dq_{sz}}{dh_{sz}}\left(\frac{dA_{sz}}{dh_{sz}}\right)^{-1} =
- -\frac{d}{dh_{sz}}g\left(h_{sz},\Theta_{sz}\right)
- \]
- 
- 
- 
- Since which satisfies
+a unit width such that $q_{sz} = w g\left(a_{sz}/w,\Theta_{sz}\right)
+ \geq 0$. The function $g$ is considered to satisify
 \begin{equation}
--\frac{dq_{sz}}{dh_{sz}} = -w\frac{d}{dh_{sz}}g\left(h_{sz},\Theta_{sz}\right) \geq 0
+-\frac{dq_{sz}}{da_{sz}} = -w\frac{d}{da_{sz}}g\left(a_{sz}/w,\Theta_{sz}\right) \geq 0
 \end{equation}
 and
 \begin{equation}
-g\left(h_{sz},\Theta_{sz}\right) \rightarrow 0 \quad \mathrm{as} \quad
- h_{sz}\rightarrow \infty
+g\left(a_{sz}/w,\Theta_{sz}\right) \rightarrow 0 \quad \mathrm{as} \quad
+ a_{sz}\rightarrow \infty
 \end{equation}
 The first condition ensures a non negative celerity (wave speed) which is in
-keeping with the conceptualisation of the model. The first condition also implies
-that $q_{sz}$ decreases with increasing $h_{sz}$. This combined with
+keeping with the conceptualisation of the model. This combined with
  the second condition ensures that the model represents a state where no
  lateral inflow is generated.
 
-In soltuion of the governing ODE $s_sz$ is used in place of $h_{sz}$
-in evaluating the celerity used to commput $\kappa$. However the
-transmissivity also places a limit on the laterla flow into and out of
-the saturated zone. To handle this, without introducing additional
-dispersion, the inflows and outflows are repartitioned between the
-surface and saturated lateral fluxes so that $q_{sz}^{-}$ and
-$q_{sz}^{+}$ are less then or equal to 
-$w^{+}g\left(0,\Theta_{sz}\right)$
 
-# Approximating Equations
+# Numerical Solution
 
 No analytical solution yet exists for simultaneous integration of the system of
 ODEs outlined above. In the following an implicit scheme, where fluxes
@@ -288,15 +264,73 @@ between stores are considered constant over the time step and gradients are
 evaluated at the final state, is presented.
 
 The basis of the solution is that a gravity driven system will maximise
-the downward flow of water within each timestep of size $\Delta t$. 
+the downward flow of water within each timestep of size $\Delta t$. Hence on
+the first downward pass through the stores teh maximum rates of the vertical
+fluxes $\hat{r}_{* \rightarrow *} is determined. This then moderated in the
+solution of the saturated zone, before the upward pass gives the final states.
+
+## Downward Pass
 
 
-Recalling that the temporal and spatial average vertical fluxes are denoted with
-a $\hat{}$ the implicit approximations are stated in the following sections using the unknown vertical fluxes
-$\hat{r}_{\star \rightarrow \star}$ which are then determined by maximising the
-downward flux.
+### Surface excess
 
-## Surface excess
+**SEARCH WITH $a^{+}$ **
+
+Consider first the case with:
+
+- a known constant value of $\eta$ 
+- a known positive inflow $q\left(a^{-}_{t+\Delta t}\right)$ giving a value of
+  $a^{-}_{t+\Delta t}$
+- a known function $q$ such that $\frac{dq\left(a\right)}{da}\geq 0$ and
+  $q\left(0\right)=0$
+  
+An implicit
+solution gives the joint equations
+\[
+s_{t+\Delta t} = \Delta x \left(\eta a^{-}_{t+\Delta t} + \left(1-\eta\right)
+a^{+}_{t+\Delta t} \right)
+\]
+and
+\[
+s_{t+\Delta t} = s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t} - q\left(a^{+}_{t+\Delta t}\right) \right)
+\]
+
+The unknown outflow crossection satisfies $a^{+}_{t+\Delta t} \geq 0$. The first
+expression for $s_{t+\Delta t}$ is strictly increasing with respect to
+$a^{+}_{t+\Delta t}$ while the second is decreasing, hence there is a unique
+solution for $a^{+}_{t+\Delta t}$ so long as
+\[
+\Delta x \eta a^{-}_{t+\Delta t} \leq s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t}\right)
+\]
+Failure of this condition represents a breakdown of the trapeziod
+approximation. This is handled by taking $q\left(a^{+}_{t+\Delta t}\right)=0$
+and
+\[
+s_{t+\Delta t} = s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
+r_{t+\Delta t}\right)
+\]
+From this we see that
+\[
+-r \leq \frac{1}{\Delta t} s_{t} + q\left(a^{-}_{t+Δt}\right) - \frac{\Delta
+x}{\Delta t} \eta a^{-}_{t+\Delta t}
+\]
+
+A more general numeric scheme is the following
+process
+
+- select trial $\hat{s}$
+- compute $\hat{a} = \max\left(0, \frac{1}{\Delta x \left(1-\eta\right)} \left( \hat{s} -
+  \Delta x \eta a^{-}_{t+\Delta t}\right)\right)$
+- evaluate $e = \hat{s} - s_{t} - \Delta t \left(q\left(a^{-}_{t+\Delta t}\right) +
+  r_{t+\Delta t} - q\left(\hat{a}\right)\right)$
+
+then search to find $e=0$
+
+Note that $\frac{de}{d\hat{s}} = 1 + \frac{dq}{da}\frac{da}{d\hat{s}} > 0$ and
+$\hat{s}=0$ implies $\hat{a} = 0$ hence $e \leq 0$ so there is a single
+solution.
 
 Building on the generic solution in Appendix A the implicit scheme gives
 

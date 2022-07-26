@@ -37,10 +37,10 @@ void dt_init(Rcpp::List mdl, // hru data frame
   for(int ii=0; ii<nhru; ++ii){
     Rcpp::List tmp = mdl[ii];
     Rcpp::NumericVector svec = tmp["states"];
-    svec["s_sf"] = hrus[ii].s_sf;
-    svec["s_rz"] = hrus[ii].s_rz;
-    svec["s_uz"] = hrus[ii].s_uz;
-    svec["s_sz"] = hrus[ii].s_sz;
+    svec["s_sf"] = hrus[ii].s_sf / hrus[ii].area;
+    svec["s_rz"] = hrus[ii].s_rz / hrus[ii].area;
+    svec["s_uz"] = hrus[ii].s_uz / hrus[ii].area;
+    svec["s_sz"] = hrus[ii].s_sz / hrus[ii].area;
   };
 
   //end of dt_init
@@ -113,8 +113,8 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     // compute the mass balance initial storage
     for(int ii=0; ii<nhru; ++ii){
       if( hrus[ii].area > 0.0){
-	mbv[0] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz) * hrus[ii].area; // initial state volume
-	mbv[1] += hrus[ii].precip * hrus[ii].area; // precip volume
+	mbv[0] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz); // initial state volume
+	mbv[1] += hrus[ii].precip; // precip volume
       }
     }
     mbv[1] = mbv[1] * timestep;
@@ -137,8 +137,8 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
 
 	// mass balance components
 	if( hrus[ii].area > 0.0){
-	  mbv[2] += hrus[ii].aet * hrus[ii].area * Dt ; // actual evapotranspiration
-	  mbv[3] += Dt * (hrus[ii].q_sf + hrus[ii].q_sz - hrus[ii].q_sf_in - hrus[ii].q_sz_in) * hrus[ii].area ; // net lateral flux
+	  mbv[2] += hrus[ii].aet * Dt ; // actual evapotranspiration
+	  mbv[3] += Dt * (hrus[ii].q_sf + hrus[ii].q_sz - hrus[ii].q_sf_in - hrus[ii].q_sz_in) ; // net lateral flux
 	}
       }
       
@@ -155,7 +155,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     // finish off mass balance at end of step
     for(int ii=0; ii<nhru; ++ii){
       if( hrus[ii].area > 0.0){
-	mbv[4] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz) * hrus[ii].area; // final state volume
+	mbv[4] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz); // final state volume
       }
     }
     mbv[5] = mbv[0] + mbv[1] - mbv[2] - mbv[3] - mbv[4];
@@ -188,10 +188,10 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   for(int ii=0; ii<nhru; ++ii){
     Rcpp::List tmp = mdl[ii];
     Rcpp::NumericVector svec = tmp["states"];
-    svec["s_sf"] = hrus[ii].s_sf;
-    svec["s_rz"] = hrus[ii].s_rz;
-    svec["s_uz"] = hrus[ii].s_uz;
-    svec["s_sz"] = hrus[ii].s_sz;
+    svec["s_sf"] = hrus[ii].s_sf / hrus[ii].area;
+    svec["s_rz"] = hrus[ii].s_rz / hrus[ii].area;
+    svec["s_uz"] = hrus[ii].s_uz / hrus[ii].area;
+    svec["s_sz"] = hrus[ii].s_sz / hrus[ii].area;
   };
 
   // end of dt_sim

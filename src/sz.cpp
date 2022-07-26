@@ -1,43 +1,45 @@
 #include "sz.h"
 
-szc::szc(){};
-double szc::fa(double &q){ return(-999.9); }
-double szc::fs(double &q, double &qin){
-  //return( (Dx/2.0)*(fa(qin) + fa(q)) );
-  return( (1.0/2.0)*(fa(qin) + fa(q)) );
-}
+szc::szc(){}
+double szc::fa(double &q){ return(-999.9); } // cross sectional area for a given flux
+double szc::fq(double &s, double &a){ return(-999.9); } // flux for crossectional area
 
 // exponential
-szc_exp::szc_exp(std::vector<double> const &param, double const &grd, double const &A, double const &w){
-  szc();
-  double const &t0(param[0]), &m(param[1]);
-  Dx = A/w;
-  double beta = std::atan(grd);
-  psi = std::cos(beta) / m ;
-  q_szmax = w*t0*std::sin(beta)/A; //in m/s
-};
-double szc_exp::fa(double &q){
-  Rcpp::Rcout << "computing a " << q << " " << q_szmax << " " << psi << " " <<-std::log(q/q_szmax)/psi << std::endl;
-  if( (q/q_szmax) < (1 / std::pow(10.0,300.0)) ){ return( 700.0/psi); }
-  return( -std::log(q/q_szmax)/psi );
-}
-  
-// bounded exponential
-szc_bexp::szc_bexp(std::vector<double> const &param, double const &grd, double const &A, double const &w)
+szc_exp::szc_exp(std::vector<double> const param, double const grd, double const w, double Dx_):
+  Dx(Dx_)
 {
   szc();
-  double const &t_0(param[0]), &m(param[1]), &D(param[2]);
-  Dx = A/w;
-  // Rcpp::Rcout << "D is " << D << std::endl;
+  double const &t0(param[0]), &m(param[1]);
   double beta = std::atan(grd);
-  psi = std::cos(beta) / m ;
-  omega = w*t_0*std::sin(beta)/A;
-  kappa = std::exp(-psi*D);
-  q_szmax = omega * ( 1 -  kappa );
-};
-double szc_bexp::fa(double &q){
-  return( -std::log((q/omega)+kappa)/psi );
-};
+  psi = std::cos(beta) / (m*w) ; // w so can use as a function of area
+  q_szmax = w*t0*std::sin(beta); //in m^3/s
+}
+double szc_exp::fa(double &q){
+  if( q_szmax == 0.0 ){ return(700/psi); }
+  if( q <= (q_szmax / std::pow(10.0,300.0)) ){ return( 700.0/psi); }
+  return( -std::log(q/q_szmax)/psi );
+}
+double szc_exp::fq(double &s, double &ain){
+  double a = (2.0*s/Dx) - ain;
+  return( q_szmax*std::exp(-psi*a) );
+}
+  
+// // bounded exponential
+// szc_bexp::szc_bexp(std::vector<double> const &param, double const &grd, double const &A, double const &w)
+// {
+//   szc();
+//   double const &t_0(param[0]), &m(param[1]), &D(param[2]);
+//   Dx = A/w;
+//   // Rcpp::Rcout << "D is " << D << std::endl;
+//   double beta = std::atan(grd);
+//   psi = std::cos(beta) / m ;
+//   omega = w*t_0*std::sin(beta)/A;
+//   kappa = std::exp(-psi*D);
+//   q_szmax = omega * ( 1 -  kappa );
+// };
+// double szc_bexp::fa(double &q){
+//   return( -std::log((q/omega)+kappa)/psi );
+// };
 // // constant celerity/velocity
 // szc_cnst::szc_cnst(std::vector<double> const &param, double const &A, double const &w){
 //   szc();

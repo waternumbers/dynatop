@@ -210,10 +210,10 @@ dynatop <- R6Class(
         map  = NULL, # storage for map object
         output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
-        info = list(sf = setNames(as.integer(1:3),c("cnst","dummy","dummy2")),
+        info = list(sf = setNames(as.integer(1:2),c("cnstC","cnstCD")),
                     rz = setNames(as.integer(1),c("orig")),
                     uz = setNames(as.integer(1),c("orig")),
-                    sz = setNames(as.integer(1:2),c("bexp","cnst")),
+                    sz = setNames(as.integer(1:2),c("exp","cnst")),
                     
                     output = setNames(1:14, c("precip","pet","aet",
                                               "q_sf","q_sf_in","q_sz","q_sz_in",
@@ -280,7 +280,11 @@ dynatop <- R6Class(
                     next
                 }
                 pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
-                              "sf_cnst" = c("c_sf")
+                              "sf_cnstC" = c("c_sf"),
+                              "rz_orig" = c("s_rzmax"),
+                              "uz_orig" = c("t_d"),
+                              "sz_exp" = c("t_0","m"),
+                              stop("Invalid options for pname")
                               )
                 if( !is.numeric( h[[ii]]$parameters )){
                     etxt <- c(etxt, paste0(h$id[1], ": ", ii, " parameters should be a numeric vector"))
