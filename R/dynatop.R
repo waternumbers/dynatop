@@ -210,7 +210,7 @@ dynatop <- R6Class(
         map  = NULL, # storage for map object
         output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
-        info = list(sf = setNames(as.integer(1:2),c("cnstC","cnstCD")),
+        info = list(sf = setNames(as.integer(1:3),c("cnstC","cnstCD","cnstC_raf")),
                     rz = setNames(as.integer(1),c("orig")),
                     uz = setNames(as.integer(1),c("orig")),
                     sz = setNames(as.integer(1:2),c("exp","cnst")),
@@ -281,6 +281,8 @@ dynatop <- R6Class(
                 }
                 pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
                               "sf_cnstC" = c("c_sf"),
+                              "sf_cnstCD" = c("c_sf","d_sf"),
+                              "sf_cnstC_raf" = c("c_sf","s_raf","t_raf"),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
                               "sz_exp" = c("t_0","m"),
@@ -298,6 +300,7 @@ dynatop <- R6Class(
                     etxt <- c(etxt, paste0(h$id, ": some ", ii, " parameters are negatve"))
                     next
                 }
+                h[[ii]]$parameters <- h[[ii]]$parameters[ c(pnm,setdiff(names(h[[ii]]$parameters),pnm)) ] ## make sure parameters are in correct order
             }
             
             ## check precip and pet

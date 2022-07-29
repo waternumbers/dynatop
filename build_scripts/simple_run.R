@@ -18,10 +18,13 @@ for(ii in 1:nrow(mdl$hru)){
     ## mdl$hru$width[ii], area = mdl$hru$area[ii], gradient = mdl$hru$s_bar[ii])
     ##if( tmp$properties["width"] ==0 ){ tmp$properties["width"] <- 1 }
     tmp$sf <- list(type = "cnstC", #mdl$hru$sf[[ii]]$type,
-                   parameters = c("c_sf" = 0.9))
+                   parameters = c("c_sf" = 0.3))
     tmp$sz <- list(type = "exp",
-                   parameters = c(t_0=exp(1.46),m=0.0063,D=0.5)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
-    if(mdl$hru$is_channel[ii]){ tmp$sz$parameters["t_0"] <- 1e-60 }
+                   parameters = c(t_0=0.0001,m=0.08)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
+    if(mdl$hru$is_channel[ii]){
+        tmp$sz$parameters["t_0"] <- 1e-60
+        tmp$sf$parameters["c_sf"] <- 0.7
+    }
     tmp$precip <- mdl$hru$precip[[ii]]
     names(tmp$precip) <- c("name","fraction")
     tmp$pet <- mdl$hru$pet[[ii]]
@@ -41,8 +44,8 @@ hh <- h
 hh[[1]]$id <- hh[[1]]$id + 0
 system.time({
     dt <- dynatop$new(h)
-
-    dt$add_data(Swindale$obs)
+    obs <- Swindale$obs
+    dt$add_data(obs)
     dt$initialise()
 
     tail(dt$get_states())
@@ -50,6 +53,6 @@ system.time({
     dt$sim(odfn)
 })
 
-plot(dt$get_output())
-lines(Swindale$obs$flow,col="red")
-#plot(Swindale$obs$flow,add=TRUE)
+
+x11(); plot(Swindale$obs$flow, ylim=c(0,60))
+lines(dt$get_output())

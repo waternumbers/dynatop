@@ -8,10 +8,11 @@ mdl <- list(list(
     id = as.integer(0),
     states = setNames(as.numeric(rep(NA,4)), c("s_sf","s_rz","s_uz","s_sz")),
     properties = c(area = as.numeric(100), width=as.numeric(2), gradient= as.numeric(0.01)),
-    sf = list( type="cnst", parameters = c(c_sf = 0.1)),
+    sf = list( type="cnstC", parameters = c(c_sf = 0.1,d_sf =0, s_raf=0.0,t_raf=10)),
+    ##sf = list( type="cnstC_raf", parameters = c(c_sf = 0.1,s_raf=0,t_raf=10)),
     rz = list( type="orig", parameters = c(s_rzmax = 0.05)),
     uz = list( type="orig", parameters = c(t_d = 3600)),
-    sz = list( type="bexp", parameters = c(t_0=0.1,m=0.01,D=5.0)),
+    sz = list( type="exp", parameters = c(t_0=0.1,m=0.01,D=5.0)),
     initialisation = c(s_rz_0 = 0.75,r_uz_sz_0 = 1e-6),
     sf_flow_direction = list(id=integer(0),fraction=numeric(0)),
     sz_flow_direction = list(id=integer(0),fraction=numeric(0)),
@@ -23,23 +24,33 @@ output_flux = data.frame(name = c("q_sf_1","q_sz_1","s_sf","s_rz","s_uz","s_sz",
                          id = as.integer(rep(0, 12)),
                          flux = c("q_sf","q_sz","s_sf","s_rz","s_uz","s_sz","r_sf_rz","r_rz_uz","r_uz_sz","precip","pet","aet"))
 
-dt <- dynatop$new(mdl)
-#obs[,"precip"] <- 0
-#obs[,"pet"] <- 0
-dt$add_data(obs[1:2,])
+## dt <- dynatop$new(mdl)
+## #obs[,"precip"] <- 0
+## #obs[,"pet"] <- 0
+## dt$add_data(obs) # [1:35,])
 
-dt$initialise()
+## dt$initialise()
 
 
-is <- dt$get_states()
+## is <- dt$get_states()
 
-                                        #
-dt$sim(output_flux)
-y <- dt$get_output()
+##                                         #
+## dt$sim(output_flux)
+## y <- dt$get_output()
 
 ## x <- dt$get_mass_errors()
 ## range(y$s_sf)
 
+dt <- dynatop$new(mdl)$add_data(obs)$initialise()$sim(output_flux)
+cnst <- dt$get_output()
+
+mdl[[1]]$sf$type <- "cnstC_raf"
+dt <- dynatop$new(mdl)$add_data(obs)$initialise()$sim(output_flux)
+cnst_raf <- dt$get_output()
+
+par(mfrow=c(2,1)); plot( merge(cnst$s_sf, cnst_raf$s_sf) );plot( cnst$s_sf - cnst_raf$s_sf );
 
 ## range(x$error)
 
+#plot( merge( cnst$q_sf, cnst_raf$q_sf) )
+#plot( merge( cnst$r_sf_rz, cnst_raf$r_sf_rz) )

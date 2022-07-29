@@ -11,7 +11,7 @@ szc_exp::szc_exp(std::vector<double> const param, double const grd, double const
   szc();
   double const &t0(param[0]), &m(param[1]);
   double beta = std::atan(grd);
-  psi = std::cos(beta) / (m*w) ; // w so can use as a function of area
+  psi = 1.0 / (m*w); //std::cos(beta) / (m*w) ; // w so can use as a function of area
   q_szmax = w*t0*std::sin(beta); //in m^3/s
 }
 double szc_exp::fa(double &q){
@@ -20,7 +20,7 @@ double szc_exp::fa(double &q){
   return( -std::log(q/q_szmax)/psi );
 }
 double szc_exp::fq(double &s, double &ain){
-  double a = (2.0*s/Dx) - ain;
+  double a = std::max(0.0, (2.0*s/Dx) - ain);
   return( q_szmax*std::exp(-psi*a) );
 }
   
