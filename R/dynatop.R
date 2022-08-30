@@ -246,9 +246,10 @@ dynatop <- R6Class(
         get_states = function(record=FALSE){
             
             if( record ){
+                #browser()
                 tmp <- setNames(private$time_series$state_record,
                                 private$time_series$index)
-                idx <- lapply(tmp, function(x){length(x)>0})
+                idx <- sapply(tmp, function(x){length(x)>0})
                 return(tmp[idx])
 ##                return( setNames(private$time_series$state_record,
 ##                                 private$time_series$index) )
