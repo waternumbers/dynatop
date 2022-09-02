@@ -20,7 +20,7 @@ for(ii in 1:nrow(mdl$hru)){
     tmp$sf <- list(type = "cnstC", #mdl$hru$sf[[ii]]$type,
                    parameters = c("c_sf" = 0.3))
     tmp$sz <- list(type = "exp",
-                   parameters = c(t_0=0.0001,m=0.08)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
+                   parameters = c(t_0=0.001,m=0.8)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
     if(mdl$hru$is_channel[ii]){
         tmp$sz$parameters["t_0"] <- 1e-60
         tmp$sf$parameters["c_sf"] <- 0.7
