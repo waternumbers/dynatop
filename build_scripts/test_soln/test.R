@@ -3,86 +3,124 @@ rm(list=ls())
 graphics.off()
 
 ## constant velocity
-
-fs <- function(qi,qo){
+fqo <- function(s,qi){
     Dx <- 100
     v <- 1.3
     eta <- 0.5
-    s <- (Dx/v)*( (eta*qi) + (1-eta)*qo) ## check if this way round in text
-    return(s)
+    return( ( (s*v/Dx) - (eta*qi) )/(1-eta) )
 }
 
-fF <- function(qo,qi,s0,vi,q0,Dt,theta){
-    vo <- Dt*( (1-theta)*q0 + theta*qo )
-    return( fs(qi,qo) - s0 - vi + vo )
+fE <- function(s,s0,vi,vr,qi,q0,Dt,omega){
+    ##determine qo
+    qo <- fqo(s,qi)
+    vo <- Dt*(omega*qo + (1-omega)*q0)
+    return( s+vo-s0-vi-vr )
 }
 
-
-ftheta <- function(qo,qi,s0,vi,q0,Dt){
-    ##(s0 + vi - Dt*q0 - fs(ai,x,Dx) ) / ( Dt * (fq(x)-q0) )
-    #browser()
-    (fs(qi,qo) - s0 - vi + Dt*q0) / (Dt*(q0 - qo))
+fs <- function(s,qi,qo){
+    fqo(s,qi) - qo
 }
+
 
 n <- 1100
-s <- vin <- vout <- qout <- rep(NA,n)
+s <- vin <- vr <- vout <- qout <- rep(NA,n)
 qin <- rep(1,n)
-qin[200:500] <- 20
+qin[200:500] <- 3
 r <- rep(0,n)
-Dt <- 90
+r[700:800] <- -2
+Dt <- 4
 
 ## initialise at steady state
 qout[1] <- qin[1] + r[1]
 vin[1] <- qin[1]*Dt
 vout[1] <- qout[1]*Dt
-s[1] <- fs(qin[1],qout[1])
+s[1] <- uniroot(fs,c(-1,100),
+                qi=qin[1], qo=qout[1])$root
 
 
 
 ## loop
 for(ii in 2:n){
     vin[ii] <- Dt*0.5*(qin[ii]+qin[ii-1])
-    ##if(ii==200){ browser()}
-    ## range of aout for TVD solution
-    rng <- range( c(qin[ii],qout[ii-1],qin[ii-1]) )
-    #rng <- c(0,5)
-    frng <- c( fF(rng[1],qin[ii],s[ii-1],vin[ii],qout[ii-1],Dt,1),
-              fF(rng[2],qin[ii],s[ii-1],vin[ii],qout[ii-1],Dt,1) )
+    vr[ii] <- Dt*0.5*(r[ii]+r[ii-1])
 
-   
-    if(rng[1]==rng[2]){
-        qout[ii] <- rng[1]
-    }else{        
+    vr[ii] <- max(vr[ii], -(s[ii-1]+vin[ii]))
+    ## mock up for no limits
+    ql <- 0
+    qu <- 1000
+    ql <- max(0, min(qin[ii],qin[ii-1],qout[ii-1]) + min(vr[ii]/Dt,0))
+    qu <- max(qin[ii],qin[ii-1],qout[ii-1]) + max(vr[ii]/Dt,0)
+    
+    ## find sl
+    sl <- uniroot(fs,c(-1,100),
+                  qi=qin[ii], qo=ql,
+                  extendInt="upX"
+                  )$root
+    
+    ## find su
+    su <- uniroot(fs,c(-1,100),
+                  qi=qin[ii], qo=qu,
+                  extendInt="upX"
+                  )$root
+
+    ## check can evaluate
+    if(ql==qu){ ## steady state...
+        qout[ii] <- qu
+        s[ii] <- s[ii-1]
         omega <- 0.5
-        if( qin[ii] > qout[ii-1] ){
-            omega <- max(qin[ii-0:1])
-            omega <- ftheta( omega, qin[ii],s[ii-1],vin[ii],qout[ii-1],Dt)
+    }else{
+        if( fE(su,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,1) <=0 ){
+            #print(paste(ii, "Upper Q limited"))
+            qout[ii] <- qu
+            s[ii] <- s[ii-1] + vin[ii] + vr[ii] - Dt*qu
+            omega <- 1
         }
-        if( qin[ii] < qout[ii-1] ){
-            omega <- min(qin[ii-0:1])
-            omega <- ftheta( omega, qin[ii],s[ii-1],vin[ii],qout[ii-1],Dt)
+        if( fE(su,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,1) > 0 &
+            fE(su,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,0.5) <=0 ){   
+            qout[ii] <- qu
+            s[ii] <- su
+            omega <- ( su + (Dt*qout[ii-1]) - s[ii-1] - vin[ii] -vr[ii] ) / (Dt*(qout[ii-1]-qu))
+            #print(paste(ii, "Upper Q limited on omega", omega))
         }
-        print(omega)
-        omega <- min(1,max(0.5, omega))
-        ##omega <- 0.5
-        rng <- c(-0.1,300)
-        frng <- c( fF(rng[1],qin[ii],s[ii-1],vin[ii],qout[ii-1],Dt,omega),
-                  fF(rng[2],qin[ii],s[ii-1],vin[ii],qout[ii-1],Dt,omega) )
-        qout[ii] <- uniroot(fF, rng,
-                            qi=qin[ii], s0=s[ii-1],
-                            vi=vin[ii],q0=qout[ii-1],
-                            Dt=Dt,theta=omega)$root
+        if( fE(su,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,0.5) > 0 &
+            fE(sl,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,0.5) < 0 ){
+            if(ii %in% c(400,750)){ print(paste(ii, "optim")) }
+            ## numeric search
+            s[ii] <- uniroot(fE,c(sl,su),
+                             s0=s[ii-1],vi=vin[ii],
+                             vr=vr[ii],qi=qin[ii],
+                             q0=qout[ii-1],Dt=Dt,omega=0.5)$root
+            qout[ii] <- fqo(s[ii],qin[ii])
+            omega <- 0.5
+        }
+        if( fE(sl,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,0.5) >= 0 &
+            fE(sl,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,1) < 0 ){
+            qout[ii] <- ql
+            s[ii] <- sl
+            omega <- ( sl + (Dt*qout[ii-1]) - s[ii-1] - vin[ii] -vr[ii] ) / (Dt*(qout[ii-1]-ql))
+            #print(paste(ii, "Lower Q limited on omega", omega))
+        }
+        if( fE(sl,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,1) >= 0 ){
+            qout[ii] <- ql
+            s[ii] <- s[ii-1] + vin[ii] + vr[ii] - Dt*ql
+            omega <- 1
+            #print(paste(ii, "Lower Q limited"))
+        }
     }
-    s[ii] <- fs( qin[ii],qout[ii] )
-    vout[ii] <- s[ii-1] + vin[ii] - s[ii]
+    #if(ii == 200){browser()}
+    vout[ii] <- s[ii-1] + vin[ii] + vr[ii] - s[ii]
+##        Dt*(omega*qout[ii] + (1-omega)*qout[ii-1])
 }
 
-                
-    
-par(mfrow=c(3,1))
-plot(s)
-plot(qout); lines(qin)
-plot(vout); lines(vin)
+print( s[1] + sum(vin[-1]) + sum(vr[-1]) - sum(vout[-1]) - tail(s,1) )
+e <- c(0, s[-length(s)] + vin[-1] + vr[-1] - vout[-1] - s[-1])
+idx <- 1:length(s)
+
+par(mfrow=c(4,1))
+plot(s[idx])
+plot(qout[idx]); lines(qin[idx])
+plot(vout[idx]); lines(vin[idx])
+plot(e[idx])
 
 ## ## test the celerity based solution with additional dispersion
 ## rm(list=ls())

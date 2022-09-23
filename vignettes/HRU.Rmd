@@ -779,6 +779,155 @@ required. The additional parameter and properties are defined in Table \@ref(tab
 
   Table: (\#tab:hs-transmissivity-param) Additional parameters used in the transmissivity profiles.
 
+
+# test appendix VPMC v2
+
+Muskingham routing can be derived in a numer of ways. Consistent with the
+wedge derivation the evolution of the storage $s$ in a reach of length $\Delta
+x$ can be expressed in terms of the inflow $q^{-}$
+and outflow $q^{+}$ and state or time varying parameter $\nu$ and $\eta$ as
+
+\[
+s = \frac{\Delta x}{\nu} \left(\eta q^{-} + \left(1-\eta\right) q^{+} \right)
+\]
+
+Let the representave area $a$ be given by $a=\frac{s}{\Delta x}$. If $q = \eta
+q^{-} + \left(1-\eta\right) q^{+}$ is a representative
+flow then $\nu$ is the representative velocity since $\nu=\frac{q}{a}$.
+Below we show that in many hydrological settings that $\eta$ and $q$ are functions of
+$a$ and hence $s$. In the following we therfore consider that
+\[
+q^{+} = \mathcal{F}\left(s,q^{-}\right)
+\]
+where
+\[
+\frac{\partial q^{+}}{\partial s} = \frac{\partial}{\partial
+s}\mathcal{F}\left(s,q^{-}\right) \geq 0
+\]
+and to maintain positive flows the value of $s$ is bounded below by $s^{min}$
+such that
+\[
+0 = \mathcal{F}\left(s^{min},q^{-}\right)
+\]
+
+Taking flux to be a function of cross sectional area and lateral inflow $r$
+gives the mass balance
+
+\[
+\frac{ds}{dt} = q^{-} + r - q^{+}
+\]
+
+If the inputs an values at time $t$ are known the mass error for a four point solution with
+time weighting parameter $\omega$ is given by
+
+\[
+\mathcal{E}\left(s_{t+\Delta t},\omega\right) = 
+s_{t+\Delta t} + 
+\Delta t \left( \omega q^{+}_{t+\Delta t} + \left(1-\omega\right)q^{+}_{t}
+\right) -
+s_{t} - v_{t+\Delta t}^{-} - v_{t+\Delta t}^{r}
+\]
+
+where the ouflow volume $v^{+}_{t + \Delta t}$ is given by
+\[
+v^{+}_{t + \Delta t} = 
+\Delta t \left( \omega
+q^{+}_{t+\Delta t} + \left(1-\omega\right)q^{+}_{t} \right)
+\]
+
+to solve for the storage at time $t+\Delta t$ we seek the value of
+$s_{t+\Delta t}$ for which
+$\mathcal{E}\left(s_{t+\Delta t},\omega\right) = 0$.
+
+Since 
+\[
+\frac{\partial}{\partial
+s}\mathcal{E}\left(s,\omega\right) > 0
+\]
+a solution can be found so long as $\mathcal{E}\left(s^{min},\omega\right)
+\leq 0$
+
+The solution is numerically stable so long as $0.5 \leq \omega \leq
+1$ with second order accuray optained when $\omega = 0.5. Since increasing
+$\omega$ adds numerical dispersion the solution uses the following cases:
+
+1. If $\mathcal{E}\left(s^{min},0.5\right) \leq 0$ find $s_{t+\Delta t}$ by
+   numerical search
+2. If $\mathcal{E}\left(s^{min},0.5\right) > 0$ and
+   $\mathcal{E}\left(s^{min},1\right) \leq 0$ set $s_{t+\Delta t}=s^{min}$ and
+   compute
+   \[
+   \omega = 
+   \frac{ s^{min} + \Delta t q^{+}_{t} - s_{t} - v_{t+\Delta t}^{-} -
+   v_{t+\Delta t}^{r}}{\Delta t q^{+}_{t}}
+   \]
+3. If $\mathcal{E}\left(s^{min},1\right) > 0$ take $\omega = 1$, $q_{t+\Delta
+   t}=0$ and $s_{t+\Delta t} = s_{t} + v_{t+\Delta t}^{-} + v_{t+\Delta t}^{r}$
+
+Case 3 represents the breakdown of the trapesoid assumption, resulting from a
+numeric shock to the system. The
+solution outlines offers a "smooth" mass conservative way of handling this,
+although it does not avoid suprious osscilations.
+
+## Flux limiters for TVD
+
+To avoid osscilations flux limiters can be proposed based upon the TVD
+principle (ref), specifically we constrain the solution such that $q^{l}\leq
+q_{t+\Delta t} \leq q^{u}$ where $q^{l}$ and $q^{u}$ are based on the known
+values at the start of the time step.
+
+\[
+q^{l} = \max\left(0, \min\left(q^{+}_{t},q^{-}_{t},q^{-}_{t+1}\right)
++\min\left(v^{r}_{t+\Delta t}/\Delta t, 0\right)\right)
+\]
+
+\[
+q^{u} = \max\left(q^{+}_{t},q^{-}_{t},q^{-}_{t+1}\right)
++\max\left(v^{r}_{t+\Delta t}/\Delta t, 0\right)
+\]
+
+Corresponding storages
+\[
+q^{l} = \mathcal{F}\left(s^{l},q^{-}\right)
+\]
+\[
+q^{u} = \mathcal{F}\left(s^{u},q^{-}\right)
+\]
+
+Solve with multple cases
+ 
+0. If $\mathcal{E}\left(s^{u},1\right) \leq 0$ let $q_{t+\Delta
+   t}=q^{u}$, $\omega = 1$ and take
+   \[
+   s_{t+\Delta t} = s_{t} + v_{t+\Delta t}^{-} + v_{t+\Delta t}^{r} - \Delta t q^{u}
+   \]
+1. If $\mathcal{E}\left(s^{u},0.5\right) \leq 0$ and
+   $\mathcal{E}\left(s^{u},1\right) > 0$ let 
+   $q_{t+\Delta t}=q^{u}$, 
+   $s_{t+\Delta t}=s^{u}$ and compute
+   \[
+   \omega = 
+   \frac{ s^{u} + \Delta t q^{+}_{t} - s_{t} - v_{t+\Delta t}^{-} -
+   v_{t+\Delta t}^{r}}
+   {\Delta t \left( q^{+}_{t} - q^{u}\right)}
+   \]
+2. If $\mathcal{E}\left(s^{l},0.5\right) < 0$ and
+   $\mathcal{E}\left(s^{u},0.5\right) > 0$ find $s_{t+\Delta t}$ by
+   numerical search
+3. If $\mathcal{E}\left(s^{l},0.5\right) \geq 0$ and
+   $\mathcal{E}\left(s^{l},1\right) \leq 0$ set $s_{t+\Delta t}=s^{l}$ and
+   compute
+   \[
+   \omega = 
+   \frac{ s^{l} + \Delta t q^{+}_{t} - s_{t} - v_{t+\Delta t}^{-} - v_{t+\Delta t}^{r}}{q^{+}_{t}}
+   \]
+4. If $\mathcal{E}\left(s^{l},1\right) > 0$ take $\omega = 1$, $q_{t+\Delta
+   t}=q^{l}$ and $s_{t+\Delta t} = s_{t} + v_{t+\Delta t}^{-} + v_{t+\Delta
+   t}^{r} - \Delta t q^{l}$
+
+
+
+
 # Appendix A - Variable Parameter Muskingham solution
 
 Muskingham routing can be derived in a numer of ways. Consistent with the
