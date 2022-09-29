@@ -2,6 +2,38 @@
 rm(list=ls())
 graphics.off()
 
+## inputs and time step
+n <- 1100
+
+q_sf_in <- rep(1,n)
+q_sf_in[200:500] <- 3
+q_sz_in <- rep(1,n)
+q_sz_in[800:1000] <- 3
+
+Dt <- 40
+
+## properties
+A <- 1000
+Dx <- 100
+
+
+## function to give outflow for a represetnative area
+fqa <- function(a,qi){
+     v <- 10.3
+    eta <- 0.5
+    return( ( (a*v) - (eta*qi) )/(1-eta) )
+}
+
+
+
+
+
+
+
+
+s_sf <- s_rz <- s_uz <- s_sz <- q_sf <- q_sz <- rep(NA,n)
+v_sf_rz<- v_rz_uz <- v_uz_sz <- rep(NA,n)
+
 ## constant velocity
 fqo <- function(s,qi){
     Dx <- 100

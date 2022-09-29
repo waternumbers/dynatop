@@ -17,8 +17,8 @@ void dt_init(Rcpp::List mdl, // hru data frame
   int nhru = mdl.size(); // number of HRUs
 
   // storage for inflow fluxes
-  std::vector<double> q_sf_in(nhru,0.0);// vector to surface inflow fluxes
-  std::vector<double> q_sz_in(nhru,0.0);// vector to saturated zone inflow fluxes
+  std::vector<double> v_sf_in(nhru,0.0);// vector to surface inflow inflow volumes
+  std::vector<double> v_sz_in(nhru,0.0);// vector to saturated zone inflow volumes
   
   // make HRUs
   std::vector<hru> hrus = makeHRUs(mdl);
@@ -69,7 +69,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   int nhru = mdl.size(); // number of HRUs
 
   // constant used in simulation
-  double dbl_n_sub_step = (double)n_sub_step;
+  double const dbl_n_sub_step = (double)n_sub_step;
   double const Dt = timestep / dbl_n_sub_step;
 
 
@@ -80,6 +80,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   
   // sotrage for inflow fluxes
   std::vector<double> q_sf_in(nhru,0.0);// vector to surface inflow fluxes
+  std::vector<double> q_sz_in(nhru,0.0);// vector to saturated zone inflow fluxes
   std::vector<double> q_sz_in(nhru,0.0);// vector to saturated zone inflow fluxes
   
   // make HRUs
