@@ -10,10 +10,12 @@ fqo <- function(s,qi){
     return( ( (s*v/Dx) - (eta*qi) )/(1-eta) )
 }
 
-fE <- function(s,s0,vi,vr,qi,q0,Dt,omega){
+fE <- function(s,s0,vr,qi,ql,qu,Dt){
     ##determine qo
     qo <- fqo(s,qi)
-    vo <- Dt*(omega*qo + (1-omega)*q0)
+    qo <- min(qu,max(ql,qo))
+    vo <- Dt*qo
+    vi <- Dt*qi
     return( s+vo-s0-vi-vr )
 }
 
@@ -27,7 +29,7 @@ s <- vin <- vr <- vout <- qout <- rep(NA,n)
 qin <- rep(1,n)
 qin[200:500] <- 3
 r <- rep(0,n)
-r[700:800] <- -2
+r[700:800] <-  2
 Dt <- 4
 
 ## initialise at steady state
@@ -41,75 +43,32 @@ s[1] <- uniroot(fs,c(-1,100),
 
 ## loop
 for(ii in 2:n){
-    vin[ii] <- Dt*0.5*(qin[ii]+qin[ii-1])
-    vr[ii] <- Dt*0.5*(r[ii]+r[ii-1])
+    vin[ii] <- Dt*qin[ii]
+    vr[ii] <- Dt*r[ii]
 
-    vr[ii] <- max(vr[ii], -(s[ii-1]+vin[ii]))
+    vr[ii] <- max(vr[ii], -(s[ii-1]+vin[ii])) ##??
     ## mock up for no limits
     ql <- 0
     qu <- 1000
-    ql <- max(0, min(qin[ii],qin[ii-1],qout[ii-1]) + min(vr[ii]/Dt,0))
-    qu <- max(qin[ii],qin[ii-1],qout[ii-1]) + max(vr[ii]/Dt,0)
-    
-    ## find sl
-    sl <- uniroot(fs,c(-1,100),
-                  qi=qin[ii], qo=ql,
-                  extendInt="upX"
-                  )$root
-    
-    ## find su
-    su <- uniroot(fs,c(-1,100),
-                  qi=qin[ii], qo=qu,
-                  extendInt="upX"
-                  )$root
+        ql <- max(0, min(qin[ii],qout[ii-1]) + min(vr[ii]/Dt,0))
+    qu <- max(qin[ii],qout[ii-1]) + max(vr[ii]/Dt,0)
 
-    ## check can evaluate
-    if(ql==qu){ ## steady state...
-        qout[ii] <- qu
+
+    if( fE(s[ii-1],s[ii-1],vr[ii],qin[ii],ql=0,qu=1000,Dt=Dt)==0 ){
         s[ii] <- s[ii-1]
-        omega <- 0.5
+        qout[ii] <- qout[ii-1]
     }else{
-        if( fE(su,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,1) <=0 ){
-            #print(paste(ii, "Upper Q limited"))
-            qout[ii] <- qu
-            s[ii] <- s[ii-1] + vin[ii] + vr[ii] - Dt*qu
-            omega <- 1
-        }
-        if( fE(su,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,1) > 0 &
-            fE(su,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,0.5) <=0 ){   
-            qout[ii] <- qu
-            s[ii] <- su
-            omega <- ( su + (Dt*qout[ii-1]) - s[ii-1] - vin[ii] -vr[ii] ) / (Dt*(qout[ii-1]-qu))
-            #print(paste(ii, "Upper Q limited on omega", omega))
-        }
-        if( fE(su,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,0.5) > 0 &
-            fE(sl,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,0.5) < 0 ){
-            if(ii %in% c(400,750)){ print(paste(ii, "optim")) }
-            ## numeric search
-            s[ii] <- uniroot(fE,c(sl,su),
-                             s0=s[ii-1],vi=vin[ii],
-                             vr=vr[ii],qi=qin[ii],
-                             q0=qout[ii-1],Dt=Dt,omega=0.5)$root
-            qout[ii] <- fqo(s[ii],qin[ii])
-            omega <- 0.5
-        }
-        if( fE(sl,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,0.5) >= 0 &
-            fE(sl,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,1) < 0 ){
-            qout[ii] <- ql
-            s[ii] <- sl
-            omega <- ( sl + (Dt*qout[ii-1]) - s[ii-1] - vin[ii] -vr[ii] ) / (Dt*(qout[ii-1]-ql))
-            #print(paste(ii, "Lower Q limited on omega", omega))
-        }
-        if( fE(sl,s[ii-1],vin[ii],vr[ii],qin[ii],qout[ii-1],Dt,1) >= 0 ){
-            qout[ii] <- ql
-            s[ii] <- s[ii-1] + vin[ii] + vr[ii] - Dt*ql
-            omega <- 1
-            #print(paste(ii, "Lower Q limited"))
-        }
+        s[ii] <- uniroot(fE,c(0,s[ii-1]+10),
+                         s0=s[ii-1],
+                         vr=vr[ii],qi=qin[ii],
+                         ql=ql,qu=qu,Dt=Dt,
+                         extendInt = "upX")$root
+        qout[ii] <- min(qu,max(ql,fqo(s[ii],qin[ii])))
     }
+    
     #if(ii == 200){browser()}
     vout[ii] <- s[ii-1] + vin[ii] + vr[ii] - s[ii]
-##        Dt*(omega*qout[ii] + (1-omega)*qout[ii-1])
+##        Dt*qout[ii]
 }
 
 print( s[1] + sum(vin[-1]) + sum(vr[-1]) - sum(vout[-1]) - tail(s,1) )

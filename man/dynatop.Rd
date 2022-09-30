@@ -153,6 +153,8 @@ Simulate the hillslope and channel componets of a dynatop object
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
+\item{\code{output_defn}}{a description of the output series}
+
 \item{\code{keep_states}}{a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept}
 
 \item{\code{sub_step}}{simulation timestep in seconds, default value of NULL results in data time step}
@@ -162,13 +164,11 @@ Simulate the hillslope and channel componets of a dynatop object
 \item{\code{ftol}}{tolerance on the solution for the saturated zone (as difference of solution from 0)}
 
 \item{\code{max_it}}{maximum number of iterations to use in the solution of the saturated zone}
-
-\item{\code{mass_check}}{Flag indicating is a record of mass balance errors shuld be kept}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-Calls the sim_hillslope and sim_channel in sequence. Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
+Saving the states at every timestep and keeping the mass balance can generate very large data sets!!
 }
 
 \subsection{Returns}{
@@ -198,18 +198,13 @@ Return channel inflow as an xts series or list of xts series
 \subsection{Method \code{plot_output()}}{
 Plot the channel inflow
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_output(
-  name = colnames(private$time_series$output),
-  seperate = FALSE
-)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_output(name = colnames(private$time_series$output))}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
-\item{\code{total}}{logical if total inflow is to be plotted}
-
-\item{\code{separate}}{logical logical if the surface and saturated zone inflows should be plotted separately}
+\item{\code{name}}{of series to plot}
 }
 \if{html}{\out{</div>}}
 }

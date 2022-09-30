@@ -16,7 +16,7 @@ class hru {
   std::unique_ptr<szc> sz;
 
   
-
+  double const width, Dx;
   std::vector<double> const sf_param;
   double const s_rzmax, t_d;
   std::vector<double> const sz_param;
@@ -30,28 +30,27 @@ class hru {
   std::vector<int> const sz_lnk_id;
   std::vector<double> const sz_lnk_frc;
 
-  double Dx, a_sf_in, a_sz_in;
   
+  // double v_sf_in, v_sz_in;
   void  lateral_redistribution(std::vector<double>&, std::vector<double>&);
-  void  compute_met(std::vector<double>&);
-  double fsz(double&, double const&);
-  double fsf(double&, double const&);
+  double fsz(double&, double&, double&, double&, double const&);
+  double fsf(double&, double&, double&, double&, double const&);
   
 public:
   // variables initialised
   int const id;
-  double s_sf, s_rz, s_uz, s_sz;
+  double s_sf, s_rz, s_uz, s_sz, q_sf, q_sz;
   double const area;
   
 
-  double q_sf_in, q_sf, q_sz_in, q_sz;
+  double q_sf_in, q_sz_in;
   double r_sf_rz, r_rz_uz, r_uz_sz;
   double precip, pet, aet;
   
   // initialisation
   hru(int const,
-      double, double, double, double,
-      double const, double const, double const,
+      std::vector<double>,
+      std::vector<double> const,
       int const, std::vector<double> const,
       std::vector<double> const,
       std::vector<double> const,

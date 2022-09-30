@@ -10,23 +10,20 @@
 class szc {
 protected:
 public:
-  double q_szmax;
-   // initialisation
+  double q_szmax, sz_max;
+  // initialisation
   szc(); //std::vector<double> const&, double const& ,double const&, double const&);
   virtual double fq(double&,double&);
-  virtual double fa(double&);
 };
 
 // exponential
 class szc_exp: public szc {
  protected:
   //double const &t0, &m;
-  double Dx; 
-  double psi;
+  double psi, eta, kappa;  
  public:
-  szc_exp(std::vector<double> const, double const ,double const, double const);
+  szc_exp(std::vector<double> const, double const ,double const, double const, double const);
   double fq(double&,double&);
-  double fa(double&);
 };
 
 

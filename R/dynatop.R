@@ -72,14 +72,14 @@ dynatop <- R6Class(
             invisible(self)
         },
         #' @description Simulate the hillslope and channel componets of a dynatop object
+        #' @param output_defn a description of the output series
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
-        #' @param mass_check Flag indicating is a record of mass balance errors shuld be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
         #' @param vtol tolerance on width of bounds in the solution for the saturated zone (as volume)
         #' @param ftol tolerance on the solution for the saturated zone (as difference of solution from 0)
         #' @param max_it maximum number of iterations to use in the solution of the saturated zone
         #'
-        #' @details Calls the sim_hillslope and sim_channel in sequence. Both saving the states at every timestep and keeping the mass balance can generate very large data sets!!
+        #' @details Saving the states at every timestep and keeping the mass balance can generate very large data sets!!
         #'
         #' @return invisible(self) for chaining
         sim = function(output_defn,keep_states=NULL,sub_step=NULL,
@@ -135,22 +135,24 @@ dynatop <- R6Class(
             return(x)
         },
         #' @description Plot the channel inflow
-        #' @param total logical if total inflow is to be plotted
-        #' @param separate logical logical if the surface and saturated zone inflows should be plotted separately
-        plot_output = function(name=colnames(private$time_series$output),seperate=FALSE){
-            x <- self$get_output(total,separate)
-            if(seperate){
-                oldpar <- par(no.readonly = TRUE)
-                on.exit(par(oldpar))
-                nc <- floor(sqrt(length(name)))
-                nr <- ceiling( length(name)/nc )
-                par(mfrow=c(nr,nc))
-                for(ii in name){
-                    plot(x[,ii])
-                }
-            }else{
-                plot(x)
-            }
+        #' @param name of series to plot
+        plot_output = function(name=colnames(private$time_series$output)){
+            x <- self$get_output(name)
+            plot(x)
+            
+            
+            ## if(seperate){
+            ##     oldpar <- par(no.readonly = TRUE)
+            ##     on.exit(par(oldpar))
+            ##     nc <- floor(sqrt(length(name)))
+            ##     nr <- ceiling( length(name)/nc )
+            ##     par(mfrow=c(nr,nc))
+            ##     for(ii in name){
+            ##         plot(x[,ii])
+            ##     }
+            ## }else{
+            ##     plot(x)
+            ## }
         },
         #' @description Get the observed data
         get_obs_data = function(){

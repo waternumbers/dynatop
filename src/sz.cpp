@@ -1,28 +1,28 @@
 #include "sz.h"
 
 szc::szc(){}
-double szc::fa(double &q){ return(-999.9); } // cross sectional area for a given flux
-double szc::fq(double &s, double &a){ return(-999.9); } // flux for crossectional area
+double szc::fq(double &s, double &qin){ return(-999.9); } // flux for crossectional area
 
-// exponential
-szc_exp::szc_exp(std::vector<double> const param, double const grd, double const w, double Dx_):
-  Dx(Dx_)
-{
+// exponential bounded below
+szc_exp::szc_exp(std::vector<double> const param, double const grd,
+		 double const A, double const w, double const Dx){
   szc();
-  double const &t0(param[0]), &m(param[1]);
+  double const &D(param[0]), t0(param[1]), &m(param[2]);
   double beta = std::atan(grd);
-  psi = 1.0 / (m*w); //std::cos(beta) / (m*w) ; // w so can use as a function of area
-  q_szmax = w*t0*std::sin(beta); //in m^3/s
+
+  sz_max = D*A; // maximum storage D time area
+  kappa =  w*t0*std::sin(beta);
+  psi = std::cos(beta) / (m*w*Dx); // scaling to get crosssectional depth from storage
+  eta = std::exp( - std::cos(beta)*D/m ); // offset due to minimum depth
+  q_szmax = kappa * (1.0 - eta);
 }
-double szc_exp::fa(double &q){
-  if( q_szmax == 0.0 ){ return(700/psi); }
-  if( q <= (q_szmax / std::pow(10.0,300.0)) ){ return( 700.0/psi); }
-  return( -std::log(q/q_szmax)/psi );
+double szc_exp::fq(double &s, double &qin){
+  double q = kappa * ( std::exp(-psi*s) - eta );
+  q = std::min( q_szmax, std::max( 2*q - qin, 0.0)); // bracket for unreasonable values of s
+  return( q );
 }
-double szc_exp::fq(double &s, double &ain){
-  double a = std::max(0.0, (2.0*s/Dx) - ain);
-  return( q_szmax*std::exp(-psi*a) );
-}
+
+
   
 // // bounded exponential
 // szc_bexp::szc_bexp(std::vector<double> const &param, double const &grd, double const &A, double const &w)

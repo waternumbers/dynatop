@@ -19,11 +19,12 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
     int id = m["id"];
 
     svec = svec * pvec["area"];
-    
+
+    // all passed explicity, not by reference
     hrus.push_back( hru( id, //m["id"], // id passed explicitly
-			 Rcpp::as<double>(svec["s_sf"]), Rcpp::as<double>(svec["s_rz"]), Rcpp::as<double>(svec["s_uz"]), Rcpp::as<double>(svec["s_sz"]), // states passed explicitly
-			 Rcpp::as<double>(pvec["area"]), Rcpp::as<double>(pvec["gradient"]), Rcpp::as<double>(pvec["width"]), // properties passed explicity
-			 Rcpp::as<int>(sf_list["type"]), Rcpp::as<std::vector<double>>(sf_list["parameters"]), // surface type and parameters passed explicitly
+			 Rcpp::as<std::vector<double>>(svec),
+			 Rcpp::as<std::vector<double>>(pvec),
+			 Rcpp::as<int>(sf_list["type"]), Rcpp::as<std::vector<double>>(sf_list["parameters"]), // surface type and parameters
 			 rz_list["parameters"], // root zone type and parameters passed explicitly
 			 uz_list["parameters"], // unsaturated zone type and parameters passed explicitly
 			 Rcpp::as<int>(sz_list["type"]), Rcpp::as<std::vector<double>>(sz_list["parameters"]), // saturated zone type and parameters passed explicitly
@@ -47,7 +48,9 @@ Rcpp::List makeStateList(std::vector<hru> &hrus){
 							Rcpp::Named("s_sf", hrus[ii].s_sf / hrus[ii].area),
 							Rcpp::Named("s_rz", hrus[ii].s_rz / hrus[ii].area),
 							Rcpp::Named("s_uz", hrus[ii].s_uz / hrus[ii].area),
-							Rcpp::Named("s_sz", hrus[ii].s_sz / hrus[ii].area));
+							Rcpp::Named("s_sz", hrus[ii].s_sz / hrus[ii].area),
+							Rcpp::Named("q_sf", hrus[ii].q_sf / hrus[ii].area),
+							Rcpp::Named("q_sz", hrus[ii].q_sz / hrus[ii].area));
     Rcpp::List L = Rcpp::List::create(Rcpp::Named("id") = hrus[ii].id , Rcpp::Named("states") = s);
     state_list.push_back(L);
   }

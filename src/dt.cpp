@@ -17,8 +17,8 @@ void dt_init(Rcpp::List mdl, // hru data frame
   int nhru = mdl.size(); // number of HRUs
 
   // storage for inflow fluxes
-  std::vector<double> v_sf_in(nhru,0.0);// vector to surface inflow inflow volumes
-  std::vector<double> v_sz_in(nhru,0.0);// vector to saturated zone inflow volumes
+  std::vector<double> q_sf_in(nhru,0.0);// vector to surface inflow inflow volumes
+  std::vector<double> q_sz_in(nhru,0.0);// vector to saturated zone inflow volumes
   
   // make HRUs
   std::vector<hru> hrus = makeHRUs(mdl);
@@ -41,6 +41,8 @@ void dt_init(Rcpp::List mdl, // hru data frame
     svec["s_rz"] = hrus[ii].s_rz / hrus[ii].area;
     svec["s_uz"] = hrus[ii].s_uz / hrus[ii].area;
     svec["s_sz"] = hrus[ii].s_sz / hrus[ii].area;
+    svec["q_sf"] = hrus[ii].q_sf / hrus[ii].area;
+    svec["q_sz"] = hrus[ii].q_sz / hrus[ii].area;
   };
 
   //end of dt_init
@@ -80,7 +82,6 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   
   // sotrage for inflow fluxes
   std::vector<double> q_sf_in(nhru,0.0);// vector to surface inflow fluxes
-  std::vector<double> q_sz_in(nhru,0.0);// vector to saturated zone inflow fluxes
   std::vector<double> q_sz_in(nhru,0.0);// vector to saturated zone inflow fluxes
   
   // make HRUs
@@ -193,6 +194,8 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     svec["s_rz"] = hrus[ii].s_rz / hrus[ii].area;
     svec["s_uz"] = hrus[ii].s_uz / hrus[ii].area;
     svec["s_sz"] = hrus[ii].s_sz / hrus[ii].area;
+    svec["q_sz"] = hrus[ii].q_sz / hrus[ii].area;
+    svec["q_sf"] = hrus[ii].q_sf / hrus[ii].area;
   };
 
   // end of dt_sim

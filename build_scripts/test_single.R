@@ -1,12 +1,12 @@
 ## test some class and inheritance through Rcpp
 rm(list=ls())
-devtools::load_all("../")
+devtools::load_all()
 
 data("Swindale"); obs <- Swindale$obs; names(obs) <- c("Flow","precip","pet")
 
 mdl <- list(list(
     id = as.integer(0),
-    states = setNames(as.numeric(rep(NA,4)), c("s_sf","s_rz","s_uz","s_sz")),
+    states = setNames(as.numeric(rep(NA,6)), c("s_sf","s_rz","s_uz","s_sz","q_sf","q_sz")),
     properties = c(area = as.numeric(100), width=as.numeric(2), gradient= as.numeric(0.01)),
     sf = list( type="cnstC", parameters = c(c_sf = 0.1,d_sf =0, s_raf=0.0,t_raf=10)),
     ##sf = list( type="cnstC_raf", parameters = c(c_sf = 0.1,s_raf=0,t_raf=10)),
@@ -44,11 +44,11 @@ output_flux = data.frame(name = c("q_sf_1","q_sz_1","s_sf","s_rz","s_uz","s_sz",
 dt <- dynatop$new(mdl)$add_data(obs)$initialise()$sim(output_flux)
 cnst <- dt$get_output()
 
-mdl[[1]]$sf$type <- "cnstC_raf"
-dt <- dynatop$new(mdl)$add_data(obs)$initialise()$sim(output_flux)
-cnst_raf <- dt$get_output()
+## mdl[[1]]$sf$type <- "cnstC_raf"
+## dt <- dynatop$new(mdl)$add_data(obs)$initialise()$sim(output_flux)
+## cnst_raf <- dt$get_output()
 
-par(mfrow=c(2,1)); plot( merge(cnst$s_sf, cnst_raf$s_sf) );plot( cnst$s_sf - cnst_raf$s_sf );
+## par(mfrow=c(2,1)); plot( merge(cnst$s_sf, cnst_raf$s_sf) );plot( cnst$s_sf - cnst_raf$s_sf );
 
 ## range(x$error)
 
