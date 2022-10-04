@@ -212,7 +212,7 @@ dynatop <- R6Class(
         map  = NULL, # storage for map object
         output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
-        info = list(sf = setNames(as.integer(1:3),c("cnstC","cnstCD","cnstC_raf")),
+        info = list(sf = setNames(as.integer(1:2),c("cnstCD","cnstC_raf")),
                     rz = setNames(as.integer(1),c("orig")),
                     uz = setNames(as.integer(1),c("orig")),
                     sz = setNames(as.integer(1:2),c("exp","cnst")),
@@ -236,15 +236,16 @@ dynatop <- R6Class(
             
             ## check properties
             if("properties" %in% names(h)){
+                prpnm <- c("area", "width", "Dx", "gradient")
                 if( !is.numeric(h$properties) ){ etxt <- c( etxt, paste0(h$id, ": properties should be a numeric vector") ) }
-                if( all(c("area","gradient","width") %in% names(h$properties)) ){
+                if( all(prpnm %in% names(h$properties)) ){
                     if( !all( h$properties[c("gradient","width")] >0 ) ){
                         etxt <- c( etxt, paste0(h$id, ": gradient and width but be greater then 0") )
                     }
                     if( h$properties["area"] < 0 ){
                         etxt <- c( etxt, paste0(h$id, ": area must not be negative"))
                     }
-                    
+                    h$properties <- h$properties[ c( prpnm, setdiff(names(h$properties),prpnm)) ]
                 }else{
                     etxt <- c(etxt, paste0(h$id, ": properties is missing named values") )
                 }
@@ -253,11 +254,13 @@ dynatop <- R6Class(
             }
                 
             ## check states
+            snm <- c("s_sf","s_rz","s_uz","s_sz","q_sz","q_sf")
             if("states" %in% names(h)){
                 if( !is.numeric(h$states) ){ etxt <- paste(etxt, paste0(h$id, ": states should be a numeric vector"), sep="\n") }
-                if( !all(c("s_sf","s_rz","s_uz","s_sz") %in% names(h$states)) ){
+                if( !all(snm %in% names(h$states)) ){
                     etxt <- c(etxt, paste0(h$id, ": states is missing named values"))
                 }
+                h$states <- h$states[ c(snm, setdiff(names(h$states),snm)) ] ## make sure states are in correct order
             }else{
                 etxt <- c(etxt,paste0(h$id, ": states is missing") )
             }
@@ -282,12 +285,11 @@ dynatop <- R6Class(
                     next
                 }
                 pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
-                              "sf_cnstC" = c("c_sf"),
                               "sf_cnstCD" = c("c_sf","d_sf"),
                               "sf_cnstC_raf" = c("c_sf","s_raf","t_raf"),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
-                              "sz_exp" = c("t_0","m"),
+                              "sz_exp" = c("D","t_0","m"),
                               stop("Invalid options for pname")
                               )
                 if( !is.numeric( h[[ii]]$parameters )){
@@ -303,6 +305,7 @@ dynatop <- R6Class(
                     next
                 }
                 h[[ii]]$parameters <- h[[ii]]$parameters[ c(pnm,setdiff(names(h[[ii]]$parameters),pnm)) ] ## make sure parameters are in correct order
+                ## print(h[[ii]]$parameters)
             }
             
             ## check precip and pet
@@ -473,7 +476,6 @@ dynatop <- R6Class(
         ## ###########################################
         ## Initialise the states
         init = function(vtol,etol,max_it){
-            
             dt_init(private$model,
                     vtol,etol,max_it)
             

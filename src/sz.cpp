@@ -9,11 +9,13 @@ szc_exp::szc_exp(std::vector<double> const param, double const grd,
   szc();
   double const &D(param[0]), t0(param[1]), &m(param[2]);
   double beta = std::atan(grd);
-
+  
   sz_max = D*A; // maximum storage D time area
   kappa =  w*t0*std::sin(beta);
   psi = std::cos(beta) / (m*w*Dx); // scaling to get crosssectional depth from storage
   eta = std::exp( - std::cos(beta)*D/m ); // offset due to minimum depth
+  Rcpp::Rcout << D << " " << t0 << " " << m << " " << grd << " " << beta << std::endl;
+  Rcpp::Rcout << kappa << " " << psi << " " << eta << std::endl;
   q_szmax = kappa * (1.0 - eta);
 }
 double szc_exp::fq(double &s, double &qin){

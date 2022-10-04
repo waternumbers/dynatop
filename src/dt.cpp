@@ -25,7 +25,7 @@ void dt_init(Rcpp::List mdl, // hru data frame
 
   // start loop of hrus
   for(int ii=nhru-1; ii>=0; --ii){
-    // Rcpp::Rcout << "hru " << ii << std::endl;
+    Rcpp::Rcout << "hru " << ii << std::endl;
     Rcpp::List L = mdl[ii];
     Rcpp::NumericVector ivec = L["initialisation"];
     
@@ -35,6 +35,7 @@ void dt_init(Rcpp::List mdl, // hru data frame
   // Rcpp::Rcout << "copying back states" << std::endl;
   // copy back states
   for(int ii=0; ii<nhru; ++ii){
+    Rcpp::Rcout << "copy hru " << ii << std::endl;
     Rcpp::List tmp = mdl[ii];
     Rcpp::NumericVector svec = tmp["states"];
     svec["s_sf"] = hrus[ii].s_sf / hrus[ii].area;

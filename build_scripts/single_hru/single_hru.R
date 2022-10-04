@@ -1,7 +1,7 @@
 ## create a single hsu model for testing
 rm(list=ls())
 library(xts)
-library(dynatop)
+devtools::load_all("../../") #library(dynatop)
 
 mdl <- list(
     options = c(channel_solver="histogram"),

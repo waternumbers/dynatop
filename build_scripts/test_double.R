@@ -1,15 +1,15 @@
 ## test some class and inheritance through Rcpp
 rm(list=ls())
-devtools::load_all("../")
+devtools::load_all()
 
 data("Swindale"); obs <- Swindale$obs; names(obs) <- c("Flow","precip","pet")
 
 mdl <- list(
     list(
         id = as.integer(0),
-        states = setNames(as.numeric(rep(NA,4)), c("s_sf","s_rz","s_uz","s_sz")),
-        properties = c(area = as.numeric(100), width=as.numeric(2), gradient= as.numeric(0.01)),
-        sf = list( type="cnstC", parameters = c(c_sf = 0.1)),
+        states = setNames(as.numeric(rep(NA,6)), c("s_sf","s_rz","s_uz","s_sz","q_sf","q_sz")),
+        properties = c(area = as.numeric(100), width=as.numeric(2), Dx=as.numeric(50), gradient= as.numeric(0.01)),
+        sf = list( type="cnstCD", parameters = c(c_sf = 0.1,d_sf =0)),
         rz = list( type="orig", parameters = c(s_rzmax = 0.05)),
         uz = list( type="orig", parameters = c(t_d = 3600)),
         sz = list( type="exp", parameters = c(t_0=1,m=0.001,D=0.50)),
@@ -21,9 +21,9 @@ mdl <- list(
     ),
     list(
         id = as.integer(1),
-        states = setNames(as.numeric(rep(NA,4)), c("s_sf","s_rz","s_uz","s_sz")),
-        properties = c(area = as.numeric(100), width=as.numeric(2), gradient= as.numeric(0.01)),
-        sf = list( type="cnstC_raf", parameters = c(c_sf = 0.1,s_raf=0.01,t_raf=1000)),
+        states = setNames(as.numeric(rep(NA,6)), c("s_sf","s_rz","s_uz","s_sz","q_sf","q_sz")),
+        properties = c(area = as.numeric(100), width=as.numeric(2),  Dx=as.numeric(50),gradient= as.numeric(0.01)),
+        sf = list( type="cnstCD", parameters = c(c_sf = 0.1,d_sf = 0, s_raf=0.01,t_raf=1000)),
         rz = list( type="orig", parameters = c(s_rzmax = 0.05)),
         uz = list( type="orig", parameters = c(t_d = 3600)),
         sz = list( type="exp", parameters = c(t_0=1,m=0.001,D=0.5)),
