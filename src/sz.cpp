@@ -14,8 +14,8 @@ szc_exp::szc_exp(std::vector<double> const param, double const grd,
   kappa =  w*t0*std::sin(beta);
   psi = std::cos(beta) / (m*w*Dx); // scaling to get crosssectional depth from storage
   eta = std::exp( - std::cos(beta)*D/m ); // offset due to minimum depth
-  Rcpp::Rcout << D << " " << t0 << " " << m << " " << grd << " " << beta << std::endl;
-  Rcpp::Rcout << kappa << " " << psi << " " << eta << std::endl;
+  //Rcpp::Rcout << D << " " << t0 << " " << m << " " << grd << " " << beta << std::endl;
+  //Rcpp::Rcout << kappa << " " << psi << " " << eta << std::endl;
   q_szmax = kappa * (1.0 - eta);
 }
 double szc_exp::fq(double &s, double &qin){

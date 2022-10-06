@@ -27,8 +27,7 @@ BugReports: https://github.com/waternumbers/dynatop/issues
 URL: https://waternumbers.github.io/dynatop/, https://github.com/waternumbers/dynatop
 RoxygenNote: 7.2.1
 Suggests:
-    raster,
-    rgdal,
+    terra,
     knitr,
     rmarkdown,
     covr,

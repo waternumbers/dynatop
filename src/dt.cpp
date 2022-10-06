@@ -25,7 +25,6 @@ void dt_init(Rcpp::List mdl, // hru data frame
 
   // start loop of hrus
   for(int ii=nhru-1; ii>=0; --ii){
-    Rcpp::Rcout << "hru " << ii << std::endl;
     Rcpp::List L = mdl[ii];
     Rcpp::NumericVector ivec = L["initialisation"];
     
@@ -35,7 +34,7 @@ void dt_init(Rcpp::List mdl, // hru data frame
   // Rcpp::Rcout << "copying back states" << std::endl;
   // copy back states
   for(int ii=0; ii<nhru; ++ii){
-    Rcpp::Rcout << "copy hru " << ii << std::endl;
+    //Rcpp::Rcout << "copy hru " << ii << std::endl;
     Rcpp::List tmp = mdl[ii];
     Rcpp::NumericVector svec = tmp["states"];
     svec["s_sf"] = hrus[ii].s_sf / hrus[ii].area;
@@ -48,7 +47,6 @@ void dt_init(Rcpp::List mdl, // hru data frame
 
   //end of dt_init
 }
-
 // ////////////////////////////////////////
 // Simulation
 // ///////////////////////////////////////
@@ -87,11 +85,11 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   
   // make HRUs
   std::vector<hru> hrus = makeHRUs(mdl);
-  // Rcpp::Rcout << "Made HRUs" << std::endl;
+  //Rcpp::Rcout << "Made HRUs" << std::endl;
   
   // create output flux object
   outFlux out_flux(out_dfn["name_idx"], out_dfn["id"], out_dfn["flux_int"]);
-  // Rcpp::Rcout << "Made outFlux" << std::endl;
+  //Rcpp::Rcout << "Made outFlux" << std::endl;
   
   // start loop of time steps
   for(int tt = 0; tt < obs_matrix.nrow(); ++tt) {
@@ -122,9 +120,9 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     }
     mbv[1] = mbv[1] * timestep;
     
-    // Rcpp::Rcout << "mbv after initialised of time step inputs " << mbv[0] << std::endl;
-    // Rcpp::Rcout << "summed Precip: " << std::accumulate(precip.begin(), precip.end(), 0.0) << std::endl;
-    // Rcpp::Rcout << "summed pet: " << std::accumulate(pet.begin(), pet.end(), 0.0) << std::endl;
+    //Rcpp::Rcout << "mbv after initialised of time step inputs " << mbv[0] << std::endl;
+    //Rcpp::Rcout << "summed Precip: " << std::accumulate(precip.begin(), precip.end(), 0.0) << std::endl;
+    //Rcpp::Rcout << "summed pet: " << std::accumulate(pet.begin(), pet.end(), 0.0) << std::endl;
     
     // start loop of substeps
     for(int nn = 0; nn < n_sub_step; ++nn){
@@ -151,9 +149,9 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
       // end loop of substeps
     }
 
-    // Rcpp::Rcout << hrus[0].s_sf << " " << hrus[0].s_rz << " " << hrus[0].s_uz << " " << hrus[0].s_sz << std::endl;
-    // Rcpp::Rcout << hrus[0].r_sf_rz << " " << hrus[0].r_rz_uz << " " << hrus[0].r_uz_sz << std::endl;
-    // Rcpp::Rcout << hrus[0].q_sf_in << " " << hrus[0].q_sf << " " << hrus[0].q_sz_in << " " << hrus[0].q_sz << std::endl;
+    //Rcpp::Rcout << hrus[0].s_sf << " " << hrus[0].s_rz << " " << hrus[0].s_uz << " " << hrus[0].s_sz << std::endl;
+    //Rcpp::Rcout << hrus[0].r_sf_rz << " " << hrus[0].r_rz_uz << " " << hrus[0].r_uz_sz << std::endl;
+    //Rcpp::Rcout << hrus[0].q_sf_in << " " << hrus[0].q_sf << " " << hrus[0].q_sz_in << " " << hrus[0].q_sz << std::endl;
     
     // finish off mass balance at end of step
     for(int ii=0; ii<nhru; ++ii){
@@ -165,14 +163,14 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     for(unsigned int ii=0;  ii<6; ++ii){
       mass_balance(tt,ii) = mbv[ii];
     }
-    // Rcpp::Rcout << "finished mass balance" << std::endl;
+    //Rcpp::Rcout << "finished mass balance" << std::endl;
     
     // copy across output
     //Rcpp::Rcout << "Copying " << outt.size() << " outputs" << std::endl;
     for(unsigned int ii=0;  ii<out.size(); ++ii){
       out_matrix(tt,ii) = out[ii];
     }
-    // Rcpp::Rcout << "copied output" << std::endl;
+    //Rcpp::Rcout << "copied output" << std::endl;
     
     // keep states if required
     //Rcpp::Rcout << "keep states" << std::endl;

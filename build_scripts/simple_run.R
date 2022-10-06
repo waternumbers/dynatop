@@ -1,7 +1,7 @@
 ## ##############################
 ## simple run for debugging
 rm(list=ls())
-devtools::load_all("../")
+devtools::load_all()
 data("Swindale");
 
 mdl <- Swindale$model
@@ -12,15 +12,15 @@ h <- list()
 for(ii in 1:nrow(mdl$hru)){
     tmp <- list()
     tmp$id <- as.integer( mdl$hru$id[ii]-1 )
-    tmp$states <- setNames(as.numeric(rep(NA,4)), c("s_sf","s_rz","s_uz","s_sz"))
-    tmp$properties <- c(width =  mdl$hru$area[ii]/mdl$hru$length[ii], area = mdl$hru$area[ii], gradient = mdl$hru$s_bar[ii])
+    tmp$states <- setNames(as.numeric(rep(NA,6)), c("s_sf","s_rz","s_uz","s_sz","q_sf","q_sz"))
+    tmp$properties <- c(width =  mdl$hru$area[ii]/mdl$hru$length[ii], area = mdl$hru$area[ii], gradient = mdl$hru$s_bar[ii], Dx = mdl$hru$length[ii])
 
     ## mdl$hru$width[ii], area = mdl$hru$area[ii], gradient = mdl$hru$s_bar[ii])
     ##if( tmp$properties["width"] ==0 ){ tmp$properties["width"] <- 1 }
-    tmp$sf <- list(type = "cnstC", #mdl$hru$sf[[ii]]$type,
-                   parameters = c("c_sf" = 0.3))
+    tmp$sf <- list(type = "cnstCD", #mdl$hru$sf[[ii]]$type,
+                   parameters = c("c_sf" = 0.3, "d_sf"=0.0))
     tmp$sz <- list(type = "exp",
-                   parameters = c(t_0=0.001,m=0.8)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
+                   parameters = c(t_0=1000,m=0.0063,D=5)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
     if(mdl$hru$is_channel[ii]){
         tmp$sz$parameters["t_0"] <- 1e-60
         tmp$sf$parameters["c_sf"] <- 0.7
@@ -56,3 +56,5 @@ system.time({
 
 x11(); plot(Swindale$obs$flow, ylim=c(0,60))
 lines(dt$get_output())
+
+
