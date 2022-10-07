@@ -102,10 +102,22 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // if steady state then passed downward flux straight to uz
   r_rz_uz = r_sf_rz;
 
-  double r_inj = area * std::min( r_uz_sz_0, 1/t_d ); // amount of water injected, can't be more then r_uzmax else can't be caused by storage in uz
-  r_uz_sz = std::min( r_inj + r_rz_uz, area/t_d ); // ensure downward flux is possible
+  // injected water flux into the unsaturated zone
+  double r_inj = area * r_uz_sz_0;
+
+  // evaluate flux from unsaturated zone
+  r_uz_sz = std::min( r_rz_uz + r_inj, area/t_d ); // ensure downward flux is possible
   r_uz_sz = std::min( r_uz_sz , sz->q_szmax - q_sz_in ); // revise down so that outflow from saturated zone is possible
-  r_rz_uz = r_uz_sz - r_inj; // revise down if enough to reach maximum inflow to saturated zone
+  
+  
+  // double r_inj = area * r_uz_sz_0;
+  // r_inj += r_rz_uz; // add in any flux from root zone
+  
+  
+  // double r_inj = area * std::min( r_uz_sz_0, 1/t_d ); // amount of water injected, can't be more then r_uzmax else can't be caused by storage in uz
+  // r_uz_sz = std::min( r_inj + r_rz_uz, area/t_d ); // ensure downward flux is possible
+  // r_uz_sz = std::min( r_uz_sz , sz->q_szmax - q_sz_in ); // revise down so that outflow from saturated zone is possible
+  // //r_rz_uz = r_uz_sz - r_inj; // revise down if enough to reach maximum inflow to saturated zone
 
   // initialise saturated zone by bisection to match q_sz
   q_sz = r_uz_sz + q_sz_in;
@@ -139,29 +151,39 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   s_sz = z;
   
   s_uz = t_d*r_uz_sz*s_sz/area; // compute unsaturated zone storage
-  if( r_uz_sz < 0.0 ){ r_rz_uz =  r_uz_sz; } // should only occur when saturated limited
-  
-  // solve rz
-  if( r_rz_uz == 0.0 ){
-    s_rz = s_rzmax * s_rz_0 * area;
-  }else{
-    s_rz = s_rzmax * area;
-  }
-  // balance flux through root zone
-  r_sf_rz = r_rz_uz;
 
+  
+  r_rz_uz = r_uz_sz - r_inj;
+  //if( r_uz_sz < 0.0 ){ r_rz_uz =  r_uz_sz; } // should only occur when saturated limited
+
+  // solve rz
+  if( (r_sf_rz > 0.0) | (r_rz_uz < 0.0)  ){
+    s_rz = s_rzmax * area;
+  }else{
+    s_rz = s_rzmax * s_rz_0 * area;    
+  }
+
+  // balance flux through root zone
+  r_sf_rz = std::min( r_sf_rz , r_rz_uz );
+  
+
+  // balance flux through root zone
+  // balance flux through root zone
   // solve surface
   q_sf = q_sf_in - r_sf_rz;
   bnd.first = 0.0;
   bnd.second = 0.1*area;
   fbnd.first = sf->fq(bnd.first,q_sf_in) - q_sf;
   fbnd.second = sf->fq(bnd.second,q_sf_in) - q_sf;
-  
+  if( id == 0 ){
+    Rcpp::Rcout << "fluxes: " << q_sf_in << " " << q_sf << std::endl;
+    Rcpp::Rcout << "vertical fluxes: " <<  r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
+    Rcpp::Rcout << "bnd: " << bnd.first << " " << bnd.second << std::endl;
+    Rcpp::Rcout << "fbnd: " << fbnd.first << " " << fbnd.second << std::endl;
+  }
   
   if( fbnd.first >= 0.0 ){
     s_sf = bnd.first;
-  }else if( fbnd.second <= 0.0 ){
-    s_sf = bnd.second;
   }else{
     // expand
     int it(0);
@@ -283,6 +305,16 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   r_sf_rz = std::min( r_sf_rz , ( ((area*s_rzmax)-s_rz) / Dt ) - precip + r_rz_uz + pet );
   s_rz = ( (area*s_rzmax) / ( (area*s_rzmax) + pet*Dt) ) * ( s_rz + Dt*(precip + r_sf_rz - r_rz_uz) );
   aet = pet * s_rz / (s_rzmax*area);
+
+  if( id==0 ){
+  //   Rcpp::Rcout << "Solved all" << std::endl;
+  //   Rcpp::Rcout << "inflow " << q_sf_in << " " << q_sz_in << std::endl;
+  // Rcpp::Rcout << "external input: " << precip << " " << pet << " " << aet << std::endl;
+  Rcpp::Rcout << "vertical flux " << r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
+  Rcpp::Rcout << "states " << s_sf << " " << s_rz << " " << s_uz << " " << s_sz << std::endl;
+  // Rcpp::Rcout << "outflow " << q_sf << " " << q_sz  << " " << sz->q_szmax << std::endl;
+  }
+
   
   // solve for surface by bisection
   q_lower = std::max( 0.0, std::min( q_sf, q_sf_in) - std::max(r_sf_rz,0.0) );
@@ -293,10 +325,15 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   fbnd.first = fsf(bnd.first,q_sf_in,q_lower,q_upper,Dt);
   fbnd.second = fsf(bnd.second,q_sf_in,q_lower,q_upper,Dt);
 
+  if( id == 0 ){
+    Rcpp::Rcout << "fluxes: " << q_sf_in << " " << q_sf << std::endl;
+    Rcpp::Rcout << "vertical fluxes: " <<  r_sf_rz << " " << r_rz_uz << " " << r_uz_sz << std::endl;
+    Rcpp::Rcout << "bnd: " << bnd.first << " " << bnd.second << std::endl;
+    Rcpp::Rcout << "fbnd: " << fbnd.first << " " << fbnd.second << std::endl;
+  }
+  
   if( fbnd.first >= 0.0 ){
     z = bnd.first;
-  }else if( fbnd.second <= 0.0 ){
-    z = bnd.second;
   }else{
     // expand
     int it(0);

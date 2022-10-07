@@ -1,6 +1,7 @@
 ## ##############################
 ## simple run for debugging
 rm(list=ls())
+graphics.off()
 devtools::load_all()
 data("Swindale");
 
@@ -20,7 +21,7 @@ for(ii in 1:nrow(mdl$hru)){
     tmp$sf <- list(type = "cnstCD", #mdl$hru$sf[[ii]]$type,
                    parameters = c("c_sf" = 0.3, "d_sf"=0.0))
     tmp$sz <- list(type = "exp",
-                   parameters = c(t_0=1000,m=0.0063,D=5)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
+                   parameters = c(t_0=0.08,m=0.009,D=5)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
     if(mdl$hru$is_channel[ii]){
         tmp$sz$parameters["t_0"] <- 1e-60
         tmp$sf$parameters["c_sf"] <- 0.7
@@ -40,19 +41,17 @@ for(ii in 1:nrow(mdl$hru)){
     h[[ii]] <- tmp
 }
 
-hh <- h
-hh[[1]]$id <- hh[[1]]$id + 0
-system.time({
-    dt <- dynatop$new(h)
-    obs <- Swindale$obs
-    dt$add_data(obs)
-    dt$initialise()
-
-    tail(dt$get_states())
-    head(dt$get_states())
-    dt$sim(odfn)
-})
-
+##system.time({
+dt <- dynatop$new(h)
+obs <- Swindale$obs
+dt$add_data(obs)
+dt$initialise()
+s0 <- dt$get_states()
+#    print(head(dt$get_states()))
+dt$sim(odfn)
+sn <- dt$get_states()
+##    print(head(dt$get_states()))
+##})
 
 x11(); plot(Swindale$obs$flow, ylim=c(0,60))
 lines(dt$get_output())
