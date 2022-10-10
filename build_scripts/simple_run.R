@@ -8,7 +8,7 @@ data("Swindale");
 mdl <- Swindale$model
 
 ## temp fix to get correct model form
-odfn <- data.frame(name=c("outlet","under_outlet"),id=c(0,0),flux=c("q_sf","q_sz"))
+odfn <- data.frame(name=c("outlet","under_outlet","s_sf","s_rz","s_uz","s_sz"),id=c(0,0,rep(0,4)),flux=c("q_sf","q_sz","s_sf","s_rz","s_uz","s_sz"))
 h <- list()
 for(ii in 1:nrow(mdl$hru)){
     tmp <- list()
@@ -21,10 +21,10 @@ for(ii in 1:nrow(mdl$hru)){
     tmp$sf <- list(type = "cnstCD", #mdl$hru$sf[[ii]]$type,
                    parameters = c("c_sf" = 0.3, "d_sf"=0.0))
     tmp$sz <- list(type = "exp",
-                   parameters = c(t_0=0.08,m=0.009,D=5)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
+                   parameters = c(t_0=0.0008,m=0.01,D=50)) #c(mdl$hru$sz[[ii]]$param, "D" = 0.05))
     if(mdl$hru$is_channel[ii]){
         tmp$sz$parameters["t_0"] <- 1e-60
-        tmp$sf$parameters["c_sf"] <- 0.7
+        tmp$sf$parameters["c_sf"] <- 2
     }
     tmp$precip <- mdl$hru$precip[[ii]]
     names(tmp$precip) <- c("name","fraction")
@@ -55,5 +55,5 @@ sn <- dt$get_states()
 
 x11(); plot(Swindale$obs$flow, ylim=c(0,60))
 lines(dt$get_output())
-
+#plot(dt$get_output()[,"s_sf"])
 
