@@ -28,7 +28,7 @@ dynatop <- R6Class(
             ## digest model with checks - will fail if errors identified
             private$digest_model(model,use_states,delta)
             if( !is.null( map ) ){
-                if( !file.exists(mapFile) ){ stop( "Map file does not exist") }
+                if( !file.exists(map) ){ stop( "Map file does not exist") }
                 private$digest_map(map)
             }
             invisible(self)
@@ -189,7 +189,7 @@ dynatop <- R6Class(
        plot_state = function(state=c("s_sf","s_rz","s_uz","s_sz")){ #,add_channel=TRUE){
            state <- match.arg(state)
            
-           if( is.null(private$model$map) | ( length(private$model$map)==0) ){
+           if( is.null(private$map) | ( length(private$map)==0) ){
                stop("The model contains no map of HRU locations")
            }
 

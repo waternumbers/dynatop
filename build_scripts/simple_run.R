@@ -42,10 +42,14 @@ for(ii in 1:nrow(mdl$hru)){
 }
 
 ##system.time({
-dt <- dynatop$new(h)
+dt <- dynatop$new(h,map="test.tif")
 obs <- Swindale$obs
 dt$add_data(obs)
 dt$initialise()
+
+dt$plot_state("s_sf")
+
+
 s0 <- dt$get_states()
 #    print(head(dt$get_states()))
 dt$sim(odfn)
