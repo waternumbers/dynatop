@@ -108,6 +108,140 @@ over the length of the hillslope we find
   Table: (\#tab:hs-x-notation) Outline of notation for describing a cross
   section of the hillslope HRU
 
+# Variable Parameter Muskingham solution
+
+The solution of the surface and saturated zone, is absed upon a variable
+parameter Muskingham solution. This section outlines the solution and shows
+how it may be used to capture a range of conceptual models.
+
+Muskingham routing can be derived in a numer of ways. The storage $s$ in a reach or hillslope of length $\Delta
+x$ can be expressed in terms of the representative flow $q$ and velocity $v$
+as
+\[
+s = \frac{q \Delta x}{v}
+\]
+Relating the representaative flow to the inflow $q^{-}$ and outflow $q^{+}$
+with the possibly state or time varying parameter $\eta$ results in
+\[
+s = \frac{\Delta x}{v} \left(\eta q^{-} + \left(1-\eta\right) q^{+} \right)
+\]
+Taking vertical inflow $r$
+gives the mass balance
+\[
+\frac{ds}{dt} = q^{-} + r - q^{+}
+\]
+where by subsitution
+\[
+\frac{ds}{dt} = q^{-} + r - \frac{1}{1-\eta}\left(\frac{sv}{\Delta x} - \eta q^{-}  \right)
+\]
+
+## Approximating Tank Models
+
+Taking $\eta=0$ gives
+\[
+\frac{ds}{dt} = q^{-} + r - \frac{sv}{\Delta x}
+\]
+which is the equation of a tank model with possibly varying time constant $T =
+\frac{\Delta x}{v}$
+
+## Approximating Diffusion Wave Routing
+
+Diffuse routing with lateral inflow can be expressed as the parabolic
+equation \footnote{doi:10.1016/j.advwatres.2005.08.008}
+
+\[
+\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl - D \frac{dl}{dx}
+\]
+where $l$ is lateral inflow per unit length. Simplify this by
+considering that the lateral inflow $r$ uniformly
+distributed so that $l=\frac{r}{\Delta x}$ and $\frac{dl}{dx}=0$ to give
+
+\[
+\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl
+\]
+
+Let us relate this to the Muskingham Solution using the relationship
+\[
+q = \eta q^{-} + \left(1-\eta\right) q^{+}
+\]
+
+Taking Taylor series expansions for $q^{-}$ and
+$q^{+}$ based on $q$ gives
+
+\[
+q^{+} \approx q + \eta \Delta x \frac{dq}{dx} + \frac{1}{2}\eta^2\Delta x^2 \frac{d^2 q}{dx^2}
+\]
+and
+\[
+q^{-} \approx q - \left(1-\eta\right) \Delta x \frac{dq}{dx} + \frac{1}{2}\left(1-\eta\right)^2 \Delta x^2 \frac{d^2 q}{dx^2}
+\]
+
+Subtracting the expression for $q^{-}$ from that for $q^{+}$ gives
+
+\[
+q^{-} - q^{+} \approx
+-\Delta x \frac{dq}{dx} +
+\frac{1}{2}\left(1-2\eta\right) \Delta x^2 \frac{d^2 q}{dx^2}
+\]
+
+From the mass balance condition
+\[
+\frac{ds}{dt} \approx \Delta x l -\Delta x \frac{dq}{dx} +
+\frac{1}{2}\left(1-2\eta\right)\Delta x^2 \frac{d^2 q}{dx^2} 
+\]
+
+Using the expression for storage and relationship between flow and area
+\[
+\frac{dq}{dt} = \frac{dq}{da} \frac{da}{dt} = \frac{c}{\Delta x} \frac{ds}{dt}
+\]
+
+Then combinign this with the approximation produces
+\[
+\frac{dq}{dt} + c\frac{dq}{dx} -
+\frac{c}{2}\left(1-2\eta\right)\Delta x \frac{d^2 q}{dx^2}
+\approx c l
+\]
+
+Comparision to the orginal diffuse routing equation shows that
+\[
+\eta \approx \frac{1}{2} - \frac{D}{c \Delta x}
+\]
+
+The value of $\eta$ is limited to between 0 and $\frac{1}{2}$. Firstly $\eta =
+1/2$ results from $D=0$; that is the Kinematic wave equation. Taking  $\eta=0$
+produces the maxium dispersion of $D = \frac{c\Delta x}{2}$, which is given by
+the linear tank.
+
+## Numerical scheme
+
+The numerical scheme is based on the implicit solution of
+
+\[
+\frac{ds}{dt} = q^{-} + r - \frac{1}{1-\eta}\left(\frac{sv}{\Delta x} - \eta q^{-}  \right)
+\]
+
+given by
+\[
+s_{t} = s_{0} + \Delta t \left( q^{-}_{t} + r_{t} -
+\frac{1}{1-\eta_{t}}\max\left(0,q_{t} - \eta_{t} q^{-}_{t}  \right) \right)
+\]
+
+where the maximum ensures that $q^{+}$ does not become negative. The
+implimentation outliens is eqivilent to taking the addition of dispersion to
+ensure non-negative outflows.
+
+For known $\eta_{t}$ it is clear that the left hand side of the expression is
+increasing and teh right hand side decreasing so long as $\frac{dq}{ds} =
+\frac{1}{\Delta x}\frac{dq}{da} \geq 0$. If $\eta_{t}$ is a function of
+$s_{t}$ then it is required that 
+\[
+\frac{1}{\left(1-\eta\right)^{2}}\left(\frac{d\eta}{ds}\left(q-q^{-}\right) +
+\left(1-\eta\right)\frac{dq}{ds}\right) \geq 0
+\]
+A simplier approximate solution base on taking $\eta_{t}$ as a function of
+$s_{0}$ is impliemnted in the code.
+
+
 # Finite Volume Formulation
 
 In this section a finite volume formulation of the Dynamic TOPMODEL equations
@@ -134,28 +268,17 @@ saturation storage deficits water may be returned from the root
 zone to the surface giving negative values of $r_{sf \rightarrow rz}$.
 
 To determine the outflow $q^{+}_{sf}$ a second relationship between
-$q^{-}_{sf}$, $s_{sf}$ and $q^{+}_{sf}$ is required. This is developed using a
-Muskingham type approximation to the volume. Consistent with the
-wedge derivation the storage $s_{sf}$ in an HRU of length $\Delta
-x$ can be expressed in terms of the inflow $q^{-}_{sf}$, outflow $q^{+}_{sf}$ and state varying parameters $\nu_{sf}$ and $\eta_{sf}$ as
-
+$q^{-}_{sf}$, $s_{sf}$ and $q^{+}_{sf}$ is required. This is given by the
+Muskingham formulation where
 \[
-s_{sf} = \frac{\Delta x}{\nu_{sf}} \left(\eta_{sf} q^{-}_{sf} + \left(1-\eta_{sf}\right) q^{+}_{sf} \right)
+\mathcal{F}\left(s_{sf},\Theta_{sf}\right) = q_{sf} = \eta_{sf}q_{sf}^{-} +
+\left(1-\eta_{sf}\right)q_{sf}^{+}
+\]
+and
+\[
+\mathcal{F}_{\eta}\left(s_{sf}\right) = \eta_{sf}
 \]
 
-Let the representative cross sectional area $a_{sf}$ be given by $a_{sf}=\frac{s_{sf}}{\Delta x}$. If $q_{sf} = \eta_{sf}
-q^{-}_{sf} + \left(1-\eta_{sf}\right) q^{+}_{sf}$ is a representative
-flow then $\nu_{sf}$ is the representative velocity since $\nu_{sf}=\frac{q_{sf}}{a_{sf}}$.
-Appendix A shows that in many hydrological settings that $\eta_{sf}$ and $q_{sf}$ are functions of
-$a_{sf}$ and hence $s_{sf}$. In the following (see Appendix B for details) consider that
-\[
-q^{+}_{sf} = \mathcal{F}\left(s_{sf},q^{-}_{sf}\right)
-\]
-where $q_{sf} \geq 0$ for all $s_{sf} \geq 0$ and
-\[
-\frac{\partial q^{+}}{\partial s} = \frac{\partial}{\partial
-s}\mathcal{F}\left(s,q^{-}\right) \geq 0
-\]
 
 ## Root zone
 
@@ -218,40 +341,23 @@ $s_{uz} \leq s_{sz}$.
 ## Saturated Zone
 
 For a HRU the alteration of the storage in the saturated zone is
-given by the kinematic equation implimented through the muskingham
-approximation (see Appendix A). This gives a mass balance equation considered
+given by the kinematic equation implimented through the Muskingham
+approximation. This gives a mass balance equation considered
 in terms of storage deficits as:
 
 \[
 \frac{ds_{sz}}{dt} = q^{+}_{sz} - r_{sf \rightarrow rz} - q^{-}_{sz} 
 \]
-
-The Muskingham approximation to the storage for the kinematic wave form gives
-
-\[
-D - s_{sz} = \frac{\Delta x}{\nu_{sz}} \left( 2q_{sz} - q^{-}_{sz}\right)
-\]
-
-The Kinematic approximation then requires a relationship between $q_{sz}$ and
- the cross sectional storage defict, given  defict
- $a_{sz}=\frac{s_{sz}}{\Delta x}$. This relationship defined using teh
- transmissivity, a one-to-one, continuously differentiable function 
-$\mathcal{T}: \left[0,D\right] \rightarrow \mathcal{R}^{+}$ which returns the lateral flow on
-a unit width such that $q_{sz} = w \mathcal{T}\left(a_{sz}/w,\Theta_{sz}\right)
- \geq 0$. The function $g$ is considered to satisify
-\begin{equation}
--\frac{dq_{sz}}{da_{sz}} = -w\frac{d}{da_{sz}}\mathcal{T}\left(a_{sz}/w,\Theta_{sz}\right) \geq 0
-\end{equation}
+with the relationships between the flows and storage given by
 and
-\begin{equation}
-\mathcal{T}\left(a_{sz}/w,\Theta_{sz}\right) \rightarrow 0 \quad \mathrm{as} \quad
- a_{sz}\rightarrow \infty
-\end{equation}
-The first condition ensures a non negative celerity (wave speed) which is in
-keeping with the conceptualisation of the model. This combined with
- the second condition ensures that the model represents a state where no
- lateral inflow is generated.
-
+\[
+q_{sz} = \mathcal{G}\left(s_{sz},\Theta_{sz}\right) \\
+q_{sz}^{+} = 2q_{sz} - q_{sz}^{-}
+\]
+Not that the assumption of increaseing flow with storage means that
+\[
+- \frac{d}{ds_{sz}} \mathcal{G}\left(s_{sz},\Theta_{sz}\right) \geq 0
+\]
 
 # Numerical Solution
 
@@ -262,52 +368,36 @@ evaluated at the final state, is presented.
 
 The basis of the solution is that a gravity driven system will maximise
 the downward flow of water within each timestep of size $\Delta t$. Hence on
-the first downward pass through the stores teh maximum rates of the vertical
-fluxes $\hat{r}_{* \rightarrow *} is determined. This then moderated in the
-solution of the saturated zone, before the upward pass gives the final states.
+the first downward pass through the stores the maximum downward volumes of the vertical
+fluxes $\hat{v}_{* \rightarrow *} = \Delta t \hat{r}_{* \rightarrow *}$ are determined. These then moderated by the
+solution of the saturated zone, with an upward pass gives the final states.
 
 ## Downward Pass
 
-
 ### Surface excess
 
-
-If the inputs and values at time $t$ are known the mass error for a four point solution with
-time weighting parameter $\omega_sf$ is given by
+The implict solution of the Muskingham methodology gives
 
 \[
-\mathcal{E}\left(\left. s_{sf} \right\rvert_{t+\Delta t},\omega_{sf}\right) = 
-\left. s_{sf} \right\rvert_{t+\Delta t} + 
-\Delta t \left( \omega_{sf} 
-\left. q^{+}_{sf} \right\rvert_{t+\Delta t} + 
-\left(1-\omega_{sf}\right)\left. q^{+}_{sf} \right\rvert_{t} 
-\right) -
-\left. s_{sf} \right\rvert_{t} - 
-\left. v_{sf}^{-} \right\rvert_{t+\Delta t} + 
-v_{sf \rightarrow rz}
+\left. s_{sf} \right\rvert_{t+\Delta t} = \left. s_{sf} \right\rvert_{t} +
+\Delta t 
+\left( \left. q_{sf}^{-} \right\rvert_{t+\Delta t} -
+\frac{1}{1 - \left. \eta_{sf} \right\rvert_{t+\Delta t} }
+\max\left(0, 
+\left. q_{sf} \right\rvert_{t+\Delta t} -
+\left. \eta_{sf} \right\rvert_{t+\Delta t}
+\left. q_{sf}^{-} \right\rvert_{t+\Delta t}
+\right) \right) - 
+\left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t}
 \]
 
-where the ouflow volume $\left. v_{sf}^{+} \right\rvert_{t+\Delta t}$ is given by
+So the maximum downward flux volume is
 \[
-\left. v_{sf}^{*} \right\rvert_{t+\Delta t} = 
-\Delta t \left( \omega_{sf} 
-\left. q^{+}_{sf} \right\rvert_{t+\Delta t} + 
-\left(1-\omega_{sf}\right)\left. q^{+}_{sf} \right\rvert_{t} \right)
+\left. \hat{v}_{sf \rightarrow rz} \right\rvert_{t+\Delta t} =  \left. s_{sf}
+\right\rvert_{t} + \Delta t \left. q_{sf}^{-} \right\rvert_{t+\Delta t}
 \]
 
-A solution for the time $t+\Delta t$ satisfies
-$\mathcal{E}\left(\left. s_{sf} \right\rvert_{t+\Delta t},\omega_{sf}\right) = 0$.
-
-The four-point schem is numerically stable for $0.5 \leq \omega_{sf} \leq
-1$. Since $\left. q^{+}_{sf} \right\rvert_{t+\Delta t}=0$ when $\left. s_{sf}
-\right\rvert_{t+\Delta t} =0$ the maximum downwards flux occurs when
-$\omega_{sf}=1$ and is given by
-\[
-\hat{v}_{sf \rightarrow rz} = \left. s_{sf} \right\rvert_{t} +
-\left. v_{sf}^{-} \right\rvert_{t+\Delta t}
-\]
-
-## Root Zone
+### Root Zone
 
 The implicit formulation for the root zone gives
 \begin{equation}
@@ -330,7 +420,7 @@ $s_{rz} \leq s_{rzmax}$ then
 \right)
 \end{equation}
 
-## Unsaturated Zone
+### Unsaturated Zone
 
 The implicit expression for the unsaturated zone is given in terms of
 $\left. s_{uz} \right.\rvert_{t+\Delta t}$ and 
@@ -351,286 +441,159 @@ Since $\left. s_{uz} \right.\rvert_{t+\Delta t} \leq \left. s_{sz}
 \left. s_{sz} \right.\rvert_{t+\Delta t} + \frac{A \Delta t}{T_d}
 \end{equation}
 
-By mass balance this gives
+By mass balance this gives teh maximum downward flux volume as
 \[
-v_{uz \rightarrow sz} = \frac{A \Delta t}
-{T_{d}\left. s_{sz} \right.\rvert_{t+\Delta t} + A \Delta t}
-\min\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz},
-\left. s_{sz} \right.\rvert_{t+\Delta t} + \frac{A \Delta t}{T_d} \right)
+\hat{v}_{uz \rightarrow sz} = A\Delta t \min\left(
+\frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
+{T_{d}\left. s_{sz} \right.\rvert_{t+\Delta t} + A \Delta t}, \frac{1}{T_{d}} \right)
 \]
 
+This is a function of $\left. s_{sz} \right.\rvert_{t+\Delta t}$.
 
 ## Saturated Zone
 
-Building on the generic solution in Appendix A the implicit scheme gives
+Building on the generic solution the implicit scheme for the Muskingham model gives
 
 \[
-\left.q^{+}_{sz}\right.\rvert_{t + \Delta t} = 
-\frac{ 1 }{ \kappa\left(1-\eta\right) + \Delta t } 
-\left( D - \left. s_{sz} \right.\rvert_{t} \right) + 
-\frac{ \Delta t - \kappa\eta}{ \kappa\left(1-\eta\right) + \Delta t } 
-\left. q^{-}_{sz} \right.\rvert_{t + \Delta t} + 
-\frac{ \Delta t }{ \kappa\left(1-\eta\right) + \Delta t } 
-\left. r_{uz \rightarrow sz} \right.\rvert_{t + \Delta t}
-\]
-
-The maximum downward flux is that which minimises $\left. s_sf
-\right.\rvert_{t + \Delta t}$. Since for any positive lateral inflow there
-must be surface storage the maximum downward flux is that which sets
-$\left.q^{+}_{sf}\right.\rvert_{t + \Delta t} = 0$.
-
-This provides the condition
-\[
-\left. r_{sf \rightarrow rz} \right.\rvert_{t + \Delta t} \leq 
-\frac{ 1 }{ \Delta t } 
-\left. s_{sf} \right.\rvert_{t} + 
-\frac{ \Delta t - \kappa\eta}{ \Delta t } 
-\left. q^{-}_{sf} \right.\rvert_{t + \Delta t}
-\]
-
-
-
-
-
-
-Initial evaluation and substitution of the flux from the unsaturated zone gives
-\begin{equation}
-\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 
-\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + 
-\frac{\Delta t}{\Delta x} \left(g\left(\left.\bar{s}_{sz}\right\rvert_{\Delta t},\Theta_{sz}\right) -
-l_{sz}^{-}\right) - \Delta t \frac{
-\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \hat{r}_{rz \rightarrow uz} }
-{ T_{d}\left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \Delta t}
-\end{equation}
-
-Limiting the inflow by reaching the saturation level gives
-
-\begin{equation}
-\hat{r}_{rz \rightarrow uz} \leq \frac{1}{\Delta t}\left(
-\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + 
-\frac{\Delta t}{\Delta x} \left(g\left(\left.\bar{s}_{sz}\right\rvert_{\Delta t},\Theta_{sz}\right) -
-l_{sz}^{-}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)
-\end{equation}
-
-Selecting $\bar{s}_{sz}$ and $\hat{r}_{rz \rightarrow uz}$ to satisfy the above equation describes a non-linear
-problem with two unknowns a multiple solutions. A further condition, that the
-downward flux is maximised, is imposed to ensure a unique solution.
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Numerical Algorithm
-
-An implementation of the approximating equations which is consistent with
-maximising the downward flux produces a fully implicit numeric scheme.
-
-The maximum downward flux from the surface is given by 
-\[
-\check{r}_{sf \rightarrow rz} = \min\left( k_{sf},
-\left. \frac{1}{\Delta t}\left(\bar{s}_{sf} \right\rvert_{0} + \frac{\Delta
-t}{\Delta x} \hat{l}_{sf}^{-}
+\left. s_{sz} \right\rvert_{t+\Delta t} = \left. s_{sz} \right\rvert_{t} -
+\Delta t  \left. q_{sz}^{-} \right\rvert_{t+\Delta t} -
+\left. v_{uz \rightarrow sz} \right\rvert_{t+\Delta t} +
+\Delta t \min\left(q_{sz}^{max},\max\left( 0, 2 \left. q_{sz} \right\rvert_{t+\Delta t} - \left. q_{sz}^{-}
+\right\rvert_{t+\Delta t}
 \right)\right)
 \]
 
-which results in a maximum downward flux from the root zone of 
+where the maxima stops the outflow becoming negative. The minima derives from
+a further condition on the saturated zone; based on the maximum outflow give by 
+$f_{sz}\left(0\right) = q_{sz}^{max}$. Applying this flow limit to every
+cross section of the saturated zone mean $q_{sz}^{-}\leq q_{sz}^{max}$ and
+$q_{sz}^{+}\leq q_{sz}^{max}$.
+The inflow inequality to handled by reassigning an inflow greater then the
+limit to the surface inflow. The outflow inequality results in the
+minina.
+
+Alternatively the upper flow limit could be evaluated by finding
+$s_{sz}^{max}$ for which
 \[
-\check{r}_{rz \rightarrow uz} = \max\left(0, \frac{1}{\Delta t}\left(
-\left. \bar{s}_{rz} \right.\rvert_{0} + \Delta t \left( p + \check{r}_{sf
-\rightarrow rz} - e_{p} \right) - s_{rzmax} \right)\right)
+\mathcal{G}\left(s_{sz}^{max},\Theta_{sz}\right) = \frac{
+q_{sz}^{max} + \left. q_{sz}^{-}\right\rvert_{t+\Delta t} }{2}
 \]
+and treating this as the satrated defict at which point water is returned from
+the saturated to unsaturated zone. In contrast to this the minima solution
+holds the water in the saturated zone. This is prefered both conceptually,
+since the water remains imediatly available for future lateral flow, and also
+computationally since it avoids the need to invert the function relating
+storage to flow.
 
 
 Consider the pseudo-function 
 \[
-f\left(z\right) = 
+\mathcal{H}\left(z\right) = 
 z - 
-\left. \bar{s}_{sz}\right.\rvert_{0} -
-\frac{\Delta t}{\Delta x} \left(g\left(z,\Theta_{sz}\right) -
-l_{sz}^{-}\right) + \Delta t \min\left(\frac{1}{T_d},\frac{
-\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
-{ T_{d} z + \Delta t}\right)
+\left. s_{sz}\right.\rvert_{t} +
+\Delta t  \left. q_{sz}^{-} \right\rvert_{t+\Delta t} +
+A\Delta t \min\left(
+\frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
+{T_{d}z + A \Delta t}, \frac{1}{T_{d}} \right) - \\
+\Delta t \min\left(q_{sz}^{max},\max\left( 0, 2 \mathcal{G}\left(z,\Theta_{sz}\right) - \left. q_{sz}^{-}
+\right\rvert_{t+\Delta t}
+\right)\right)
 \]
 
-adapted from the approximating equation for the saturated zone storage with the minima
-ensuring the limit on the flux from the unsaturated zone. If $f(0) \geq 0$ the
-downward flux is enough to produce saturation in the subsurface and
-$\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0$. If  $f(0) < 0$ then
-$\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ is given by a solution of
-$f(z) = 0$. In Appendix A it is
-shown that $f\left(z\right)$ is a monotonic increasing function of
-$z > 0$; hence if $f\left(0\right) \leq 0$ and $f\left(D\right) \geq 0$ a
-unique solution for $\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ can be found.
+adapted from the approximating equation for the saturated zone storage.
+In Appendix A it is
+shown that $\mathcal{H}\left(z\right)$ is a monotonic increasing function of
+$z > 0$ and $\mathcal{H}\left(D\right) \geq 0$. 
+Hence if $\mathcal{H}\left(0\right) \lt 0$ unique solution for
+$\left. s_{sz}\right.\rvert_{\Delta t}$ can be found. 
+If  $\mathcal{H}\left(0\right) \geq 0$ then the incoming fluxes are enough to
+produce saturation in the subsurface and
+$\left. s_{sz}\right.\rvert_{\Delta t} = 0$. 
 
-<!-- ### Algorithm 1 - Simple Implicit -->
-
-A direct implementation of the above results takes the form of Algorithm 1.
-
-***
-*Algorithm 1: Direct Implementation*
-
-1. Compute $\check{r}_{sf \rightarrow rz}$ and $\check{r}_{rz \rightarrow uz}$
-2. Test for saturation. If $f\left(0\right) \geq
-   0$ then go to Step 3 else go to Step 4
-3. Saturated. Set $\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0$ and
-\[\hat{r}_{rz \rightarrow uz} = \frac{1}{\Delta t}\left(
-\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + 
-\frac{\Delta t}{\Delta x} \left(g\left(0,\Theta_{sz}\right) -
-l_{sz}^{-}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)
-\]
-Go to Step 5.
-4. Not saturated. Find $\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ such that 
-$f\left(\left. \bar{s}_{sz}\right.\rvert_{\Delta t}\right) = 0$ and take 
-\[
-\hat{r}_{rz \rightarrow uz} = \min\left(\check{r}_{rz \rightarrow uz},\frac{1}{\Delta t} \left(
-\left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \frac{\Delta t}{T_d} -
- \left. \bar{s}_{uz} \right.\rvert_{0}\right)\right)\]
- Go to Step 5.
-5. Compute 
-\[
-\hat{r}_{sf \rightarrow rz} = \min\left(\check{r}_{sf \rightarrow
-  rz}, \frac{1}{\Delta t}\left( s_{rzmax} - 
-\left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p - \hat{r}_{rz
-  \rightarrow uz} \right) \right)\right)\] 
-6. Solve for $\left. \bar{s}_{uz}\right.\rvert_{\Delta t}$,
-$\left. \bar{s}_{rz}\right.\rvert_{\Delta t}$ and
-$\left. \bar{s}_{sf}\right.\rvert_{\Delta t}$ using the computed vertical
-fluxes.
-
-***
-
-The challenge with Algorithm 1 is that maintaining a water (mass) balance and
+Maintaining a water (mass) balance and
 correct limits on the state values
-depends upon the accuracy of the solution of $f\left(z\right)=0$. Since
-finding $z$ requires multiple evaluations of the transmissivity profile it can
-rapidly become the most expensive part of the code. 
+depends upon the accuracy of the solution of
+$\mathcal{H}\left(z\right)=0$. Since each evaluation of
+$\mathcal{H}\left(z\right)$ requires an evaluation of the transmissivity
+profile the search for $z$ such that $\mathcal{H}\left(z\right)=0$ can
+rapidly become the most expensive part of the code.
 
-To limit the computational cost suppose that $f\left(z\right)=0$ is solved
-approximately to give $\tilde{z}$
-such that for some numerical tolerance $\epsilon$ we have $\left\lvert
-f\left(\tilde{z}\right) \right\rvert \leq \epsilon$. Using $\tilde{z}$ to
-evaluate the outward lateral flux from the saturated zone gives the
-pseudo-function
+Use of a numerical scheme which allows mass balance to maintained
+regardless of the accuracy of the solution of $\mathcal{H}\left(z\right)=0$
+allows scope for compromises based on computational time.
+If $\mathcal{H}\left(z\right)=0$ is
+solved by a bracketing algorithm then at each iteration the lower and upper
+limts of the bracket satisfy $z^{l} <
+\left. s_{sz}\right.\rvert_{\Delta t} < z^{u}$. Iterating until; for some
+tolerance $\epsilon>0$; $z^{u} - z^{l}
+< \epsilon$ take $\left. s_{sz}\right.\rvert_{\Delta t} = z^{u}$. In both is
+and the saturated case $\mathcal{H}\left(\left. s_{sz}\right.\rvert_{\Delta
+t}\right)>0$ and the upward pass can proceed as outlined in the following
+section without compromising the mass conservation.
+
+## Upward Pass
+
+Given an estimate of $\left. s_{sz}\right.\rvert_{\Delta t}$ such that
+$\mathcal{H}\left(\left. s_{sz}\right.\rvert_{\Delta t}\right)>0$ compute the
+vertical flux volumes in the following fashion
+
+1. $\left. q_{sz}^{+}\right.\rvert_{\Delta t} = \min\left(q_{sz}^{max},\max\left( 0, 2 \mathcal{G}\left(\left. s_{sz}\right.\rvert_{\Delta t},\Theta_{sz}\right) - \left. q_{sz}^{-}
+\right\rvert_{t+\Delta t}
+\right)\right)$
+1. $v_{uz \rightarrow sz} = \left. s_{sz}\right.\rvert_{t} +
+   \Delta t  \left(\left. q_{sz}^{+}\right.\rvert_{\Delta t} -
+   \left. q_{sz}^{-} \right\rvert_{t+\Delta t}\right) - \left. s_{sz}\right.\rvert_{\Delta t}$
+1. $v_{rz \rightarrow uz} = \min \left( \hat{v}_{rz \rightarrow uz},
+\left. s_{sz}\right.\rvert_{\Delta t} + v_{uz \rightarrow sz} - \left. s_{uz}\right.\rvert_{t} \right)$
+1. $v_{sf \rightarrow rz} = \min\left(\hat{v}_{sf \rightarrow rz}, s_{rzmax} - 
+\left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p \right)  + {v}_{rz
+  \rightarrow uz} \right)$
+
+The storage values for the unsaturated ans root zone can then be computed
+using these fluxes. This leaves teh solution of the surface zone
+
+## Surface Zone
+
+For the surface zone we take a semi implicit scheme where $\eta_{sf}$ is
+evaluated with teh initial state giving
 \[
-h\left(z\right) = 
-z - 
-\left. \bar{s}_{sz}\right.\rvert_{0} -
-\frac{\Delta t}{\Delta x} \left(g\left(\tilde{z},\Theta_{sz}\right) -
-l_{sz}^{-}\right) + \Delta t \min\left(\frac{1}{T_d},\frac{
-\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
-{ T_{d} z + \Delta t}\right)
+\left. \eta_{sf} \right\rvert_{t+\Delta t} = \mathcal{F}_{\eta}\left(\left. s_{sf} \right\rvert_{t}\right)
 \]
 
-Since $h\left(z\right)$ is a monotonic increasing function of
-$z > 0$ the solution for $\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ is
-similar to that using $f\left(z\right)$. Taking $z \in \left[0,D\right]$ the
-solution for $\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$ is given by
-
-- If $h(0) \geq 0$ the inward flux is enough to produce saturation in the subsurface and
-$\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0$.
-- If $h(z_{max}) < 0$ (possible only due to the outflow flux approximation) then
-$\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = D$ and the lateral outflow is
-adjusted such that
+Proceeding in a similar fashion to the saturated zone consider the psuedo-function
 \[
-\frac{\Delta t}{\Delta x} l_{sz}^{+} = 
-D - 
-\left. \bar{s}_{sz}\right.\rvert_{0} +
-\frac{\Delta t}{\Delta x} l_{sz}^{-} + 
-\Delta t \min\left(\frac{1}{T_d},\frac{
-\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
-{ T_{d} D + \Delta t}\right)
+\mathcal{S}\left(w\right) =
+\left. s_{sf} \right\rvert_{t} +
+\Delta t 
+\left( \left. q_{sf}^{-} \right\rvert_{t+\Delta t} -
+\frac{1}{1 - \left. \eta_{sf} \right\rvert_{t+\Delta t} }
+\max\left(0, 
+\mathcal{F}\left(w,\Theta_{sf}\right) -
+\left. \eta_{sf} \right\rvert_{t+\Delta t}
+\left. q_{sf}^{-} \right\rvert_{t+\Delta t}
+\right) \right) - 
+\left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t} - w
 \]
-- If $h(0) < 0$ and If $h(D) \geq 0$ then with $z_{C} =  \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t\left(
-  \check{r}_{rz \rightarrow uz} - \frac{1}{T_{d}}\right)$
-  - If $h\left( z_{C} \right) \geq 0$ then the inflow from the unsaturated
-  zone is $1/T_{d}$ and 
-  \[
-  \left. \bar{s}_{sz}\right.\rvert_{\Delta t} =
-  \left. \bar{s}_{sz}\right.\rvert_{0} +
-\frac{\Delta t}{\Delta x} \left(g\left(\tilde{z},\Theta_{sz}\right) -
-l_{sz}^{-}\right) - \frac{\Delta t}{T_d}
-  \]
-  - else (see Appendix C)
-  \[
-z = \frac{1}{2}\left(-b + \sqrt{ b^2 - 4c }\right) \\
-= \frac{1}{2} \left( z_{C} - h\left(z_{C}\right) + \sqrt{
-\left(h\left(z_{C}\right)-z_{C}\right)^2 - 4 \frac{\Delta t}{T_{d}}
-h\left(z_{C}\right) } \right)
-\]
+which is monotonically decreasing for $w \geq 0$ with
+$\mathcal{S}\left(0\right)\geq 0$.
 
-The implementation of this approach is presented in Algorithm 2. it can be seem
-that the exchange for decreasing the accuracy of the solution of the zero
-finding problem is a potential to evaluate a power and a square root.
-
-***
-*Algorithm 2: Stable Implementation*
-
-1. Compute $\check{r}_{sf \rightarrow rz}$ and $\check{r}_{rz \rightarrow uz}$
-2. Compute the lateral outflow
-   - If $f\left(0\right) \geq 0$ then $l_{sz}^{+} = l_{szmax}$
-   - else find $\tilde{z}$ such that $\left\lvert
-f\left(\tilde{z}\right) \right\rvert \leq \epsilon$. Set $l_{sz}^{+} = g\left(\tilde{z},\Theta\right)$
-3. Solve for $\left. \bar{s}_{sz}\right.\rvert_{\Delta t}$
-   - If $h(0) \geq 0$ then
-   $\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0$.
-   - If $h(z_{max}) < 0$ then $\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = D$ and
+A bracketing solution algorithm gives at any iteration $w^{l} < \left. s_{sf}
+\right\rvert_{t+\Delta t} < w^{u}$. An inital value of $w^{u}$ can be computed
+as $\left. s_{sf} \right\rvert_{t} + \Delta t\left. q_{sf}^{-}
+\right\rvert_{t+\Delta t} - \left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t}$. Iterating until; for some
+tolerance $\epsilon>0$; $w^{u} - w^{l}
+< \epsilon$ take $\left. s_{sf}\right.\rvert_{\Delta t} = w^{l}$.
+In this case $\mathcal{S}\left(\left. s_{sf}\right.\rvert_{\Delta t}\right) >
+0$ hence mass conservation can be maintained by taking
 \[
-\frac{\Delta t}{\Delta x} l_{sz}^{+} = 
-D - 
-\left. \bar{s}_{sz}\right.\rvert_{0} +
-\frac{\Delta t}{\Delta x} l_{sz}^{-} + 
-\Delta t \min\left(\frac{1}{T_d},\frac{
-\left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t \check{r}_{rz \rightarrow uz} }
-{ T_{d} D + \Delta t}\right)
+\left. q_{sf}^{+} \right\rvert_{t+\Delta t} = 
+\left. q_{sf}^{-} \right\rvert_{t+\Delta t} +
+\frac{1}{\Delta t}\left( 
+\left. s_{sf} \right\rvert_{t} - 
+\left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t} -
+\left. s_{sf}\right.\rvert_{t + \Delta t}\right)
 \]
-   - else with $z_{C} =  \left. \bar{s}_{uz} \right.\rvert_{0} + \Delta t\left(
-  \check{r}_{rz \rightarrow uz} - \frac{1}{T_{d}}\right)$
-     - If $h\left( z_{C} \right) \geq 0$ then 
-  \[
-  \left. \bar{s}_{sz}\right.\rvert_{\Delta t} =
-  \left. \bar{s}_{sz}\right.\rvert_{0} +
-\frac{\Delta t}{\Delta x} \left(g\left(\tilde{z},\Theta_{sz}\right) -
-l_{sz}^{-}\right) - \frac{\Delta t}{T_d}
-  \]
-     - else
-  \[
-\left. \bar{s}_{sz}\right.\rvert_{\Delta t} =
-= \frac{1}{2} \left( z_{C} - h\left(z_{C}\right) + \sqrt{
-\left(h\left(z_{C}\right)-z_{C}\right)^2 - 4 \frac{\Delta t}{T_{d}}
-h\left(z_{C}\right) } \right)
-\]
-4. Solve for $\hat{r}_{rz \rightarrow uz}$
-   - If $\left. \bar{s}_{sz}\right.\rvert_{\Delta t} = 0$ then
-\[\hat{r}_{rz \rightarrow uz} = \frac{1}{\Delta t}\left(
-\left. \bar{s}_{sz}\right.\rvert_{\Delta 0} + 
-\frac{\Delta t}{\Delta x} \left(g\left(0,\Theta_{sz}\right) -
-l_{sz}^{-}\right) - \left. \bar{s}_{uz} \right.\rvert_{0} \right)
-\]
-   - else 
-\[
-\hat{r}_{rz \rightarrow uz} = \min\left(\check{r}_{rz \rightarrow uz},\frac{1}{\Delta t} \left(
-\left. \bar{s}_{sz} \right.\rvert_{\Delta t} + \frac{\Delta t}{T_d} -
- \left. \bar{s}_{uz} \right.\rvert_{0}\right)\right)\]
-5. Compute 
-\[
-\hat{r}_{sf \rightarrow rz} = \min\left(\check{r}_{sf \rightarrow
-  rz}, \frac{1}{\Delta t}\left( s_{rzmax} - 
-\left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p - \hat{r}_{rz
-  \rightarrow uz} \right) \right)\right)\] 
-6. Solve for $\left. \bar{s}_{uz}\right.\rvert_{\Delta t}$,
-$\left. \bar{s}_{rz}\right.\rvert_{\Delta t}$ and
-$\left. \bar{s}_{sf}\right.\rvert_{\Delta t}$ using the computed vertical
-fluxes.
 
-***
 
 
 # Transmissivity Profiles
@@ -642,12 +605,12 @@ package, the corresponding value to use for the `transmissivity_profile` value
 in the model options vector and the additional parameters or properties
 required. The additional parameter and properties are defined in Table \@ref(tab:hs-transmissivity-param).
 
-| Name                | $g\left(\bar{s}_{sz},\Theta_{sz}\right)$                                                                                       | Celerity                                                      | $\Theta_{sz}$     |  `transmissivity_profile` value    | Notes                                                        |
-| ----                | ----                                                                                                                           | ----                                                        | ----              | ----            | ----                                                         |
-| Exponential          | $T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)$                                                       | $\frac{\cos\beta}{m}g\left(\bar{s}_{sz},\Theta_{sz}\right)$ | $T_0,\beta,m$ | `"exp"` | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |
-| Bounded Exponential | $T_{0}\sin\left(\beta\right)\left(\exp\left(-\frac{\cos\beta}{m}s_{sz}\right) - \exp\left(-\frac{\cos\beta}{m}D\right)\right)$ | $\frac{cos \beta}{m}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)$ | $T_0,\beta,m,D$ | `"bexp"` | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |
-| Constant Celerity  | $c_{sz}\left(D-s_{sz}\right)$ | $c_{sz}$ | $c_{sz},D$ | `"cnst"` |   |   |
-| Double Exponential | $T_{0}\sin\left(\beta\right)\left( \omega\exp\left(-\frac{\cos\beta}{m}s_{sz}\right) + \left(1-\omega\right)\exp\left(\frac{\cos\beta}{m_2}s_{sz}\right)\right)$                               | $\omega\frac{cos \beta}{m}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right) + \left(1-\omega \right)\frac{cos \beta}{m_2}T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m_2}s_{sz}\right)$ | $T_0,\beta,m,m_2,\omega$    | "dexp"             |   |
+| Name                | $g\left(\bar{s}_{sz},\Theta_{sz}\right)$                                                                                       | $\Theta_{sz}$     |  `transmissivity_profile` value    | Notes                                                        |
+| ----                | ----                                                                                                                           |  ----              | ----            | ----                                                         |
+| Exponential          | $T_{0}\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{m}s_{sz}\right)$                                                       |  $T_0,\beta,m$ | `"exp"` | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |
+| Bounded Exponential | $T_{0}\sin\left(\beta\right)\left(\exp\left(-\frac{\cos\beta}{m}s_{sz}\right) - \exp\left(-\frac{\cos\beta}{m}D\right)\right)$ |  $T_0,\beta,m,D$ | `"bexp"` | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |
+| Constant Celerity  | $c_{sz}\left(D-s_{sz}\right)$ | $c_{sz},D$ | `"cnst"` |   |   |
+| Double Exponential | $T_{0}\sin\left(\beta\right)\left( \omega\exp\left(-\frac{\cos\beta}{m}s_{sz}\right) + \left(1-\omega\right)\exp\left(\frac{\cos\beta}{m_2}s_{sz}\right)\right)$                               | $T_0,\beta,m,m_2,\omega$    | "dexp"             |   |
                                                     
   Table: (\#tab:hs-transmissivity) Transmissivity profiles available with the
   `dynatop` package.
@@ -666,409 +629,61 @@ required. The additional parameter and properties are defined in Table \@ref(tab
   Table: (\#tab:hs-transmissivity-param) Additional parameters used in the transmissivity profiles.
 
 
-# test appendix VPMC v2
+<!-- ## Flux limiters for TVD -->
 
-Muskingham routing can be derived in a numer of ways. Consistent with the
-wedge derivation the evolution of the storage $s$ in a reach of length $\Delta
-x$ can be expressed in terms of the inflow $q^{-}$
-and outflow $q^{+}$ and state or time varying parameter $\nu$ and $\eta$ as
+<!-- To avoid osscilations flux limiters can be proposed based upon the TVD -->
+<!-- principle (ref), specifically we constrain the solution such that $q^{l}\leq -->
+<!-- q_{t+\Delta t} \leq q^{u}$ where $q^{l}$ and $q^{u}$ are based on the known -->
+<!-- values at the start of the time step. -->
 
-\[
-s = \frac{\Delta x}{\nu} \left(\eta q^{-} + \left(1-\eta\right) q^{+} \right)
-\]
+<!-- \[ -->
+<!-- q^{l} = \max\left(0, \min\left(q^{+}_{t},q^{-}_{t},q^{-}_{t+1}\right) -->
+<!-- +\min\left(v^{r}_{t+\Delta t}/\Delta t, 0\right)\right) -->
+<!-- \] -->
 
-Let the representave area $a$ be given by $a=\frac{s}{\Delta x}$. If $q = \eta
-q^{-} + \left(1-\eta\right) q^{+}$ is a representative
-flow then $\nu$ is the representative velocity since $\nu=\frac{q}{a}$.
-Below we show that in many hydrological settings that $\eta$ and $q$ are functions of
-$a$ and hence $s$. In the following we therfore consider that
-\[
-q^{+} = \mathcal{F}\left(s,q^{-}\right)
-\]
-where
-\[
-\frac{\partial q^{+}}{\partial s} = \frac{\partial}{\partial
-s}\mathcal{F}\left(s,q^{-}\right) \geq 0
-\]
-and to maintain positive flows the value of $s$ is bounded below by $s^{min}$
-such that
-\[
-0 = \mathcal{F}\left(s^{min},q^{-}\right)
-\]
+<!-- \[ -->
+<!-- q^{u} = \max\left(q^{+}_{t},q^{-}_{t},q^{-}_{t+1}\right) -->
+<!-- +\max\left(v^{r}_{t+\Delta t}/\Delta t, 0\right) -->
+<!-- \] -->
 
-Taking flux to be a function of cross sectional area and lateral inflow $r$
-gives the mass balance
+<!-- Corresponding storages -->
+<!-- \[ -->
+<!-- q^{l} = \mathcal{F}\left(s^{l},q^{-}\right) -->
+<!-- \] -->
+<!-- \[ -->
+<!-- q^{u} = \mathcal{F}\left(s^{u},q^{-}\right) -->
+<!-- \] -->
 
-\[
-\frac{ds}{dt} = q^{-} + r - q^{+}
-\]
-
-If the inputs an values at time $t$ are known the mass error for a four point solution with
-time weighting parameter $\omega$ is given by
-
-\[
-\mathcal{E}\left(s_{t+\Delta t},\omega\right) = 
-s_{t+\Delta t} + 
-\Delta t \left( \omega q^{+}_{t+\Delta t} + \left(1-\omega\right)q^{+}_{t}
-\right) -
-s_{t} - v_{t+\Delta t}^{-} - v_{t+\Delta t}^{r}
-\]
-
-where the ouflow volume $v^{+}_{t + \Delta t}$ is given by
-\[
-v^{+}_{t + \Delta t} = 
-\Delta t \left( \omega
-q^{+}_{t+\Delta t} + \left(1-\omega\right)q^{+}_{t} \right)
-\]
-
-to solve for the storage at time $t+\Delta t$ we seek the value of
-$s_{t+\Delta t}$ for which
-$\mathcal{E}\left(s_{t+\Delta t},\omega\right) = 0$.
-
-Since 
-\[
-\frac{\partial}{\partial
-s}\mathcal{E}\left(s,\omega\right) > 0
-\]
-a solution can be found so long as $\mathcal{E}\left(s^{min},\omega\right)
-\leq 0$
-
-The solution is numerically stable so long as $0.5 \leq \omega \leq
-1$ with second order accuray optained when $\omega = 0.5. Since increasing
-$\omega$ adds numerical dispersion the solution uses the following cases:
-
-1. If $\mathcal{E}\left(s^{min},0.5\right) \leq 0$ find $s_{t+\Delta t}$ by
-   numerical search
-2. If $\mathcal{E}\left(s^{min},0.5\right) > 0$ and
-   $\mathcal{E}\left(s^{min},1\right) \leq 0$ set $s_{t+\Delta t}=s^{min}$ and
-   compute
-   \[
-   \omega = 
-   \frac{ s^{min} + \Delta t q^{+}_{t} - s_{t} - v_{t+\Delta t}^{-} -
-   v_{t+\Delta t}^{r}}{\Delta t q^{+}_{t}}
-   \]
-3. If $\mathcal{E}\left(s^{min},1\right) > 0$ take $\omega = 1$, $q_{t+\Delta
-   t}=0$ and $s_{t+\Delta t} = s_{t} + v_{t+\Delta t}^{-} + v_{t+\Delta t}^{r}$
-
-Case 3 represents the breakdown of the trapesoid assumption, resulting from a
-numeric shock to the system. The
-solution outlines offers a "smooth" mass conservative way of handling this,
-although it does not avoid suprious osscilations.
-
-## Flux limiters for TVD
-
-To avoid osscilations flux limiters can be proposed based upon the TVD
-principle (ref), specifically we constrain the solution such that $q^{l}\leq
-q_{t+\Delta t} \leq q^{u}$ where $q^{l}$ and $q^{u}$ are based on the known
-values at the start of the time step.
-
-\[
-q^{l} = \max\left(0, \min\left(q^{+}_{t},q^{-}_{t},q^{-}_{t+1}\right)
-+\min\left(v^{r}_{t+\Delta t}/\Delta t, 0\right)\right)
-\]
-
-\[
-q^{u} = \max\left(q^{+}_{t},q^{-}_{t},q^{-}_{t+1}\right)
-+\max\left(v^{r}_{t+\Delta t}/\Delta t, 0\right)
-\]
-
-Corresponding storages
-\[
-q^{l} = \mathcal{F}\left(s^{l},q^{-}\right)
-\]
-\[
-q^{u} = \mathcal{F}\left(s^{u},q^{-}\right)
-\]
-
-Solve with multple cases
+<!-- Solve with multple cases -->
  
-0. If $\mathcal{E}\left(s^{u},1\right) \leq 0$ let $q_{t+\Delta
-   t}=q^{u}$, $\omega = 1$ and take
-   \[
-   s_{t+\Delta t} = s_{t} + v_{t+\Delta t}^{-} + v_{t+\Delta t}^{r} - \Delta t q^{u}
-   \]
-1. If $\mathcal{E}\left(s^{u},0.5\right) \leq 0$ and
-   $\mathcal{E}\left(s^{u},1\right) > 0$ let 
-   $q_{t+\Delta t}=q^{u}$, 
-   $s_{t+\Delta t}=s^{u}$ and compute
-   \[
-   \omega = 
-   \frac{ s^{u} + \Delta t q^{+}_{t} - s_{t} - v_{t+\Delta t}^{-} -
-   v_{t+\Delta t}^{r}}
-   {\Delta t \left( q^{+}_{t} - q^{u}\right)}
-   \]
-2. If $\mathcal{E}\left(s^{l},0.5\right) < 0$ and
-   $\mathcal{E}\left(s^{u},0.5\right) > 0$ find $s_{t+\Delta t}$ by
-   numerical search
-3. If $\mathcal{E}\left(s^{l},0.5\right) \geq 0$ and
-   $\mathcal{E}\left(s^{l},1\right) \leq 0$ set $s_{t+\Delta t}=s^{l}$ and
-   compute
-   \[
-   \omega = 
-   \frac{ s^{l} + \Delta t q^{+}_{t} - s_{t} - v_{t+\Delta t}^{-} - v_{t+\Delta t}^{r}}{q^{+}_{t}}
-   \]
-4. If $\mathcal{E}\left(s^{l},1\right) > 0$ take $\omega = 1$, $q_{t+\Delta
-   t}=q^{l}$ and $s_{t+\Delta t} = s_{t} + v_{t+\Delta t}^{-} + v_{t+\Delta
-   t}^{r} - \Delta t q^{l}$
-
-
-
-
-# Appendix A - Variable Parameter Muskingham solution
-
-Muskingham routing can be derived in a numer of ways. Consistent with the
-wedge derivation the evolution of the storage $s$ in a reach of length $\Delta
-x$ can be expressed in terms of the cross sectional area of the inflow $a^{-}$
-and outflow $a^{+}$ and possibly state or time varying parameter $\eta$ as
-\[
-s = \Delta x \left(\eta a^{-} + \left(1-\eta\right) a^{+} \right)
-\]
-Taking flux to be a function of cross sectional area and lateral inflow $r$
-gives the mass balance
-
-\[
-\frac{ds}{dt} = q\left(a^{-}\right) + r - q\left(a^{+}\right)
-\]
-
-## Approximating Tank Models
-
-A tank model with possibly varying time constant $T$ has 
-\[
-q\left(a^{+}\right) = \frac{1}{T}s
-\].
-This is a special case of the solution with $\eta=0$ so that 
-$s=a^{+} \Delta x$
-
-## Approximating Diffusion Wave Routing
-
-Diffuse routing with lateral inflow can be expressed as the parabolic
-equation \footnote{doi:10.1016/j.advwatres.2005.08.008}
-
-\[
-\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl - D \frac{dl}{dx}
-\]
-where $l$ is lateral inflow per unit length. Simplify this by
-considering that the lateral inflow $r$ uniformly
-distributed so that $l=\frac{r}{\Delta x}$ and $\frac{dl}{dx}=0$ to give
-
-\[
-\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl
-\]
-
-Let us relate this to the Muskingham Solution using the relationship
-\[
-a = \eta a^{-} + \left(1-\eta\right) a^{+}
-\]
-
-Taking Taylor series expansions for $q\left(a^{-}\right)$ and
-$q\left(a^{+}\right)$ based on $a$ gives
-
-\[
-q\left(a^{+}\right) \approx q\left(a\right) + \eta \Delta x \frac{dq\left(a\right)}{dx} + \frac{1}{2}\eta^2\Delta x^2 \frac{d^2 q\left(a\right)}{dx^2}
-\]
-and
-\[
-q\left(a^{-}\right) \approx q\left(a\right) - \left(1-\eta\right) \Delta x \frac{dq\left(a\right)}{dx} + \frac{1}{2}\left(1-\eta\right)^2 \Delta x^2 \frac{d^2 q\left(a\right)}{dx^2}
-\]
-
-Subtracting the expression for $q\left(a^{-}\right)$ from that for $q\left(a^{+}\right)$ gives
-
-\[
-q\left(a^{-}\right) - q\left(a^{+}\right) \approx
--\Delta x \frac{dq\left(a\right)}{dx} +
-\frac{1}{2}\left(1-2\eta\right)^2\Delta x^2 \frac{d^2 q\left(a\right)}{dx^2}
-\]
-
-From the mass balance condition
-\[
-\frac{ds}{dt} \approx \Delta x l -\Delta x \frac{dq\left(a\right)}{dx} +
-\frac{1}{2}\left(1-2\eta\right)\Delta x^2 \frac{d^2 q\left(a\right)}{dx^2} 
-\]
-
-Using the expression for storage and relationship between flow and area
-\[
-\frac{dq}{dt} = \frac{dq}{da} \frac{da}{dt} = \frac{c}{\Delta x} \frac{ds}{dt}
-\]
-
-Then combinign this with the approximation produces
-\[
-\frac{dq\left(a\right)}{dt} + c\frac{dq\left(a\right)}{dx} -
-\frac{c}{2}\left(1-2\eta\right)\Delta x \frac{d^2 q\left(a\right)}{dx^2}
-\approx c l
-\]
-
-Comparision to the orginal diffuse routing equation shows that
-\[
-\eta = \frac{1}{2} - \frac{D}{c \Delta x}
-\]
-
-The value of $\eta$ is limited to between 0 and $\frac{1}{2}$. Firstly $\eta =
-1/2$ results from $D=0$; that is the Kinematic wave equation. Taking  $\eta=0$
-produces the maxium dispersion of $D = \frac{c\Delta x}{2}$, which is given by
-the linear tank.
-
-## Numerical Solution
-
-**SEARCH WITH $a^{+}$ **
-
-Consider first the case with:
-
-- a known constant value of $\eta$ 
-- a known positive inflow $q\left(a^{-}_{t+\Delta t}\right)$ giving a value of
-  $a^{-}_{t+\Delta t}$
-- a known function $q$ such that $\frac{dq\left(a\right)}{da}\geq 0$ and
-  $q\left(0\right)=0$
-  
-An implicit
-solution gives the joint equations
-\[
-s_{t+\Delta t} = \Delta x \left(\eta a^{-}_{t+\Delta t} + \left(1-\eta\right)
-a^{+}_{t+\Delta t} \right)
-\]
-and
-\[
-s_{t+\Delta t} = s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
-r_{t+\Delta t} - q\left(a^{+}_{t+\Delta t}\right) \right)
-\]
-
-The unknown outflow crossection satisfies $a^{+}_{t+\Delta t} \geq 0$. The first
-expression for $s_{t+\Delta t}$ is strictly increasing with respect to
-$a^{+}_{t+\Delta t}$ while the second is decreasing, hence there is a unique
-solution for $a^{+}_{t+\Delta t}$ so long as
-\[
-\Delta x \eta a^{-}_{t+\Delta t} \leq s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
-r_{t+\Delta t}\right)
-\]
-Failure of this condition represents a breakdown of the trapeziod
-approximation. This is handled by taking $q\left(a^{+}_{t+\Delta t}\right)=0$
-and
-\[
-s_{t+\Delta t} = s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
-r_{t+\Delta t}\right)
-\]
-From this we see that
-\[
--r \leq \frac{1}{\Delta t} s_{t} + q\left(a^{-}_{t+Δt}\right) - \frac{\Delta
-x}{\Delta t} \eta a^{-}_{t+\Delta t}
-\]
-
-A more general numeric scheme is the following
-process
-
-- select trial $\hat{s}$
-- compute $\hat{a} = \max\left(0, \frac{1}{\Delta x \left(1-\eta\right)} \left( \hat{s} -
-  \Delta x \eta a^{-}_{t+\Delta t}\right)\right)$
-- evaluate $e = \hat{s} - s_{t} - \Delta t \left(q\left(a^{-}_{t+\Delta t}\right) +
-  r_{t+\Delta t} - q\left(\hat{a}\right)\right)$
-
-then search to find $e=0$
-
-Note that $\frac{de}{d\hat{s}} = 1 + \frac{dq}{da}\frac{da}{d\hat{s}} > 0$ and
-$\hat{s}=0$ implies $\hat{a} = 0$ hence $e \leq 0$ so there is a single
-solution.
-
-
-## Solution for saturated zone
-
-Buildin on the above let the storage deficit be $z$ and area deficit be $v$ is
-is simple to see that
-solution gives the joint equations
-\[
-z_{t+\Delta t} = \Delta x \left(\eta v^{-}_{t+\Delta t} + \left(1-\eta\right)
-v^{+}_{t+\Delta t} \right)
-\]
-and
-\[
-z_{t+\Delta t} = z_{t} - \Delta t \left( q\left(v^{-}_{t+\Delta t}\right) +
-r_{t+\Delta t} - q\left(v^{+}_{t+\Delta t}\right) \right)
-\]
-
-where now $q\left(v\right) \rightarrow 0$ as $v \rightarrow \infty$ and
-$\frac{dq}{dv} \leq 0$.
-
-Subsituting in the expression 
-\[
-r_{t+\Delta{ t}} = \min\left( \frac{1}{T_{d}}, \frac{U}{T_{d}z_{t+\Delta t} +
-\Delta t} \right)
-\]
-
-Gives a similar numeric scheme to that previously
-
-- select trial $\hat{q}$
-- compute $\hat{v} = q^{-1}\left(\hat{q}\right)$
-- compute $hat{z} = \Delta x \left(\eta v^{-}_{t+\Delta t} + \left(1-\eta\right)
-\hat{v} \right)$
-- compute $\hat{r} = \min\left( \frac{1}{T_{d}}, \frac{U}{T_{d}\hat{z} +
-\Delta t} \right)$
-- evaluate $e = \hat{z} - z_{t} +\Delta t \left(q\left(a^{-}_{t+\Delta t}\right) +
-  \hat{r} - q\left(\hat{v}\right)\right)$
-
-and search for $e=0$.
-
-The derivative $\frac{de}{d\hat{z}} = 1 + \frac{d\hat{r}}{dz -
- }\frac{dq}{dv}\frac{dv}{d\hat{z}} > 0$. *TODO based on proof below*
- For a unique solution $e \leq 0$ for $hat{s}=0$. if this is not the case need
- to limit $\hat{r}$
-  \[
- e = 0 - z_{t} +\Delta t \left(q\left(a^{-}_{t+\Delta t}\right) +
-  \hat{r} \right)$
- 
- 
- and
-$\hat{s}=0$ implies $\hat{a} = 0$ hence $e \leq 0$ so there is a single
-solution.
-
-
-meaning that 
-\[ 
-s_{t+\Delta t} \geq \Delta x \eta a^{-}_{t+\Delta t}
-\]
-
-Letting $\frac{dq\left(a\right)}{da}\geq 0$ and $q\left(0\right)=0$ gives
-\[
-s_{t} + \Delta t \left( q\left(a^{-}_{t+\Delta t}\right) +
-r_{t+\Delta t}  \right) 
-\geq \Delta x \eta a^{-}_{t+\Delta t}
-\]
-
-
-
-Assuming $\eta$ and $\kappa$ are constant over the time window $\Delta t$ this
-gives the solution
-
-\[
-\left. s \right.\rvert_{t + \Delta t} = 
-\frac{ \kappa\left(1-\eta\right) }{ \kappa\left(1-\eta\right) + \Delta t }
-\left( \left. s \right.\rvert_{t} + \frac{\Delta t}{1-\eta} \left. q^{-}
-\right.\rvert_{t + \Delta t} + \Delta t \left. r
-\right.\rvert_{t + \Delta t} \right)
-\]
-
-By derivation this scheme is mass conservative. The final state is positive when the bracket term is positive. The outflow is given by
-
-\[
-\Delta t \left.q^{+}\right.\rvert_{t + \Delta t} = 
-\left. s \right.\rvert_{t} + 
-\Delta t \left. q^{-} \right.\rvert_{t + \Delta t} + 
-\Delta t \left. r \right.\rvert_{t + \Delta t} - 
-\left. s \right.\rvert_{t + \Delta t}
-\]
-
-Subsituting in the expression for $\left. s \right.\rvert_{t + \Delta t}$
-gives
-
-\[
-\left.q^{+}\right.\rvert_{t + \Delta t} = 
-\frac{ 1 }{ \kappa\left(1-\eta\right) + \Delta t } 
-\left. s \right.\rvert_{t} + 
-\frac{ \Delta t - \kappa\eta}{ \kappa\left(1-\eta\right) + \Delta t } 
-\left. q^{-} \right.\rvert_{t + \Delta t} + 
-\frac{ \Delta t }{ \kappa\left(1-\eta\right) + \Delta t } 
-\left. r \right.\rvert_{t + \Delta t}
-\]
-
-Further manipulations indicates that $\left.q^{+}\right.\rvert_{t + \Delta
-t} \geq 0$ requires $\Delta t  \geq \kappa\eta$. *TODO - show these*
+<!-- 0. If $\mathcal{E}\left(s^{u},1\right) \leq 0$ let $q_{t+\Delta -->
+<!--    t}=q^{u}$, $\omega = 1$ and take -->
+<!--    \[ -->
+<!--    s_{t+\Delta t} = s_{t} + v_{t+\Delta t}^{-} + v_{t+\Delta t}^{r} - \Delta t q^{u} -->
+<!--    \] -->
+<!-- 1. If $\mathcal{E}\left(s^{u},0.5\right) \leq 0$ and -->
+<!--    $\mathcal{E}\left(s^{u},1\right) > 0$ let  -->
+<!--    $q_{t+\Delta t}=q^{u}$,  -->
+<!--    $s_{t+\Delta t}=s^{u}$ and compute -->
+<!--    \[ -->
+<!--    \omega =  -->
+<!--    \frac{ s^{u} + \Delta t q^{+}_{t} - s_{t} - v_{t+\Delta t}^{-} - -->
+<!--    v_{t+\Delta t}^{r}} -->
+<!--    {\Delta t \left( q^{+}_{t} - q^{u}\right)} -->
+<!--    \] -->
+<!-- 2. If $\mathcal{E}\left(s^{l},0.5\right) < 0$ and -->
+<!--    $\mathcal{E}\left(s^{u},0.5\right) > 0$ find $s_{t+\Delta t}$ by -->
+<!--    numerical search -->
+<!-- 3. If $\mathcal{E}\left(s^{l},0.5\right) \geq 0$ and -->
+<!--    $\mathcal{E}\left(s^{l},1\right) \leq 0$ set $s_{t+\Delta t}=s^{l}$ and -->
+<!--    compute -->
+<!--    \[ -->
+<!--    \omega =  -->
+<!--    \frac{ s^{l} + \Delta t q^{+}_{t} - s_{t} - v_{t+\Delta t}^{-} - v_{t+\Delta t}^{r}}{q^{+}_{t}} -->
+<!--    \] -->
+<!-- 4. If $\mathcal{E}\left(s^{l},1\right) > 0$ take $\omega = 1$, $q_{t+\Delta -->
+<!--    t}=q^{l}$ and $s_{t+\Delta t} = s_{t} + v_{t+\Delta t}^{-} + v_{t+\Delta -->
+<!--    t}^{r} - \Delta t q^{l}$ -->
 
 
 # Appendix A - Monotonicity of $f\left(z\right)$
