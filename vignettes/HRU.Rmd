@@ -537,20 +537,29 @@ Given an estimate of $\left. s_{sz}\right.\rvert_{\Delta t}$ such that
 $\mathcal{H}\left(\left. s_{sz}\right.\rvert_{\Delta t}\right)>0$ compute the
 vertical flux volumes in the following fashion
 
-1. $\left. q_{sz}^{+}\right.\rvert_{\Delta t} = \min\left(q_{sz}^{max},\max\left( 0, 2 \mathcal{G}\left(\left. s_{sz}\right.\rvert_{\Delta t},\Theta_{sz}\right) - \left. q_{sz}^{-}
-\right\rvert_{t+\Delta t}
+1. $\left. q_{sz}^{+}\right.\rvert_{t+\Delta t} =
+\min\left(q_{sz}^{max},\max\left( 0, 2
+\mathcal{G}\left(\left. s_{sz}\right.\rvert_{t+\Delta t},\Theta_{sz}\right) -
+\left. q_{sz}^{-} \right\rvert_{t+\Delta t}
 \right)\right)$
 1. $v_{uz \rightarrow sz} = \left. s_{sz}\right.\rvert_{t} +
-   \Delta t  \left(\left. q_{sz}^{+}\right.\rvert_{\Delta t} -
-   \left. q_{sz}^{-} \right\rvert_{t+\Delta t}\right) - \left. s_{sz}\right.\rvert_{\Delta t}$
-1. $v_{rz \rightarrow uz} = \min \left( \hat{v}_{rz \rightarrow uz},
-\left. s_{sz}\right.\rvert_{\Delta t} + v_{uz \rightarrow sz} - \left. s_{uz}\right.\rvert_{t} \right)$
+   \Delta t  \left(\left. q_{sz}^{+}\right.\rvert_{t+\Delta t} -
+   \left. q_{sz}^{-} \right\rvert_{t+\Delta t}\right) -
+   \left. s_{sz}\right.\rvert_{t+\Delta t}$
+1. $\left. s_{uz}\right.\rvert_{t+\Delta t} = \min\left(\left. s_{sz}\right.\rvert_{t+\Delta t},\left. s_{uz}\right.\rvert_{t} + \hat{v}_{rz \rightarrow uz} - v_{uz \rightarrow sz}\right)$
+1. $v_{rz \rightarrow uz} = \left. s_{uz}\right.\rvert_{t+\Delta t} -\left. s_{uz}\right.\rvert_{t} + v_{uz \rightarrow sz}$
 1. $v_{sf \rightarrow rz} = \min\left(\hat{v}_{sf \rightarrow rz}, s_{rzmax} - 
 \left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p \right)  + {v}_{rz
   \rightarrow uz} \right)$
+1. Solve for $\left. s_{rz}\right.\rvert_{t+\Delta t}$ using the equation
+   aready given.
+1. Compute the volume loss to evapotranspiration as
+   $\left. v_{e_{p}}\right.\rvert_{t+\Delta t} =
+   \left. s_{rz}\right.\rvert_{t} + v_{sf \rightarrow rz} - v_{rz \rightarrow
+   uz} + \Delta t p - \left. s_{rz}\right.\rvert_{t+\Delta t}$
 
-The storage values for the unsaturated ans root zone can then be computed
-using these fluxes. This leaves teh solution of the surface zone
+
+This leaves the solution of the surface zone
 
 ## Surface Zone
 
