@@ -1,4 +1,4 @@
-## Solution based on Area
+## Solution based on flow
 rm(list=ls())
 #graphics.off()
 
@@ -11,7 +11,7 @@ fa <- function(q){ (q/1.1)^(3/5) } ##q/1.3 }
 eta <- 0.3
 Dx <- 3000 #2340 #10000#10
 n <- 1100
-s <- vin <- vr <- vout <- qout <- rep(NA,n)
+s <- vin <- vr <- vout <- qout <- q <- rep(NA,n)
 qin <- rep(1,n)
 qin[200:500] <- 3
 r <- rep(0,n)
@@ -21,8 +21,9 @@ Dt <- 900
 
 ## initialise at steady state
 qout[1] <- qin[1] + r[1]
-qq <- eta*qin[1] + (1-eta)*qout[1]
-s[1] <- fa(qq)*Dx
+a <- eta*fa(qout[1]) + (1-eta)*fa(qin[1])
+q[1] <- fq(a)
+s[1] <- Dx*a
 
 ## loop
 for(tt in 2:n){
@@ -51,15 +52,14 @@ for(tt in 2:n){
 
         while( diff(rng) > 1e-10 ){
             shat <- mean(rng)
-            ahat <- shat/Dx
-            qq <- max( 0, (fq(ahat) - eta*qin[tt])/(1-eta) )
-            e <- shat - smax + DtStep*qq
+            ahat <- max( 0 , ( (shat/Dx) - eta*ain )/(1-eta) )
+            e <- shat - smax + DtStep*fq(ahat)
             if( e <=0 ){ rng[1] <- shat } else { rng[2] <- shat }
         }
 
         ss <- mean(rng)
-        ahat <- shat/Dx
-        qq <- max( 0, (fq(ahat) - eta*qin[tt])/(1-eta) )
+        ahat <- max( 0 , ( (ss/Dx) - eta*ain )/(1-eta) )
+        qq <- fq(ahat)
         vout[tt] <- vout[tt] + DtStep*qq
     }
     s[tt] <- ss
@@ -69,7 +69,7 @@ for(tt in 2:n){
 #graphics.off()
 x11()
 layout(matrix(1:3,1,3))
-matplot(cbind(qin,qout,r),type="l",main=paste("flow",nstep))
-matplot(cbind(qin,qout,r),type="l",main=paste("flow",nstep),xlim=c(195,203))
+matplot(cbind(qin,qout,r,q),type="l",main=nstep)
+matplot(cbind(qin,qout,r,q),type="l",main=nstep,xlim=c(195,203))
 plot(s[-n]+vin[-1]+vr[-1]-vout[-1]-s[-1])
 
