@@ -1,3 +1,8 @@
+# dynatop 0.2.3
+
+- removed dependancy on rgdal
+- Fix bug in get_states method
+
 # dynatop 0.2.2
 
 - Fixed missing time step in some Courant number calculations

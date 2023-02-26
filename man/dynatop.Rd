@@ -110,7 +110,9 @@ invisible(self) suitable for chaining
 \if{html}{\out{<a id="method-dynatop-initialise"></a>}}
 \if{latex}{\out{\hypertarget{method-dynatop-initialise}{}}}
 \subsection{Method \code{initialise()}}{
+
 Initialises a dynatop object in the simpliest way possible.
+
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dynatop$initialise(
   vtol = sqrt(.Machine$double.eps),

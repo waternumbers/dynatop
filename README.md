@@ -4,6 +4,7 @@
 [![R-CMD-check](https://github.com/waternumbers/dynatop/workflows/R-CMD-check/badge.svg)](https://github.com/waternumbers/dynatop/actions)
 [![codecov](https://img.shields.io/codecov/c/gh/waternumbers/dynatop/master)](https://app.codecov.io/gh/waternumbers/dynatop)
 [![AppVeyor build status](https://ci.appveyor.com/api/projects/status/github/waternumbers/dynatop?branch=master&svg=true)](https://ci.appveyor.com/project/waternumbers/dynatop)
+[![dynatop status badge](https://waternumbers.r-universe.dev/badges/dynatop)](https://waternumbers.r-universe.dev)
 <!-- badges: end -->
 
 This R package contains the core code to perform a dynamic TOPMODEL
@@ -45,4 +46,5 @@ the git repository from within R using the devtools package:
 devtools::install_github("waternumbers/dynatop")
 ```
 
-Prebuild packages of the development version (which may be ahead of CRAN) are available from the waternumbers drat repository [here](https://waternumbers.github.io/drat/).
+Prebuild packages of the development version (which may be ahead of CRAN) are available from the [r-universe](https://waternumbers.r-universe.dev/ui#package:dynatop)
+
