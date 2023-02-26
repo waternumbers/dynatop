@@ -1,4 +1,4 @@
-# dynatop
+# dynatop - Maintainance branch for v0.2.* of dynatop
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/waternumbers/dynatop/workflows/R-CMD-check/badge.svg)](https://github.com/waternumbers/dynatop/actions)
