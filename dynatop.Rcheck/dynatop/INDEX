@@ -1,0 +1,6 @@
+Swindale                Example dynamic TOPMODEL setup
+dynatop                 R6 Class for Dynamic TOPMODEL
+dynatop-package         dynatop
+evap_est                Create sinusoidal time series of potential
+                        evapotranspiration input
+resample_xts            Functions to resample an xts time series

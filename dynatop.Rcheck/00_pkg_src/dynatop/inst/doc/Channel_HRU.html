@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Channel HRU</title>
+
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Channel HRU</h1>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#notation-and-nomenclature" id="toc-notation-and-nomenclature">Notation and nomenclature</a></li>
+<li><a href="#inputs-to-a-channel-hru" id="toc-inputs-to-a-channel-hru">Inputs to a Channel HRU</a></li>
+<li><a href="#time-delay-channel-routing" id="toc-time-delay-channel-routing">Time Delay Channel Routing</a>
+<ul>
+<li><a href="#examples" id="toc-examples">Examples</a></li>
+</ul></li>
+</ul>
+</div>
+
+<p>The <code>dynatop</code> function in the dynamic TOPMODEL R package implements a set of numerical solutions to the
+governing equations of the dynamic TOPMODEL hillslope formulation. This
+returns the inflow to the channel reaches specified in the model.
+This vignette documents the formulation and the numerical solution used to
+route these channel inflows, along with other diffuse and point inputs to the
+model.</p>
+<div id="notation-and-nomenclature" class="section level1">
+<h1>Notation and nomenclature</h1>
+<p>Table @ref(tab:ch-notation} outlines the notation used in this document.</p>
+<table>
+<caption><span id="tab:ch-notation">Table 1: </span> Outline of notation for describing the Channel HRU
+section of the hillslope HRU</caption>
+<colgroup>
+<col width="15%" />
+<col width="10%" />
+<col width="63%" />
+<col width="10%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Quantity type</th>
+<th align="center">Symbol</th>
+<th>Description</th>
+<th align="center">unit</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Discharge from a reach at time <span class="math inline">\(t\)</span></td>
+<td align="center"><span class="math inline">\(q\left(t\right)\)</span></td>
+<td>Instantaneous discharge</td>
+<td align="center">m<span class="math inline">\(^3\)</span>/s</td>
+</tr>
+<tr class="even">
+<td>Discharge from a reach at time <span class="math inline">\(t\)</span></td>
+<td align="center"><span class="math inline">\(g\left(t\right)\)</span></td>
+<td>Instantaneous discharge</td>
+<td align="center">m<span class="math inline">\(^3\)</span>/s</td>
+</tr>
+<tr class="odd">
+<td>Diffuse inflow</td>
+<td align="center"><span class="math inline">\(d\left(t\right)\)</span></td>
+<td>Instantaneous inflow from diffuse inputs to the channel HRU</td>
+<td align="center">m<span class="math inline">\(^3\)</span>/s</td>
+</tr>
+<tr class="even">
+<td>Point inflow</td>
+<td align="center"><span class="math inline">\(p\left(t\right)\)</span></td>
+<td>Instantaneous inflow from a point source to the head of the Channel HRU</td>
+<td align="center">m<span class="math inline">\(^3\)</span>/s</td>
+</tr>
+<tr class="odd">
+<td>Velocity</td>
+<td align="center"><span class="math inline">\(v_{ch}\)</span></td>
+<td>Effective velocity of water conveyance within the Channel HRU network</td>
+<td align="center">m/s</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="inputs-to-a-channel-hru" class="section level1">
+<h1>Inputs to a Channel HRU</h1>
+<p>A Channel HRU is considered as representing a channel reach of length
+<span class="math inline">\(L\)</span>. Each Channel HRU has two types of inflow, labelled diffuse
+and point. Diffuse inflows are external inputs which occur at a
+constant rate over the length of the reach. These include precipitation, the
+inflow from Hillslope HRUs and time series specified in the <code>diffuse_inputs</code>
+table.</p>
+<p>Point inflows are considered to occur at the head of the channel reach. These
+consist of the inflow from upstream channel HRUs and time series specified in the <code>point_inputs</code> table.</p>
+</div>
+<div id="time-delay-channel-routing" class="section level1">
+<h1>Time Delay Channel Routing</h1>
+<p>The time delay channel routing is selected by setting the <code>channel_solver</code>
+value in the model options vector to <code>histogram</code>. The method offers a basic representation of the movement of
+water in which a constant velocity to assigned to each channel reach.</p>
+<p>For the diffuse inputs to a single channel reach of length <span class="math inline">\(L\)</span> the
+contribution to the outflow at time <span class="math inline">\(t\)</span> is given by
+<span class="math display">\[
+\frac{1}{L} \int\limits_{l=0}^{L} d\left(t - \frac{l}{v_{ch}}\right) dl
+\]</span>
+where as for a point input to the same channel the contribution is
+<span class="math display">\[
+p\left(t - \frac{L}{v_{ch}}\right)
+\]</span>
+such that
+<span class="math display">\[
+q\left(t\right) = \frac{1}{L} \int\limits_{l=0}^{L} d\left(t -
+\frac{l}{v_{ch}}\right) dl + p\left(t - \frac{L}{v_{ch}}\right)
+\]</span></p>
+<p>Consider next a change of variables by taking <span class="math inline">\(\tau = l/v_{ch}\)</span> and defining
+<span class="math inline">\(\tau_{L} = L/v_{ch}\)</span> so that
+<span class="math display">\[
+q\left(t\right) =
+\frac{v_{ch}}{L} \int\limits_{\tau=0}^{\tau_{L}} d\left(t - \tau\right) d\tau +
+p\left(t - \tau_{L}\right)
+\]</span></p>
+<p>Since the action on the point inputs is purely advective the flow at a gauged
+location can be written as the summation of the diffuse and external point
+inflows to the Channel
+HRUs (reaches) above the location. For the <span class="math inline">\(k\)</span>th Channel HRU above the gauge let
+<span class="math inline">\(\tau_{0}^{\left[k\right]}\)</span> be the advective time delay between water leaving the reach and
+arriving at the gauge. This is readily computed from the channel HRU
+connectivity, reach lengths and velocities. The gauged flow can thus be
+expressed as</p>
+<p><span class="math display">\[
+g\left(t\right) = \sum_{k}
+\frac{v_{ch}^{\left[k\right]}}{L^{\left[k\right]}}
+\int\limits_{\tau_{0}^{\left[k\right]}}^{\tau_{0}^{\left[k\right]} + \tau_{L}^{\left[k\right]}} d\left(t -
+\tau \right) d\tau +
+\hat{p}\left(t - \tau_{0}^{\left[k\right]} - \tau_{L}^{\left[k\right]}\right)
+\]</span></p>
+<p>To solve for the gauge flow on a discrete time step <span class="math inline">\(\Delta t\)</span> suppose that
+<span class="math inline">\(t = i\Delta t\)</span> and that the flow index by the time subscript is valid over
+the preceding time step; for example
+<span class="math display">\[
+d\left(t\right) = d_{i\Delta t} \quad \left(i-1\right)\Delta t \leq t &lt;i\Delta t
+\]</span></p>
+<p>Then to evaluate <span class="math inline">\(g_{i\Delta t}\)</span> while maintaining mass
+conservation in the formulation, the gauged flows must be integrated over the
+time period. Consider one of the contributing
+HRUs, then (dropping the superscript <span class="math inline">\(k\)</span>) the contribution of the point inflow
+is
+<span class="math display">\[
+\frac{1}{\Delta t}\int\limits_{\left(i-1\right)\Delta t}^{i\Delta
+  t} \hat{p}\left(t - \tau_{0} - \tau_{L}\right) dt
+=
+\frac{\left(r_{L}+1\right)\Delta t - \left(\tau_{0}+\tau_{L}\right)}{\Delta t}
+\hat{p}_{\left(i-r_L\right)\Delta t} +
+\frac{\tau_0 + \tau_L- r_L \Delta t}{\Delta t}
+\hat{p}_{\left(i-1-r_L\right)\Delta t}
+\]</span>
+where <span class="math inline">\(r_L\)</span> is the largest integer for which
+<span class="math inline">\(r_{L}\Delta t \leq \tau_0 + \tau_L\)</span>.
+The right hand side of this expression gives the time delay histogram for the
+point inflow.</p>
+<p>As similar expression holds for each value of <span class="math inline">\(\tau\)</span> along the HRU, such that
+the average inflow at that point over the time step is given by
+<span class="math display">\[
+\frac{1}{\Delta t}\int\limits_{\left(i-1\right)\Delta t}^{i\Delta
+  t} d\left(t - \tau\right) dt
+=
+\frac{\left(r_{\tau}+1\right)\Delta t - \tau}{\Delta t}
+d_{\left(i-r_{\tau}\right)\Delta t} +
+\frac{\tau- r_{\tau} \Delta t}{\Delta t}
+d_{\left(i-1-r_{\tau}\right)\Delta t}
+\]</span>
+where <span class="math inline">\(r_\tau\)</span> is the largest integer for which
+<span class="math inline">\(r_{\tau}\Delta t \leq \tau\)</span>.
+Next consider the integral of the diffuse inflows over <span class="math inline">\(\tau\)</span>; that is
+<span class="math display">\[
+\int\limits_{\tau_{0}}^{\tau_{0} +
+  \tau_{L}}
+\frac{\left(r_{\tau}+1\right)\Delta t - \tau}{\Delta t}
+d_{\left(i-r_{\tau}\right)\Delta t} +
+\frac{\tau- r_{\tau} \Delta t}{\Delta t}
+d_{\left(i-1-r_{\tau}\right)\Delta t} d\tau
+\]</span></p>
+<p>The range of <span class="math inline">\(\tau\)</span> can be divided into intervals which share the same value
+of <span class="math inline">\(r_{\tau}\)</span>. Defining the minimum value of <span class="math inline">\(r_\tau\)</span> as
+<span class="math inline">\(r_{0} = r_{\tau_{0}}\)</span> then if <span class="math inline">\(r_{L}&gt;r_{0}\)</span> the intervals are given by
+<span class="math display">\[
+\left(\tau_0,\left(r_{0}+1\right)\Delta t\right),
+\left(\left(r_{0}+1\right)\Delta t,\left(r_{0}+2\right)\Delta t\right),
+\ldots,
+\left(\left(r_{0}+n\right)\Delta t,\tau_{0}+\tau_{L}\right)
+\]</span></p>
+<p>For <span class="math inline">\(j=1,\ldots,n-1\)</span> the integral over an interval of <span class="math inline">\(\Delta t\)</span> gives
+<span class="math display">\[
+\int\limits_{\left(r_{0}+j\right)\Delta t}^{\left(r_{0}+j+1\right)\Delta t}
+\frac{\left(r_{0}+j+1\right)\Delta t - \tau}{\Delta t}
+d_{\left(i-r_{0}-j\right)\Delta t} +
+\frac{\tau- \left(r_{0}+j\right) \Delta t}{\Delta t}
+d_{\left(i-r_{0}-j-1\right)\Delta t} d\tau \\
+= \frac{\Delta t}{2}
+\left(\left(r_{0}+j+1\right)-\left(r_{0}+j\right)\right)^2
+d_{\left(i-r-j\right)\Delta t} +
+\frac{\Delta t}{2}
+\left(\left(r_{0}+j+1\right)-\left(r_{0}+j\right)\right)^2
+d_{\left(i-r-j-1\right)\Delta t} \\
+=  \frac{\Delta t}{2} d_{\left(i-r_{0}-j\right)\Delta t} +
+\frac{\Delta t}{2} d_{\left(i-r_{0}-j-1\right)\Delta t}
+\]</span></p>
+<p>For the initial interval
+<span class="math display">\[
+\int\limits_{\tau_{0}}^{\left(r_{0}+1\right)\Delta t}
+\frac{\left(r_{0}+1\right)\Delta t - \tau}{\Delta t}
+d_{\left(i-r_{0}\right)\Delta t} +
+\frac{\tau- r_{0}\Delta t}{\Delta t}
+d_{\left(i-r_{0}-1\right)\Delta t} d\tau \\
+= \frac{1}{2\Delta t} \left(\left(r_0+1\right)\Delta t - \tau_{0}\right)^2
+d_{\left(i-r_{0}\right)\Delta t} +
+\left\{
+\frac{1}{2\Delta t} \left(\left(r_0+1\right)\Delta t - \tau_{0}\right)^2 +
+\frac{ \left(\tau_{0} - r_{0}\Delta t\right)\left(\left(r_0+1\right)\Delta t -
+  \tau_{0}\right)}{\Delta t} \right\}
+d_{\left(i-r_{0}-1\right)\Delta t}
+\]</span></p>
+<p>and the final interval and noting that <span class="math inline">\(r_{0}+n = r_{L}\)</span>
+<span class="math display">\[
+\int\limits_{r_{L}\Delta t}^{\tau_0+\tau_L}
+\frac{\left(r_{L}+1\right)\Delta t - \tau}{\Delta t}
+d_{\left(i-r_{L}\right)\Delta t} +
+\frac{\tau- r_{L} \Delta t}{\Delta t}
+d_{\left(i-r_{L}-1\right)\Delta t} d\tau \\
+=
+\left\{
+\frac{1}{2\Delta t} \left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2 +
+\frac{ \left(\tau_0 + \tau_{L} - r_L\Delta t\right)\left(\left(r_L + 1
+  \right)\Delta t - \tau_{0} - \tau_L\right)}{\Delta t}
+\right\}d_{\left(i-r_{L}\right)\Delta t} +
+\frac{1}{2\Delta t} \left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2
+d_{\left(i-r_{L}-1\right)\Delta t}
+\]</span></p>
+<p>By grouping the terms for the individual inputs together and multiply through
+by <span class="math inline">\(v_{ch}/L\)</span> time delay histograms
+can be constructed for each HRU draining to the gauge. Table <a href="#tab:table-full">2</a> shows the solution for
+<span class="math inline">\(r_{L}&gt;r_0+1\)</span> and Table <a href="#tab:table-three">3</a> for the case <span class="math inline">\(r_{L}=r_0+1\)</span>.</p>
+<table>
+<caption><span id="tab:table-full">Table 2: </span> Outline of the time delay histogram for the diffuse input in the case <span class="math inline">\(r_{L}&gt;r_0+1\)</span></caption>
+<colgroup>
+<col width="30%" />
+<col width="38%" />
+<col width="30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Delay</th>
+<th>Inflow</th>
+<th>Weight</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(r=0,\ldots,r_0-1\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r\right)\Delta t}\)</span></td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(r_0\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_0\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}}{2L\Delta t} \left(\left(r_0+1\right)\Delta t - \tau_{0}\right)^2\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(r_0+1\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_0-1\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}\Delta t}{2L} + \frac{v_{ch}}{2L\Delta t} \left(\left(r_0+1\right)\Delta t - \tau_{0}\right)^2 + \frac{ v_{ch}\left(\tau_{0} - r_{0}\Delta t\right)\left(\left(r_0+1\right)\Delta t - \tau_{0}\right)}{L\Delta t}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(r=r_{0}+2,\ldots,r_{L}-1\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}\Delta t}{L}\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(r_{L}\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_{L}\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}\Delta t}{2L} + \frac{v_{ch}}{2L\Delta t} \left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2 + \frac{ v_{ch}\left(\tau_0 + \tau_{L} - r_L\Delta t\right)\left(\left(r_L + 1 \right)\Delta t - \tau_{0} - \tau_L\right)}{L\Delta t}\)</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(r_{L}+1\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_{L}-1\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}}{2L\Delta t} \left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2\)</span></td>
+</tr>
+</tbody>
+</table>
+<table>
+<caption><span id="tab:table-three">Table 3: </span> Outline of the time delay histogram for the diffuse input in the case <span class="math inline">\(r_{L}=r_0+1\)</span></caption>
+<colgroup>
+<col width="30%" />
+<col width="38%" />
+<col width="30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Delay</th>
+<th>Inflow</th>
+<th>Weight</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><span class="math inline">\(r=0,\ldots,r_0-1\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r\right)\Delta t}\)</span></td>
+<td>0</td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(r_0\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_0\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}}{2L\Delta t} \left(\left(r_0+1\right)\Delta t - \tau_{0}\right)^2\)</span></td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(r_0+1 = r_{L}\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_0-1\right)\Delta t}\)</span></td>
+<td><span class="math display">\[\frac{v_{ch}}{2L\Delta t}\left(\left(r_0+1\right)\Delta t -
+\tau_{0}\right)^2
++
+\frac{v_{ch}\left(\tau_{0} - r_{0}\Delta
+t\right)\left(\left(r_0+1\right)\Delta t- \tau_{0}\right)}{L\Delta t}
++\\
+\frac{v_{ch}}{L\Delta t}\left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2
++
+\frac{
+v_{ch}\left(\tau_0 + \tau_{L} - r_L\Delta t\right)\left(\left(r_L + 1
+\right)\Delta t - \tau_{0} - \tau_L\right)}{L\Delta t}\]</span></td>
+</tr>
+<tr class="even">
+<td><span class="math inline">\(r_{L}+1\)</span></td>
+<td><span class="math inline">\(d_{\left(i-r_{L}-1\right)\Delta t}\)</span></td>
+<td><span class="math inline">\(\frac{v_{ch}}{2L\Delta t} \left(\tau_0 + \tau_{L} - r_L\Delta t\right)^2\)</span></td>
+</tr>
+</tbody>
+</table>
+<p>The final case to consider is <span class="math inline">\(r_{0} = r_{L}\)</span>. In this case there is a single
+integral to evaluate:
+<span class="math display">\[
+\int\limits_{\tau_{0}}^{\tau_{0}+\tau_{L}}
+\frac{\left(r_{0}+1\right)\Delta t - \tau}{\Delta t}
+d_{\left(i-r_{0}\right)\Delta t} +
+\frac{\tau- r_{0} \Delta t}{\Delta t}
+d_{\left(i-r_{0}-1\right)\Delta t} d\tau \\
+= \frac{\tau_{L}}{\Delta t}
+\left(\left(r_{0}+1\right)\Delta t - \tau_{0} - \tau_{L}/2 \right)
+d_{\left(i-r_{0}\right)\Delta t} +
+\frac{\tau_{L}}{\Delta t}
+\left(\tau_{)} + \tau_{L}/2 - r_{0}\Delta t\right)
+d_{\left(i-r_{0}-1\right)\Delta t}
+\]</span></p>
+<div id="examples" class="section level2">
+<h2>Examples</h2>
+<p>In this section some example histograms are generated based upon the length,
+velocity and <span class="math inline">\(\tau_0\)</span> of the Channel HRU along with the time step <span class="math inline">\(\Delta t\)</span>.</p>
+<div id="point-input" class="section level3">
+<h3>Point input</h3>
+<p>First a function for defining the histogram for a point inflow can be coded
+as follows:</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="do">## L is length of channel</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="do">## vch is channel velocity</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="do">## Dt is the time step</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="do">## tau0 is the time delay between the gauge and foot of the reach</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>fp <span class="ot">&lt;-</span> <span class="cf">function</span>(L,vch,Dt,tau0){</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  tauL <span class="ot">&lt;-</span> L<span class="sc">/</span>vch</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  rL <span class="ot">&lt;-</span> <span class="fu">floor</span>((tau0<span class="sc">+</span>tauL)<span class="sc">/</span>Dt)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  irL <span class="ot">&lt;-</span> rL<span class="sc">+</span><span class="dv">1</span> <span class="do">## index in vector since R starts at 1 not zero</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>,irL<span class="sc">+</span><span class="dv">1</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  b[irL] <span class="ot">&lt;-</span> ((rL<span class="sc">+</span><span class="dv">1</span>)<span class="sc">*</span>Dt <span class="sc">-</span> tau0<span class="sc">-</span>tauL)<span class="sc">/</span>Dt</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  b[irL<span class="sc">+</span><span class="dv">1</span>] <span class="ot">&lt;-</span> (tau0<span class="sc">+</span>tauL <span class="sc">-</span> rL<span class="sc">*</span>Dt)<span class="sc">/</span>Dt</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(b)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>For the first example all the input should occur with one time step delay
+(second element in output vector) since <span class="math inline">\(L/v_ch\)</span> exactly matches the time step
+and <span class="math inline">\(\tau_{0}=0\)</span></p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fp</span>(<span class="at">L=</span><span class="dv">100</span>,<span class="at">vch=</span><span class="fl">0.5</span>,<span class="at">Dt=</span><span class="dv">200</span>,<span class="at">tau0=</span><span class="dv">0</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0 1 0</span></span></code></pre></div>
+<p>In this example <span class="math inline">\(\tau_{0}+L/v_ch = \frac{7}{2}\Delta t\)</span>; so the first non zero
+value of the vector should be the 4th element with the 4th and 5th
+elements being equal.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fp</span>(<span class="at">L=</span><span class="dv">100</span>,<span class="at">vch=</span><span class="dv">1</span>,<span class="at">Dt=</span><span class="dv">200</span>,<span class="at">tau0=</span><span class="dv">600</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.0 0.0 0.0 0.5 0.5</span></span></code></pre></div>
+<p>This build upon the above example, altering the velocity such that the only
+non-zero elements are the 4th and 5th, but with the 4th being larger then the 5th.</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">fp</span>(<span class="at">L=</span><span class="dv">100</span>,<span class="at">vch=</span><span class="fl">1.5</span>,<span class="at">Dt=</span><span class="dv">200</span>,<span class="at">tau0=</span><span class="dv">600</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 0.0000000 0.0000000 0.0000000 0.6666667 0.3333333</span></span></code></pre></div>
+</div>
+<div id="diffuse-inflow" class="section level3">
+<h3>Diffuse inflow</h3>
+<p>The function for the diffuse inflow is more complex since the special cases
+have to be handled:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>fd <span class="ot">&lt;-</span> <span class="cf">function</span>(L,vch,Dt,tau0){</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  tauL <span class="ot">&lt;-</span> L<span class="sc">/</span>vch</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  r0 <span class="ot">&lt;-</span> <span class="fu">floor</span>(tau0<span class="sc">/</span>Dt)</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  ir0 <span class="ot">&lt;-</span> r0<span class="sc">+</span><span class="dv">1</span> <span class="do">## index in vector since R starts at 1 not zero</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  rL <span class="ot">&lt;-</span> <span class="fu">floor</span>((tau0<span class="sc">+</span>tauL)<span class="sc">/</span>Dt)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  irL <span class="ot">&lt;-</span> rL<span class="sc">+</span><span class="dv">1</span> <span class="do">## index in vector since R starts at 1 not zero</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="dv">0</span>,irL<span class="sc">+</span><span class="dv">1</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span>(rL<span class="sc">&gt;</span>r0){</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    b[ir0<span class="sc">:</span>(irL<span class="dv">-1</span>)] <span class="ot">&lt;-</span> Dt <span class="co"># inital values valid unless over written</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    b[ir0] <span class="ot">&lt;-</span> ( ((r0<span class="sc">+</span><span class="dv">1</span>)<span class="sc">*</span>Dt <span class="sc">-</span> tau0)<span class="sc">^</span><span class="dv">2</span> ) <span class="sc">/</span> (<span class="dv">2</span><span class="sc">*</span>Dt)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    b[ir0<span class="sc">+</span><span class="dv">1</span>] <span class="ot">&lt;-</span> b[ir0] <span class="sc">+</span> ( ((r0<span class="sc">+</span><span class="dv">1</span>)<span class="sc">*</span>Dt <span class="sc">-</span> tau0)<span class="sc">*</span>(tau0 <span class="sc">-</span> (r0<span class="sc">*</span>Dt)) ) <span class="sc">/</span> Dt</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    b[irL<span class="sc">+</span><span class="dv">1</span>] <span class="ot">&lt;-</span> ( (tau0<span class="sc">+</span>tauL <span class="sc">-</span> (rL<span class="sc">*</span>Dt))<span class="sc">^</span><span class="dv">2</span> ) <span class="sc">/</span> (<span class="dv">2</span><span class="sc">*</span>Dt)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    b[irL] <span class="ot">&lt;-</span> b[irL] <span class="sc">+</span> b[irL<span class="sc">+</span><span class="dv">1</span>] <span class="sc">+</span> ( ((tau0<span class="sc">+</span>tauL <span class="sc">-</span> (rL<span class="sc">*</span>Dt))<span class="sc">*</span>((rL<span class="sc">+</span><span class="dv">1</span>)<span class="sc">*</span>Dt <span class="sc">-</span> tau0<span class="sc">-</span>tauL)) <span class="sc">/</span> Dt ) <span class="do">## added to self since rL could equal r0+1</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span>( rL <span class="sc">&gt;</span> (r0<span class="sc">+</span><span class="dv">1</span>) ){</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>      b[ir0<span class="sc">+</span><span class="dv">1</span>] <span class="ot">&lt;-</span> b[ir0<span class="sc">+</span><span class="dv">1</span>] <span class="sc">+</span> Dt<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>      b[irL] <span class="ot">&lt;-</span> b[irL] <span class="sc">+</span> Dt<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  }<span class="cf">else</span>{</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    b[ir0] <span class="ot">&lt;-</span> (tauL<span class="sc">/</span>Dt)<span class="sc">*</span>( (r0<span class="sc">+</span><span class="dv">1</span>)<span class="sc">*</span>Dt <span class="sc">-</span> tau0 <span class="sc">-</span> (tauL<span class="sc">/</span><span class="dv">2</span>) )</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    b[ir0<span class="sc">+</span><span class="dv">1</span>] <span class="ot">&lt;-</span> (tauL<span class="sc">/</span>Dt)<span class="sc">*</span>(tau0 <span class="sc">+</span> (tauL<span class="sc">/</span><span class="dv">2</span>) <span class="sc">-</span> r0<span class="sc">*</span>Dt )</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(b<span class="sc">*</span>vch<span class="sc">/</span>L)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>In the first example there is no advective time delay and
+<span class="math inline">\(L/v_{ch} = \Delta t\)</span>. This results in time delay histogram in which the
+first two values equal 0.5. This is an example of the case <span class="math inline">\(r_{L}=r_{0}+1\)</span></p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">fd</span>(<span class="at">L=</span><span class="dv">200</span>,<span class="at">vch=</span><span class="dv">1</span>,<span class="at">Dt=</span><span class="dv">200</span>,<span class="at">tau0=</span><span class="dv">0</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(b)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(b)</span></code></pre></div>
+<p><img src="data:image/png;base64,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S19JS0szGo3tHrEDxMTEjBgxosWlxMREjbxdYmJirH1ol06n8/HxaWhosPFILdLIv+lPdNY+RRBA+2nqCMZmXzgabQTGZl84KA2cIloq3n8oIe1dw/CpU1Ja2Oz7+vvfJbDZF3ZK/cCav8q6o/favjsPXbXZV1EURblwIuvuhBVR/yhisy/skPp7EdnsCwemfmBs9oUDU//Chs2+cGDqX4MpimKpzd/wxLzMNz4qbmmz76PPP5c+yF/9Qy1w/TQR2EUNbPaFo9FSYIDD4cwLEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAEIEBgggMEERggCACAwQRGCCIwABBBAYIIjBA0P8Ak6iWDq2kNgcAAAAASUVORK5CYII=" /><!-- --></p>
+<p>Extending the previous example the velocity now altered to that
+<span class="math inline">\(r_{L}=r_{0}\)</span>. The resulting non-negative histogram values are now the first
+two in the vector.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">fd</span>(<span class="at">L=</span><span class="dv">200</span>,<span class="at">vch=</span><span class="fl">1.5</span>,<span class="at">Dt=</span><span class="dv">200</span>,<span class="at">tau0=</span><span class="dv">0</span>)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(b)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(b)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p>In contrast decreasing the channel velocity produces a more delayed
+histogram. In this case <span class="math inline">\(r_{L}&gt;r_{0}+1\)</span>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">fd</span>(<span class="at">L=</span><span class="dv">200</span>,<span class="at">vch=</span><span class="fl">0.5</span>,<span class="at">Dt=</span><span class="dv">200</span>,<span class="at">tau0=</span><span class="dv">0</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(b)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(b)</span></code></pre></div>
+<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASAAAAEgCAIAAACb4TnXAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAMqklEQVR4nO3dfVRUZR7A8WcGBhmEURYREJT1iOgRXwBfEE3dfCkt04w09mS6lq9Ji+tahrml5OaaJaZhKhkdVjpbaVtqJq4vpalsWiq6pgkJpZYEYoCiMsPsP1amjKLwm3tn+n7+vM849zmH+XrvnXlmrsFutysAMoxaTwBwZwQGCCIwQBCBAYIIDBBEYIAgAgMEERggiMAAQQQGCCIwQBCBAYIIDBBEYIAgAgMEERggiMAAQQQGCCIwQBCBAYIIDBBEYIAgAgMEERggiMAAQQQGCCIwQBCBAYIIDBBEYIAgAgMEERggiMAAQQQGCCIwQBCBAYIIDBBEYIAgAgMEERggiMAAQQQGCCIwQBCBAYIIDBBEYIAgAgMEERggiMAAQQQGCCIwQBCBAYIIDBBEYIAgAgMEERggiMAAQQQGCCIwQBCBAYIIDBBEYIAgAgMEERggiMAAQQQGCCIwQBCBAYIIDBBEYIAgAgMEERggiMAAQQQGCCIwQBCBAYIIDBDkqfUEGlJubm5SUpKj0TNnzqxdu7ZHjx7OnJIjc+fOXb9+vfReTCZTRkZGx44dpXcER9wqsOjo6BUrVjgaHTdunNVqdeZ8buCzzz6Lj4+Xfumnp6cXFhYSmIbcKjBvb++uXbs6Gm3cuLHRqKNT4tDQ0MjISNFd+Pr6ij4/bkpHLzjA/RAYIIjAAEEEBggiMEAQgQGCCAwQRGCAIAIDBOk3MNuRVZPGrzikl7VNwO3QwVKpqh8KT/9otV+72Xpw58aN1XccH2A2KYNP89+3sHhoMTugPrQP7HLunDsGLjtVU/vomA5vKaW8+qd//Z/HQ/V7uAVqp31gnhGDRsS+vfJEq4dmpSb1D/P6abv1i4X3z6p+dsOsHp7K6NeyOXXBBWkfmLHl/Uv39Bz56l8fnzNm0qF5yxdOimvmoZSqLm/m5VUd0Tk62uumzwHolD6OC57Bfadlf37wrYSytLs69UvOPlxx3SUZ4Ir0EZhSSqlG4YNnv39gb3qfL2f17nzPs+sKqqgMrk5HgSmllGoc+cD8nLydqW23TZ206lub1tMB6kf7a7DrGZp0fmTJJ/eM+/Cj/OYd9DhBoK50+/r1CIgZNjpGKdsPX+4+VmaJ6NYxmDc74HJ0G9hPKnOeHvDIpl51+hxs3759KSkpjkaPHj1aUlLSwNMDbkj3gTUeMGfdR1ObRjWrw9Viu3btZs6c6Wg0OTnZ39+/IecG3IzuA/MMiRkUUsfH+vn5DRw40NGoxWLx8GC5FZxKP4HVVBR9/unuL44Wfn+28rLd09w0KDyyS3zfuIim+pkjcIt08eK1nd78/KSpL28sqLQbvHwsfj4mZa2qLD9/yabMre58fNHKvye0aaT1JIHboIPPwaz/e/nBhLRveqW+v7ewrOpiZVlJcXHJ2YqqqrKiz9e/eG9V1sNDntxWofUsgduh/RHMemTNW3kxcw9lTmv9q9oNpiatYu9NSu/d6nyHP72+ZX7/EY21miJwu7Q/gtl/LPvRK7x1iIOZGPwi24deLi2pZN0UXJD2gXlGdGxv3bZ6zTe1fnfZfm5P5jtHgjtF/c7g7IkB9af9KaIhJPFvycsHj4uNfXfk8L4xkS0Dm/iYVHVVecnJ/LxdH67ZcMjnodV/6WnSep7AbdA+MKV8e6Vuz41+5aUV72bOef105ZVfDzB4mAPb9hj46MrXpo/uFqD9kRa4DXoITCmDX4eE2W8kzFb26sqzpefOX6rxMDdt1szSiK7g2vQR2M8MJt+AYN8AracBNBAOEYAgAgMEERggiMAAQQQGCCIwQBCBAYIIDBBEYIAgna3kqJ8DBw688MILjkaPHz9+9uxZZ84HcKvAwsPDR44c6Wj04MGDfn5+zpwP4FaB+fv73yCwRYsWmUx86wVOxTUYIIjAAEEEBggiMEAQgQGCCAwQRGCAIAIDBLnVB823KicnZ9WqVdJ7MRqNU6ZM6devn/SO6iglJaWgoEB6L76+vunp6WazWXpHOucCgVkrS0urfQL9zQ1+tN2xY0dpaWmfPn0a+ol/Zdu2bTt37tRPYFlZWYmJidKrxtLS0lJTU8PCwkT3on+6CKymeOeSlDmZ24+VmVp2v3/K7KcfifH/+ZeyrUdeHhC/Y+JXdbiF7G1o3bq19EvfCYeLWxUfHx8QIPvjeMuWLRN9flehg2swW3564tAn15W1HfLHUQPCvs2a0DtudNbxS1pPC2gA2h/BbPlrV+eGTd+2a0FPs1KqZu6nC8cmTh483nv7m6NaccdXuDbtj2A1xd8Ve8f2jrlyNWwMvGPm2o/mR2x+bPhTW0u5ZxFcm/aBGYNaNL+Yt+/I5V82mTv9+V9vTzGsfPDelC3FNdpNDagv7QPziEgY26to4QPDZ2bs+u6nmgz+f/jHxncftS2/r/uQeR+XcCCDi9I+MGVsM3n1mqej8le++N7Xtqs2Bw9+afuujOHWXXtO2xz/a0DPtH+TQyllDB743IavUi5cNP76C8cG36jRSz558JmvjlcGNNfBfwXArdJFYEoppQxePrV/6u8dFNkpyMmTARqGfgJzoDx7RIuxOfGv5m+e3OJmt2k+fPjw0qVLHY2eOHHi3LlzDTw94IZ0H1ijDiOmzYgKj/atw2ODgoK6detmt9f+nsjWrVt9fHwadnbAjek/sJgx82Lq+NjAwMAJEyY4Gs3MzPTy8mqgaQF1oqvArBWnC/KLvj9bednuaW4aFB4R0bIpRcCV6SOw6pNbX3k29bW1u0+UW385vzMYG4f1GDZh1vMz7mvzW//WA1yUDgKzF38wsc+o98xDxj/7et/otqHNLD4mZa2qKDl1/MDO9VmLE3rtWfrpukltdTBV4BZp/6qtOZH90juNpmz87+J+13xDqWt8/2Fjkh5Luztu3uId49L7c7YIl6P9x7e2k4XfescN6Ong+39ebe8Z3P5cfn4Zy6XggrQPzBgSFly1PzfvYu3DNWdydxeYW4RabvYhGKBD2p8ierRJnHLXwonD7ip7ampC35jIloFNfEyquqq85GR+3q4Nbyx+7ZPwGdsH8C4HXJH2gSljyzH/3KKemZ763MPLK2xXnwkajObQnonzcxYkdffWbHpAPeggMKUMfp3HLtkydmFp/qG8Y0Vnys5fqvEwN23eqm2nzu2DfTg3hOvSRWBXNAqI6HZnRDetpwE0HO3f5ADcGIEBgggMEERggCACAwQRGCCIwABBBAYIIjBAkJ5WctTbsWPH0tLSHP3oTWFhYXl5uZOnhN84twrMYrHExsY6Gt2yZQs/egMnc6vAQkJCJk6c6Gg0MzPT25tV+XAqrsEAQQQGCCIwQBCBAYIIDBBEYIAgAgMEERggiMAAQbpaycHti+Bu9BEYty+Cm9JBYNy+CO5L+1ctty+CG9P+TQ5uXwQ3pn1g3L4Ibkz7U0RuXwQ3pn1g3L4IbkwHgXH7IrgvXQR2BbcvgtvRU2C1Ks8e0WJsTvyr+Zsnt7jZsaygoCAjI8PR6MmTJysrK6/ZuHfv3gsXLtR/mjeQl5fXrl2767dv2rQpLy9PdNdFRUW1bs/OzjabZa9qz58/f80Wm802b968qqoq0f0qpUJDQ5944gnpvdSR7gNr1GHEtBlR4dG+dXisyWTy9/d3NDpo0KCoqKirt4waNcpisdR7ijfRpUuXoUOHXrMxOTl5//79Tth1XFzcNRsXLFhw6tQp6V137949ODj46i0Gg6FJkyZO+N0hJ/xN687g6FcEAdSfro5gLPaFu9FHYCz2hZvSwSmivfiDR+NGvWceMv6xEbUs9n3jg+/iWOwLF6V9YDVfp/XrtKLrxr3XLfZVSil1+Wja3XGLOvy7gMW+cEHar0VksS/cmPaBsdgXbkz7CxsW+8KNaX8NppSyV+RlPTM99c2PT9S22PfJFxck9Q7U/lAL3DpdBHbFJRb7wt3oKTDA7XDmBQgiMEAQgQGCCAwQRGCAIAIDBBEYIIjAAEEEBggiMEAQgQGCCAwQRGCAIAIDBBEYIIjAAEEEBggiMEAQgQGCCAwQRGCAIAIDBBEYIIjAAEEEBggiMEAQgQGCCAwQRGCAIAIDBBEYIIjAAEEEBggiMEAQgQGCCAwQRGCAIAIDBBEYIIjAAEEEBggiMEAQgQGCCAwQRGCAIAIDBBEYIIjAAEEEBggiMEAQgQGCCAwQRGCAIAIDBBEYIIjAAEEEBggiMEAQgQGCCAwQRGCAIAIDBBEYIIjAAEEEBggiMEAQgQGCCAwQRGCAIAIDBBEYIIjAAEEEBggiMEAQgQGCCAwQRGCAIAIDBBEYIIjAAEEEBggiMEAQgQGCCAwQRGCAIAIDBBEYIOj/ATKnyPyvu0QAAAAASUVORK5CYII=" /><!-- --></p>
+<p>Finally we look at two cases where <span class="math inline">\(\tau_0\)</span> is positive; being either a
+direct multiple of the time step</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">fd</span>(<span class="at">L=</span><span class="dv">600</span>,<span class="at">vch=</span><span class="dv">1</span>,<span class="at">Dt=</span><span class="dv">200</span>,<span class="at">tau0=</span><span class="dv">800</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(b)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(b)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+<p>or not</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>b <span class="ot">&lt;-</span> <span class="fu">fd</span>(<span class="at">L=</span><span class="dv">600</span>,<span class="at">vch=</span><span class="dv">1</span>,<span class="at">Dt=</span><span class="dv">200</span>,<span class="at">tau0=</span><span class="dv">850</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(b)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; [1] 1</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="fu">barplot</span>(b)</span></code></pre></div>
+<p><img src="data:image/png;base64,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" /><!-- --></p>
+</div>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

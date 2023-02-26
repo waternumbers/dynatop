@@ -1,0 +1,254 @@
+---
+title: "The Model Object"
+output:
+  bookdown::html_document2:
+    base_format: rmarkdown::html_vignette
+    number_sections: false
+    toc: true
+    toc_depth: 2
+pkgdown:
+  as_is: true
+vignette: >
+  %\VignetteIndexEntry{The Model Object}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+The purpose of this vignette is to document the structure of a Dynamic
+TOPMODEL model 'object'; that is the structure of the model that can be generated in
+the [dynatopGIS](https://waternumbers.github.io/dynatopGIS/) package and is
+used in calls to the ```dynatop``` function in the current package. Currently
+the model is stored as an R variable of the list class.
+
+This should be read alongside the ["Getting
+Started"](dynatop.html) vignette which demonstrates the manipulation and use
+of a model object.
+
+The model structure will be documented with reference to the model in the test
+catchment data supplied with the package. This can be loaded with
+
+```{r, setup}
+library(dynatop)
+data("Swindale")
+model <- Swindale$model
+```
+
+The top level of the model contains the following elements:
+
+```{r model_parts}
+names(model)
+```
+
+These are outlined in Table \@ref(tab:model-table) and described in more detail in the sections
+below.
+
+| Name           | Class            | Description                                               |
+| ---            | ---              | ------                                                    |
+| options        | character vector | Options defining the model                                |
+| hillslope      | data.frame       | Description of the hill slope HRU units                   |
+| channel        | data.frame       | Description of the channel HRU units                      |
+| gauge          | data.frame       | Description of the gauge locations on the channel network |
+| point_inflow   | data.frame      | Description of the point inflows to the channel network   |
+| diffuse_inflow | data.frame       | Description of the diffuse inflows to the channel network |
+| flow_direction | data.frame       | Description of the flow linkages between HRUs             |
+| precip_input   | data.frame       | Description of the precipitation input to the HRUs        |
+| pet_input      | data.frame       | Description of the PET input to the HRUs                  |
+| map            | list             | Location of files for creating plots of the HRUs       |
+	
+Table: (\#tab:model-table) Description of top-level model components
+
+## Options
+
+The options vector is a named character vector. Two named variables are used:
+
+- `transmissivity_profile` which defines the transmissivity function used
+for the hillslope HRUs
+- `channel_solver` which defines the channel solution to be used
+
+The columns present in the hillslope and channel data.frames will depend upon
+the value taken by these options. See the
+[hillslope](Hillslope_HRU.html)
+and
+[channel](Channel_HRU.html)
+vignettes for further details.
+
+## Hillslope HRU table
+
+Each row of the hillslope table describes a single hillslope HRU. In this example it looks like:
+
+```{r hillslope_parts}
+head(model$hillslope)
+```
+
+The individual columns are documented in Table \@ref(tab:hillslope-table). Not all the parameters are relevant for each option. See the Hillslope HRU vignette for details.
+
+| Name    | Class   | Unit  | Description                                                                                                                              |
+| ---     | ---     | ---   | -----                                                                                                                                    |
+| id      | integer | -   | Unique identifying number of the HRU. These combined with the HRU numbers in the channel table should be unique and take values 1,2,3... |
+| area    | numeric | m$^2$ | Surface area of the HRU                                                                                                                  |
+| atb_bar | numeric | ??    | Topographic index, log if the upslope area divided by tangent of gradient                                                                |
+| s_bar   | numeric | -   | Average gradient                                                                                                                         |
+| min_dst | numeric | -[m] | Minimum distance from HRU to a channel from the distance metric used in the model generation |
+| width   | numeric | m     | Contour length of downslope end of HRU                                                                                                   |
+| s_sf | numeric | m | Surface Zone storage volume per unit area (state) |
+| s_rz | numeric | m | Root Zone storage volume per unit area (state) |
+| s_uz | numeric | m | Unsaturated Zone storage volume per unit area (state) |
+| s_sz | numeric | m | Saturated Zone storage deficit per unit area (state) |
+| cls_*   | integer | -   | Classification of HRU in each of the classes used in its definition. The extra part of the name matches the class name given in dynatopGIS                                                      |
+| opt   | character | - | Option controlling the type of Hillslope HRU. Currently defines the transmissivity profile.                                                       |
+| r_sfmax | numeric | m/s | Maximum flow rate from surface to root zone (parameter)                                                                                  |
+| c_sf    | numeric | m/s | Celerity of the surface excess storage (parameter)                                                                                       |
+| s_rzmax | numeric | m   | Maximum root zone depth (parameter)                                                                                                      |
+| t_d     | numeric | s/m | Unsaturated zone time constant given per $m$ of saturated storage deficit (parameter)                                                    |
+| ln_t0   | numeric | m/s | Log of the soil saturated conductivity (parameter)                                                                                       |
+| m       | numeric | -   | Exponential transmissivity decay parameter (parameter)                                                                                   |
+| m_2     | numeric | -   | Second Exponential transmissivity decay parameter (parameter)                                                                            |
+| omega   | numeric | 0-1   | Weighting between the two transmissivity parameters (parameter)                                                                                     |
+| c_sz    | numeric | m/s | Constant saturated zone celerity (parameter)                                                                                     |
+| s_rz0   | numeric | 0-1 | Initial root zone depth expressed as fraction of maximum depth (parameter)                                                                |
+| r_uz_sz0   | numeric | m/s | Initial recharge to the saturated zone per unit area (parameter)                                                                |
+
+
+Table: (\#tab:hillslope-table) Description of hillslope data frame columns
+
+
+## Channel HRU table
+
+Each row of the channel HRU table describes a single channel HRU. In this example it looks like:
+```{r channel_parts}
+head(model$channel)
+```
+
+Many of the columns are not needed and are passed through from the original
+data. The columns required are documented in Table \@ref(tab:channel-table). 
+
+| Name   | Class   | Unit  | Description                                                                                                                                              |
+| ---    | ---     | ---   | -----                                                                                                                                                    |
+| id     | integer | -   | Unique identifying number of the channel HRU. These, combined with the id from the hillslope table should for consecutive integers increasing from 1. |
+| area   | numeric | m$^2$ | Surface area of the HRU in m$^2$                                                                                                                         |
+| length | numeric | m   | Length of the channel in metres                                                                                                                          |
+| v_ch   | numeric | m/s | Channel velocity parameter                                                                                                                               |
+
+Table: (\#tab:channel-table) Description of channel data frame columns
+
+
+## Gauge locations
+
+Gauge locations can be specified on the channel HRUs as outlined in Table
+\@ref(tab:gauge-table). Gauges are taken to be at the outlet of the channel length.
+
+| Name | Class     | Unit | Description                                                     |
+| ---  | ---       | ---  | -----                                                           |
+| name | character | -  | Unique name to identify the gauge. Used to name the output series |
+| id   | integer   | -  | The id of the channel HRU on which the gauge is sited           |
+
+Table: (\#tab:gauge-table) Description of gauge data frame columns
+
+In this case there is a single gauge at the outlet:
+
+```{r gauge}
+model$gauge
+```
+
+
+## Point Inflows
+
+The point_inflow data frame allows the specification for point inflow which
+are added to the inflow at the head of the channel length.
+
+| Name | Class     | Unit | Description                                            |
+| ---  | ---       | ---  | -----                                                  |
+| name | character | -  | Name of the input series to use.                       |
+| id   | integer   | -  | The id of the channel HRU to which the inflow is added |
+
+Table: (\#tab:point-inflow-table) Description of point_inflow data frame columns
+
+In the current catchment there are no inflows so the table is left blank:
+
+```{r point_inflow}
+model$point_inflow
+```
+
+## Diffuse Inflows
+
+The diffuse_inflow data frame allows the specification of diffuse inputs to
+the channel. These are presumed to occur uniformly along the channel length. 
+
+| Name | Class     | Unit | Description                                            |
+| ---  | ---       | ---  | -----                                                  |
+| name | character | -  | Name of the input series to use.                       |
+| id   | integer   | -  | The id of the channel HRU to which the inflow is added |
+
+Table: (\#tab:diffuse-inflow-table) Description of diffuse_inflow data frame columns
+
+In the current catchment there are no inflows so the table is left blank:
+
+```{r diffuse_inflow}
+model$diffuse_inflow
+```
+
+## Flow direction
+
+The flow_direction data frame describes the connections between the HRUs. 
+
+| Name | Class   | Unit | Description                                                       |
+| ---  | ---     | ---  | -----                                                             |
+| from | integer | -    | id of the HRU which the flow comes from                           |
+| to   | integer | -    | id of the HRU to which the flow is going                          |
+| frc  | numeric | 0-1  | Fraction of the flow which goes from the `from` id to the `to` id |
+
+Table: (\#tab:flow-direction-table) Description of flow_direction data frame columns
+
+The start of the data frame in the current example is:
+
+```{r flow_direction}
+head(model$flow_direction)
+```
+
+## Precipitation input
+
+The precip_input data frame describes the precipitation series to use for each
+HRU. Each row contains a HRU id, the series to use and the fraction of the HRU
+to which this series should be applied. From this an average precipitation
+for each HRU is derived.
+
+| Name | Class     | Unit | Description                                                      |
+| ---  | ---       | ---  | -----                                                            |
+| id   | integer   | -    | The id of the channel HRU to which the input is applied          |
+| name | character | -    | Name of the input series to use.                                 |
+| frc  | numeric   | 0-1  | The fraction of the HRU area for which the input series is valid |
+
+Table: (\#tab:precip-input-table) Description of precip_input data frame columns
+
+In the current example there is a single precipitation series being used:
+
+```{r precip_input}
+head(model$precip_input)
+```
+
+## PET input
+
+The pet_input data frame describes the potential evapotranspiration series to use for each
+HRU. Each row contains a HRU id, the series to use and the fraction of the HRU
+to which this series should be applied. From this an average PET value
+for each HRU is derived.
+
+| Name | Class     | Unit | Description                                                      |
+| ---  | ---       | ---  | -----                                                            |
+| id   | integer   | -  | The id of the channel HRU to which the input is applied          |
+| name | character | -  | Name of the input series to use.                                 |
+| frc  | numeric   | 0-1  | The fraction of the HRU area for which the input series is valid |
+
+Table: (\#tab:pet-input-table) Description of pet_input data frame columns
+
+In the current example there is a single PET series being used:
+
+```{r pet_input}
+head(model$pet_input)
+```

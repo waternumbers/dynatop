@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+
+
+<title>Notes on the implementation of Dynamic TOPMODEL</title>
+
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Notes on the implementation of Dynamic TOPMODEL</h1>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#the-solution-order-of-hrus-and-exchange-of-fluxes" id="toc-the-solution-order-of-hrus-and-exchange-of-fluxes">The solution order of HRUs and exchange of fluxes</a></li>
+<li><a href="#input-series" id="toc-input-series">Input Series</a></li>
+<li><a href="#miscellaneous-coding-comments" id="toc-miscellaneous-coding-comments">Miscellaneous Coding comments</a>
+<ul>
+<li><a href="#relating-the-vignette-notation-and-code-variables" id="toc-relating-the-vignette-notation-and-code-variables">Relating the vignette notation and code variables</a></li>
+<li><a href="#numerical-solutions" id="toc-numerical-solutions">Numerical solutions</a></li>
+</ul></li>
+</ul>
+</div>
+
+<p>The <code>dynatop</code> package represents an implementation of the concepts behind a dynamic TOPMODEL.
+One of the underlying principles of dynamic TOPMODEL is that the landscape can be broken up into
+hydrologically similar regions, or Hydrological Response Units (HRUs), where
+all the area within a HRU behaves in a hydrologically similar fashion.</p>
+<p>While a Hydrological Response Unit (HRU) has typically been thought of as an
+area of hill slope with, for example, similar topographic, soil and upslope area
+characteristics the idea may be generalised. In doing this a catchments is
+conceptualised as a collection of HRUs of different type (e.g. hill slope,
+channel, lake) which exchange fluxes at specified levels (e.g. saturated zone,
+surface)</p>
+<p>As well as the exchange of fluxes this documents considers two types of HRU. The first termed
+“hillslope” solves the surface, root, unsaturated and saturated zones
+for ‘similar’ areas of hill slope the catchment a each time step.
+The second termed “channel” represents a length of river channel in a
+simplified manner allowing the extraction of the inflow from the
+hill slope. The solutions for each of these HRU types are presented in the
+<a href="Hillslope_HRU.html">hillslope</a> and <a href="Channel_HRU.html">channel</a> vignettes.</p>
+<p>The aim of this document is to outline</p>
+<ul>
+<li>the computational sequence and linking the HRUs</li>
+<li>conventions for the input data</li>
+<li>other miscellaneous information that may help developers</li>
+</ul>
+<div id="the-solution-order-of-hrus-and-exchange-of-fluxes" class="section level1">
+<h1>The solution order of HRUs and exchange of fluxes</h1>
+<p>Each HRU has a unique reference number in the <code>id</code> variable. In principle the HRUs are
+solved in reverse order of <code>id</code>; that is from the largest <code>id</code> value to the
+smallest. Currently this not strictly enforced since the C++ code used for the
+computation first solves the hillslope HRUs then the channel HRUs, but this
+should not be relied upon and may change in future releases.</p>
+<p>Fluxes between the HRUs are represented as occurring at two levels, the surface and the
+saturated zones. For the <span class="math inline">\(i\)</span>th HRU the outflow in <span class="math inline">\(m^3/s\)</span> at time <span class="math inline">\(t+\Delta t\)</span> is
+<span class="math inline">\(\left.q_{sf}^{\left[i\right]}\right\rvert_{t+\Delta t}\)</span> at the surface and
+<span class="math inline">\(\left.q_{sz}^{\left[i\right]}\right\rvert_{t+\Delta t}\)</span> in the saturated
+zone.</p>
+<p>The fraction of outflow going from the <span class="math inline">\(i\)</span> th to the <span class="math inline">\(j\)</span> th HRU is <span class="math inline">\(f_{i,j}\)</span>.
+The redistribution is conservative as does not vary in time so
+<span class="math display">\[
+\sum\limits_{j} f_{i,j} = 1
+\]</span>
+Since there is no exchange between the surface and saturated zones during
+redistribution the inflows at time <span class="math inline">\(t+\Delta t\)</span> to the <span class="math inline">\(k\)</span>th HRU can be computed as
+<span class="math display">\[
+\sum\limits_{i&gt;k} f_{i,k}\left.q_{sf}^{\left[i\right]}\right\rvert_{t+\Delta t}
+\]</span>
+and
+<span class="math display">\[
+\sum\limits_{i&gt;k} f_{i,k}\left.q_{sz}^{\left[i\right]}\right\rvert_{t+\Delta t}
+\]</span></p>
+<p>The values of <span class="math inline">\(f_{i,j}\)</span> are specified in the <code>flow_direction</code> data.frame of
+the model.</p>
+</div>
+<div id="input-series" class="section level1">
+<h1>Input Series</h1>
+<p>It is expected that the precipitation and potential evapotranspiration inputs series are
+given in <span class="math inline">\(m\)</span> accrued over the proceeding time step. So if the data has a time
+step <span class="math inline">\(\Delta t\)</span> the value given at <span class="math inline">\(t+\Delta t\)</span> is accrued in the interval between time <span class="math inline">\(t\)</span>
+and time <span class="math inline">\(t+\Delta t\)</span>.</p>
+<p>The data series for the diffuse and point inputs used in the channel routing
+should be in <span class="math inline">\(m^3/s\)</span>. In the channel HRU solution the value given at time
+<span class="math inline">\(t+\Delta t\)</span> is presumed to be constant over the interval <span class="math inline">\(t\)</span> to <span class="math inline">\(t+\Delta t\)</span>.</p>
+</div>
+<div id="miscellaneous-coding-comments" class="section level1">
+<h1>Miscellaneous Coding comments</h1>
+<div id="relating-the-vignette-notation-and-code-variables" class="section level2">
+<h2>Relating the vignette notation and code variables</h2>
+<p>To aid the readability of the code the variables are labelled consistently
+with regards to the vignettes. For example:</p>
+<ul>
+<li>Single subscript: <span class="math inline">\(l_{sz}\)</span> becomes <code>l_sz</code>, <span class="math inline">\(s_{uz}\)</span> becomes <code>s_uz</code> etc.</li>
+<li>Directional variables: <span class="math inline">\(q_{rz \rightarrow uz}\)</span> becomes <code>q_rz_uz</code>, etc.</li>
+<li>Greek letters are spelt: <span class="math inline">\(\lambda\)</span> becomes <code>lambda</code></li>
+</ul>
+<p>However the notation used in the vignettes for intermediate values of fluxes
+or states (e.g. ) is dropped from the code where it can be inferred from
+the computational sequence (or comments)</p>
+</div>
+<div id="numerical-solutions" class="section level2">
+<h2>Numerical solutions</h2>
+<p>Currently the code uses a purely implicit scheme for the solution of the
+hillslope HRUs. This requires a solving a <em>zero finding</em> problem for each HRU
+at each (sub)time step. Currently a simple bisection algorithm is used with a
+user specified tolerance and maximum number of iterations. The tolerance is
+defined as the difference between the upper and lower limits of the interval
+containing the zero point. Notionally faster algorithms (such as the TOMS-748
+algorithm) could be used.</p>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

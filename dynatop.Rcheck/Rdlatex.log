@@ -1,0 +1,110 @@
+Hmm ... looks like a package
+Converting parsed Rd's to LaTeX 
+Creating pdf output from LaTeX ...
+Warning in texi2dvi(file = file, pdf = TRUE, clean = clean, quiet = quiet,  :
+  texi2dvi script/program not available, using emulation
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./Rd2.tex
+LaTeX2e <2022-06-01> patch level 5
+L3 programming layer <2022-07-14>
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/base/book.cls
+Document Class: book 2021/10/04 v1.4n Standard LaTeX document class
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/base/bk10.clo)) (/usr/lib64/R/share/texmf/tex/latex/Rd.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/ifthen.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/tools/longtable.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/tools/bm.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/alltt.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/tools/verbatim.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/url/url.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/textcomp.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amstext.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amsgen.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amsbsy.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amsopn.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsfonts/amsfonts.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsfonts/amssymb.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/jknapltx/mathrsfs.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/iftex/iftex.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/fontenc.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/psnfss/times.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/inconsolata/zi4.sty `inconsolata-zi4' v1.12, 2019/05/17 Text macros for Inconsolata (msharpe) (/home/paul/.TinyTeX/texmf-dist/tex/latex/xkeyval/xkeyval.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/xkeyval/xkeyval.tex (/home/paul/.TinyTeX/texmf-dist/tex/generic/xkeyval/xkvutils.tex (/home/paul/.TinyTeX/texmf-dist/tex/generic/xkeyval/keyval.tex))))) (/home/paul/.TinyTeX/texmf-dist/tex/latex/graphics/color.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/graphics-cfg/color.cfg) (/home/paul/.TinyTeX/texmf-dist/tex/latex/graphics-def/pdftex.def) (/home/paul/.TinyTeX/texmf-dist/tex/latex/graphics/mathcolor.ltx)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/hyperref.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/infwarerr/infwarerr.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/generic/kvsetkeys/kvsetkeys.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/pdfescape/pdfescape.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hycolor/hycolor.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/letltxmacro/letltxmacro.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/auxhook/auxhook.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/nameref.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/refcount/refcount.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/kvoptions/kvoptions.sty))) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/pd1enc.def) (/home/paul/.TinyTeX/texmf-dist/tex/generic/intcalc/intcalc.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/etexcmds/etexcmds.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/puenc.def) (/home/paul/.TinyTeX/texmf-dist/tex/generic/bitset/bitset.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/atbegshi-ltx.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/hpdftex.def (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/atveryend-ltx.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty)))
+
+Package hyperref Warning: Option `hyperindex' has already been used,
+(hyperref)                setting the option has no effect on input line 394.
+
+
+Package hyperref Warning: Option `pagebackref' has already been used,
+(hyperref)                setting the option has no effect on input line 394.
+
+) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/makeidx.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/inputenc.sty)
+Writing index file Rd2.idx
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/psnfss/t1ptm.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def)
+No file Rd2.aux.
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/jknapltx/ursfs.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/psnfss/t1phv.fd)
+No file Rd2.toc.
+[1{/home/paul/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] (/home/paul/.TinyTeX/texmf-dist/tex/latex/inconsolata/ts1zi4.fd) [6]
+No file Rd2.ind.
+[7] (./Rd2.aux)
+
+Package rerunfilecheck Warning: File `Rd2.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+ ){/home/paul/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}{/home/paul/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/paul/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/paul/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (7 pages, 94718 bytes).
+Transcript written on Rd2.log.
+This is makeindex, version 2.16 [TeX Live 2022] (kpathsea + Thai support).
+Scanning input file Rd2.idx....done (7 entries accepted, 0 rejected).
+Sorting entries....done (20 comparisons).
+Generating output file Rd2.ind....done (24 lines written, 0 warnings).
+Output written in Rd2.ind.
+Transcript written in Rd2.ilg.
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./Rd2.tex
+LaTeX2e <2022-06-01> patch level 5
+L3 programming layer <2022-07-14>
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/base/book.cls
+Document Class: book 2021/10/04 v1.4n Standard LaTeX document class
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/base/bk10.clo)) (/usr/lib64/R/share/texmf/tex/latex/Rd.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/ifthen.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/tools/longtable.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/tools/bm.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/alltt.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/tools/verbatim.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/url/url.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/textcomp.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amstext.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amsgen.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amsbsy.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amsopn.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsfonts/amsfonts.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsfonts/amssymb.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/jknapltx/mathrsfs.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/iftex/iftex.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/fontenc.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/psnfss/times.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/inconsolata/zi4.sty `inconsolata-zi4' v1.12, 2019/05/17 Text macros for Inconsolata (msharpe) (/home/paul/.TinyTeX/texmf-dist/tex/latex/xkeyval/xkeyval.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/xkeyval/xkeyval.tex (/home/paul/.TinyTeX/texmf-dist/tex/generic/xkeyval/xkvutils.tex (/home/paul/.TinyTeX/texmf-dist/tex/generic/xkeyval/keyval.tex))))) (/home/paul/.TinyTeX/texmf-dist/tex/latex/graphics/color.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/graphics-cfg/color.cfg) (/home/paul/.TinyTeX/texmf-dist/tex/latex/graphics-def/pdftex.def) (/home/paul/.TinyTeX/texmf-dist/tex/latex/graphics/mathcolor.ltx)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/hyperref.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/infwarerr/infwarerr.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/generic/kvsetkeys/kvsetkeys.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/pdfescape/pdfescape.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hycolor/hycolor.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/letltxmacro/letltxmacro.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/auxhook/auxhook.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/nameref.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/refcount/refcount.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/kvoptions/kvoptions.sty))) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/pd1enc.def) (/home/paul/.TinyTeX/texmf-dist/tex/generic/intcalc/intcalc.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/etexcmds/etexcmds.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/puenc.def) (/home/paul/.TinyTeX/texmf-dist/tex/generic/bitset/bitset.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/atbegshi-ltx.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/hpdftex.def (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/atveryend-ltx.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty)))
+
+Package hyperref Warning: Option `hyperindex' has already been used,
+(hyperref)                setting the option has no effect on input line 394.
+
+
+Package hyperref Warning: Option `pagebackref' has already been used,
+(hyperref)                setting the option has no effect on input line 394.
+
+) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/makeidx.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/inputenc.sty)
+Writing index file Rd2.idx
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/psnfss/t1ptm.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def) (./Rd2.aux) (./Rd2.out) (./Rd2.out) (/home/paul/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/jknapltx/ursfs.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/psnfss/t1phv.fd) (./Rd2.toc) [1{/home/paul/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] (/home/paul/.TinyTeX/texmf-dist/tex/latex/inconsolata/ts1zi4.fd) [6] (./Rd2.ind [7] [8]) (./Rd2.aux)
+
+Package rerunfilecheck Warning: File `Rd2.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+ ){/home/paul/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}{/home/paul/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/paul/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/paul/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (8 pages, 104239 bytes).
+Transcript written on Rd2.log.
+This is makeindex, version 2.16 [TeX Live 2022] (kpathsea + Thai support).
+Scanning input file Rd2.idx....done (7 entries accepted, 0 rejected).
+Sorting entries....done (20 comparisons).
+Generating output file Rd2.ind....done (24 lines written, 0 warnings).
+Output written in Rd2.ind.
+Transcript written in Rd2.ilg.
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex)
+ restricted \write18 enabled.
+entering extended mode
+(./Rd2.tex
+LaTeX2e <2022-06-01> patch level 5
+L3 programming layer <2022-07-14>
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/base/book.cls
+Document Class: book 2021/10/04 v1.4n Standard LaTeX document class
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/base/bk10.clo)) (/usr/lib64/R/share/texmf/tex/latex/Rd.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/ifthen.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/tools/longtable.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/tools/bm.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/alltt.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/tools/verbatim.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/url/url.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/textcomp.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amsmath.sty
+For additional information on amsmath, use the `?' option.
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amstext.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amsgen.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amsbsy.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsmath/amsopn.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsfonts/amsfonts.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsfonts/amssymb.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/jknapltx/mathrsfs.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/iftex/iftex.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/fontenc.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/psnfss/times.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/inconsolata/zi4.sty `inconsolata-zi4' v1.12, 2019/05/17 Text macros for Inconsolata (msharpe) (/home/paul/.TinyTeX/texmf-dist/tex/latex/xkeyval/xkeyval.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/xkeyval/xkeyval.tex (/home/paul/.TinyTeX/texmf-dist/tex/generic/xkeyval/xkvutils.tex (/home/paul/.TinyTeX/texmf-dist/tex/generic/xkeyval/keyval.tex))))) (/home/paul/.TinyTeX/texmf-dist/tex/latex/graphics/color.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/graphics-cfg/color.cfg) (/home/paul/.TinyTeX/texmf-dist/tex/latex/graphics-def/pdftex.def) (/home/paul/.TinyTeX/texmf-dist/tex/latex/graphics/mathcolor.ltx)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/hyperref.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/infwarerr/infwarerr.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/generic/kvsetkeys/kvsetkeys.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/pdfescape/pdfescape.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hycolor/hycolor.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/letltxmacro/letltxmacro.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/auxhook/auxhook.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/nameref.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/refcount/refcount.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty (/home/paul/.TinyTeX/texmf-dist/tex/latex/kvoptions/kvoptions.sty))) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/pd1enc.def) (/home/paul/.TinyTeX/texmf-dist/tex/generic/intcalc/intcalc.sty) (/home/paul/.TinyTeX/texmf-dist/tex/generic/etexcmds/etexcmds.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/puenc.def) (/home/paul/.TinyTeX/texmf-dist/tex/generic/bitset/bitset.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/atbegshi-ltx.sty)) (/home/paul/.TinyTeX/texmf-dist/tex/latex/hyperref/hpdftex.def (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/atveryend-ltx.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty (/home/paul/.TinyTeX/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty)))
+
+Package hyperref Warning: Option `hyperindex' has already been used,
+(hyperref)                setting the option has no effect on input line 394.
+
+
+Package hyperref Warning: Option `pagebackref' has already been used,
+(hyperref)                setting the option has no effect on input line 394.
+
+) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/makeidx.sty) (/home/paul/.TinyTeX/texmf-dist/tex/latex/base/inputenc.sty)
+Writing index file Rd2.idx
+(/home/paul/.TinyTeX/texmf-dist/tex/latex/psnfss/t1ptm.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def) (./Rd2.aux) (./Rd2.out) (./Rd2.out) (/home/paul/.TinyTeX/texmf-dist/tex/latex/psnfss/ts1ptm.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/inconsolata/t1zi4.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsa.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/amsfonts/umsb.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/jknapltx/ursfs.fd) (/home/paul/.TinyTeX/texmf-dist/tex/latex/psnfss/t1phv.fd) (./Rd2.toc) [1{/home/paul/.TinyTeX/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [2] [3] [4] [5] (/home/paul/.TinyTeX/texmf-dist/tex/latex/inconsolata/ts1zi4.fd) [6] (./Rd2.ind [7] [8]) (./Rd2.aux) ){/home/paul/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-ts1.enc}{/home/paul/.TinyTeX/texmf-dist/fonts/enc/dvips/base/8r.enc}{/home/paul/.TinyTeX/texmf-dist/fonts/enc/dvips/inconsolata/i4-t1-0.enc}</home/paul/.TinyTeX/texmf-dist/fonts/type1/public/inconsolata/Inconsolata-zi4r.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></home/paul/.TinyTeX/texmf-dist/fonts/type1/urw/times/utmri8a.pfb>
+Output written on Rd2.pdf (8 pages, 105018 bytes).
+Transcript written on Rd2.log.
+Saving output to ‘dynatop-manual.pdf’ ...
+Done
+You may want to clean up by 'rm -Rf /tmp/Rtmp5u1Xo7/Rd2pdf39f568207457'
