@@ -105,13 +105,13 @@ void outFlux::apply(std::vector<hru> &hrus, std::vector<double> &out, double nst
       out[oi] = hrus[i].s_sz / nstep;
       break;
     case 12: // r_sf_rz
-      out[oi] += hrus[i].r_sf_rz / nstep;
+      out[oi] += hrus[i].v_sf_rz / nstep; // TODO - wrong
       break;
     case 13: // r_rz_uz
-      out[oi] += hrus[i].r_rz_uz / nstep;
+      out[oi] += hrus[i].v_rz_uz / nstep; // TODO - wrong
       break;
     case 14: // r_uz_sz
-      out[oi] += hrus[i].r_uz_sz / nstep;
+      out[oi] += hrus[i].v_uz_sz / nstep; // TODO - wrong
       break;
     }
   }

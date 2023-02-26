@@ -20,9 +20,9 @@ t_d <- 360
 s_rz_max <- 0.1*area
 s_rz_0 <- 0.75
 
-nstep <- 10
+nstep <- 1
 epsilon <- 0.001#1e-10 #0.001 #1e-10
-q_uz_sz_init <- 0/area
+q_uz_sz_init <- 1e-4/area
 
 ## function to give outflow from the surface zone for an area
 fqsf <- function(a,qin){
@@ -83,7 +83,7 @@ head(q_sf)
 
 ## loop
 for(tt in 2:n){
-    print(tt)
+    ##print(tt)
     qq = min( q_sz_in[tt] , q_sz_max)
     q_sf_in[tt] <- q_sf_in[tt] + q_sz_in[tt] - qq
     q_sz_in[tt] <- qq
@@ -147,7 +147,7 @@ for(tt in 2:n){
                 if( Hz<= 0 ){rng[1] <- z}else{ rng[2] <- z}
             }
             z <- rng[2]
-            print(rng)
+            ##print(rng)
         }
 
         ## upward pass
@@ -168,7 +168,7 @@ for(tt in 2:n){
 
         ## surface
         rng <- c(0, sf + vsfStep - vsfrz)
-        print("sf")
+        #print("sf")
         while(diff(rng)>epsilon){
             w <- (rng[1]+rng[2])/2
             qq <- fqsf(w/Dx,q_sf_in[tt])

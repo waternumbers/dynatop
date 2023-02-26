@@ -212,10 +212,10 @@ dynatop <- R6Class(
         map  = NULL, # storage for map object
         output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
-        info = list(sf = setNames(as.integer(1:2),c("cnstCD","cnstC_raf")),
+        info = list(sf = setNames(as.integer(1:2),c("cnst","kin")),
                     rz = setNames(as.integer(1),c("orig")),
                     uz = setNames(as.integer(1),c("orig")),
-                    sz = setNames(as.integer(1:2),c("exp","cnst")),
+                    sz = setNames(as.integer(1:4),c("exp","bexp","dexp","cnst")),
                     
                     output = setNames(1:14, c("precip","pet","aet",
                                               "q_sf","q_sf_in","q_sz","q_sz_in",
@@ -254,7 +254,7 @@ dynatop <- R6Class(
             }
                 
             ## check states
-            snm <- c("s_sf","s_rz","s_uz","s_sz","q_sz","q_sf")
+            snm <- c("s_sf","s_rz","s_uz","s_sz")
             if("states" %in% names(h)){
                 if( !is.numeric(h$states) ){ etxt <- paste(etxt, paste0(h$id, ": states should be a numeric vector"), sep="\n") }
                 if( !all(snm %in% names(h$states)) ){
@@ -285,11 +285,14 @@ dynatop <- R6Class(
                     next
                 }
                 pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
-                              "sf_cnstCD" = c("c_sf","d_sf"),
-                              "sf_cnstC_raf" = c("c_sf","s_raf","t_raf"),
+                              "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
+                              "sf_kin" = c("n","s_raf","t_raf"),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
-                              "sz_exp" = c("D","t_0","m"),
+                              "sz_exp" = c("t_0","m"),
+                              "sz_bexp" = c("t_0","m","h_sz_max"),
+                              "sz_cnst" = c("v_sz","h_sz_max"),
+                              "sz_dexp" = c("t_0","m","m2","omega"),
                               stop("Invalid options for pname")
                               )
                 if( !is.numeric( h[[ii]]$parameters )){
@@ -355,6 +358,7 @@ dynatop <- R6Class(
                     next
                 }
                 if( length(h[[ii]]$fraction)>0 ){
+                    
                     if( any(h[[ii]]$fraction < 0) | ( abs( sum(h[[ii]]$fraction) -1) > delta) ){
                         etxt <- c(etxt, paste0(h$id, ": ", ii, " fractions should be positive and sum to 1"))
                         next

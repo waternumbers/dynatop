@@ -15,10 +15,12 @@ class hru {
   std::unique_ptr<sfc> sf;
   std::unique_ptr<szc> sz;
 
-  
-  double const width, Dx;
+
+  std::vector<double> const states;
+  std::vector<double> const properties;
+
   std::vector<double> const sf_param;
-  double const s_rzmax, t_d;
+  double const t_d, s_rzmax;
   std::vector<double> const sz_param;
   
   std::vector<int> const precip_lnk_id;
@@ -32,7 +34,7 @@ class hru {
 
   
   // double v_sf_in, v_sz_in;
-  void  lateral_redistribution(std::vector<double>&, std::vector<double>&);
+  
   double fsz(double&, double&, double&, double&, double const&);
   double fsf(double&, double&, double&, double&, double const&);
   
@@ -40,11 +42,11 @@ public:
   // variables initialised
   int const id;
   double s_sf, s_rz, s_uz, s_sz, q_sf, q_sz;
-  double const area;
+  double area;
   
 
   double q_sf_in, q_sz_in;
-  double r_sf_rz, r_rz_uz, r_uz_sz;
+  double v_sf_rz, v_rz_uz, v_uz_sz;
   double precip, pet, aet;
   
   // initialisation
@@ -63,6 +65,7 @@ public:
 
   void init(std::vector<double>&, std::vector<double>&, double, double, double const&, double const&, int const&);
   void update_met(std::vector<double>&);
+  void  lateral_redistribution(std::vector<double>&, std::vector<double>&);
   void step(std::vector<double>&, std::vector<double>&, double const&, double const&, int const&, double const&);
 };
 

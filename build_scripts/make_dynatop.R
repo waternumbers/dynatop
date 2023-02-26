@@ -38,18 +38,10 @@ for(ii in 1:2){ ## m1 not fixed yet in drat
     drat::insertPackage(outFile,dratPath)
 }
 
-## tidy up drat
-drat::pruneRepo(dratPath,pkg="dynatop",remove="git")## this only does source files
-
 ## prior to submission
 ## submit to win-builder (release and devel) and macbuilder
 ## run locally with R CMD check --as-cran --use-valgrind ...
 ## run locally with r-devel and ASAN build
-
-## tmp <- devtools::check_win_devel(pkg = buildFile)
-## devtools::check_win(pkg = buildFile)
-## devtools::check_mac(pkg = buildFile)
-
 
 ###########################################################################
 ## This converts the data for Swindale into the data object used in the examples.

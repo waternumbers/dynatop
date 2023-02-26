@@ -12,15 +12,29 @@ public:
    // initialisation
   sfc();
   virtual double fq(double&, double&); // outflow given storage and inflow
+  virtual double fs(double&, double&); // storage given outflow and inflow
 };
 
-// constant celerity kinematic wave
-class sfc_cnstCD: public sfc {
+// constant celerity & diffusivity with RAF
+class sfc_cnst: public sfc {
 protected:
-  double kappa, eta;
+  double kappa, eta, s_raf, t_raf, q_raf;
+  
 public:
-  sfc_cnstCD(std::vector<double> const&, double const&);
+  sfc_cnst(std::vector<double> const&, std::vector<double> const&);
   double fq(double&, double&);
+  double fs(double&, double&);
+};
+
+// kinematic with RAF
+class sfc_kin: public sfc {
+protected:
+  double kappa, omega, s_raf, t_raf, q_raf;
+  
+public:
+  sfc_kin(std::vector<double> const&, std::vector<double> const&);
+  double fq(double&, double&);
+  double fs(double&, double&);
 };
 
 #endif

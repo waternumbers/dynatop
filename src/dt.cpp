@@ -28,7 +28,8 @@ void dt_init(Rcpp::List mdl, // hru data frame
     Rcpp::List L = mdl[ii];
     Rcpp::NumericVector ivec = L["initialisation"];
     
-    hrus[ii].init(q_sf_in,q_sz_in,ivec["s_rz_0"], ivec["r_uz_sz_0"], vtol, etol, max_it);
+    hrus[ii].init(q_sf_in,q_sz_in,ivec["s_rz_0"], ivec["r_uz_sz_0"], vtol, etol, max_it); // initialise
+    hrus[ii].lateral_redistribution(q_sf_in,q_sz_in); // spread flow downslope
   }
 
   // Rcpp::Rcout << "copying back states" << std::endl;
