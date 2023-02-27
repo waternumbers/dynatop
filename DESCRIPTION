@@ -1,6 +1,6 @@
 Package: dynatop
 Title: An Implementation of Dynamic TOPMODEL Hydrological Model in R
-Version: 0.2.3
+Version: 0.3.0.1000
 Authors@R: 
 	   c(person(given = "Paul",
            	family = "Smith",
@@ -25,13 +25,13 @@ Depends:
 	R (>= 4.0.0)
 BugReports: https://github.com/waternumbers/dynatop/issues
 URL: https://waternumbers.github.io/dynatop/, https://github.com/waternumbers/dynatop
-RoxygenNote: 7.2.1
+RoxygenNote: 7.2.3
 Suggests:
-    raster,
+    terra,
     knitr,
     rmarkdown,
     bookdown,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
-SystemRequirements: C++11
+SystemRequirements: C++14
 Language: en-GB

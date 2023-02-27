@@ -10,63 +10,44 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// dt_courant
-void dt_courant(Rcpp::DataFrame hillslope, Rcpp::NumericMatrix courant, double timestep, int n_sub_step);
-RcppExport SEXP _dynatop_dt_courant(SEXP hillslopeSEXP, SEXP courantSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type hillslope(hillslopeSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type courant(courantSEXP);
-    Rcpp::traits::input_parameter< double >::type timestep(timestepSEXP);
-    Rcpp::traits::input_parameter< int >::type n_sub_step(n_sub_stepSEXP);
-    dt_courant(hillslope, courant, timestep, n_sub_step);
-    return R_NilValue;
-END_RCPP
-}
-// dt_implicit_sim
-void dt_implicit_sim(Rcpp::DataFrame hillslope, Rcpp::DataFrame channel, Rcpp::DataFrame flow_direction, Rcpp::DataFrame precip_input, Rcpp::DataFrame pet_input, Rcpp::NumericMatrix obs, Rcpp::NumericMatrix channel_inflow_sf, Rcpp::NumericMatrix channel_inflow_sz, Rcpp::NumericMatrix mass_balance, std::vector<bool> keep_states, Rcpp::List state_rec, double timestep, int n_sub_step, double tol, int max_it, double ftol);
-RcppExport SEXP _dynatop_dt_implicit_sim(SEXP hillslopeSEXP, SEXP channelSEXP, SEXP flow_directionSEXP, SEXP precip_inputSEXP, SEXP pet_inputSEXP, SEXP obsSEXP, SEXP channel_inflow_sfSEXP, SEXP channel_inflow_szSEXP, SEXP mass_balanceSEXP, SEXP keep_statesSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP, SEXP tolSEXP, SEXP max_itSEXP, SEXP ftolSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type hillslope(hillslopeSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type channel(channelSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type flow_direction(flow_directionSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type precip_input(precip_inputSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type pet_input(pet_inputSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type obs(obsSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type channel_inflow_sf(channel_inflow_sfSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type channel_inflow_sz(channel_inflow_szSEXP);
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type mass_balance(mass_balanceSEXP);
-    Rcpp::traits::input_parameter< std::vector<bool> >::type keep_states(keep_statesSEXP);
-    Rcpp::traits::input_parameter< Rcpp::List >::type state_rec(state_recSEXP);
-    Rcpp::traits::input_parameter< double >::type timestep(timestepSEXP);
-    Rcpp::traits::input_parameter< int >::type n_sub_step(n_sub_stepSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< int >::type max_it(max_itSEXP);
-    Rcpp::traits::input_parameter< double >::type ftol(ftolSEXP);
-    dt_implicit_sim(hillslope, channel, flow_direction, precip_input, pet_input, obs, channel_inflow_sf, channel_inflow_sz, mass_balance, keep_states, state_rec, timestep, n_sub_step, tol, max_it, ftol);
-    return R_NilValue;
-END_RCPP
-}
 // dt_init
-void dt_init(Rcpp::DataFrame hillslope, Rcpp::DataFrame channel, Rcpp::DataFrame flow_direction, double tol, int max_it);
-RcppExport SEXP _dynatop_dt_init(SEXP hillslopeSEXP, SEXP channelSEXP, SEXP flow_directionSEXP, SEXP tolSEXP, SEXP max_itSEXP) {
+void dt_init(Rcpp::List mdl, double const vtol, double const etol, int const max_it);
+RcppExport SEXP _dynatop_dt_init(SEXP mdlSEXP, SEXP vtolSEXP, SEXP etolSEXP, SEXP max_itSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type hillslope(hillslopeSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type channel(channelSEXP);
-    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type flow_direction(flow_directionSEXP);
-    Rcpp::traits::input_parameter< double >::type tol(tolSEXP);
-    Rcpp::traits::input_parameter< int >::type max_it(max_itSEXP);
-    dt_init(hillslope, channel, flow_direction, tol, max_it);
+    Rcpp::traits::input_parameter< Rcpp::List >::type mdl(mdlSEXP);
+    Rcpp::traits::input_parameter< double const >::type vtol(vtolSEXP);
+    Rcpp::traits::input_parameter< double const >::type etol(etolSEXP);
+    Rcpp::traits::input_parameter< int const >::type max_it(max_itSEXP);
+    dt_init(mdl, vtol, etol, max_it);
+    return R_NilValue;
+END_RCPP
+}
+// dt_sim
+void dt_sim(Rcpp::List mdl, Rcpp::DataFrame out_dfn, std::vector<bool> keep_states, Rcpp::NumericMatrix obs_matrix, Rcpp::NumericMatrix mass_balance, Rcpp::NumericMatrix out_matrix, Rcpp::List state_rec, double const timestep, int const n_sub_step, double const vtol, double const etol, int const max_it);
+RcppExport SEXP _dynatop_dt_sim(SEXP mdlSEXP, SEXP out_dfnSEXP, SEXP keep_statesSEXP, SEXP obs_matrixSEXP, SEXP mass_balanceSEXP, SEXP out_matrixSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP, SEXP vtolSEXP, SEXP etolSEXP, SEXP max_itSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< Rcpp::List >::type mdl(mdlSEXP);
+    Rcpp::traits::input_parameter< Rcpp::DataFrame >::type out_dfn(out_dfnSEXP);
+    Rcpp::traits::input_parameter< std::vector<bool> >::type keep_states(keep_statesSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type obs_matrix(obs_matrixSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type mass_balance(mass_balanceSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type out_matrix(out_matrixSEXP);
+    Rcpp::traits::input_parameter< Rcpp::List >::type state_rec(state_recSEXP);
+    Rcpp::traits::input_parameter< double const >::type timestep(timestepSEXP);
+    Rcpp::traits::input_parameter< int const >::type n_sub_step(n_sub_stepSEXP);
+    Rcpp::traits::input_parameter< double const >::type vtol(vtolSEXP);
+    Rcpp::traits::input_parameter< double const >::type etol(etolSEXP);
+    Rcpp::traits::input_parameter< int const >::type max_it(max_itSEXP);
+    dt_sim(mdl, out_dfn, keep_states, obs_matrix, mass_balance, out_matrix, state_rec, timestep, n_sub_step, vtol, etol, max_it);
     return R_NilValue;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_dynatop_dt_courant", (DL_FUNC) &_dynatop_dt_courant, 4},
-    {"_dynatop_dt_implicit_sim", (DL_FUNC) &_dynatop_dt_implicit_sim, 16},
-    {"_dynatop_dt_init", (DL_FUNC) &_dynatop_dt_init, 5},
+    {"_dynatop_dt_init", (DL_FUNC) &_dynatop_dt_init, 4},
+    {"_dynatop_dt_sim", (DL_FUNC) &_dynatop_dt_sim, 12},
     {NULL, NULL, 0}
 };
 

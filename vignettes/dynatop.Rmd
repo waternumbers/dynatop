@@ -57,9 +57,7 @@ example the maps are located within the `extdata` directory of the package and
 can be set using commands
 
 ```{r set_map}
-swindale_model$map$hillslope <- system.file("extdata","Swindale.tif",package="dynatop",mustWork=TRUE)
-swindale_model$map$channel <- system.file("extdata","channel.shp",package="dynatop",mustWork=TRUE)
-swindale_model$map$channel_id <- system.file("extdata","channel_id.tif",package="dynatop",mustWork=TRUE)
+swindale_model$map <- system.file("extdata","Swindale.tif",package="dynatop",mustWork=TRUE)
 ```
 
 # Preparing input data
@@ -81,10 +79,10 @@ accumulated over the time step.
 
 To use the data with the model we need to set the names of the time series
 inputs within the model. In this case this is already done as can be seen by
-inspecting the `precip_input` and `pet_input` tables
+inspecting the `precip` and `pet` values for the individual HRU's
 ```{r, set_obs_names}
-head(swindale_model$precip_input)
-head(swindale_model$pet_input)
+head(swindale_model$hru[[1]]$precip)
+head(swindale_model$hru[[1]]$pet)
 ```
 
 # Altering parameters
@@ -92,22 +90,38 @@ head(swindale_model$pet_input)
 The parameter values are stored within the table describing the hillslope and
 channel HRUs. Which parameters are present depends upon the options selected
 for the transmissivity and channel solution. Details can be found in the
-[Hillslope](Hillslope_HRU.html) and [Channel](Channel_HRU.html) Vignettes.
+[HRU](HRU.html) Vignettes.
 
-Altering parameter values requires changing their values in the HRU tables. 
+Altering parameter values requires changing their values in the HRU definitions. 
 For this catchment all HRU have the same parameter values. For this simulation 
-we change the parameter vectors to be more representative of the
-catchment
+we change the parameter vectors to be more representative of the catchment
 ```{r, change_param}
-swindale_model$hillslope$r_sfmax <- Inf
-swindale_model$hillslope$m <- 0.0063
-swindale_model$hillslope$ln_t0 <- 7.46
-swindale_model$hillslope$s_rz0 <- 0.98
-swindale_model$hillslope$s_rzmax <- 0.1
-swindale_model$hillslope$t_d <- 8*60*60
-swindale_model$hillslope$c_sf <- 0.4
-
-swindale_model$channel$v_ch <- 0.8
+hru <- swindale_model$hru
+for(ii in 1:length(hru)){
+    if(is.na(hru[[ii]]$class$endNode)){
+        ## then HRU is not a channel
+        ## saturated zone parameters
+        hru[[ii]]$sz$parameters["m"] <- 0.0063
+        hru[[ii]]$sz$parameters["t_0"] <- exp(7.46)
+        ## unsaturated zone parameters
+        hru[[ii]]$uz$parameters["t_d"] <- 8*60*60
+        ## root zone parameters
+        hru[[ii]]$rz$parameters["s_rzmax"] <- 0.1
+        ## surface parameters
+        hru[[ii]]$sf$parameters["c_sf"] <- 0.4
+    }else{
+        ## then HRU is a channel - set so no subsurface response
+        ## saturated zone parameters
+        hru[[ii]]$sz$parameters["t_0"] <- 0.001
+        ## root zone parameters
+        hru[[ii]]$rz$parameters["s_rzmax"] <- 0.001
+        ## surface parameters
+        hru[[ii]]$sf$parameters["c_sf"] <- 0.8
+    }
+    ## initialisation parameters
+    hru[[ii]]$initialisation["s_rz_0"] <- 0.98
+    hru[[ii]]$initialisation["r_uz_sz_0"] <- 1.755582e-07 ## initial outflow divided by catchment area
+}
 ```
 
 # Creating the dynatop Object
@@ -116,7 +130,7 @@ Simulations are performed by embedding the model and the observed data into
 a `dynatop` object. First the object is created using the model in list form
 
 ```{r create_object}
-ctch_mdl <- dynatop$new(swindale_model)
+ctch_mdl <- dynatop$new(hru,map=swindale_model$map)
 ```
 
 This step performs some basis checks on the model for consistency.
@@ -138,7 +152,7 @@ object. If, as in the case of this example, the states are not specified then
 any attempt to perform a simulation will fail.
 
 ```{r sim_fail, error=TRUE, purl=FALSE}
-ctch_mdl$sim()
+ctch_mdl$sim(swindale_model$output_flux)
 ```
 
 The states need to be initialised using the `initialise` method which requires
@@ -152,7 +166,7 @@ ctch_mdl$initialise()$plot_state("s_sz")
 The simulation can now be performed and the flow at the gauge extracted with
 
 ```{r sim1}
-sim1 <- ctch_mdl$sim()$get_gauge_flow()
+sim1 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()
 ```
 
 Note that the states of the system are now those at the end of the simulation
@@ -166,10 +180,10 @@ Rerunning the simulation with the new initial states will of course produce
 different results. Output for the above examples can be plotted against observed discharge for comparison as follows:
 
 ```{r sim2}
-sim2 <- ctch_mdl$sim()$get_gauge_flow()
+sim2 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()
 out <- merge( merge(swindale_obs,sim1),sim2)
 names(out) <- c(names(swindale_obs),'sim_1','sim_2')
-plot(out[,c('Flow','sim_1','sim_2')], main="Discharge",ylab="m3/s",legend.loc="topright")
+plot(out[,c('flow','sim_1','sim_2')], main="Discharge",ylab="m3/s",legend.loc="topright")
 ```
 
 # Mass balance
