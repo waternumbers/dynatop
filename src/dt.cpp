@@ -38,10 +38,10 @@ void dt_init(Rcpp::List mdl, // hru data frame
     //Rcpp::Rcout << "copy hru " << ii << std::endl;
     Rcpp::List tmp = mdl[ii];
     Rcpp::NumericVector svec = tmp["states"];
-    svec["s_sf"] = hrus[ii].s_sf / hrus[ii].area;
-    svec["s_rz"] = hrus[ii].s_rz / hrus[ii].area;
-    svec["s_uz"] = hrus[ii].s_uz / hrus[ii].area;
-    svec["s_sz"] = hrus[ii].s_sz / hrus[ii].area;
+    svec["s_sf"] = hrus[ii].s_sf;
+    svec["s_rz"] = hrus[ii].s_rz;
+    svec["s_uz"] = hrus[ii].s_uz;
+    svec["s_sz"] = hrus[ii].s_sz;
   };
 
   //end of dt_init
@@ -78,7 +78,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   std::vector<double> out(out_matrix.ncol(),0.0);// vector to store observed values
   std::vector<double> mbv(6,0.0);// vector to store mass balance calulations
   
-  // sotrage for inflow fluxes
+  // storage for inflow fluxes
   std::vector<double> q_sf_in(nhru,0.0);// vector to surface inflow fluxes
   std::vector<double> q_sz_in(nhru,0.0);// vector to saturated zone inflow fluxes
   
@@ -132,7 +132,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   
       // start loop of hrus
       for(int ii= nhru-1; ii >= 0; --ii){
-  	//Rcpp::Rcout << "hru " << ii << " at timestep " << tt << std::endl;
+  	///Rcpp::Rcout << "hru " << ii << " at timestep " << tt << std::endl;
   	hrus[ii].step(q_sf_in,q_sz_in,vtol,etol,max_it,Dt);
 
 	// mass balance components
@@ -188,10 +188,10 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   for(int ii=0; ii<nhru; ++ii){
     Rcpp::List tmp = mdl[ii];
     Rcpp::NumericVector svec = tmp["states"];
-    svec["s_sf"] = hrus[ii].s_sf / hrus[ii].area;
-    svec["s_rz"] = hrus[ii].s_rz / hrus[ii].area;
-    svec["s_uz"] = hrus[ii].s_uz / hrus[ii].area;
-    svec["s_sz"] = hrus[ii].s_sz / hrus[ii].area;
+    svec["s_sf"] = hrus[ii].s_sf;
+    svec["s_rz"] = hrus[ii].s_rz;
+    svec["s_uz"] = hrus[ii].s_uz;
+    svec["s_sz"] = hrus[ii].s_sz;
   };
 
   // end of dt_sim

@@ -18,7 +18,7 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
     Rcpp::List q_sz_list = m["sz_flow_direction"];
     int id = m["id"];
 
-    svec = svec * pvec["area"];
+    //svec = svec * pvec["area"];
 
     // all passed explicity, not by reference
     hrus.push_back( hru( id, //m["id"], // id passed explicitly
@@ -45,12 +45,12 @@ Rcpp::List makeStateList(std::vector<hru> &hrus){
   Rcpp::List state_list;
   for(int ii=0; ii<nhru; ++ii){
     Rcpp::NumericVector s = Rcpp::NumericVector::create(
-							Rcpp::Named("s_sf", hrus[ii].s_sf / hrus[ii].area),
-							Rcpp::Named("s_rz", hrus[ii].s_rz / hrus[ii].area),
-							Rcpp::Named("s_uz", hrus[ii].s_uz / hrus[ii].area),
-							Rcpp::Named("s_sz", hrus[ii].s_sz / hrus[ii].area),
-							Rcpp::Named("q_sf", hrus[ii].q_sf / hrus[ii].area),
-							Rcpp::Named("q_sz", hrus[ii].q_sz / hrus[ii].area));
+							Rcpp::Named("s_sf", hrus[ii].s_sf),
+							Rcpp::Named("s_rz", hrus[ii].s_rz),
+							Rcpp::Named("s_uz", hrus[ii].s_uz),
+							Rcpp::Named("s_sz", hrus[ii].s_sz),
+							Rcpp::Named("q_sf", hrus[ii].q_sf),
+							Rcpp::Named("q_sz", hrus[ii].q_sz));
     Rcpp::List L = Rcpp::List::create(Rcpp::Named("id") = hrus[ii].id , Rcpp::Named("states") = s);
     state_list.push_back(L);
   }
@@ -64,7 +64,7 @@ outFlux::outFlux(std::vector<int> out_idx_, std::vector<int> idx_, std::vector<i
 {}
 
 void outFlux::apply(std::vector<hru> &hrus, std::vector<double> &out, double nstep){
-  for(uint ii=0; ii<out_idx.size(); ++ii){
+  for(long unsigned int ii=0; ii<out_idx.size(); ++ii){
     
     int &oi = out_idx[ii];
     int &i = idx[ii];

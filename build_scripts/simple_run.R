@@ -40,7 +40,7 @@ dt$initialise()
 s0 <- dt$get_states()
 
 out_def <- Swindale$model$output_flux
-dt$sim(out_def,keep_states=index(obs))
+dt$sim(out_def,keep_states=index(Swindale$obs))
 
 sn <- dt$get_states()
 colSums(s0)
