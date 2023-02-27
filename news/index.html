@@ -17,7 +17,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.2.3</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0.1000</span>
       </span>
     </div>
 
@@ -35,10 +35,7 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu"><li>
-      <a href="../articles/Channel_HRU.html">Channel HRU</a>
-    </li>
-    <li>
-      <a href="../articles/Hillslope_HRU.html">The Hillslope HRU</a>
+      <a href="../articles/HRU.html">The HRU</a>
     </li>
     <li>
       <a href="../articles/Notes_on_the_implementation_of_Dynamic_TOPMODEL.html">Notes on the implementation of Dynamic TOPMODEL</a>
@@ -73,7 +70,7 @@
     </div>
 
     <div class="section level2">
-<h2 class="page-header" data-toc-text="0.2.3" id="dynatop-023">dynatop 0.2.3<a class="anchor" aria-label="anchor" href="#dynatop-023"></a></h2>
+<h2 class="page-header" data-toc-text="0.2.3" id="dynatop-023">dynatop 0.2.3<small>2022-10-10</small><a class="anchor" aria-label="anchor" href="#dynatop-023"></a></h2>
 <ul><li>removed dependancy on rgdal</li>
 <li>Fix bug in get_states method</li>
 </ul></div>
@@ -85,7 +82,8 @@
 </ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.2.1" id="dynatop-021">dynatop 0.2.1<small>2022-01-18</small><a class="anchor" aria-label="anchor" href="#dynatop-021"></a></h2>
-<ul><li>Release for CRAN</li></ul></div>
+<ul><li>Release for CRAN</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.2.0.9200" id="dynatop-0209200">dynatop 0.2.0.9200<a class="anchor" aria-label="anchor" href="#dynatop-0209200"></a></h2>
 <ul><li>Fix so using a single channel works correctly</li>
@@ -109,7 +107,8 @@
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.2.0.904" id="dynatop-020904">dynatop 0.2.0.904*<a class="anchor" aria-label="anchor" href="#dynatop-020904"></a></h2>
-<ul><li>changes to improve plotting</li></ul></div>
+<ul><li>changes to improve plotting</li>
+</ul></div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.2.0.9035" id="dynatop-0209035">dynatop 0.2.0.9035<a class="anchor" aria-label="anchor" href="#dynatop-0209035"></a></h2>
 <ul><li>Adapted R and C++ code to pass data frames of hillslope and channel properties</li>
@@ -118,10 +117,12 @@
 <li>Revert Channel routing to compute average flux over the time step</li>
 </ul><div class="section level3">
 <h3 id="new-features-0-2-0-9035">New features<a class="anchor" aria-label="anchor" href="#new-features-0-2-0-9035"></a></h3>
-<ul><li>None</li></ul></div>
+<ul><li>None</li>
+</ul></div>
 <div class="section level3">
 <h3 id="breaking-changes-0-2-0-9035">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-2-0-9035"></a></h3>
-<ul><li>None</li></ul></div>
+<ul><li>None</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.2.0.9030" id="dynatop-0209030">dynatop 0.2.0.9030<a class="anchor" aria-label="anchor" href="#dynatop-0209030"></a></h2>
@@ -130,12 +131,15 @@
 </ul><div class="section level3">
 <h3 id="new-features-0-2-0-9030">New features<a class="anchor" aria-label="anchor" href="#new-features-0-2-0-9030"></a></h3>
 <ul><li>Addition of two further transmissivity profiles - these implementations should be considered <strong>experimental</strong>
-</li></ul></div>
+</li>
+</ul></div>
 <div class="section level3">
 <h3 id="breaking-changes-0-2-0-9030">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-2-0-9030"></a></h3>
-<ul><li>Alterations to model structure<ul><li>Two new data.frames added for defining Precipitation and PET inputs. These can now be specified as weighted sums of observed series.</li>
+<ul><li>Alterations to model structure
+<ul><li>Two new data.frames added for defining Precipitation and PET inputs. These can now be specified as weighted sums of observed series.</li>
 <li>The parameter vector <code>$param</code> is dropped. Numeric parameters are now stored in the <code>$hillslope</code> and <code>$channel</code> data.frames. This is to allow for cleaner code and future development of different model storage less dependent of <code>*.rds</code> files.</li>
-</ul></li></ul></div>
+</ul></li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.2.0.9020" id="dynatop-0209020">dynatop 0.2.0.9020<a class="anchor" aria-label="anchor" href="#dynatop-0209020"></a></h2>
@@ -143,7 +147,8 @@
 <li>Complete rewrite of the hillslope simulation code making better use of std C++ classes and Boost libraries.</li>
 </ul><div class="section level3">
 <h3 id="breaking-changes-0-2-0-9020">Breaking Changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-2-0-9020"></a></h3>
-<ul><li>Model structure altered to contain a further data frame containing all the HRU linkages</li></ul></div>
+<ul><li>Model structure altered to contain a further data frame containing all the HRU linkages</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.13" id="dynatop-013">dynatop 0.13<a class="anchor" aria-label="anchor" href="#dynatop-013"></a></h2>
@@ -191,7 +196,8 @@
 <h2 class="page-header" data-toc-text="0.0.4" id="dynatop-004">dynatop 0.0.4<a class="anchor" aria-label="anchor" href="#dynatop-004"></a></h2>
 <div class="section level3">
 <h3 id="breaking-changes-0-0-4">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-0-4"></a></h3>
-<ul><li>New solutions to the surface and saturated zone means models for previous versions of dynatop will not work. See the model description and the <code>dynatopGIS</code> package (0.0.4) for a method of generating models in the revised format</li></ul></div>
+<ul><li>New solutions to the surface and saturated zone means models for previous versions of dynatop will not work. See the model description and the <code>dynatopGIS</code> package (0.0.4) for a method of generating models in the revised format</li>
+</ul></div>
 <div class="section level3">
 <h3 id="other-changes-0-0-4">Other changes<a class="anchor" aria-label="anchor" href="#other-changes-0-0-4"></a></h3>
 <ul><li>The surface store, previously labelled <span class="math inline"><em>s</em><sub><em>e</em><em>x</em></sub></span> has been relabelled <span class="math inline"><em>s</em><sub><em>s</em><em>f</em></sub></span> since this is felt to be more logical.</li>
@@ -205,7 +211,8 @@
 <h2 class="page-header" data-toc-text="0.0.3" id="dynatop-003">dynatop 0.0.3<a class="anchor" aria-label="anchor" href="#dynatop-003"></a></h2>
 <div class="section level3">
 <h3 id="new-features-0-0-3">New features<a class="anchor" aria-label="anchor" href="#new-features-0-0-3"></a></h3>
-<ul><li>Added time delay histogram river routing. See vignettes on theory and use.</li></ul></div>
+<ul><li>Added time delay histogram river routing. See vignettes on theory and use.</li>
+</ul></div>
 <div class="section level3">
 <h3 id="bug-fixes-0-0-3">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-0-3"></a></h3>
 <ul><li>Fixed some mass balance issues in dynatop relating to the saturated zone solution in dynatop</li>
@@ -213,7 +220,8 @@
 </ul></div>
 <div class="section level3">
 <h3 id="breaking-changes-0-0-3">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-0-0-3"></a></h3>
-<ul><li>The model structure has been adapted to allow for the channel connectivity and specification of gauges and inputs on the channel network. See the model object vignette. If using dynatopGIS then rerun create_model.</li></ul></div>
+<ul><li>The model structure has been adapted to allow for the channel connectivity and specification of gauges and inputs on the channel network. See the model object vignette. If using dynatopGIS then rerun create_model.</li>
+</ul></div>
 <div class="section level3">
 <h3 id="other-changes-0-0-3">Other changes<a class="anchor" aria-label="anchor" href="#other-changes-0-0-3"></a></h3>
 <ul><li>Fixed minor formatting issues in the vignettes</li>
@@ -224,10 +232,12 @@
 <h2 class="page-header" data-toc-text="0.0.2" id="dynatop-002">dynatop 0.0.2<a class="anchor" aria-label="anchor" href="#dynatop-002"></a></h2>
 <div class="section level3">
 <h3 id="bug-fixes-0-0-2">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-0-2"></a></h3>
-<ul><li>Added purl=FALSE where error=TRUE in vignette</li></ul></div>
+<ul><li>Added purl=FALSE where error=TRUE in vignette</li>
+</ul></div>
 <div class="section level3">
 <h3 id="other-changes-0-0-2">Other changes<a class="anchor" aria-label="anchor" href="#other-changes-0-0-2"></a></h3>
-<ul><li>Removed unused Rcpp functions and library dependencies</li></ul></div>
+<ul><li>Removed unused Rcpp functions and library dependencies</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="page-header" data-toc-text="0.0.1" id="dynatop-001">dynatop 0.0.1<a class="anchor" aria-label="anchor" href="#dynatop-001"></a></h2>
@@ -275,7 +285,7 @@
 </div>
 
 <div class="pkgdown">
-  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.6.</p>
+  <p></p><p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
 </div>
 
       </footer></div>
