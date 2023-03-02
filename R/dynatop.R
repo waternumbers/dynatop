@@ -463,8 +463,8 @@ dynatop <- R6Class(
             ## check table
             if( !is.data.frame(defn) ){ stop("Output definition should be a data frame") }
             if( !all(c("name","id","flux") %in% names(defn) ) ){ stop("Output definition have varaibles name, id and flux") }
-            if( !all(defn$id %in% (0:(length(private$mdl)-1))) ){
-                stop(paste("id should be between 0 and",length(private$mdl)-1))
+            if( !all(defn$id %in% (0:(length(private$model)-1))) ){
+                stop(paste("id should be between 0 and",length(private$model)-1))
             }
             
             defn$name <- as.character(defn$name)
