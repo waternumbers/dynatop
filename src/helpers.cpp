@@ -84,12 +84,14 @@ void outFlux::apply(std::vector<hru> &hrus, std::vector<double> &out, double nst
       out[oi] += hrus[i].q_sf / nstep;
       break;
     case 5: // q_sf_in
+      //Rcpp::Rcout << "q_sf_in " << i << " " <<  hrus[i].q_sf_in << std::endl;
       out[oi] += hrus[i].q_sf_in / nstep;
       break;
     case 6: // q_sz
       out[oi] += hrus[i].q_sz / nstep;
       break;
     case 7: // q_sz_in
+      //Rcpp::Rcout << "q_sz_in " << i << " " <<  hrus[i].q_sz_in << std::endl;
       out[oi] += hrus[i].q_sz_in  / nstep;
       break;
     case 8: // s_sf

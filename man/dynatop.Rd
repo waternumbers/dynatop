@@ -110,9 +110,7 @@ invisible(self) suitable for chaining
 \if{html}{\out{<a id="method-dynatop-initialise"></a>}}
 \if{latex}{\out{\hypertarget{method-dynatop-initialise}{}}}
 \subsection{Method \code{initialise()}}{
-
 Initialises a dynatop object in the simpliest way possible.
-
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dynatop$initialise(
   vtol = sqrt(.Machine$double.eps),
@@ -146,7 +144,7 @@ Simulate the hillslope and channel componets of a dynatop object
   output_defn,
   keep_states = NULL,
   sub_step = NULL,
-  vtol = sqrt(.Machine$double.eps),
+  vtol = 0.001,
   ftol = sqrt(.Machine$double.eps),
   max_it = 1000
 )}\if{html}{\out{</div>}}

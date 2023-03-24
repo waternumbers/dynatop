@@ -3,7 +3,7 @@ rm(list=ls())
 graphics.off()
 
 ## path of the package
-pacPath <- '../'
+pacPath <- '.'
 Rcpp::compileAttributes(pacPath)
 devtools::document(pacPath)
 devtools::spell_check(pacPath,use_wordlist=TRUE)
