@@ -21,6 +21,7 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+# THIS IS OUTDATED AND RELATES TO v02
 
 The `dynatop` package represents an implementation of the concepts behind a dynamic TOPMODEL.
 One of the underlying principles of dynamic TOPMODEL is that the landscape can be broken up into

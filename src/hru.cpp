@@ -28,8 +28,14 @@ hru::hru(int const id_,
   s_sf(states_[0]), s_rz(states_[1]), s_uz(states_[2]), s_sz(states_[3])
 {
   // change depths to volues for storage limits
-  //s_rzmax = s_rzmax*area;
   area = properties_[0];
+  //s_rzmax = s_rzmax*area;
+  s_sf *= area;
+  s_rz *= area;
+  s_uz *= area;
+  s_sz *= area;
+  
+  
   // initialise the surface flux object
   switch(sf_type_){
   case 1:

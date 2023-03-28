@@ -38,10 +38,10 @@ void dt_init(Rcpp::List mdl, // hru data frame
     //Rcpp::Rcout << "copy hru " << ii << std::endl;
     Rcpp::List tmp = mdl[ii];
     Rcpp::NumericVector svec = tmp["states"];
-    svec["s_sf"] = hrus[ii].s_sf;
-    svec["s_rz"] = hrus[ii].s_rz;
-    svec["s_uz"] = hrus[ii].s_uz;
-    svec["s_sz"] = hrus[ii].s_sz;
+    svec["s_sf"] = hrus[ii].s_sf / hrus[ii].area;
+    svec["s_rz"] = hrus[ii].s_rz / hrus[ii].area;
+    svec["s_uz"] = hrus[ii].s_uz / hrus[ii].area;
+    svec["s_sz"] = hrus[ii].s_sz / hrus[ii].area;
   };
 
   //end of dt_init
@@ -188,10 +188,10 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   for(int ii=0; ii<nhru; ++ii){
     Rcpp::List tmp = mdl[ii];
     Rcpp::NumericVector svec = tmp["states"];
-    svec["s_sf"] = hrus[ii].s_sf;
-    svec["s_rz"] = hrus[ii].s_rz;
-    svec["s_uz"] = hrus[ii].s_uz;
-    svec["s_sz"] = hrus[ii].s_sz;
+    svec["s_sf"] = hrus[ii].s_sf / hrus[ii].area;
+    svec["s_rz"] = hrus[ii].s_rz / hrus[ii].area;
+    svec["s_uz"] = hrus[ii].s_uz / hrus[ii].area;
+    svec["s_sz"] = hrus[ii].s_sz / hrus[ii].area;
   };
 
   // end of dt_sim
