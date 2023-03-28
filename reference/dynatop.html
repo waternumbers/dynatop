@@ -42,9 +42,6 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
       <a href="../articles/Notes_on_the_implementation_of_Dynamic_TOPMODEL.html">Notes on the implementation of Dynamic TOPMODEL</a>
     </li>
     <li>
-      <a href="../articles/Selected_References.html">Selected References</a>
-    </li>
-    <li>
       <a href="../articles/The_Model_Object.html">The Model Object</a>
     </li>
   </ul></li>
@@ -176,10 +173,7 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
 
 </div><p></p><hr><a id="method-dynatop-initialise"></a><div class="section">
 <h3 id="method-initialise-">Method <code>initialise()</code><a class="anchor" aria-label="anchor" href="#method-initialise-"></a></h3>
-
-
-<p>Initialises a dynatop object in the simpliest way possible.</p>
-<div class="section">
+<p>Initialises a dynatop object in the simpliest way possible.</p><div class="section">
 <h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">dynatop</span><span class="op">$</span><span class="fu">initialise</span><span class="op">(</span></span>
 <span>  vtol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">.Machine</span><span class="op">$</span><span class="va">double.eps</span><span class="op">)</span>,</span>
@@ -217,7 +211,7 @@ R6 Class for Dynamic TOPMODEL"><!-- mathjax --><script src="https://cdnjs.cloudf
 <span>  <span class="va">output_defn</span>,</span>
 <span>  keep_states <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sub_step <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  vtol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">.Machine</span><span class="op">$</span><span class="va">double.eps</span><span class="op">)</span>,</span>
+<span>  vtol <span class="op">=</span> <span class="fl">0.001</span>,</span>
 <span>  ftol <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">.Machine</span><span class="op">$</span><span class="va">double.eps</span><span class="op">)</span>,</span>
 <span>  max_it <span class="op">=</span> <span class="fl">1000</span></span>
 <span><span class="op">)</span></span></code></pre></div><p></p></div>

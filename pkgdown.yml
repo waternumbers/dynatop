@@ -4,8 +4,7 @@ pkgdown_sha: ~
 articles:
   HRU: HRU.html
   Notes_on_the_implementation_of_Dynamic_TOPMODEL: Notes_on_the_implementation_of_Dynamic_TOPMODEL.html
-  Selected_References: Selected_References.html
   The_Model_Object: The_Model_Object.html
   dynatop: dynatop.html
-last_built: 2023-03-02T11:32Z
+last_built: 2023-03-28T10:10Z
 
