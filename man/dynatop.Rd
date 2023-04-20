@@ -62,7 +62,7 @@ Creates a dynatop class object from the a list based model description as genera
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
+This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistency of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
 }
 
 \subsection{Returns}{
@@ -110,7 +110,7 @@ invisible(self) suitable for chaining
 \if{html}{\out{<a id="method-dynatop-initialise"></a>}}
 \if{latex}{\out{\hypertarget{method-dynatop-initialise}{}}}
 \subsection{Method \code{initialise()}}{
-Initialises a dynatop object in the simpliest way possible.
+Initialises a dynatop object in the simplest way possible.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dynatop$initialise(
   vtol = sqrt(.Machine$double.eps),
@@ -138,7 +138,7 @@ invisible(self) suitable for chaining
 \if{html}{\out{<a id="method-dynatop-sim"></a>}}
 \if{latex}{\out{\hypertarget{method-dynatop-sim}{}}}
 \subsection{Method \code{sim()}}{
-Simulate the hillslope and channel componets of a dynatop object
+Simulate the hillslope and channel components of a dynatop object
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dynatop$sim(
   output_defn,
