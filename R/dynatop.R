@@ -23,7 +23,7 @@ dynatop <- R6Class(
         #'
         #' @return invisible(self) suitable for chaining
         #'
-        #' @details This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistncy of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
+        #' @details This function makes some basic consistency checks on a list representing a dynamic TOPMODEL model. The checks performed and basic 'sanity' checks. They do not check for the logic of the parameter values nor the consistency of states and parameters. Sums of the redistribution matrices are checked to be in the range 1 +/- delta.
         initialize = function(model, map=NULL, use_states=FALSE, delta = 1e-13){
             ## digest model with checks - will fail if errors identified
             private$digest_model(model,use_states,delta)
@@ -52,7 +52,7 @@ dynatop <- R6Class(
         clear_data = function(){
             private$time_series <- list()
         },
-        #' @description Initialises a dynatop object in the simpliest way possible.
+        #' @description Initialises a dynatop object in the simplest way possible.
         #'
         #' @param vtol tolerance for the solution for the saturated zone storage (as volume)
         #' @param ftol tolerance for the solution of the saturated zone storage (as difference of function from 0)
@@ -71,7 +71,7 @@ dynatop <- R6Class(
             private$init(vtol,ftol,max_it)
             invisible(self)
         },
-        #' @description Simulate the hillslope and channel componets of a dynatop object
+        #' @description Simulate the hillslope and channel components of a dynatop object
         #' @param output_defn a description of the output series
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
@@ -223,7 +223,7 @@ dynatop <- R6Class(
                     output = setNames(1:14, c("precip","pet","aet",
                                               "q_sf","q_sf_in","q_sz","q_sz_in",
                                               "s_sf","s_rz","s_uz","s_sz",
-                                              "r_sf_rz","r_rz_uz","r_uz_sz"))
+                                              "v_sf_rz","v_rz_uz","v_uz_sz"))
                     ),
         digest_hru = function(h, use_states, delta){ ## check HRU returns a text string of errors
             etxt = character(0)

@@ -1,6 +1,14 @@
+# dynatop 0.3.1000
+
+## Breaking changes
+
+- New solution to the surface and saturated zone
+- Revised model structure
+
+
 # dynatop 0.2.3
 
-- removed dependancy on rgdal
+- removed dependency on rgdal
 - Fix bug in get_states method
 
 # dynatop 0.2.2
