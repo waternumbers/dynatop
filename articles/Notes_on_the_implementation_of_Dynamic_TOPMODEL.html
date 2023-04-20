@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0.1000</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0.1001</span>
       </span>
     </div>
 
@@ -97,9 +97,6 @@
 
     
     
-<div class="section level2">
-<h2 id="this-is-outdated-and-relates-to-v02">THIS IS OUTDATED AND RELATES TO v02<a class="anchor" aria-label="anchor" href="#this-is-outdated-and-relates-to-v02"></a>
-</h2>
 <p>The <code>dynatop</code> package represents an implementation of the concepts behind a dynamic TOPMODEL.
 One of the underlying principles of dynamic TOPMODEL is that the landscape can be broken up into
 hydrologically similar regions, or Hydrological Response Units (HRUs), where
@@ -107,31 +104,24 @@ all the area within a HRU behaves in a hydrologically similar fashion.</p>
 <p>While a Hydrological Response Unit (HRU) has typically been thought of as an
 area of hill slope with, for example, similar topographic, soil and upslope area
 characteristics the idea may be generalised. In doing this a catchments is
-conceptualised as a collection of HRUs of different type (e.g. hill slope,
+conceptualised as a collection of HRUs which may represent of different types
+of landscape (e.g. hill slope,
 channel, lake) which exchange fluxes at specified levels (e.g. saturated zone,
-surface)</p>
-<p>As well as the exchange of fluxes this documents considers two types of HRU. The first termed
-“hillslope” solves the surface, root, unsaturated and saturated zones
-for ‘similar’ areas of hill slope the catchment a each time step.
-The second termed “channel” represents a length of river channel in a
-simplified manner allowing the extraction of the inflow from the
-hill slope. The solutions for each of these HRU types are presented in the
-<a href="Hillslope_HRU.html">hillslope</a> and <a href="Channel_HRU.html">channel</a> vignettes.</p>
+surface). Currently a single type of <a href="HRU.html">HRU</a> is present in the model, which may be
+parameterised to represent a number of different physical features.</p>
 <p>The aim of this document is to outline</p>
 <ul>
 <li>the computational sequence and linking the HRUs</li>
 <li>conventions for the input data</li>
 <li>other miscellaneous information that may help developers</li>
 </ul>
-</div>
 <div class="section level2">
 <h2 id="the-solution-order-of-hrus-and-exchange-of-fluxes">The solution order of HRUs and exchange of fluxes<a class="anchor" aria-label="anchor" href="#the-solution-order-of-hrus-and-exchange-of-fluxes"></a>
 </h2>
 <p>Each HRU has a unique reference number in the <code>id</code> variable. In principle the HRUs are
 solved in reverse order of <code>id</code>; that is from the largest <code>id</code> value to the
-smallest. Currently this not strictly enforced since the C++ code used for the
-computation first solves the hillslope HRUs then the channel HRUs, but this
-should not be relied upon and may change in future releases.</p>
+smallest. Currently this is strictly enforced. Future releases may relax this
+to enable parallel solutions.</p>
 <p>Fluxes between the HRUs are represented as occurring at two levels, the surface and the
 saturated zones. For the <span class="math inline">\(i\)</span>th HRU the outflow in <span class="math inline">\(m^3/s\)</span> at time <span class="math inline">\(t+\Delta t\)</span> is
 <span class="math inline">\(\left.q_{sf}^{\left[i\right]}\right\rvert_{t+\Delta t}\)</span> at the surface and
@@ -161,9 +151,6 @@ the model.</p>
 given in <span class="math inline">\(m\)</span> accrued over the proceeding time step. So if the data has a time
 step <span class="math inline">\(\Delta t\)</span> the value given at <span class="math inline">\(t+\Delta t\)</span> is accrued in the interval between time <span class="math inline">\(t\)</span>
 and time <span class="math inline">\(t+\Delta t\)</span>.</p>
-<p>The data series for the diffuse and point inputs used in the channel routing
-should be in <span class="math inline">\(m^3/s\)</span>. In the channel HRU solution the value given at time
-<span class="math inline">\(t+\Delta t\)</span> is presumed to be constant over the interval <span class="math inline">\(t\)</span> to <span class="math inline">\(t+\Delta t\)</span>.</p>
 </div>
 <div class="section level2">
 <h2 id="miscellaneous-coding-comments">Miscellaneous Coding comments<a class="anchor" aria-label="anchor" href="#miscellaneous-coding-comments"></a>
@@ -187,7 +174,7 @@ the computational sequence (or comments)</p>
 <h3 id="numerical-solutions">Numerical solutions<a class="anchor" aria-label="anchor" href="#numerical-solutions"></a>
 </h3>
 <p>Currently the code uses a purely implicit scheme for the solution of the
-hillslope HRUs. This requires a solving a <em>zero finding</em> problem for each HRU
+hillslope HRUs. This requires a solving two <em>zero finding</em> problems for each HRU
 at each (sub)time step. Currently a simple bisection algorithm is used with a
 user specified tolerance and maximum number of iterations. The tolerance is
 defined as the difference between the upper and lower limits of the interval
