@@ -462,14 +462,23 @@ dynatop <- R6Class(
         digest_output_defn = function(defn){
             ## check table
             if( !is.data.frame(defn) ){ stop("Output definition should be a data frame") }
-            if( !all(c("name","id","flux") %in% names(defn) ) ){ stop("Output definition have varaibles name, id and flux") }
+            if( !all(c("name","id","flux") %in% names(defn) ) ){ stop("Output definition must have variables name, id and flux") }
             if( !all(defn$id %in% (0:(length(private$model)-1))) ){
                 stop(paste("id should be between 0 and",length(private$model)-1))
+            }
+            
+            if( !("scale" %in% names(defn) ) ){
+                warning("Output definition does not have scale - adding a vector of 1's")
+                defn$scale <- 1
             }
             
             defn$name <- as.character(defn$name)
             defn$id <- as.integer(defn$id)
             defn$flux <- as.character(defn$flux)
+            if( !all( defn$flux %in% names(private$info$output) ) ){
+                stop("At least one flux type not recognised")
+            }
+            defn$scale <- as.numeric(defn$scale)
             unm <- unique(defn$name)
             defn$name_idx <- setNames(0:(length(unm)-1),unm)[ defn$name ]
             defn$flux_int <- private$info$output[ defn$flux ]
@@ -523,7 +532,7 @@ dynatop <- R6Class(
             ## Initialise the mass error store
             private$time_series$mass_balance <- matrix(as.numeric(NA),nrow(private$time_series$obs),6)
             colnames(private$time_series$mass_balance) <-
-                c("initial_state","p","e_t","channel_inflow","final_state","error")
+                c("initial_state","p","e_t","outflow","final_state","error")
             
             ## simulate
             dt_sim(private$model,

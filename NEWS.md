@@ -1,4 +1,9 @@
-# dynatop 0.3.1000
+# dynatop 0.3.0.1002
+
+- Add scale in utput definition
+- Add warning if output flux type not defined
+
+# dynatop 0.3.0.1000
 
 ## Breaking changes
 

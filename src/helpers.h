@@ -14,9 +14,10 @@ Rcpp::List makeStateList(std::vector<hru>&);
 class outFlux {
  protected: 
   std::vector<int> out_idx, idx, flux_type;
+  std::vector<double> scale;
  public:
-  outFlux(std::vector<int>, std::vector<int>, std::vector<int>);
-  void apply(std::vector<hru>&, std::vector<double>&, double);
+  outFlux(std::vector<int>, std::vector<int>, std::vector<int>, std::vector<double>, double);
+  void apply(std::vector<hru>&, std::vector<double>&);
 };
 
 #endif

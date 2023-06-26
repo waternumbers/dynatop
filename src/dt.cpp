@@ -87,7 +87,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   //Rcpp::Rcout << "Made HRUs" << std::endl;
   
   // create output flux object
-  outFlux out_flux(out_dfn["name_idx"], out_dfn["id"], out_dfn["flux_int"]);
+  outFlux out_flux(out_dfn["name_idx"], out_dfn["id"], out_dfn["flux_int"], out_dfn["scale"], dbl_n_sub_step);
   //Rcpp::Rcout << "Made outFlux" << std::endl;
   
   // start loop of time steps
@@ -143,7 +143,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
       }
       
 
-      out_flux.apply( hrus, out, dbl_n_sub_step);
+      out_flux.apply( hrus, out) ; //, dbl_n_sub_step);
       
       // end loop of substeps
     }

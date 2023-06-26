@@ -59,61 +59,66 @@ Rcpp::List makeStateList(std::vector<hru> &hrus){
 
 
 
-outFlux::outFlux(std::vector<int> out_idx_, std::vector<int> idx_, std::vector<int> flux_type_):
-  out_idx(out_idx_), idx(idx_), flux_type(flux_type_)
-{}
+outFlux::outFlux(std::vector<int> out_idx_, std::vector<int> idx_, std::vector<int> flux_type_, std::vector<double> scale_, double nstep):
+  out_idx(out_idx_), idx(idx_), flux_type(flux_type_), scale(scale_)
+{
+  for(long unsigned int ii=0; ii<scale.size(); ++ii){
+    scale[ii] = scale[ii] / nstep;
+  }
+}
 
-void outFlux::apply(std::vector<hru> &hrus, std::vector<double> &out, double nstep){
+void outFlux::apply(std::vector<hru> &hrus, std::vector<double> &out){
   for(long unsigned int ii=0; ii<out_idx.size(); ++ii){
     
     int &oi = out_idx[ii];
     int &i = idx[ii];
     int &fl = flux_type[ii];
+    double &sc = scale[ii];
     
     switch (fl) {
     case 1: // precip
-      out[oi] += hrus[i].precip / nstep;
+      out[oi] += hrus[i].precip * sc;
       break;
     case 2: // pet
-      out[oi] += hrus[i].pet / nstep;
+      out[oi] += hrus[i].pet * sc;
       break;
     case 3: // aet
-      out[oi] += hrus[i].aet / nstep;
+      out[oi] += hrus[i].aet * sc;
       break;
     case 4: // q_sf
-      out[oi] += hrus[i].q_sf / nstep;
+      out[oi] += hrus[i].q_sf * sc;
       break;
     case 5: // q_sf_in
       //Rcpp::Rcout << "q_sf_in " << i << " " <<  hrus[i].q_sf_in << std::endl;
-      out[oi] += hrus[i].q_sf_in / nstep;
+      out[oi] += hrus[i].q_sf_in * sc;
       break;
     case 6: // q_sz
-      out[oi] += hrus[i].q_sz / nstep;
+      out[oi] += hrus[i].q_sz * sc;
       break;
     case 7: // q_sz_in
       //Rcpp::Rcout << "q_sz_in " << i << " " <<  hrus[i].q_sz_in << std::endl;
-      out[oi] += hrus[i].q_sz_in  / nstep;
+      out[oi] += hrus[i].q_sz_in  * sc;
       break;
     case 8: // s_sf
-      out[oi] = hrus[i].s_sf  / nstep;
+      out[oi] = hrus[i].s_sf  * sc;
       break;
     case 9: // s_rz
-      out[oi] = hrus[i].s_rz  / nstep;
+      out[oi] = hrus[i].s_rz  * sc;
       break;
     case 10: // s_uz
-      out[oi] = hrus[i].s_uz / nstep;
+      out[oi] = hrus[i].s_uz * sc;
       break;
     case 11: // s_sz
-      out[oi] = hrus[i].s_sz / nstep;
+      out[oi] = hrus[i].s_sz * sc;
       break;
     case 12: // v_sf_rz
-      out[oi] += hrus[i].v_sf_rz / nstep;
+      out[oi] += hrus[i].v_sf_rz * sc;
       break;
     case 13: // v_rz_uz
-      out[oi] += hrus[i].v_rz_uz / nstep;
+      out[oi] += hrus[i].v_rz_uz * sc;
       break;
     case 14: // v_uz_sz
-      out[oi] += hrus[i].v_uz_sz / nstep;
+      out[oi] += hrus[i].v_uz_sz * sc;
       break;
     }
   }
