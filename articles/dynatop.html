@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0.1001</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0.1002</span>
       </span>
     </div>
 
@@ -251,6 +251,8 @@ object. If, as in the case of this example, the states are not specified
 then any attempt to perform a simulation will fail.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">sim</span><span class="op">(</span><span class="va">swindale_model</span><span class="op">$</span><span class="va">output_flux</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in private$digest_output_defn(output_defn): Output definition does not</span></span>
+<span><span class="co">#&gt; have scale - adding a vector of 1's</span></span>
 <span><span class="co">#&gt; Error in ctch_mdl$sim(swindale_model$output_flux): Model states have non-finite values</span></span></code></pre></div>
 <p>The states need to be initialised using the <code>initialise</code>
 method which requires an initial recharge rate. In the following we
@@ -262,7 +264,9 @@ deficit, using the chaining of commands.</p>
 <p>The simulation can now be performed and the flow at the gauge
 extracted with</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">sim1</span> <span class="op">&lt;-</span> <span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">sim</span><span class="op">(</span><span class="va">swindale_model</span><span class="op">$</span><span class="va">output_flux</span><span class="op">)</span><span class="op">$</span><span class="fu">get_output</span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">sim1</span> <span class="op">&lt;-</span> <span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">sim</span><span class="op">(</span><span class="va">swindale_model</span><span class="op">$</span><span class="va">output_flux</span><span class="op">)</span><span class="op">$</span><span class="fu">get_output</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in private$digest_output_defn(output_defn): Output definition does not</span></span>
+<span><span class="co">#&gt; have scale - adding a vector of 1's</span></span></code></pre></div>
 <p>Note that the states of the system are now those at the end of the
 simulation for example:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
@@ -273,6 +277,8 @@ produce different results. Output for the above examples can be plotted
 against observed discharge for comparison as follows:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sim2</span> <span class="op">&lt;-</span> <span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">sim</span><span class="op">(</span><span class="va">swindale_model</span><span class="op">$</span><span class="va">output_flux</span><span class="op">)</span><span class="op">$</span><span class="fu">get_output</span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning in private$digest_output_defn(output_defn): Output definition does not</span></span>
+<span><span class="co">#&gt; have scale - adding a vector of 1's</span></span>
 <span><span class="va">out</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span> <span class="fu"><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">swindale_obs</span>,<span class="va">sim1</span><span class="op">)</span>,<span class="va">sim2</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">out</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">swindale_obs</span><span class="op">)</span>,<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">out</span><span class="op">[</span>,<span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">'flow'</span>,<span class="st">'sim_1'</span>,<span class="st">'sim_2'</span><span class="op">)</span><span class="op">]</span>, main<span class="op">=</span><span class="st">"Discharge"</span>,ylab<span class="op">=</span><span class="st">"m3/s"</span>,legend.loc<span class="op">=</span><span class="st">"topright"</span><span class="op">)</span></span></code></pre></div>
