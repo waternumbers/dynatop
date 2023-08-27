@@ -1,9 +1,7 @@
-#' dynatop
-#'
-#' This package contains the core code for the R implementation of dynamic TOPMODEL
-#'
-#' @name dynatop-package
-#' @docType package
+#' @keywords internal
+#' @aliases dynatop-package
+"_PACKAGE"
+
 #' @import xts
 #' @importFrom R6 R6Class
 #' @importFrom zoo index

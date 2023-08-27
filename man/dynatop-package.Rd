@@ -3,7 +3,27 @@
 \docType{package}
 \name{dynatop-package}
 \alias{dynatop-package}
-\title{dynatop}
+\alias{_PACKAGE}
+\title{dynatop: An Implementation of Dynamic TOPMODEL Hydrological Model in R}
 \description{
-This package contains the core code for the R implementation of dynamic TOPMODEL
+An R implementation and enhancement of the Dynamic TOPMODEL semi-distributed hydrological model originally proposed by Beven and Freer (2001) \doi{10.1002/hyp.252}. The 'dynatop' package implements code for simulating models which can be created using the 'dynatopGIS' package.
 }
+\seealso{
+Useful links:
+\itemize{
+  \item \url{https://waternumbers.github.io/dynatop/}
+  \item \url{https://github.com/waternumbers/dynatop}
+  \item Report bugs at \url{https://github.com/waternumbers/dynatop/issues}
+}
+
+}
+\author{
+\strong{Maintainer}: Paul Smith \email{paul@waternumbers.co.uk} (\href{https://orcid.org/0000-0002-0034-3412}{ORCID})
+
+Authors:
+\itemize{
+  \item Peter Metcalfe
+}
+
+}
+\keyword{internal}
