@@ -187,36 +187,59 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 		     s_rz - (area*s_rzmax)  + Dt*(precip - pet) + v_sf_rz);
 
   // search for s_sz
-  double z = 0.0;
+  double z = 0.0; // this is the value used if no search performed
+  std::pair<double,double> lbnd(z, 999.9);
+  std::pair<double,double> ubnd(s_sz + 3*vtol, -999.9); // second value should be negative to ensure search
+  
+  //double z = 0.0;
+  //double z = lbnd.first;
   v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
   double qq = std::min( sz->q_szmax, std::max(0.0, 2*sz->fq(z) - q_sz_in) );
-  double Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
-  std::pair<double,double> bnd(0.0, s_sz + 3*vtol);
+  //double Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
+  lbnd.second = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
+  //std::pair<double,double> bnd(0.0, s_sz + 3*vtol);
   int it(0);
-  if( Hz <= 0 ){ // then solve by bisection
-    //Rcpp::Rcout << "in Hz <0" << std::endl;
-    // expand
-    //std::pair<double,double> bnd(0.0, s_sz + 3*vtol);
-    //int it(0);
-    //Rcpp::Rcout << "expanding" << std::endl;
-    bool flg(true);
-    while( (flg == true) and (it < max_it) ){
-      z = bnd.second;
+  if( lbnd.second <= 0){ //Hz <= 0 ){ // then solve by bisection
+    // bool flg(true);
+    // while( (flg == true) and (it < max_it) ){
+    //   //z = bnd.second;
+    //   z = ubnd.first;
+    //   v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
+    //   qq = std::min( sz->q_szmax, std::max(0.0, 2*sz->fq(z) - q_sz_in) );
+    //   //Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
+    //   ubnd.second = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
+    //   if( ubnd.second < 0 ){ //Hz<0 ){
+    // 	lbnd = ubnd;
+    // 	ubnd.first = 2*ubnd.first;
+    // 	//bnd.first = bnd.second;
+    // 	//bnd.second = 2* bnd.second;
+    //   }else{
+    // 	flg = false;
+    //   }
+    //   it += 1;
+    // }
+    
+    // if( flg==true ){
+    //   Rcpp::warning("SZ: No bound found within %i iterations. Difference between bounds is %d.",
+    // 		    it, ubnd.first - lbnd.first); //bnd.second - bnd.first);
+    // }
+    
+    while( (ubnd.second < 0) and (it < max_it) ){
+      //z = bnd.second;
+      z = ubnd.first;
       v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
       qq = std::min( sz->q_szmax, std::max(0.0, 2*sz->fq(z) - q_sz_in) );
-      Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
-      if( Hz<0 ){
-	bnd.first = bnd.second;
-	bnd.second = 2* bnd.second;
-      }else{
-	flg = false;
+      ubnd.second = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
+      if( ubnd.second < 0 ){ //Hz<0 ){
+	lbnd = ubnd;
+	ubnd.first = 2*ubnd.first;
       }
       it += 1;
     }
     
-    if( flg==true ){
+    if( ubnd.second < 0 ){
       Rcpp::warning("SZ: No bound found within %i iterations. Difference between bounds is %d.",
-		    it, bnd.second - bnd.first);
+		    it, ubnd.first - lbnd.first); //bnd.second - bnd.first);
     }
 
     //Rcpp::Rcout << "contracting" << std::endl;
@@ -225,13 +248,22 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
     //}
       
     it = 0;  
-    while( (it <= max_it) and ( (bnd.second - bnd.first)>vtol ) ){
-      z = (bnd.first+bnd.second)/2.0;
+    while( (it <= max_it) and ( (ubnd.first - lbnd.first)>vtol ) ){ //(bnd.second - bnd.first)>vtol ) ){
+      //z = (lbnd.first+ubnd.first)/2.0;
+      double iW = ubnd.second / (ubnd.second-lbnd.second);
+      iW = std::max(0.001,std::min(iW,0.999));
+      z = (iW*lbnd.first) + (1.0-iW)*ubnd.first;
       v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
       qq = std::min( sz->q_szmax, std::max(0.0, 2*sz->fq(z) - q_sz_in) );
-      Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
+      double Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
       
-      if( Hz <= 0 ){ bnd.first= z; } else { bnd.second=z; }
+      if( Hz <= 0 ){ //bnd.first= z; } else { bnd.second=z; }
+	lbnd.first = z;
+	lbnd.second = Hz;
+      }else{
+	ubnd.first = z;
+	ubnd.second = Hz;
+      }
       it += 1;
       //if(id == 1241){
       //	Rcpp::Rcout << z << " " << qq << " " << Hz << " " << bnd.first << " " << bnd.second << " " << bnd.second-bnd.first << std::endl;
@@ -240,9 +272,10 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
     }
     if(it > max_it){
       Rcpp::warning("HRU %i SZ: No solution found within %i iterations. Difference between bounds is %d",
-		    id, it, bnd.second - bnd.first);
+		    id, it, ubnd.first - lbnd.first); //bnd.second - bnd.first);
     }
-    z = bnd.second;
+    z = ubnd.first;
+    //    z = bnd.second;
   }
 
   // upward pass
@@ -261,17 +294,37 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // surface
   //Rcpp::Rcout << "solving surface" << std::endl;
   double sfmax = s_sf + Dt*q_sf_in - v_sf_rz;
-  bnd.first = 0.0;
-  bnd.second = sfmax;
+  //std::pair<double,double> bnd;
+  //bnd.first = 0.0;
+  //bnd.second = sfmax;
+  lbnd.first = 0.0;
+  qq = sf->fq(lbnd.first,q_sf_in);
+  lbnd.second = sfmax - Dt*qq - z;
+  
+  ubnd.first = sfmax;
+  qq = sf->fq(ubnd.first,q_sf_in);
+  ubnd.second = sfmax - Dt*qq - z;
+  
   it = 0;
-  while( (it <= max_it) and ( (bnd.second - bnd.first)>vtol ) ){
-    z = (bnd.first+bnd.second)/2.0;
+  while( (it <= max_it) and ( (ubnd.first - lbnd.first)>vtol ) ){ //( (bnd.second - bnd.first)>vtol ) ){
+    //z = (bnd.first+bnd.second)/2.0;
+    //z = (lbnd.first+ubnd.first)/2.0;
+    double iW = ubnd.second / (ubnd.second-lbnd.second);
+    iW = std::max(0.001,std::min(iW,0.999));
+    z = (iW*lbnd.first) + (1.0-iW)*ubnd.first;
     qq = sf->fq(z,q_sf_in);
     double Sw = sfmax - Dt*qq - z;
-    if( Sw <= 0 ){ bnd.second= z; } else { bnd.first=z; }
+    if( Sw <= 0 ){ //bnd.second= z; } else { bnd.first=z; }
+      ubnd.first = z;
+      ubnd.second = Sw;
+    }else{
+      lbnd.first = z;
+      lbnd.second = Sw;
+    }
     it += 1;
   }
-  z = bnd.first;
+  z = lbnd.first;
+  //z = bnd.first;
   q_sf = q_sf_in + (s_sf - v_sf_rz - z)/Dt;
   s_sf = z;
    

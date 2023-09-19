@@ -280,28 +280,27 @@ and
 \]
 
 The different formulation available in the model are given in Table
-\@ref{tbl:surface} with their parameters outlined in Table
-\@ref{tbl:surface-param}
+\@ref{tab:surface} with their parameters outlined in Table
+\@ref{tab:surface-param}
 
-| Type | Description                                                           | Parameters   | \mathcal{F}\left(s_{sf},\Theta_{sf}\right)                                   | \mathcal{F}_{\eta}\left(s_{sf},\Theta_{sf}\right) |
-|------|-----------------------------------------------------------------------|--------------|------------------------------------------------------------------------------|---------------------------------------------------|
-| cnst | Linear Tank coupled below a constant parameter diffusive wave solution | $v_sf, k_sf$ | \[q_{sf}  =\left\{ \begin{array}{cl} s_{sf}/t_{raf} & s_{sf} \leq s_{raf} \\ s_{raf}/t_{raf} + (s_{sf}-s{raf}|                                                   |
-| kin  | Linear tank with Kinematic Wave for remaining flow                    |              |                                                                              |                                                   |
+| Type | Description                                                            | Parameters                        | $\mathcal{F}\left(s_{sf},\Theta_{sf}\right)$                                                                                                                                              | $\mathcal{F}_{\eta}\left(s_{sf},\Theta_{sf}\right)$ |
+|------|------------------------------------------------------------------------|-----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
+| cnst | Linear Tank coupled below a constant parameter diffusive wave solution | $t_{raf}, s_{raf},c_{sf}, d_{sf}$ | \[ \left\{ \begin{array}{cl} \frac{s_{sf}}{t_{raf}} & s_{sf} \leq s_{raf} \\ \frac{s_{raf}}{t_{raf}} + \frac{c_{sf}}{\Delta x}(s_{sf}-s_{raf}) & \mathrm{otherwise} \end{array} \right.\] | $\frac{1}{2} - \frac{d_{sf}}{c_{sf}\Delta x}$        |
+| kin  | Linear tank with Kinematic Wave for remaining flow                     | TODO                              |                                                                                                                                                                                           | TODO                                                |
 
-Table: (\#tbl:surface) Outline formulations for the storage-flow relationship in the surface zone.
+Table: (\#tab:surface) Outline formulations for the storage-flow relationship in the surface zone.
 
 
-| Symbol   | Description                             | unit     |
-|----------|-----------------------------------------|----------|
-| $T_0$    | Transmissivity at saturation             | m$^2$/s  |
-| $m$,$m_2$ | Exponential transmissivity constants    | m$^{-1}$ |
-| $\beta$  | Angle of hill slope                     | rad      |
-| $c_{sz}$ | Saturated zone celerity                 | m/s      |
-| $D$      | Depth at which zero lateral flow occurs | m        |
-| $\omega$ | weighting parameter                     | -        |
+| Symbol    | Description                                     | unit          |
+|-----------|-------------------------------------------------|---------------|
+| $t_{raf}$ | Time constant of the runoff attenuation feature | s             |
+| $c_{sf}$  | Free flowing surface water velocity             | ms$^{-1}$     |
+| $s_{raf}$ | storage of the runoff attenuation feature       | m$^3$         |
+| $d_{sf}$  | Free flowing surface water diffusion rate       | m$^2$s$^{-1}$ |
 
-Table: (\#tbl:surface-param) Parameters used in the surface zone storage-flow
+Table: (\#tab:surface-param) Parameters used in the surface zone storage-flow
 relationships.
+
 
 ## Root zone
 
@@ -396,8 +395,7 @@ required. The additional parameters are defined in Table \@ref(tab:hs-transmissi
 | Constant Celerity   | $\frac{c_{sz}w}{A}\left(AD-s_{sz}\right)$                                                                                                                           | $c_{sz},D$               | cnst         |                                                                           |   |
 | Double Exponential  | $T_{0}w\sin\left(\beta\right)\left( \omega\exp\left(-\frac{\cos\beta}{Am}s_{sz}\right) + \left(1-\omega\right)\exp\left(\frac{\cos\beta}{Am_2}s_{sz}\right)\right)$ | $T_0,\beta,m,m_2,\omega$ | dexp         |                                                                           |   |
 
-Table: (\#tab:hs-transmissivity) Transmissivity profiles available with the
-  `dynatop` package.
+Table: (\#tab:hs-transmissivity) Transmissivity profiles available with the `dynatop` package.
 
 
 | Symbol    | Description                                       | unit     |
