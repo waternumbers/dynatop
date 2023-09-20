@@ -63,7 +63,7 @@ hru::hru(int const id_,
     break;
   case 4:
     // constant celerity
-    sz = std::make_unique<szc_dexp>( sz_param_, properties ); // properites_[3] is sbar
+    sz = std::make_unique<szc_cnst>( sz_param_, properties ); // properites_[3] is sbar
     break;
   }
 };
