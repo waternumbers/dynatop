@@ -20,7 +20,6 @@ double sfc_cnst::fq(double &s, double &qin){
   if( s <= s_raf ){
     qq = s / t_raf;
   }else{
-    qq = std::max(qin-q_raf,0.0); // inflow to no raf area
     qq = ( kappa*(s-s_raf) - (eta*std::max(qin-q_raf,0.0)) ) / (1-eta); // flow from outside raf
     qq = std::max(0.0,qq); // ensure positive
     qq += q_raf; // add raf outfloe

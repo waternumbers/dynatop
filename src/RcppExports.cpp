@@ -44,33 +44,10 @@ BEGIN_RCPP
     return R_NilValue;
 END_RCPP
 }
-// start_profiler
-SEXP start_profiler(SEXP str);
-RcppExport SEXP _dynatop_start_profiler(SEXP strSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type str(strSEXP);
-    rcpp_result_gen = Rcpp::wrap(start_profiler(str));
-    return rcpp_result_gen;
-END_RCPP
-}
-// stop_profiler
-SEXP stop_profiler();
-RcppExport SEXP _dynatop_stop_profiler() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(stop_profiler());
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dynatop_dt_init", (DL_FUNC) &_dynatop_dt_init, 4},
     {"_dynatop_dt_sim", (DL_FUNC) &_dynatop_dt_sim, 12},
-    {"_dynatop_start_profiler", (DL_FUNC) &_dynatop_start_profiler, 1},
-    {"_dynatop_stop_profiler", (DL_FUNC) &_dynatop_stop_profiler, 0},
     {NULL, NULL, 0}
 };
 

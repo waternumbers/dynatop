@@ -1,6 +1,11 @@
+# dynatop 0.3.0.1003
+
+- Improved linear search in optimisation step of solution
+- Updated vignettes
+
 # dynatop 0.3.0.1002
 
-- Add scale in utput definition
+- Add scale in output definition
 - Add warning if output flux type not defined
 
 # dynatop 0.3.0.1000

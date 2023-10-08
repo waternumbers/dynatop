@@ -280,13 +280,13 @@ and
 \]
 
 The different formulation available in the model are given in Table
-\@ref{tab:surface} with their parameters outlined in Table
-\@ref{tab:surface-param}
+\@ref(tab:surface) with their parameters outlined in Table
+\@ref(tab:surface-param)
 
-| Type | Description                                                            | Parameters                        | $\mathcal{F}\left(s_{sf},\Theta_{sf}\right)$                                                                                                                                              | $\mathcal{F}_{\eta}\left(s_{sf},\Theta_{sf}\right)$ |
-|------|------------------------------------------------------------------------|-----------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|
-| cnst | Linear Tank coupled below a constant parameter diffusive wave solution | $t_{raf}, s_{raf},c_{sf}, d_{sf}$ | \[ \left\{ \begin{array}{cl} \frac{s_{sf}}{t_{raf}} & s_{sf} \leq s_{raf} \\ \frac{s_{raf}}{t_{raf}} + \frac{c_{sf}}{\Delta x}(s_{sf}-s_{raf}) & \mathrm{otherwise} \end{array} \right.\] | $\frac{1}{2} - \frac{d_{sf}}{c_{sf}\Delta x}$        |
-| kin  | Linear tank with Kinematic Wave for remaining flow                     | TODO                              |                                                                                                                                                                                           | TODO                                                |
+| Type | Description                                                            | Parameters                            | $\mathcal{F}\left(s_{sf},\Theta_{sf}\right)$                                                                                                                                                                                             | $\mathcal{F}_{\eta}\left(s_{sf},\Theta_{sf}\right)$ | $q_{sf}^{+}$                                                                                                                                                                                                                                                                                       |
+|------|------------------------------------------------------------------------|---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| cnst | Linear Tank coupled below a constant parameter diffusive wave solution | $t_{raf}, s_{raf},c_{sf}, d_{sf}$     | \[ \left\{ \begin{array}{cl} \frac{s_{sf}}{t_{raf}} & s_{sf} \leq s_{raf} \\ \frac{s_{raf}}{t_{raf}} + \frac{c_{sf}}{\Delta x}(s_{sf}-s_{raf}) & \mathrm{otherwise} \end{array} \right.\]                                                | $\frac{1}{2} - \frac{d_{sf}}{c_{sf}\Delta x}$       | \[ \left\{ \begin{array}{cl} \frac{s_{sf}}{t_{raf}} & s_{sf} \leq s_{raf} \\ \frac{s_{raf}}{t_{raf}} + \frac{ \frac{c_{sf}}{\Delta x}(s_{sf}-s_{raf}) - \eta_{sf}\max\left(0,q_{sf}^{-}- \frac{s_{raf}}{t_{raf}}\right)}{1-\eta_{sf}}& \mathrm{otherwise} \end{array} \right.\]                    |
+| kin  | Linear tank with Kinematic Wave for remaining flow                     | $t_{raf}, s_{raf}, n, w_{sf}, g_{sf}$ | \[ \left\{ \begin{array}{cl} \frac{s_{sf}}{t_{raf}} & s_{sf} \leq s_{raf} \\ \frac{s_{raf}}{t_{raf}} + \frac{g_{sf}^{1/2}}{n w_{sf}^{2/3}} \left(\frac{s_{sf}-s_{raf}}{\Delta x}\right)^{5/3} & \mathrm{otherwise} \end{array} \right.\] | $\frac{1}{2}$                                       | \[ \left\{ \begin{array}{cl} \frac{s_{sf}}{t_{raf}} & s_{sf} \leq s_{raf} \\ \frac{s_{raf}}{t_{raf}} + 2\frac{g_{sf}^{1/2}}{n w_{sf}^{2/3}} \left(\frac{s_{sf}-s_{raf}}{\Delta x}\right)^{5/3} - \max\left(0,q_{sf}^{-}- \frac{s_{raf}}{t_{raf}}\right) & \mathrm{otherwise} \end{array} \right.\] |
 
 Table: (\#tab:surface) Outline formulations for the storage-flow relationship in the surface zone.
 
@@ -297,6 +297,9 @@ Table: (\#tab:surface) Outline formulations for the storage-flow relationship in
 | $c_{sf}$  | Free flowing surface water velocity             | ms$^{-1}$     |
 | $s_{raf}$ | storage of the runoff attenuation feature       | m$^3$         |
 | $d_{sf}$  | Free flowing surface water diffusion rate       | m$^2$s$^{-1}$ |
+| $w_{sf}$  | Width of surface channel                        | m             |
+| $g_{sf}$  | Gradient of surface channel                     | -             |
+| $n$       | Manning $n$ coefficent for roughness            | sm$^{-1/3}$   |
 
 Table: (\#tab:surface-param) Parameters used in the surface zone storage-flow
 relationships.
