@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0.1002</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0.1003</span>
       </span>
     </div>
 
@@ -440,45 +440,55 @@ and
 \mathcal{F}_{\eta}\left(s_{sf},\Theta_{sf}\right) = \eta_{sf}
 \]</span></p>
 <p>The different formulation available in the model are given in Table
-@ref{tbl:surface} with their parameters outlined in Table
-@ref{tbl:surface-param}</p>
+<a href="#tab:surface">2</a> with their parameters outlined in Table
+<a href="#tab:surface-param">3</a></p>
 <table class="table">
-<caption>(#tbl:surface) Outline formulations for the storage-flow relationship in the surface zone.</caption>
+<caption>
+<span id="tab:surface">Table 2: </span> Outline formulations for the storage-flow relationship in the surface zone.</caption>
 <colgroup>
-<col width="2%">
-<col width="32%">
-<col width="6%">
-<col width="35%">
-<col width="23%">
+<col width="0%">
+<col width="10%">
+<col width="5%">
+<col width="33%">
+<col width="7%">
+<col width="41%">
 </colgroup>
 <thead><tr class="header">
 <th>Type</th>
 <th>Description</th>
 <th>Parameters</th>
-<th>(s_{sf},_{sf})</th>
-<th>
-<em>{}(s</em>{sf},_{sf})</th>
+<th><span class="math inline">\(\mathcal{F}\left(s_{sf},\Theta_{sf}\right)\)</span></th>
+<th><span class="math inline">\(\mathcal{F}_{\eta}\left(s_{sf},\Theta_{sf}\right)\)</span></th>
+<th><span class="math inline">\(q_{sf}^{+}\)</span></th>
 </tr></thead>
 <tbody>
 <tr class="odd">
 <td>cnst</td>
 <td>Linear Tank coupled below a constant parameter diffusive wave solution</td>
-<td><span class="math inline">\(v_sf, k_sf\)</span></td>
-<td>[q_{sf} ={ \begin{array}{cl} s_{sf}/t_{raf} &amp; s_{sf} s_{raf} \ s_{raf}/t_{raf} + (s_{sf}-s{raf}</td>
-<td></td>
+<td><span class="math inline">\(t_{raf}, s_{raf},c_{sf}, d_{sf}\)</span></td>
+<td><span class="math display">\[ \left\{ \begin{array}{cl} \frac{s_{sf}}{t_{raf}} &amp; s_{sf} \leq s_{raf} \\ \frac{s_{raf}}{t_{raf}} + \frac{c_{sf}}{\Delta x}(s_{sf}-s_{raf}) &amp; \mathrm{otherwise} \end{array} \right.\]</span></td>
+<td><span class="math inline">\(\frac{1}{2} - \frac{d_{sf}}{c_{sf}\Delta x}\)</span></td>
+<td><span class="math display">\[ \left\{ \begin{array}{cl} \frac{s_{sf}}{t_{raf}} &amp; s_{sf} \leq s_{raf} \\ \frac{s_{raf}}{t_{raf}} + \frac{ \frac{c_{sf}}{\Delta x}(s_{sf}-s_{raf}) - \eta_{sf}\max\left(0,q_{sf}^{-}- \frac{s_{raf}}{t_{raf}}\right)}{1-\eta_{sf}}&amp; \mathrm{otherwise} \end{array} \right.\]</span></td>
 </tr>
 <tr class="even">
 <td>kin</td>
 <td>Linear tank with Kinematic Wave for remaining flow</td>
-<td></td>
-<td></td>
-<td></td>
+<td><span class="math inline">\(t_{raf}, s_{raf}, n, w_{sf}, g_{sf}\)</span></td>
+<td><span class="math display">\[ \left\{ \begin{array}{cl} \frac{s_{sf}}{t_{raf}} &amp; s_{sf} \leq s_{raf} \\ \frac{s_{raf}}{t_{raf}} + \frac{g_{sf}^{1/2}}{n w_{sf}^{2/3}} \left(\frac{s_{sf}-s_{raf}}{\Delta x}\right)^{5/3} &amp; \mathrm{otherwise} \end{array} \right.\]</span></td>
+<td><span class="math inline">\(\frac{1}{2}\)</span></td>
+<td><span class="math display">\[ \left\{ \begin{array}{cl} \frac{s_{sf}}{t_{raf}} &amp; s_{sf} \leq s_{raf} \\ \frac{s_{raf}}{t_{raf}} + 2\frac{g_{sf}^{1/2}}{n w_{sf}^{2/3}} \left(\frac{s_{sf}-s_{raf}}{\Delta x}\right)^{5/3} - \max\left(0,q_{sf}^{-}- \frac{s_{raf}}{t_{raf}}\right) &amp; \mathrm{otherwise} \end{array} \right.\]</span></td>
 </tr>
 </tbody>
 </table>
 <table class="table">
-<caption>(#tbl:surface-param) Parameters used in the surface zone storage-flow
+<caption>
+<span id="tab:surface-param">Table 3: </span> Parameters used in the surface zone storage-flow
 relationships.</caption>
+<colgroup>
+<col width="14%">
+<col width="65%">
+<col width="20%">
+</colgroup>
 <thead><tr class="header">
 <th>Symbol</th>
 <th>Description</th>
@@ -486,37 +496,43 @@ relationships.</caption>
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td><span class="math inline">\(T_0\)</span></td>
-<td>Transmissivity at saturation</td>
-<td>m<span class="math inline">\(^2\)</span>/s</td>
+<td><span class="math inline">\(t_{raf}\)</span></td>
+<td>Time constant of the runoff attenuation feature</td>
+<td>s</td>
 </tr>
 <tr class="even">
-<td>
-<span class="math inline">\(m\)</span>,<span class="math inline">\(m_2\)</span>
-</td>
-<td>Exponential transmissivity constants</td>
-<td>m<span class="math inline">\(^{-1}\)</span>
+<td><span class="math inline">\(c_{sf}\)</span></td>
+<td>Free flowing surface water velocity</td>
+<td>ms<span class="math inline">\(^{-1}\)</span>
 </td>
 </tr>
 <tr class="odd">
-<td><span class="math inline">\(\beta\)</span></td>
-<td>Angle of hill slope</td>
-<td>rad</td>
+<td><span class="math inline">\(s_{raf}\)</span></td>
+<td>storage of the runoff attenuation feature</td>
+<td>m<span class="math inline">\(^3\)</span>
+</td>
 </tr>
 <tr class="even">
-<td><span class="math inline">\(c_{sz}\)</span></td>
-<td>Saturated zone celerity</td>
-<td>m/s</td>
+<td><span class="math inline">\(d_{sf}\)</span></td>
+<td>Free flowing surface water diffusion rate</td>
+<td>m<span class="math inline">\(^2\)</span>s<span class="math inline">\(^{-1}\)</span>
+</td>
 </tr>
 <tr class="odd">
-<td><span class="math inline">\(D\)</span></td>
-<td>Depth at which zero lateral flow occurs</td>
+<td><span class="math inline">\(w_{sf}\)</span></td>
+<td>Width of surface channel</td>
 <td>m</td>
 </tr>
 <tr class="even">
-<td><span class="math inline">\(\omega\)</span></td>
-<td>weighting parameter</td>
+<td><span class="math inline">\(g_{sf}\)</span></td>
+<td>Gradient of surface channel</td>
 <td>-</td>
+</tr>
+<tr class="odd">
+<td><span class="math inline">\(n\)</span></td>
+<td>Manning <span class="math inline">\(n\)</span> coefficent for roughness</td>
+<td>sm<span class="math inline">\(^{-1/3}\)</span>
+</td>
 </tr>
 </tbody>
 </table>
@@ -593,14 +609,13 @@ Not that the assumption of increasing flow with storage means that
 \]</span></p>
 <p>The function <span class="math inline">\(\mathcal{G}\left(s_{sz},\Theta_{sz}\right)\)</span> is related to the
 HRU width through the transmissivity function. Table
-<a href="#tab:hs-transmissivity">2</a> gives <span class="math inline">\(\mathcal{G}\left(s_{sz},\Theta_{sz}\right)\)</span> for various the transmissivity profiles present as options within the <code>dynatop</code>
+<a href="#tab:hs-transmissivity">4</a> gives <span class="math inline">\(\mathcal{G}\left(s_{sz},\Theta_{sz}\right)\)</span> for various the transmissivity profiles present as options within the <code>dynatop</code>
 package, the corresponding value to use for the <code>type</code> value
 in the saturated zone specification and the additional parameters
-required. The additional parameters are defined in Table <a href="#tab:hs-transmissivity-param">3</a>.</p>
+required. The additional parameters are defined in Table <a href="#tab:hs-transmissivity-param">5</a>.</p>
 <table style="width:100%;" class="table">
 <caption>
-<span id="tab:hs-transmissivity">Table 2: </span> Transmissivity profiles available with the
-<code>dynatop</code> package.</caption>
+<span id="tab:hs-transmissivity">Table 4: </span> Transmissivity profiles available with the <code>dynatop</code> package.</caption>
 <colgroup>
 <col width="6%">
 <col width="54%">
@@ -657,7 +672,7 @@ required. The additional parameters are defined in Table <a href="#tab:hs-transm
 </table>
 <table class="table">
 <caption>
-<span id="tab:hs-transmissivity-param">Table 3: </span> Additional parameters used in the transmissivity profiles.</caption>
+<span id="tab:hs-transmissivity-param">Table 5: </span> Additional parameters used in the transmissivity profiles.</caption>
 <colgroup>
 <col width="15%">
 <col width="70%">
