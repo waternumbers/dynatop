@@ -75,8 +75,8 @@ dynatop <- R6Class(
         #' @param output_defn a description of the output series
         #' @param keep_states a vector of POSIXct objects (e.g. from xts) giving the time stamp at which the states should be kept
         #' @param sub_step simulation timestep in seconds, default value of NULL results in data time step
-        #' @param vtol tolerance on width of bounds in the solution for the saturated zone (as volume)
-        #' @param ftol tolerance on the solution for the saturated zone (as difference of solution from 0)
+        #' @param vtol tolerance on width of bounds in the numeric search for surface and saturated zone solutions (as volume)
+        #' @param ftol - not currently used
         #' @param max_it maximum number of iterations to use in the solution of the saturated zone
         #'
         #' @details Saving the states at every timestep and keeping the mass balance can generate very large data sets!!
@@ -215,7 +215,7 @@ dynatop <- R6Class(
         map  = NULL, # storage for map object
         output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
-        info = list(sf = setNames(as.integer(1:2),c("cnst","kin")),
+        info = list(sf = setNames(as.integer(1:3),c("cnst","kin","comp")),
                     rz = setNames(as.integer(1),c("orig")),
                     uz = setNames(as.integer(1),c("orig")),
                     sz = setNames(as.integer(1:4),c("exp","bexp","dexp","cnst")),
@@ -290,6 +290,7 @@ dynatop <- R6Class(
                 pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
                               "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
                               "sf_kin" = c("n","s_raf","t_raf"),
+                              "sf_comp" = c("v_sf_1","d_sf_1","s_1","v_sf_2","d_sf_2"),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
                               "sz_exp" = c("t_0","m"),

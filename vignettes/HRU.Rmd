@@ -47,6 +47,15 @@ governing equations are then derived with associated implicit and semi-implicit 
 schemes. These are valid for the wide range of surface zone and saturated zone
 transmissivity profiles presented in the vignette.
 
+
+In this section a finite volume formulation of the Dynamic TOPMODEL equations
+is derived for the evolution of the states over the time step $t$ to $t +
+\Delta t$. The lateral flux rates are considered at the start and end of the
+time step. The vertical flux rates are considered as constant throughout the
+time step, allowing for a semi-analytical solution of some storage zones.
+
+
+
 Two appendices provide supporting information justifying the numerical schemes
 and an alternative derivation of the governing equations based on the
 infinitesimal vertical slab used in the original derivation of Dynamic TOPMODEL.
@@ -108,34 +117,124 @@ over the length of the hillslope we find
   Table: (\#tab:hs-x-notation) Outline of notation for describing a cross
   section of the hillslope HRU
 
-# Variable Parameter Muskingham solution
+# Surface Zone
 
-The solution of the surface and saturated zone, is based upon a variable
-parameter Muskingham solution. This section outlines the solution and shows
-how it may be used to capture a range of conceptual models.
+The storage in the surface zone satisfies the mass balance equation
 
-Muskingham routing can be derived in a number of ways. The storage $s$ in a reach or hillslope of length $\Delta
-x$ can be expressed in terms of the representative flow $q$ and velocity $v$
+\[
+\frac{ds_{sf}}{dt} = q^{-}_{sf} - r_{sf \rightarrow rz} - q^{+}_{sf} 
+\]
+
+where surface storage is increased by lateral downslope flow from upslope HRUs. 
+Water flows to the root zone at a constant rate $r_{sf \rightarrow rz}$, unless limited by
+the available storage at the surface or the ability of the root zone to
+receive water (for example if the saturation storage deficit is 0 and the root zone storage is full).
+
+In cases where lateral flows in the saturated zone produce
+saturation storage deficits water may be returned from the root
+zone to the surface giving negative values of $r_{sf \rightarrow rz}$.
+
+The following subsections present the various options for the surface zone
+solution starting from the first, that of the constant parameter Muskingham method.
+
+## Constant Parameter Muskingham solution
+
+The constant parameter Muskingham method offers a parsimonious for capturing a
+range of surface dynamics. This sub-section outlines the key equations and shows
+how they may be used to capture a range of conceptual models.
+
+Muskingham routing can be derived in a number of ways. The surface storage $s_{sf}$ in a reach or hillslope of length $\Delta
+x$ can be expressed in terms of the representative flow $q_{sf}$ and velocity $v_{sf}$
 as
 \[
-s = \frac{q \Delta x}{v}
+s_{sf} = \frac{q_{sf} \Delta x}{v_{sf}}
 \]
-Relating the representative flow to the inflow $q^{-}$ and outflow $q^{+}$
-with the possibly state or time varying parameter $\eta$ results in
+The representative flow is realted to the inflow $q_{sf}^{-}$ and outflow
+$q_{sf}^{+}$ using the parameter $\eta$ through
 \[
-s = \frac{\Delta x}{v} \left(\eta q^{-} + \left(1-\eta\right) q^{+} \right)
+q_{sf} = \eta q_{sf}^{-} + \left(1-\eta\right) q_{sf}^{+}
 \]
-Taking vertical inflow $r$
-gives the mass balance
+gives
+\[
+s_{sf} = \frac{\Delta x}{v_{sf}} \left(\eta q_{sf}^{-} + \left(1-\eta\right) q_{sf}^{+} \right)
+\]
+Taking vertical inflow $r$ the mass balance can be written
 \[
 \frac{ds}{dt} = q^{-} + r - q^{+}
 \]
 where by substitution
 \[
-\frac{ds}{dt} = q^{-} + r - \frac{1}{1-\eta}\left(\frac{sv}{\Delta x} - \eta q^{-}  \right)
+\frac{ds}{dt} = q^{-} + r - \max\left(0, \frac{1}{1-\eta}\left(\frac{sv}{\Delta x} - \eta q^{-}  \right) \right)
+\]
+where the maximum ensures that outflow is positive.
+
+The numerical scheme is based on the implicit solution of the ODE. Let the initial state be $s_{t}$ and the input rates $q^{-}_{t+\Delta t}$ and $r_{t+\Delta t}$ be known so
+
+\[
+s_{t+\Delta t} = \max\left(0, s_{t} + \Delta t \left( q^{-}_{t+\Delta t} + r_{t+\Delta t} -
+\frac{1}{1-\eta_{t+\Delta t}}\max\left(0,\frac{s_{t+\Delta t}v}{\Delta x} - \eta_{t} q^{-}_{t+\Delta t}  \right) \right) \right)
 \]
 
-## Approximating Tank Models
+where the outer maximum ensures that states are not negative.
+The maximum possible values of $s_{t+\Delta t}$ is $s_{m}=\max\left(0, s_{t} + \Delta t \left( q^{-}_{t+\Delta t} + r_{t+\Delta t}\right)\right)$ as the maximum possible values of $s_{t+\Delta t}$ and outflow starts at $s_{c} = \frac{\eta q^{-}_{t+\Delta t}\Delta x}{v}$
+
+If $s_{m} \leq s_{c}$ then outflow cannnot occur and $s_{t+\Delta t} = \max\left(0, s_{t} + \Delta t \left( q^{-}_{t+\Delta t} + r_{t+\Delta t} \right)\right)$ where for mass balance the value of $r$ is limites so that  $\int_{t}^{t+\Delta t} r dt = s_{t+\Delta t} - s_{t} - \Delta t q^{-}_{t+\Delta t}$.
+
+If $s_{m} > s_{c}$ then outflow can occur and their exists a value $s_{c} < s_{t+\Delta t} < s_{m}$ such that 
+\[
+s_{t+\Delta t} = s_{t} + \Delta t \left( q^{-}_{t+\Delta t} + r_{t+\Delta t} -
+\frac{1}{1-\eta_{t+\Delta t}}\left(\frac{s_{t+\Delta t}v}{\Delta x} - \eta_{t} q^{-}_{t+\Delta t}  \right) \right)
+\]
+
+which is given by
+
+\[
+s_{sf_{t+\Delta t}} = \frac{ \left(1-\eta\right) \Delta x}{
+\left(1-\eta\right) \Delta x + v_{sf}\Delta t} \left(
+s_{_sf_t} + \Delta t \left( \frac{1}{1-\eta} q^{-}_{sf_{t+\Delta t}} + r_{t+\Delta t} \right)\right)
+\]
+
+
+### Compound channel
+
+In a compound channel the convayance descriptors change from $\left\{ v_{1}, \eta{1} \right\}$ to $\left\{ v_{2}, \eta{2} \right\}$ when $s>s_{1}$. The implicit solution for the mass balance can then be written as
+
+\[
+s_{t+\Delta t} = \max\left(0, s_{t} + \Delta t \left( q^{-}_{t+\Delta t} + r_{t+\Delta t} -
+\frac{1}{1-\eta_{1}}\max\left(0,\frac{\min\left(s_{1},s_{t+\Delta t}\right)v}{\Delta x} - \eta_{1} q^{-}_{1}  \right) - 
+\frac{1}{1-\eta_{2}}\max\left(0,\frac{\min\left(0,s_{t+\Delta t}-s_{1}\right)v}{\Delta x} - \eta_{2} q^{-}_{2}  \right)
+\right) \right)
+\]
+
+the storage exced
+
+
+= \max\left(0, s_{t} + \Delta t \left( q^{-}_{t+\Delta t} + r_{t+\Delta t} \right)\right)$ where for mass balance the value of $r$ is limites so that  $\int_{t}^{t+\Delta t} r dt = s_{t+\Delta t} - s_{t} - \Delta t q^{-}_{t+\Delta t}$.
+
+
+
+\[
+\frac{ds}{dt} = q^{-}_{t+\Delta t} + r_{t+\Delta t} - \max\left(0, \frac{1}{1-\eta}\left(\frac{sv}{\Delta x} - \eta q^{-}_{t+\Delta t}  \right) \right)
+\]
+
+The solutions fall into four cases:
+
+- Case 1: $s_{t} \leq \frac{\eta q^{-}_{t+\Delta t}\Delta x}{v}$ and $q^{-}_{t+\Delta t} + r_{t+\Delta t} \leq 0$. In this case there is no outflow at the insitial state and the storage volume it not increasing, hence outflow will not occur later in the time step so
+$\int_{t}^{t+\Delta t} q^{+} dt = 0$, $s_{t+\Delta t} = max\left(0,s_{t} + \Delta t\left(q^{-}_{t+\Delta t} + r_{t+ \Delta t}\right)\right)$ and to ensure mass balance $\int_{t}^{t+\Delta t} r dt = s_{t+\Delta t} - s_{t} - \Delta t q^{-}_{t+\Delta t}$
+where the maximum ensures that outflow is positive.
+
+given by
+\[
+s_{sf_{t+\Delta t}} = \frac{ \left(1-\eta\right) \Delta x}{
+\left(1-\eta\right) \Delta x + v_{sf}\Delta t} \left(
+s_{_sf_t} + \Delta t \left( \frac{1}{1-\eta} q^{-}_{sf_{t+\Delta t}} + r_{t+\Delta t} \right)\right)
+\]
+subject to the constraint $q_{sf_{t+\Delta t}}^{+} \geq 0$
+
+
+
+
+### Approximating Tank Models
 
 Taking $\eta=0$ gives
 \[
@@ -144,7 +243,7 @@ Taking $\eta=0$ gives
 which is the equation of a tank model with possibly varying time constant $T =
 \frac{\Delta x}{v}$
 
-## Approximating Diffusion Wave Routing
+### Approximating Diffusion Wave Routing
 
 Diffuse routing with lateral inflow can be expressed as the parabolic
 equation (see for example [doi:10.1016/j.advwatres.2005.08.008](https://doi.org/10.1016/j.advwatres.2005.08.008))

@@ -37,4 +37,15 @@ public:
   double fs(double&, double&);
 };
 
+// compound channel with RAF
+class sfc_comp: public sfc {
+protected:
+  double kappa_1, eta_1, s_1, kappa_2, eta_2, q_1_max;
+  
+public:
+  sfc_comp(std::vector<double> const&, std::vector<double> const&);
+  double fq(double&, double&);
+  double fs(double&, double&);
+};
+
 #endif

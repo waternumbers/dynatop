@@ -71,3 +71,54 @@ double sfc_kin::fs(double &q, double &qin){
   }
   return( ss );
 }
+
+
+// compound channel
+sfc_comp::sfc_comp(std::vector<double> const &param, std::vector<double> const &properties){
+  double const& Dx(properties[2]);
+  kappa_1 = param[0]/Dx; // velocity divided by length to get q from storage for lower part of channel
+  eta_1 = 0.5 - (param[1] / (param[0]*Dx));  // Dispersion property for lower part of channel
+  s_1 = param[2]; // max stoage in lower part of channel
+  kappa_2 = param[3]/Dx; // velocity divided by length to get q from storage for upper part of channel
+  eta_2 = 0.5 - (param[4] / (param[3]*Dx));  // Dispersion property for upper part of channel
+  q_1_max = s_1*kappa_1; // max inflow to lower part of channel
+ 
+  //Rcpp::Rcout << eta_1 << " " << kappa_1 << " " << s_1 << " " << q_1_max << std::endl;
+  //Rcpp::Rcout << eta_2 << " " << kappa_2 << std::endl;
+  
+}
+double sfc_comp::fq(double &s, double &qin){
+  double q_1 = std::min(qin,q_1_max);
+  double q_2 = std::max(0.0,qin-q_1_max);
+  
+  double qq = std::max(0.0, (std::min(s,s_1)*kappa_1 - eta_1*q_1) / (1-eta_1) )
+    + std::max(0.0, (std::max(s-s_1,0.0)*kappa_2 - eta_2*q_2) / (1-eta_2)) ;
+  return( qq );
+ 
+}
+double sfc_comp::fs(double &q, double &qin){
+  // bool flg(false);
+  //   if( (q==0.0) and (qin > 0.0) ){
+  //   flg = true;
+  // }
+  
+  double q_1 = std::min(qin,q_1_max) ; //std::max(0.0,std::min(qin,q_1_max));
+  double q_2 = std::max(0.0,qin-q_1_max);
+  double qq = std::max(0.0, (q_1_max - eta_1*q_1)/(1-eta_1)); // outflow at stroage at s_1
+  // if( flg ){
+  //   Rcpp::Rcout << q << " " << qin << " " << qq << " " << q_1 << " " << q_2 << " " << s_1 << std::endl;
+  // }
+  double ss(-999.9);
+  if( qq >= q ){ // then storage between 0 & s_1
+    //    if( flg ){ Rcpp::Rcout <<  "In stage 1" << " " << eta_1 << std::endl; }
+    ss = ( (1-eta_1)*q + eta_1*q_1 ) / kappa_1;
+  }else{
+    qq = q-qq; // flow from upper part of channel
+    // if( flg ){ Rcpp::Rcout <<  "In stage 2" << " " << qq << std::endl; }
+    ss = ( (1-eta_2)*qq + eta_2*q_2 ) / kappa_2;
+    ss += s_1;
+
+  }
+  return(ss);
+  
+}

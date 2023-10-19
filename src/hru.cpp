@@ -45,6 +45,11 @@ hru::hru(int const id_,
   case 2:
     // kinematic with raf
     sf = std::make_unique<sfc_kin>( sf_param_, properties );
+    break;
+  case 3:
+    // compound channel
+    sf = std::make_unique<sfc_comp>( sf_param_, properties );
+    break;
   }
 
   // initialise the saturated flux object
@@ -152,6 +157,7 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   
   // solve surface
   q_sf = q_sf_in - r_sf_rz;
+  //Rcpp::Rcout << id << " " << q_sf << " " << q_sf_in << std::endl;
   s_sf = sf->fs(q_sf,q_sf_in);
   
   // redistributed the flows
