@@ -159,9 +159,9 @@ Simulate the hillslope and channel components of a dynatop object
 
 \item{\code{sub_step}}{simulation timestep in seconds, default value of NULL results in data time step}
 
-\item{\code{vtol}}{tolerance on width of bounds in the solution for the saturated zone (as volume)}
+\item{\code{vtol}}{tolerance on width of bounds in the numeric search for surface and saturated zone solutions (as volume)}
 
-\item{\code{ftol}}{tolerance on the solution for the saturated zone (as difference of solution from 0)}
+\item{\code{ftol}}{- not currently used}
 
 \item{\code{max_it}}{maximum number of iterations to use in the solution of the saturated zone}
 }

@@ -157,6 +157,7 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   
   // solve surface
   q_sf = q_sf_in - r_sf_rz;
+  //Rcpp::Rcout << id << " " << q_sf << " " << q_sf_in << std::endl;
   s_sf = sf->fs(q_sf,q_sf_in);
   
   // redistributed the flows
