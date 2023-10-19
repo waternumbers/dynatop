@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0.1003</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0.1004</span>
       </span>
     </div>
 
@@ -127,6 +127,10 @@ given in a finite volume form. Approximating equations for the solution of the
 governing equations are then derived with associated implicit and semi-implicit numerical
 schemes. These are valid for the wide range of surface zone and saturated zone
 transmissivity profiles presented in the vignette.</p>
+<p>In this section a finite volume formulation of the Dynamic TOPMODEL equations
+is derived for the evolution of the states over the time step <span class="math inline">\(t\)</span> to <span class="math inline">\(t + \Delta t\)</span>. The lateral flux rates are considered at the start and end of the
+time step. The vertical flux rates are considered as constant throughout the
+time step, allowing for a semi-analytical solution of some storage zones.</p>
 <p>Two appendices provide supporting information justifying the numerical schemes
 and an alternative derivation of the governing equations based on the
 infinitesimal vertical slab used in the original derivation of Dynamic TOPMODEL.</p>
@@ -291,42 +295,110 @@ section of the hillslope HRU</caption>
 </table>
 </div>
 <div class="section level2">
-<h2 id="variable-parameter-muskingham-solution">Variable Parameter Muskingham solution<a class="anchor" aria-label="anchor" href="#variable-parameter-muskingham-solution"></a>
+<h2 id="surface-zone">Surface Zone<a class="anchor" aria-label="anchor" href="#surface-zone"></a>
 </h2>
-<p>The solution of the surface and saturated zone, is based upon a variable
-parameter Muskingham solution. This section outlines the solution and shows
-how it may be used to capture a range of conceptual models.</p>
-<p>Muskingham routing can be derived in a number of ways. The storage <span class="math inline">\(s\)</span> in a reach or hillslope of length <span class="math inline">\(\Delta x\)</span> can be expressed in terms of the representative flow <span class="math inline">\(q\)</span> and velocity <span class="math inline">\(v\)</span>
+<p>The storage in the surface zone satisfies the mass balance equation</p>
+<p><span class="math display">\[
+\frac{ds_{sf}}{dt} = q^{-}_{sf} - r_{sf \rightarrow rz} - q^{+}_{sf}
+\]</span></p>
+<p>where surface storage is increased by lateral downslope flow from upslope HRUs.
+Water flows to the root zone at a constant rate <span class="math inline">\(r_{sf \rightarrow rz}\)</span>, unless limited by
+the available storage at the surface or the ability of the root zone to
+receive water (for example if the saturation storage deficit is 0 and the root zone storage is full).</p>
+<p>In cases where lateral flows in the saturated zone produce
+saturation storage deficits water may be returned from the root
+zone to the surface giving negative values of <span class="math inline">\(r_{sf \rightarrow rz}\)</span>.</p>
+<p>The following subsections present the various options for the surface zone
+solution starting from the first, that of the constant parameter Muskingham method.</p>
+<div class="section level3">
+<h3 id="constant-parameter-muskingham-solution">Constant Parameter Muskingham solution<a class="anchor" aria-label="anchor" href="#constant-parameter-muskingham-solution"></a>
+</h3>
+<p>The constant parameter Muskingham method offers a parsimonious for capturing a
+range of surface dynamics. This sub-section outlines the key equations and shows
+how they may be used to capture a range of conceptual models.</p>
+<p>Muskingham routing can be derived in a number of ways. The surface storage <span class="math inline">\(s_{sf}\)</span> in a reach or hillslope of length <span class="math inline">\(\Delta x\)</span> can be expressed in terms of the representative flow <span class="math inline">\(q_{sf}\)</span> and velocity <span class="math inline">\(v_{sf}\)</span>
 as
 <span class="math display">\[
-s = \frac{q \Delta x}{v}
+s_{sf} = \frac{q_{sf} \Delta x}{v_{sf}}
 \]</span>
-Relating the representative flow to the inflow <span class="math inline">\(q^{-}\)</span> and outflow <span class="math inline">\(q^{+}\)</span>
-with the possibly state or time varying parameter <span class="math inline">\(\eta\)</span> results in
+The representative flow is realted to the inflow <span class="math inline">\(q_{sf}^{-}\)</span> and outflow
+<span class="math inline">\(q_{sf}^{+}\)</span> using the parameter <span class="math inline">\(\eta\)</span> through
 <span class="math display">\[
-s = \frac{\Delta x}{v} \left(\eta q^{-} + \left(1-\eta\right) q^{+} \right)
+q_{sf} = \eta q_{sf}^{-} + \left(1-\eta\right) q_{sf}^{+}
 \]</span>
-Taking vertical inflow <span class="math inline">\(r\)</span>
-gives the mass balance
+gives
+<span class="math display">\[
+s_{sf} = \frac{\Delta x}{v_{sf}} \left(\eta q_{sf}^{-} + \left(1-\eta\right) q_{sf}^{+} \right)
+\]</span>
+Taking vertical inflow <span class="math inline">\(r\)</span> the mass balance can be written
 <span class="math display">\[
 \frac{ds}{dt} = q^{-} + r - q^{+}
 \]</span>
 where by substitution
 <span class="math display">\[
-\frac{ds}{dt} = q^{-} + r - \frac{1}{1-\eta}\left(\frac{sv}{\Delta x} - \eta q^{-}  \right)
+\frac{ds}{dt} = q^{-} + r - \max\left(0, \frac{1}{1-\eta}\left(\frac{sv}{\Delta x} - \eta q^{-}  \right) \right)
+\]</span>
+where the maximum ensures that outflow is positive.</p>
+<p>The numerical scheme is based on the implicit solution of the ODE. Let the initial state be <span class="math inline">\(s_{t}\)</span> and the input rates <span class="math inline">\(q^{-}_{t+\Delta t}\)</span> and <span class="math inline">\(r_{t+\Delta t}\)</span> be known so</p>
+<p><span class="math display">\[
+s_{t+\Delta t} = \max\left(0, s_{t} + \Delta t \left( q^{-}_{t+\Delta t} + r_{t+\Delta t} -
+\frac{1}{1-\eta_{t+\Delta t}}\max\left(0,\frac{s_{t+\Delta t}v}{\Delta x} - \eta_{t} q^{-}_{t+\Delta t}  \right) \right) \right)
 \]</span></p>
-<div class="section level3">
-<h3 id="approximating-tank-models">Approximating Tank Models<a class="anchor" aria-label="anchor" href="#approximating-tank-models"></a>
-</h3>
+<p>where the outer maximum ensures that states are not negative.
+The maximum possible values of <span class="math inline">\(s_{t+\Delta t}\)</span> is <span class="math inline">\(s_{m}=\max\left(0, s_{t} + \Delta t \left( q^{-}_{t+\Delta t} + r_{t+\Delta t}\right)\right)\)</span> as the maximum possible values of <span class="math inline">\(s_{t+\Delta t}\)</span> and outflow starts at <span class="math inline">\(s_{c} = \frac{\eta q^{-}_{t+\Delta t}\Delta x}{v}\)</span></p>
+<p>If <span class="math inline">\(s_{m} \leq s_{c}\)</span> then outflow cannnot occur and <span class="math inline">\(s_{t+\Delta t} = \max\left(0, s_{t} + \Delta t \left( q^{-}_{t+\Delta t} + r_{t+\Delta t} \right)\right)\)</span> where for mass balance the value of <span class="math inline">\(r\)</span> is limites so that <span class="math inline">\(\int_{t}^{t+\Delta t} r dt = s_{t+\Delta t} - s_{t} - \Delta t q^{-}_{t+\Delta t}\)</span>.</p>
+<p>If <span class="math inline">\(s_{m} &gt; s_{c}\)</span> then outflow can occur and their exists a value <span class="math inline">\(s_{c} &lt; s_{t+\Delta t} &lt; s_{m}\)</span> such that
+<span class="math display">\[
+s_{t+\Delta t} = s_{t} + \Delta t \left( q^{-}_{t+\Delta t} + r_{t+\Delta t} -
+\frac{1}{1-\eta_{t+\Delta t}}\left(\frac{s_{t+\Delta t}v}{\Delta x} - \eta_{t} q^{-}_{t+\Delta t}  \right) \right)
+\]</span></p>
+<p>which is given by</p>
+<p><span class="math display">\[
+s_{sf_{t+\Delta t}} = \frac{ \left(1-\eta\right) \Delta x}{
+\left(1-\eta\right) \Delta x + v_{sf}\Delta t} \left(
+s_{_sf_t} + \Delta t \left( \frac{1}{1-\eta} q^{-}_{sf_{t+\Delta t}} + r_{t+\Delta t} \right)\right)
+\]</span></p>
+<div class="section level4">
+<h4 id="compound-channel">Compound channel<a class="anchor" aria-label="anchor" href="#compound-channel"></a>
+</h4>
+<p>In a compound channel the convayance descriptors change from <span class="math inline">\(\left\{ v_{1}, \eta{1} \right\}\)</span> to <span class="math inline">\(\left\{ v_{2}, \eta{2} \right\}\)</span> when <span class="math inline">\(s&gt;s_{1}\)</span>. The implicit solution for the mass balance can then be written as</p>
+<p><span class="math display">\[
+s_{t+\Delta t} = \max\left(0, s_{t} + \Delta t \left( q^{-}_{t+\Delta t} + r_{t+\Delta t} -
+\frac{1}{1-\eta_{1}}\max\left(0,\frac{\min\left(s_{1},s_{t+\Delta t}\right)v}{\Delta x} - \eta_{1} q^{-}_{1}  \right) -
+\frac{1}{1-\eta_{2}}\max\left(0,\frac{\min\left(0,s_{t+\Delta t}-s_{1}\right)v}{\Delta x} - \eta_{2} q^{-}_{2}  \right)
+\right) \right)
+\]</span></p>
+<p>the storage exced</p>
+<p>= (0, s_{t} + t ( q^{-}<em>{t+t} + r</em>{t+t} ))$ where for mass balance the value of <span class="math inline">\(r\)</span> is limites so that <span class="math inline">\(\int_{t}^{t+\Delta t} r dt = s_{t+\Delta t} - s_{t} - \Delta t q^{-}_{t+\Delta t}\)</span>.</p>
+<p><span class="math display">\[
+\frac{ds}{dt} = q^{-}_{t+\Delta t} + r_{t+\Delta t} - \max\left(0, \frac{1}{1-\eta}\left(\frac{sv}{\Delta x} - \eta q^{-}_{t+\Delta t}  \right) \right)
+\]</span></p>
+<p>The solutions fall into four cases:</p>
+<ul>
+<li>Case 1: <span class="math inline">\(s_{t} \leq \frac{\eta q^{-}_{t+\Delta t}\Delta x}{v}\)</span> and <span class="math inline">\(q^{-}_{t+\Delta t} + r_{t+\Delta t} \leq 0\)</span>. In this case there is no outflow at the insitial state and the storage volume it not increasing, hence outflow will not occur later in the time step so
+<span class="math inline">\(\int_{t}^{t+\Delta t} q^{+} dt = 0\)</span>, <span class="math inline">\(s_{t+\Delta t} = max\left(0,s_{t} + \Delta t\left(q^{-}_{t+\Delta t} + r_{t+ \Delta t}\right)\right)\)</span> and to ensure mass balance <span class="math inline">\(\int_{t}^{t+\Delta t} r dt = s_{t+\Delta t} - s_{t} - \Delta t q^{-}_{t+\Delta t}\)</span>
+where the maximum ensures that outflow is positive.</li>
+</ul>
+<p>given by
+<span class="math display">\[
+s_{sf_{t+\Delta t}} = \frac{ \left(1-\eta\right) \Delta x}{
+\left(1-\eta\right) \Delta x + v_{sf}\Delta t} \left(
+s_{_sf_t} + \Delta t \left( \frac{1}{1-\eta} q^{-}_{sf_{t+\Delta t}} + r_{t+\Delta t} \right)\right)
+\]</span>
+subject to the constraint <span class="math inline">\(q_{sf_{t+\Delta t}}^{+} \geq 0\)</span></p>
+</div>
+<div class="section level4">
+<h4 id="approximating-tank-models">Approximating Tank Models<a class="anchor" aria-label="anchor" href="#approximating-tank-models"></a>
+</h4>
 <p>Taking <span class="math inline">\(\eta=0\)</span> gives
 <span class="math display">\[
 \frac{ds}{dt} = q^{-} + r - \frac{sv}{\Delta x}
 \]</span>
 which is the equation of a tank model with possibly varying time constant <span class="math inline">\(T = \frac{\Delta x}{v}\)</span></p>
 </div>
-<div class="section level3">
-<h3 id="approximating-diffusion-wave-routing">Approximating Diffusion Wave Routing<a class="anchor" aria-label="anchor" href="#approximating-diffusion-wave-routing"></a>
-</h3>
+<div class="section level4">
+<h4 id="approximating-diffusion-wave-routing">Approximating Diffusion Wave Routing<a class="anchor" aria-label="anchor" href="#approximating-diffusion-wave-routing"></a>
+</h4>
 <p>Diffuse routing with lateral inflow can be expressed as the parabolic
 equation (see for example <a href="https://doi.org/10.1016/j.advwatres.2005.08.008" class="external-link">doi:10.1016/j.advwatres.2005.08.008</a>)</p>
 <p><span class="math display">\[
@@ -380,6 +452,7 @@ q^{-} - q^{+} \approx
 produces the maximum dispersion of <span class="math inline">\(D = \frac{c\Delta x}{2}\)</span>, which is given by
 the linear tank.</p>
 </div>
+</div>
 <div class="section level3">
 <h3 id="numerical-scheme">Numerical scheme<a class="anchor" aria-label="anchor" href="#numerical-scheme"></a>
 </h3>
@@ -415,7 +488,7 @@ is derived for the evolution of the states over the time step <span class="math 
 time step. The vertical flux rates are considered as constant throughout the
 time step, allowing for a semi-analytical solution of some storage zones.</p>
 <div class="section level3">
-<h3 id="surface-zone">Surface zone<a class="anchor" aria-label="anchor" href="#surface-zone"></a>
+<h3 id="surface-zone-1">Surface zone<a class="anchor" aria-label="anchor" href="#surface-zone-1"></a>
 </h3>
 <p>The storage in the surface zone satisfies the mass balance equation</p>
 <p><span class="math display">\[
@@ -899,7 +972,7 @@ already given.</li>
 </ol>
 <p>This leaves the solution of the surface zone</p>
 <div class="section level4">
-<h4 id="surface-zone-1">Surface Zone<a class="anchor" aria-label="anchor" href="#surface-zone-1"></a>
+<h4 id="surface-zone-2">Surface Zone<a class="anchor" aria-label="anchor" href="#surface-zone-2"></a>
 </h4>
 <p>For the surface zone we take a semi implicit scheme where <span class="math inline">\(\eta_{sf}\)</span> is
 evaluated with the initial state giving
