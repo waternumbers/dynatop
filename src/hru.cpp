@@ -141,6 +141,7 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // initialise saturated zone to match q_sz
   q_sz = r_uz_sz + q_sz_in;
   double z = (q_sz + q_sz_in)/2.0;
+  //Rcpp::Rcout << "Initialising saturated zone " << z << std::endl;
   s_sz = sz->fs(z);
 
   s_uz = t_d * r_uz_sz * s_sz / area; // compute unsaturated zone storage
@@ -157,7 +158,7 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   
   // solve surface
   q_sf = q_sf_in - r_sf_rz;
-  //Rcpp::Rcout << id << " " << q_sf << " " << q_sf_in << std::endl;
+  //Rcpp::Rcout << "Initialising surface " << id << " " << q_sf << " " << q_sf_in << std::endl;
   s_sf = sf->fs(q_sf,q_sf_in);
   
   // redistributed the flows

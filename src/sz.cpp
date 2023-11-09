@@ -83,21 +83,32 @@ double szc_dexp::fq(double &s){ // get flow from storage
   return( q );
 }
 double szc_dexp::fs(double &q){ // get storage from flow
-  double lwr = -std::log(q/q_szmax) / psi;
-  double upr = -std::log(q/q_szmax) / kappa;
-  if(upr < lwr){
-    double tmp(upr);
-    upr=lwr;
-    lwr=tmp;
+  double z;
+  if( q > q_szmax ){
+    Rcpp::Rcout << "q > qmax " << q << " " << q_szmax << " " << q - q_szmax << std::endl;
+    z = 0.0;
   }
-  //bisection to find solution
-  int it(0), max_it(1000);
-  double z, qq;
-  while( (it <= max_it) and ( (upr-lwr)>1e-10 ) ){
+  if( q == q_szmax ){ z = 0.0; }
+  else{
+    
+    double lwr = -std::log(q/q_szmax) / psi;
+    double upr = -std::log(q/q_szmax) / kappa;
+    if(upr < lwr){
+      double tmp(upr);
+      upr=lwr;
+      lwr=tmp;
+    }
+    //bisection to find solution
+    int it(0), max_it(1000);
+    double qq; //z, qq;
+    while( (it <= max_it) and ( (upr-lwr)>1e-10 ) ){
+      z = (lwr+upr)/2.0;
+      qq = fq(z);
+      if( qq <= q ){ upr = z; } else { lwr = z; }
+      it += 1;
+    }
     z = (lwr+upr)/2.0;
-    qq = fq(z);
-    if( qq <= q ){ upr = z; } else { lwr = z; }
+    if(it == max_it){ Rcpp::Rcout << "max_it reached " <<lwr << " " << z << " " << upr << std::endl; }
   }
-  z = (lwr+upr)/2.0;
   return( z );
 }
