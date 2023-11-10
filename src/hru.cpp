@@ -207,30 +207,6 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   //std::pair<double,double> bnd(0.0, s_sz + 3*vtol);
   int it(0);
   if( lbnd.second <= 0){ //Hz <= 0 ){ // then solve by bisection
-    // bool flg(true);
-    // while( (flg == true) and (it < max_it) ){
-    //   //z = bnd.second;
-    //   z = ubnd.first;
-    //   v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
-    //   qq = std::min( sz->q_szmax, std::max(0.0, 2*sz->fq(z) - q_sz_in) );
-    //   //Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
-    //   ubnd.second = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
-    //   if( ubnd.second < 0 ){ //Hz<0 ){
-    // 	lbnd = ubnd;
-    // 	ubnd.first = 2*ubnd.first;
-    // 	//bnd.first = bnd.second;
-    // 	//bnd.second = 2* bnd.second;
-    //   }else{
-    // 	flg = false;
-    //   }
-    //   it += 1;
-    // }
-    
-    // if( flg==true ){
-    //   Rcpp::warning("SZ: No bound found within %i iterations. Difference between bounds is %d.",
-    // 		    it, ubnd.first - lbnd.first); //bnd.second - bnd.first);
-    // }
-    
     while( (ubnd.second < 0) and (it < max_it) ){
       //z = bnd.second;
       z = ubnd.first;
@@ -299,41 +275,43 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   aet = pet * s_rz / (area*s_rzmax);
   
   // surface
-  //Rcpp::Rcout << "solving surface" << std::endl;
-  double sfmax = s_sf + Dt*q_sf_in - v_sf_rz;
-  //std::pair<double,double> bnd;
-  //bnd.first = 0.0;
-  //bnd.second = sfmax;
-  lbnd.first = 0.0;
-  qq = sf->fq(lbnd.first,q_sf_in);
-  lbnd.second = sfmax - Dt*qq - z;
+  sf->update(s_sf, q_sf, q_sf_in, v_sf_rz, Dt, vtol, max_it);
+  // //Rcpp::Rcout << "solving surface" << std::endl;
+  // double sfmax = s_sf + Dt*q_sf_in - v_sf_rz;
+  // double r_sf_rz = v_sf_rz / Dt;
+  // //std::pair<double,double> bnd;
+  // //bnd.first = 0.0;
+  // //bnd.second = sfmax;
+  // lbnd.first = 0.0;
+  // qq = sf->fq(lbnd.first,q_sf_in,r_sf_rz);
+  // lbnd.second = sfmax - Dt*qq - z;
   
-  ubnd.first = sfmax;
-  qq = sf->fq(ubnd.first,q_sf_in);
-  ubnd.second = sfmax - Dt*qq - z;
+  // ubnd.first = sfmax;
+  // qq = sf->fq(ubnd.first,q_sf_in,r_sf_rz);
+  // ubnd.second = sfmax - Dt*qq - z;
   
-  it = 0;
-  while( (it <= max_it) and ( (ubnd.first - lbnd.first)>vtol ) ){ //( (bnd.second - bnd.first)>vtol ) ){
-    //z = (bnd.first+bnd.second)/2.0;
-    //z = (lbnd.first+ubnd.first)/2.0;
-    double iW = ubnd.second / (ubnd.second-lbnd.second);
-    iW = std::max(0.001,std::min(iW,0.999));
-    z = (iW*lbnd.first) + (1.0-iW)*ubnd.first;
-    qq = sf->fq(z,q_sf_in);
-    double Sw = sfmax - Dt*qq - z;
-    if( Sw <= 0 ){ //bnd.second= z; } else { bnd.first=z; }
-      ubnd.first = z;
-      ubnd.second = Sw;
-    }else{
-      lbnd.first = z;
-      lbnd.second = Sw;
-    }
-    it += 1;
-  }
-  z = lbnd.first;
-  //z = bnd.first;
-  q_sf = q_sf_in + (s_sf - v_sf_rz - z)/Dt;
-  s_sf = z;
+  // it = 0;
+  // while( (it <= max_it) and ( (ubnd.first - lbnd.first)>vtol ) ){ //( (bnd.second - bnd.first)>vtol ) ){
+  //   //z = (bnd.first+bnd.second)/2.0;
+  //   //z = (lbnd.first+ubnd.first)/2.0;
+  //   double iW = ubnd.second / (ubnd.second-lbnd.second);
+  //   iW = std::max(0.001,std::min(iW,0.999));
+  //   z = (iW*lbnd.first) + (1.0-iW)*ubnd.first;
+  //   qq = sf->fq(z,q_sf_in,r_sf_rz);
+  //   double Sw = sfmax - Dt*qq - z;
+  //   if( Sw <= 0 ){ //bnd.second= z; } else { bnd.first=z; }
+  //     ubnd.first = z;
+  //     ubnd.second = Sw;
+  //   }else{
+  //     lbnd.first = z;
+  //     lbnd.second = Sw;
+  //   }
+  //   it += 1;
+  // }
+  // z = lbnd.first;
+  // //z = bnd.first;
+  // q_sf = q_sf_in + (s_sf - v_sf_rz - z)/Dt;
+  // s_sf = z;
    
   // redistributed the flows
   lateral_redistribution(vec_q_sf_in,vec_q_sz_in);

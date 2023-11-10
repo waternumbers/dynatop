@@ -2,9 +2,58 @@
 
 // solve 
 sfc::sfc(){ }
-double sfc::fq(double &s, double &qin){return(-999.9);}
-double sfc::fs(double &q, double &qin){return(-999.9);}
-
+// fq compute the outflow given the other variables
+double sfc::fq(double const &s, double const &qin, double const &r){ return(-999.9);}
+// fs computes  steady state storage given the outflow and inflow
+double sfc::fs(double const &q, double const &qin){return(-999.9);}
+// solution for a linear tank
+// double sfc::solve_linear_tank(double &s0, double &qin, double &r, double &Dt, double &eta, double &kappa){
+//   double smax = s0 + Dt*(qin-r);
+//   double sc = eta*qin/kappa;
+//   double shat;
+//   if ( smax <= sc ){ shat =std::max(0.0,smax) ; }
+//   else{
+//     shat =  (s0 + Dt*( (qin/(1-eta)) - r )) / (1+(Dt*kappa/(1-eta))) ;
+//   }
+//   return( shat );
+// }
+void sfc::update(double &s, double &q, double const &qin, double const &vin,
+		 double const &Dt, double const &vtol, int const &max_it){
+  
+  double sfmax = s + Dt*qin - vin;
+  double rin = vin / Dt;
+  std::pair<double,double> lbnd(0.0, 999.9);
+  double qq = fq(lbnd.first,qin,rin);
+  lbnd.second = sfmax - Dt*qq - lbnd.first;
+  
+  std::pair<double,double> ubnd(sfmax, 999.9);
+  qq = fq(ubnd.first,qin,rin);
+  ubnd.second = sfmax - Dt*qq - ubnd.first;
+  
+  int it = 0;
+  while( (it <= max_it) and ( (ubnd.first - lbnd.first)>vtol ) ){ //( (bnd.second - bnd.first)>vtol ) ){
+    //z = (bnd.first+bnd.second)/2.0;
+    //z = (lbnd.first+ubnd.first)/2.0;
+    double iW = ubnd.second / (ubnd.second-lbnd.second);
+    iW = std::max(0.001,std::min(iW,0.999));
+    double z = (iW*lbnd.first) + (1.0-iW)*ubnd.first;
+    qq = fq(z,qin,rin);
+    double Sw = sfmax - Dt*qq - z;
+    if( Sw <= 0 ){ //bnd.second= z; } else { bnd.first=z; }
+      ubnd.first = z;
+      ubnd.second = Sw;
+    }else{
+      lbnd.first = z;
+      lbnd.second = Sw;
+    }
+    it += 1;
+  }
+  double z = lbnd.first;
+  //z = bnd.first;
+  q = qin + (s - vin - z)/Dt;
+  s = z;
+};
+    
 
 // constant celerity, diffusivity with raf
 sfc_cnst::sfc_cnst(std::vector<double> const &param, std::vector<double> const &properties){
@@ -15,7 +64,10 @@ sfc_cnst::sfc_cnst(std::vector<double> const &param, std::vector<double> const &
   t_raf = param[3]; // raf time constant
   q_raf = s_raf/t_raf; // raf max flow
 }
-double sfc_cnst::fq(double &s, double &qin){
+double sfc_cnst::fq(double const &s, double const &qin, double const &r){
+
+
+
   double qq(-999.9);
   if( s <= s_raf ){
     qq = s / t_raf;
@@ -26,7 +78,7 @@ double sfc_cnst::fq(double &s, double &qin){
   }
   return( qq );
 }
-double sfc_cnst::fs(double &q, double &qin){
+double sfc_cnst::fs(double const &q, double const &qin){
   double ss(-999.9);
   if( q > q_raf ){
     ss = ( (1-eta)*(q-q_raf) + eta*(std::max(0.0,qin-q_raf)) ) / kappa;
@@ -49,7 +101,7 @@ sfc_kin::sfc_kin(std::vector<double> const &param, std::vector<double> const &pr
   q_raf = s_raf/t_raf; // raf max flow
   
 }
-double sfc_kin::fq(double &s, double &qin){
+double sfc_kin::fq(double const &s, double const &qin, double const &r){
   double qq(-999.9);
   if( s <= s_raf ){
     qq = s / t_raf;
@@ -61,7 +113,7 @@ double sfc_kin::fq(double &s, double &qin){
   return( qq );
 }
 
-double sfc_kin::fs(double &q, double &qin){
+double sfc_kin::fs(double const &q, double const &qin){
   double ss(-999.9);
   if( q > q_raf ){
     ss = kappa * std::pow( (q+qin)/(2*omega), 3.0/5.0 ) ;
@@ -81,13 +133,14 @@ sfc_comp::sfc_comp(std::vector<double> const &param, std::vector<double> const &
   s_1 = param[2]; // max stoage in lower part of channel
   kappa_2 = param[3]/Dx; // velocity divided by length to get q from storage for upper part of channel
   eta_2 = 0.5 - (param[4] / (param[3]*Dx));  // Dispersion property for upper part of channel
-  q_1_max = s_1*kappa_1; // max inflow to lower part of channel
+  //q_1_max = s_1*kappa_1; // max inflow to lower part of channel
  
   //Rcpp::Rcout << eta_1 << " " << kappa_1 << " " << s_1 << " " << q_1_max << std::endl;
   //Rcpp::Rcout << eta_2 << " " << kappa_2 << std::endl;
   
 }
-double sfc_comp::fq(double &s, double &qin){
+double sfc_comp::fq(double const &s, double const &qin, double const &r){
+  double q_1_max = std::max(0.0, s_1*kappa_1 + (1-eta_1)*r);
   double q_1 = std::min(qin,q_1_max);
   double q_2 = std::max(0.0,qin-q_1_max);
   
@@ -96,7 +149,7 @@ double sfc_comp::fq(double &s, double &qin){
   return( qq );
  
 }
-double sfc_comp::fs(double &q, double &qin){
+double sfc_comp::fs(double const &q, double const &qin){
   // bool flg(false);
   //   if( (q==0.0) and (qin > 0.0) ){
   //   flg = true;
