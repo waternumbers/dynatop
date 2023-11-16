@@ -237,67 +237,118 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 		     s_rz - (area*s_rzmax)  + Dt*(precip - pet) + v_sf_rz);
 
   // search for s_sz
-  std::pair<double,double> lbnd(0.0, 999.9);
-  double z = lbnd.first;
-  v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
-  double qq = sz->fq(z,q_sz_in);
-  double Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
-  lbnd.second = Hz;
-
-  std::pair<double,double> ubnd = lbnd;// make sure have same solution is saturated
+  double lb(0.0), ub(0.0), Hzu(2*vtol), Hzl(2*vtol);
+  double z(-999.9);
   
-  if( lbnd.second < 0 ){ // need a numeric solution
-    // find upper limits of search
-    ubnd.first = s_sz+3*vtol;
-    z = ubnd.first;
-    v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
-    qq = sz->fq(z,q_sz_in);
-    Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
-    ubnd.second = Hz;
-    int it(0);
-    while( (ubnd.second < 0) and (it < max_it) ){
-      ubnd.first *= 2.0;
-      double z = ubnd.first;
-      v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
-      qq = sz->fq(z,q_sz_in);
-      Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
-      ubnd.second = Hz;
+  // test ub=0.0 to see if saturated
+  v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*ub + area*Dt), 1/t_d );
+  Hzu = ub - s_sz + v_uz_sz + Dt*(q_sz_in - sz->fq(ub,q_sz_in));
+  Hzl = Hzu; // since both are at 0 from initialisation
+  
+  if( Hzu < 0.0 ){
+    // need  a numerical solution
+
+    // scale out upper limit until positive
+    ub = s_sz + 3*vtol;
+    v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*ub + area*Dt), 1/t_d );
+    Hzu = ub - s_sz + v_uz_sz + Dt*(q_sz_in - sz->fq(ub,q_sz_in));
+    int it(0.0);
+    while( (Hzu < 0.0) and (it < max_it) ){
+      lb = ub;
+      Hzl = Hzu;
+      ub += ub;
+      v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*ub + area*Dt), 1/t_d );
+      Hzu = ub - s_sz + v_uz_sz + Dt*(q_sz_in - sz->fq(ub,q_sz_in));
       it +=1;
     }
-    if( ubnd.second < 0 ){
-      Rcpp::warning("SZ: No bound found within %i iterations. Difference between bounds is %d.",
-		    it, ubnd.first - lbnd.first); //bnd.second - bnd.first);
+    if( Hzu < 0 ){
+      Rcpp::warning("SZ: No upper bound found within %i iterations. Difference between bounds is %d.",
+		    it, ub - lb); //bnd.second - bnd.first);
     }
-    // shrink
-    it = 0;  
-    while( (it <= max_it) and ( ubnd.second > vtol ) ){
-      //z = (lbnd.first+ubnd.first)/2.0;
-      double iW = ubnd.second / (ubnd.second-lbnd.second);
+
+    // shrink back to find solution
+    it = 0;
+    double Hz(2*vtol), iW(0.001);
+    while( (Hzu > vtol) and (it < max_it) ){ //((ub -lb) > vtol) and (it < max_it) ){
+      iW = Hzu / (Hzu - Hzl);
       iW = std::max(0.001,std::min(iW,0.999));
-      z = (iW*lbnd.first) + (1.0-iW)*ubnd.first;
+      z = (iW*lb) + (1.0-iW)*ub;
       v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
-      qq = sz->fq(z,q_sz_in);
-      Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
+      Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - sz->fq(z,q_sz_in));
       
-      if( Hz <= 0 ){
-	lbnd.first = z;
-	lbnd.second = Hz;
+      if( Hz < 0 ){
+	lb = z;
+	Hzl = Hz;
       }else{
-	ubnd.first = z;
-	ubnd.second = Hz;
+	ub = z;
+	Hzu = Hz;
       }
-      it += 1;  
+      it += 1; 
     }
     if(it > max_it){
       Rcpp::warning("HRU %i SZ: No solution found within %i iterations. Difference between bounds is %d",
-		    id, it, ubnd.first - lbnd.first); //bnd.second - bnd.first);
+		    id, it, ub - lb); //bnd.second - bnd.first);
     }
   }
+      
+  // std::pair<double,double> ubnd = lbnd;// make sure have same solution is saturated
+  
+  // if( lbnd.second < 0 ){ // need a numeric solution
+  //   // find upper limits of search
+  //   ubnd.first = s_sz+3*vtol;
+  //   z = ubnd.first;
+  //   v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
+  //   qq = sz->fq(z,q_sz_in);
+  //   Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
+  //   ubnd.second = Hz;
+  //   int it(0);
+  //   while( (ubnd.second < 0) and (it < max_it) ){
+  //     ubnd.first *= 2.0;
+  //     double z = ubnd.first;
+  //     v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
+  //     qq = sz->fq(z,q_sz_in);
+  //     Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
+  //     ubnd.second = Hz;
+  //     it +=1;
+  //   }
+  //   if( ubnd.second < 0 ){
+  //     Rcpp::warning("SZ: No bound found within %i iterations. Difference between bounds is %d.",
+  // 		    it, ubnd.first - lbnd.first); //bnd.second - bnd.first);
+  //   }
+  //   // shrink
+  //   it = 0;  
+  //   while( (it <= max_it) and ( ubnd.second > vtol ) ){
+  //     //z = (lbnd.first+ubnd.first)/2.0;
+  //     double iW = ubnd.second / (ubnd.second-lbnd.second);
+  //     iW = std::max(0.001,std::min(iW,0.999));
+  //     z = (iW*lbnd.first) + (1.0-iW)*ubnd.first;
+  //     v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
+  //     qq = sz->fq(z,q_sz_in);
+  //     Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
+      
+  //     if( Hz < 0 ){
+  // 	lbnd.first = z;
+  // 	lbnd.second = Hz;
+  //     }else{
+  // 	ubnd.first = z;
+  // 	ubnd.second = Hz;
+  //     }
+  //     it += 1;  
+  //   }
+  //   if(it > max_it){
+  //     Rcpp::warning("HRU %i SZ: No solution found within %i iterations. Difference between bounds is %d",
+  // 		    id, it, ubnd.first - lbnd.first); //bnd.second - bnd.first);
+  //   }
+  // }
 
   // upward pass
-  q_sz = sz->fq(ubnd.first,q_sz_in);
-  v_uz_sz = s_sz + Dt*(q_sz-q_sz_in) - ubnd.first;
-  s_sz = ubnd.first;
+  q_sz = sz->fq(ub,q_sz_in);
+  v_uz_sz = s_sz + Dt*(q_sz-q_sz_in) - ub;
+  s_sz = ub;
+  
+  // q_sz = sz->fq(ubnd.first,q_sz_in);
+  // v_uz_sz = s_sz + Dt*(q_sz-q_sz_in) - ubnd.first;
+  // s_sz = ubnd.first;
 
   z = std::min(s_sz, s_uz+v_rz_uz-v_uz_sz);
   v_rz_uz = z + v_uz_sz - s_uz;
@@ -310,44 +361,7 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // surface
   
   sf->update(s_sf, q_sf, q_sf_in, v_sf_rz, Dt, vtol, max_it);
-  
-  // //Rcpp::Rcout << "solving surface" << std::endl;
-  // double sfmax = s_sf + Dt*q_sf_in - v_sf_rz;
-  // double r_sf_rz = v_sf_rz / Dt;
-  // //std::pair<double,double> bnd;
-  // //bnd.first = 0.0;
-  // //bnd.second = sfmax;
-  // lbnd.first = 0.0;
-  // qq = sf->fq(lbnd.first,q_sf_in,r_sf_rz);
-  // lbnd.second = sfmax - Dt*qq - z;
-  
-  // ubnd.first = sfmax;
-  // qq = sf->fq(ubnd.first,q_sf_in,r_sf_rz);
-  // ubnd.second = sfmax - Dt*qq - z;
-  
-  // it = 0;
-  // while( (it <= max_it) and ( (ubnd.first - lbnd.first)>vtol ) ){ //( (bnd.second - bnd.first)>vtol ) ){
-  //   //z = (bnd.first+bnd.second)/2.0;
-  //   //z = (lbnd.first+ubnd.first)/2.0;
-  //   double iW = ubnd.second / (ubnd.second-lbnd.second);
-  //   iW = std::max(0.001,std::min(iW,0.999));
-  //   z = (iW*lbnd.first) + (1.0-iW)*ubnd.first;
-  //   qq = sf->fq(z,q_sf_in,r_sf_rz);
-  //   double Sw = sfmax - Dt*qq - z;
-  //   if( Sw <= 0 ){ //bnd.second= z; } else { bnd.first=z; }
-  //     ubnd.first = z;
-  //     ubnd.second = Sw;
-  //   }else{
-  //     lbnd.first = z;
-  //     lbnd.second = Sw;
-  //   }
-  //   it += 1;
-  // }
-  // z = lbnd.first;
-  // //z = bnd.first;
-  // q_sf = q_sf_in + (s_sf - v_sf_rz - z)/Dt;
-  // s_sf = z;
-   
+     
   // redistributed the flows
   lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
     

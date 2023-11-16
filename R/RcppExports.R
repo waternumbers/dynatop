@@ -9,3 +9,11 @@ dt_sim <- function(mdl, out_dfn, keep_states, obs_matrix, mass_balance, out_matr
     invisible(.Call(`_dynatop_dt_sim`, mdl, out_dfn, keep_states, obs_matrix, mass_balance, out_matrix, state_rec, timestep, n_sub_step, vtol, etol, max_it))
 }
 
+start_profiler <- function(str) {
+    .Call(`_dynatop_start_profiler`, str)
+}
+
+stop_profiler <- function() {
+    .Call(`_dynatop_stop_profiler`)
+}
+
