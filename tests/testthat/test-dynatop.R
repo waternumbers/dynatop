@@ -14,17 +14,18 @@ test_that("Dynatop mass errors are correctly computed for substeps and less then
     testthat::expect_lt( tmp, 1e-6 )
 })
 
-## currently this is to slow for CRAN - run manually it passes
-## test_that("Dynatop mass errors for constant profile are <1e-6", {
-##     data(Swindale)
-##     mdl <- Swindale$model
-##     mdl$hillslope$opt <- "cnst"
-##     mdl$hillslope$c_sz<- 0.5; mdl$hillslope$D <- 5
-##     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
-##     dt$initialise()$sim_hillslope()
-##     tmp <- max(abs(dt$get_mass_errors()[,6]))
-##     testthat::expect_lt( tmp, 1e-6 )
-## })
+test_that("Dynatop mass errors for constant profile are <1e-6", {
+    data(Swindale)
+    mdl <- Swindale$model$hru
+    for(ii in 1:length(mdl)){
+        mdl[[ii]]$sz$type <- "cnst"
+        mdl[[ii]]$sz$parameters <- c("h_sz_max" = 0.1, "v_sz" = 0.1)
+    }
+    dt <- dynatop$new(mdl)$add_data(Swindale$obs)
+    dt$initialise()$sim(Swindale$model$output_flux)
+    tmp <- max(abs(dt$get_mass_errors()[,6]))
+    testthat::expect_lt( tmp, 1e-6 )
+})
 
 test_that("Dynatop mass errors for bounded exponential profile are <1e-6", {
     data(Swindale)
@@ -121,41 +122,8 @@ test_that("Dynatop cnst and compound solutions are consistent without raf to <1e
     dt_cmp$sim(Swindale$model$output_flux,vtol=1e-8)
 
     tmp <- max(abs(dt_cmp$get_output() - dt_raf$get_output()))
-    testthat::expect_lt( tmp, 1e-8 ) ## not very good    
+    testthat::expect_lt( tmp, 1e-8 )
 })
-
-## because of the way that the inflow is handled this test should fail so removed
-## test_that("Dynatop cnst and compound sf solutions are consistent with raf to <1e-6", {
-##     data(Swindale)
-##     mdl_raf <- Swindale$model$hru
-##     mdl_cmp <- Swindale$model$hru
-##     for(ii in 1:length(mdl_cmp)){
-##         mdl_raf[[ii]]$sz$parameters[c("s_raf","t_raf")] <- c(100,10*60*60)
-##         mdl_cmp[[ii]]$sf$parameters <- c("v_sf_1" = as.numeric(mdl_cmp[[ii]]$properties["Dx"]) / (10*60*60), 
-##                                          "d_sf_1" = as.numeric(mdl_cmp[[ii]]$properties["Dx"]^2) / (2*10*60*60),
-##                                          "s_1" = 100,
-##                                          "v_sf_2" = as.numeric(mdl_cmp[[ii]]$sf$parameters["c_sf"]),
-##                                          "d_sf_2" = 0)
-##         mdl_cmp[[ii]]$sf$type <- "comp"
-##     }
-##     dt_raf <- dynatop$new(mdl_raf)$add_data(Swindale$obs)
-##     dt_raf$initialise() ##$sim(Swindale$model$output_flux)
-##     dt_cmp <- dynatop$new(mdl_cmp)$add_data(Swindale$obs)
-##     dt_cmp$initialise() ## $sim(Swindale$model$output_flux)
-
-##     s_raf <- dt_raf$get_states()
-##     s_cmp <- dt_cmp$get_states()
-##     e <- s_cmp - s_raf
-##     apply(e,2,range)
-    
-##     tmp <- max(abs(dt_cmp$get_mass_errors()[,6]))
-##     testthat::expect_lt( tmp, 1e-6 )
-##    ## plot(dt_cmp$get_output() - dt_raf$get_output())
-##     tmp <- max(abs(dt_cmp$get_output() - dt_raf$get_output()))
-##     testthat::expect_lt( tmp, 1e-6 )
-
-    
-## ## })
 
 
 

@@ -1,8 +1,19 @@
 #include "sz.h"
 
 szc::szc(){}
-double szc::fq(double &s){ return(-999.9); } // flux for crossectional area
-double szc::fs(double &q){ return(-999.9); } // flux for crossectional area
+double szc::fq(double const &s, double const &qin){
+  // outflow
+  double qt = ftq(s);
+  return( std::max(0.0, 2*qt - qin) );
+}
+double szc::fs(double const &q, double const& qin){
+  // storage
+  double qt = std::min(q_szmax, (q+qin)/2); // ensure no negative outflows
+  return( fts(qt) );
+}
+double szc::ftq(double const &s){ return(-999.9); }
+double szc::fts(double const &q){ return(-999.9); }
+
 
 // exponential
 szc_exp::szc_exp(std::vector<double> const &param, std::vector<double> const &prop){
@@ -15,11 +26,12 @@ szc_exp::szc_exp(std::vector<double> const &param, std::vector<double> const &pr
   q_szmax =  width*t0*std::sin(beta);
   psi = std::cos(beta) / (m*area); // scaling to get crosssectional depth from storage
 }
-double szc_exp::fq(double &s){ // get flow from storage
+double szc_exp::ftq(double const &s){ // get flow from storage
   double q = q_szmax * std::exp(-psi*s);
   return( q );
 }
-double szc_exp::fs(double &q){ // get storage from flow
+double szc_exp::fts(double const &q){ // get storage from flow
+  //Rcpp::Rcout << "In fts " << q_szmax << " " << q << std::endl;
   double s = -std::log(q/q_szmax) / psi;
   return( s );
 }
@@ -37,11 +49,11 @@ szc_bexp::szc_bexp(std::vector<double> const &param, std::vector<double> const &
   kappa = std::exp(-psi*h_sz_max);
   q_szmax = omega * ( 1 -  kappa );
 }
-double szc_bexp::fq(double &s){ // get flow from storage
+double szc_bexp::ftq(double const &s){ // get flow from storage
   double q = std::max(0.0, omega*( std::exp(-psi*s) - kappa ) );
   return( q );
 }
-double szc_bexp::fs(double &q){ // get storage from flow
+double szc_bexp::fts(double const &q){ // get storage from flow
   return( -std::log((q/omega)+kappa)/psi );
 };
 
@@ -58,10 +70,10 @@ szc_cnst::szc_cnst(std::vector<double> const &param,  std::vector<double> const 
   kappa = h_sz_max;
   q_szmax = omega*h_sz_max;
 };
-double szc_cnst::fq(double &s){
+double szc_cnst::ftq(double const &s){
   return( std::max(0.0, omega*(kappa - (s*psi))) );
 };
-double szc_cnst::fs(double &q){
+double szc_cnst::fts(double const &q){
   return( -psi*((q/omega)-kappa) );
 };
 
@@ -78,11 +90,11 @@ szc_dexp::szc_dexp(std::vector<double> const &param, std::vector<double> const &
   psi = std::cos(beta) / (m*area); // scaling to get crosssectional depth from storage
   kappa = std::cos(beta) / (m2*area); // scaling to get crosssectional depth from storage
 }
-double szc_dexp::fq(double &s){ // get flow from storage
+double szc_dexp::ftq(double const &s){ // get flow from storage
   double q = q_szmax * ( omega*std::exp(-psi*s) + (1.0-omega)*std::exp(-kappa*s) );
   return( q );
 }
-double szc_dexp::fs(double &q){ // get storage from flow
+double szc_dexp::fts(double const &q){ // get storage from flow
   double z;
   if( q > q_szmax ){
     Rcpp::Rcout << "q > qmax " << q << " " << q_szmax << " " << q - q_szmax << std::endl;
@@ -103,7 +115,7 @@ double szc_dexp::fs(double &q){ // get storage from flow
     double qq; //z, qq;
     while( (it <= max_it) and ( (upr-lwr)>1e-10 ) ){
       z = (lwr+upr)/2.0;
-      qq = fq(z);
+      qq = ftq(z);
       if( qq <= q ){ upr = z; } else { lwr = z; }
       it += 1;
     }
