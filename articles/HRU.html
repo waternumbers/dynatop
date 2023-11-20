@@ -33,7 +33,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">dynatop</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0.1005</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="">0.3.0.1010</span>
       </span>
     </div>
 
@@ -295,7 +295,301 @@ section of the hillslope HRU</caption>
 </table>
 </div>
 <div class="section level2">
-<h2 id="surface-zone">Surface Zone<a class="anchor" aria-label="anchor" href="#surface-zone"></a>
+<h2 id="finite-volume-formulation">Finite Volume Formulation<a class="anchor" aria-label="anchor" href="#finite-volume-formulation"></a>
+</h2>
+<p>In this section a finite volume formulation of the Dynamic TOPMODEL equations
+is derived for the evolution of the states over the time step <span class="math inline">\(t\)</span> to <span class="math inline">\(t + \Delta t\)</span>. The lateral flux rates are considered at the start and end of the
+time step. The vertical flux rates are considered as constant throughout the
+time step, allowing for a semi-analytical solution of some storage zones.</p>
+<div class="section level3">
+<h3 id="surface-zone">Surface zone<a class="anchor" aria-label="anchor" href="#surface-zone"></a>
+</h3>
+<p>The storage in the surface zone satisfies the mass balance equation</p>
+<p><span class="math display">\[
+\frac{ds_{sf}}{dt} = q^{-}_{sf} - r_{sf \rightarrow rz} - q^{+}_{sf}
+\]</span></p>
+<p>where surface storage is increased by lateral downslope flow from upslope HRUs.
+Water flows to the root zone at a constant rate <span class="math inline">\(r_{sf \rightarrow rz}\)</span>, unless limited by
+the available storage at the surface or the ability of the root zone to
+receive water (for example if the saturation storage deficit is 0 and the root
+zone storage is full). In cases where lateral flow in the saturated zone produce
+saturation storage deficits water may be returned from the root
+zone to the surface giving negative values of <span class="math inline">\(r_{sf \rightarrow rz}\)</span>.</p>
+<p>The outflow <span class="math inline">\(q^{+}_{sf}\)</span> is considered a function of
+<span class="math inline">\(q^{-}_{sf}\)</span>, <span class="math inline">\(s_{sf}\)</span>, <span class="math inline">\(r_{sf \rightarrow rz}\)</span> and parameters <span class="math inline">\(\Theta_{sf}\)</span> denoted by
+<span class="math display">\[
+q^{+}_{sf} = \mathcal{F}\left(s_{sf},q^{-}_{sf},r_{sf \rightarrow
+rz},\Theta_{sf}\right)
+\]</span>
+For the purposes the numerical scheme we limit the set to possible functions
+<span class="math inline">\(\mathcal{F}\)</span> to those that are non-decreasing with respect to <span class="math inline">\(s_{sf}\)</span> and
+take the value <span class="math inline">\(0\)</span> when <span class="math inline">\(s_{sf}=0\)</span>. More formally
+<span class="math display">\[
+\frac{\partial}{\partial s_{sf}} \mathcal{F}\left(s_{sf},q^{-}_{sf},r_{sf \rightarrow
+rz},\Theta_{sf}\right) \geq 0
+\]</span>
+and
+<span class="math display">\[
+\mathcal{F}\left(0,q^{-}_{sf},r_{sf \rightarrow
+rz},\Theta_{sf}\right) = 0
+\]</span></p>
+</div>
+<div class="section level3">
+<h3 id="root-zone">Root zone<a class="anchor" aria-label="anchor" href="#root-zone"></a>
+</h3>
+<p>The root zone gains water from precipitation and the surface zone. It loses water through
+evaporation and to the unsaturated zone. All vertical fluxes are
+considered to be spatially uniform. The root zone storage satisfies</p>
+<p><span class="math display">\[\begin{equation} 0 \leq s_{rz} \leq s_{rzmax} \end{equation}\]</span></p>
+<p>with the governing ODE
+<span class="math display">\[\begin{equation}
+\frac{ds_{rz}}{dt} = p - \frac{e_p}{s_{rzmax}} s_{rz} +
+r_{sf\rightarrow rz} - r_{rz \rightarrow uz}
+\end{equation}\]</span></p>
+<p>Fluxes from the surface and to the unsaturated zone are
+controlled by the level of root zone storage along with the state of the unsaturated
+and saturated zones.</p>
+<p>For <span class="math inline">\(s_{rz} \leq s_{rzmax}\)</span> then <span class="math inline">\(r_{rz \rightarrow uz} \leq 0\)</span>. Negative
+values of <span class="math inline">\(r_{rz \rightarrow uz}\)</span> may occur only when water is returned from the
+unsaturated zone due to saturation caused by lateral inflow to the saturated zone.</p>
+<p>When <span class="math inline">\(s_{rz} = s_{rzmax}\)</span> then
+<span class="math display">\[\begin{equation}
+p - e_p + r_{sf\rightarrow rz} - r_{rz \rightarrow uz} \leq 0
+\end{equation}\]</span>
+In this case <span class="math inline">\(r_{rz \rightarrow uz}\)</span> may be positive if
+<span class="math display">\[\begin{equation}
+p - e_p + r_{sf\rightarrow rz} &gt; 0
+\end{equation}\]</span>
+so long as the unsaturated zone can receive the water. If <span class="math inline">\(r_{rz \rightarrow uz}\)</span> is ‘throttled’ by the rate at which the unsaturated zone can
+receive water, then <span class="math inline">\(r_{sf\rightarrow rz}\)</span> is adjusted (potentially becoming
+negative) to ensure the equality is met.</p>
+</div>
+<div class="section level3">
+<h3 id="unsaturated-zone">Unsaturated Zone<a class="anchor" aria-label="anchor" href="#unsaturated-zone"></a>
+</h3>
+<p>The unsaturated zone acts as a non-linear tank subject to the constraint
+<span class="math display">\[\begin{equation} 0 \leq s_{uz} \leq s_{sz} \end{equation}\]</span></p>
+<p>The governing ODE is written as
+<span class="math display">\[\begin{equation}
+\frac{ds_{uz}}{dt} = r_{rz \rightarrow uz} - \frac{A s_{uz}}{T_d s_{sz}}
+\end{equation}\]</span></p>
+<p>If water is able to pass freely to the saturated zone, then it flows at the rate
+<span class="math inline">\(\frac{A s_{uz}}{T_d s_{sz}}\)</span>.
+In the situation where <span class="math inline">\(s_{sz}=s_{uz}\)</span> the subsurface below
+the root zone can be considered saturated, as in there is no further available
+storage for water, but separated into parts: an upper part with vertical
+flow and a lower part with lateral flux.</p>
+<p>It is possible that the downward flux is constrained by the ability of the saturated zone to receive water. If
+this is the case <span class="math inline">\(r_{uz \rightarrow sz}\)</span> occurs at the maximum
+possible rate and <span class="math inline">\(r_{rz \rightarrow uz}\)</span> is limited to ensure that
+<span class="math inline">\(s_{uz} \leq s_{sz}\)</span>.</p>
+</div>
+<div class="section level3">
+<h3 id="saturated-zone">Saturated Zone<a class="anchor" aria-label="anchor" href="#saturated-zone"></a>
+</h3>
+<p>For a HRU the alteration of the storage in the saturated zone is given in
+terms of the storage deficit <span class="math inline">\(s_sz\)</span> as:
+<span class="math display">\[
+\frac{ds_{sz}}{dt} = q^{+}_{sz} - r_{sf \rightarrow rz} - q^{-}_{sz}
+\]</span></p>
+<p>The relationship between the outflow and storage deficit is given
+<span class="math display">\[
+q^{+}_{sz} = \mathcal{G}\left(s_{sz},q^{-}_{sz},\Theta_{sz}\right)
+\]</span>
+It is assummed that flow increases with storage so
+<span class="math display">\[
+- \frac{d}{ds_{sz}} \mathcal{G}\left(s_{sz},q^{-}_{sz},\Theta_{sz}\right) \geq 0
+\]</span>
+while at the maximum storage deficit
+<span class="math inline">\(\mathcal{G}\left(D,q^{-}_{sz},\Theta_{sz}\right) = 0\)</span></p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="numerical-solution">Numerical Solution<a class="anchor" aria-label="anchor" href="#numerical-solution"></a>
+</h2>
+<p>No analytical solution yet exists for simultaneous integration of the system of
+ODEs outlined above. In the following an implicit scheme, where fluxes
+between stores are considered constant over the time step and gradients are
+evaluated at the final state, is presented.</p>
+<p>The basis of the solution is that a gravity driven system will maximise
+the downward flow of water within each timestep of size <span class="math inline">\(\Delta t\)</span>. Hence on
+the first downward pass through the stores the maximum downward volumes of the vertical
+fluxes <span class="math inline">\(\hat{v}_{* \rightarrow *} = \Delta t \hat{r}_{* \rightarrow *}\)</span> are determined. These then moderated by the
+solution of the saturated zone, with an upward pass gives the final states.</p>
+<div class="section level3">
+<h3 id="downward-pass">Downward Pass<a class="anchor" aria-label="anchor" href="#downward-pass"></a>
+</h3>
+<div class="section level4">
+<h4 id="surface-excess">Surface excess<a class="anchor" aria-label="anchor" href="#surface-excess"></a>
+</h4>
+<p>The implicit solution of mass balance equation gives</p>
+<p><span class="math display">\[
+\left. s_{sf} \right\rvert_{t+\Delta t} = \left. s_{sf} \right\rvert_{t} +
+\Delta t
+\left( \left. q_{sf}^{-} \right\rvert_{t+\Delta t} -
+\mathcal{F}\left(s_{sf},q^{-}_{sf},r_{sf \rightarrow
+rz},\Theta_{sf}\right) \right) -
+\left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t}
+\]</span></p>
+<p>Since the outflow is 0 when the $s_sf =0 $ the maximum downward flux volume is
+<span class="math display">\[
+\left. \hat{v}_{sf \rightarrow rz} \right\rvert_{t+\Delta t} =  \left. s_{sf}
+\right\rvert_{t} + \Delta t \left. q_{sf}^{-} \right\rvert_{t+\Delta t}
+\]</span></p>
+</div>
+<div class="section level4">
+<h4 id="root-zone-1">Root Zone<a class="anchor" aria-label="anchor" href="#root-zone-1"></a>
+</h4>
+<p>The implicit formulation for the root zone gives
+<span class="math display">\[\begin{equation}
+\left. s_{rz} \right.\rvert_{t + \Delta t} =
+\left( 1 + \frac{e_{p}\Delta t}{s_{rzmax}} \right)^{-1}
+\left(
+\left. s_{rz} \right.\rvert_{0}
++ \Delta t p +
+v_{sf \rightarrow rz} - v_{rz \rightarrow uz} \right)
+\end{equation}\]</span></p>
+<p>Since flow to the unsaturated zone occur only to keep
+<span class="math inline">\(s_{rz} \leq s_{rzmax}\)</span> then
+<span class="math display">\[\begin{equation}
+\hat{v}_{rz \rightarrow uz} = \max\left(0,
+\left. s_{rz} \right.\rvert_{0}
++ \Delta t \left( p -e_{p}\right)
++ \hat{v}_{sf \rightarrow rz}
+- s_{rzmax}
+\right)
+\end{equation}\]</span></p>
+</div>
+<div class="section level4">
+<h4 id="unsaturated-zone-1">Unsaturated Zone<a class="anchor" aria-label="anchor" href="#unsaturated-zone-1"></a>
+</h4>
+<p>The implicit expression for the unsaturated zone is given in terms of
+<span class="math inline">\(\left. s_{uz} \right.\rvert_{t+\Delta t}\)</span> and
+<span class="math inline">\(\left. s_{sz} \right.\rvert_{t+\Delta t}\)</span> as</p>
+<p><span class="math display">\[\begin{equation}
+\left. s_{uz} \right.\rvert_{t+\Delta t} =
+\frac{T_{d}\left. s_{sz} \right.\rvert_{t+\Delta t}}{
+T_{d}\left. s_{sz} \right.\rvert_{t+\Delta t} + A \Delta t}
+\left( \left. s_{uz} \right.\rvert_{t} +
+v_{rz \rightarrow uz}\right)
+\end{equation}\]</span></p>
+<p>Since <span class="math inline">\(\left. s_{uz} \right.\rvert_{t+\Delta t} \leq \left. s_{sz}  \right.\rvert_{t+\Delta t}\)</span> this places an additional condition of
+<span class="math display">\[\begin{equation}
+\left. s_{uz} \right.\rvert_{t} + v_{rz \rightarrow uz} \leq
+\left. s_{sz} \right.\rvert_{t+\Delta t} + \frac{A \Delta t}{T_d}
+\end{equation}\]</span></p>
+<p>By mass balance this gives the maximum downward flux volume as
+<span class="math display">\[
+\hat{v}_{uz \rightarrow sz} = A\Delta t \min\left(
+\frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
+{T_{d}\left. s_{sz} \right.\rvert_{t+\Delta t} + A \Delta t}, \frac{1}{T_{d}} \right)
+\]</span></p>
+<p>This is a function of <span class="math inline">\(\left. s_{sz} \right.\rvert_{t+\Delta t}\)</span>.</p>
+</div>
+<div class="section level4">
+<h4 id="saturated-zone-1">Saturated Zone<a class="anchor" aria-label="anchor" href="#saturated-zone-1"></a>
+</h4>
+<p>Building on the generic solution the implicit scheme for the saturated zone gives</p>
+<p><span class="math display">\[
+\left. s_{sz} \right\rvert_{t+\Delta t} = \left. s_{sz} \right\rvert_{t} +
+\Delta t  \left(
+\mathcal{G}\left(s_{sz},q^{-}_{sz},\Theta_{sz}\right) -
+\left. q_{sz}^{-} \right\rvert_{t+\Delta t} \right) -
+\left. v_{uz \rightarrow sz} \right\rvert_{t+\Delta t}
+\]</span></p>
+<p>Consider the pseudo-function
+<span class="math display">\[
+\mathcal{H}\left(z\right) =
+z -
+\left. s_{sz}\right.\rvert_{t} +
+\Delta t  \left. q_{sz}^{-} \right\rvert_{t+\Delta t} +
+A\Delta t \min\left(
+\frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
+{T_{d}z + A \Delta t}, \frac{1}{T_{d}} \right) - \\
+\Delta t \min\left(q_{sz}^{max},\max\left( 0, 2 \mathcal{G}\left(z,\Theta_{sz}\right) - \left. q_{sz}^{-}
+\right\rvert_{t+\Delta t}
+\right)\right)
+\]</span></p>
+<p>adapted from the approximating equation for the saturated zone storage.
+In Appendix A it is
+shown that <span class="math inline">\(\mathcal{H}\left(z\right)\)</span> is a monotonic increasing function of
+<span class="math inline">\(z &gt; 0\)</span> and <span class="math inline">\(\mathcal{H}\left(D\right) \geq 0\)</span>.
+Hence if <span class="math inline">\(\mathcal{H}\left(0\right) \lt 0\)</span> unique solution for
+<span class="math inline">\(\left. s_{sz}\right.\rvert_{\Delta t}\)</span> can be found.
+If <span class="math inline">\(\mathcal{H}\left(0\right) \geq 0\)</span> then the incoming fluxes are enough to
+produce saturation in the subsurface and
+<span class="math inline">\(\left. s_{sz}\right.\rvert_{\Delta t} = 0\)</span>.</p>
+<p>Maintaining a water (mass) balance and
+correct limits on the state values
+depends upon the accuracy of the solution of
+<span class="math inline">\(\mathcal{H}\left(z\right)=0\)</span>. Since each evaluation of
+<span class="math inline">\(\mathcal{H}\left(z\right)\)</span> requires an evaluation of <span class="math inline">\(\mathcal{G}\)</span> this
+rapidly become the most expensive part of the code.
+Use of a numerical scheme which allows mass balance to maintained
+regardless of the accuracy of the solution of <span class="math inline">\(\mathcal{H}\left(z\right)=0\)</span>
+allows scope for compromises based on computational time.</p>
+<p>The upward pass presented below is mass conservative so long as
+<span class="math inline">\(\mathcal{H}\left(\left. s_{sz}\right.\rvert_{\Delta t}\right)\geq0\)</span>.
+We therefore seek <span class="math inline">\(z\)</span> which satifies for some tolerance <span class="math inline">\(\epsilon&gt;0\)</span>
+<span class="math display">\[
+\epsilon \geq $\mathcal{H}\left(z\right) \geq 0
+\]</span>
+One approach to finding such a value is use a bracketing algorithm. At each iteration the lower and upper limits <span class="math inline">\(z^{l} &lt; z^{u}\)</span> satisify <span class="math inline">\(\mathcal{H}\left(z^{l}\right)\leq 0 \leq \mathcal{H}\left(z^{u}\right)\)</span>, thus bracket the solution. Iterating (using for example bisection) until
+<span class="math inline">\(\mathcal{H}\left(z^{l}\right) \leq \epsilon\)</span> give the approximation <span class="math inline">\(\left. s_{sz}\right.\rvert_{\Delta t} = z^{u}\)</span>.</p>
+</div>
+</div>
+<div class="section level3">
+<h3 id="upward-pass">Upward Pass<a class="anchor" aria-label="anchor" href="#upward-pass"></a>
+</h3>
+<p>Given an estimate of <span class="math inline">\(\left. s_{sz}\right.\rvert_{\Delta t}\)</span> such that
+<span class="math inline">\(\mathcal{H}\left(\left. s_{sz}\right.\rvert_{\Delta t}\right)&gt;0\)</span> compute the
+vertical flux volumes in the following fashion</p>
+<ol style="list-style-type: decimal">
+<li><span class="math inline">\(\left. q_{sz}^{+}\right.\rvert_{t+\Delta t} = \min\left(q_{sz}^{max},\max\left( 0, 2 \mathcal{G}\left(\left. s_{sz}\right.\rvert_{t+\Delta t},\Theta_{sz}\right) - \left. q_{sz}^{-} \right\rvert_{t+\Delta t} \right)\right)\)</span></li>
+<li><span class="math inline">\(v_{uz \rightarrow sz} = \left. s_{sz}\right.\rvert_{t} + \Delta t \left(\left. q_{sz}^{+}\right.\rvert_{t+\Delta t} - \left. q_{sz}^{-} \right\rvert_{t+\Delta t}\right) - \left. s_{sz}\right.\rvert_{t+\Delta t}\)</span></li>
+<li><span class="math inline">\(\left. s_{uz}\right.\rvert_{t+\Delta t} = \min\left(\left. s_{sz}\right.\rvert_{t+\Delta t},\left. s_{uz}\right.\rvert_{t} + \hat{v}_{rz \rightarrow uz} - v_{uz \rightarrow sz}\right)\)</span></li>
+<li><span class="math inline">\(v_{rz \rightarrow uz} = \left. s_{uz}\right.\rvert_{t+\Delta t} -\left. s_{uz}\right.\rvert_{t} + v_{uz \rightarrow sz}\)</span></li>
+<li><span class="math inline">\(v_{sf \rightarrow rz} = \min\left(\hat{v}_{sf \rightarrow rz}, s_{rzmax} - \left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p \right) + {v}_{rz  \rightarrow uz} \right)\)</span></li>
+<li>Solve for <span class="math inline">\(\left. s_{rz}\right.\rvert_{t+\Delta t}\)</span> using the equation
+already given.</li>
+<li>Compute the volume loss to evapotranspiration as
+<span class="math inline">\(\left. v_{e_{p}}\right.\rvert_{t+\Delta t} = \left. s_{rz}\right.\rvert_{t} + v_{sf \rightarrow rz} - v_{rz \rightarrow uz} + \Delta t p - \left. s_{rz}\right.\rvert_{t+\Delta t}\)</span>
+</li>
+</ol>
+<p>This leaves the solution of the surface zone</p>
+<div class="section level4">
+<h4 id="surface-zone-1">Surface Zone<a class="anchor" aria-label="anchor" href="#surface-zone-1"></a>
+</h4>
+<p>Proceeding in a similar fashion to the saturated zone consider the pseudo-function
+<span class="math display">\[
+\mathcal{S}\left(w\right) =
+\left. s_{sf} \right\rvert_{t} +
+\Delta t
+\left( \left. q_{sf}^{-} \right\rvert_{t+\Delta t} -
+\mathcal{F}\left(w,q_{sf}^{-},\frac{\left. v_{sf \rightarrow rz}
+\right\rvert_{t+\Delta t}}{\Delta t},\Theta_{sf}\right)
+\right) -
+\left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t} - w
+\]</span>
+which is monotonically decreasing for <span class="math inline">\(w \geq 0\)</span> with
+<span class="math inline">\(\mathcal{S}\left(0\right)\geq 0\)</span>.</p>
+<p>A bracketing solution algorithm gives at any iteration <span class="math inline">\(w^{l} &lt; \left. s_{sf} \right\rvert_{t+\Delta t} &lt; w^{u}\)</span>. An initial value of <span class="math inline">\(w^{u}\)</span> can be computed
+as <span class="math inline">\(\left. s_{sf} \right\rvert_{t} + \Delta t\left. q_{sf}^{-} \right\rvert_{t+\Delta t} - \left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t}\)</span>. Iterating until; for some
+tolerance <span class="math inline">\(\epsilon&gt;0\)</span>; <span class="math inline">\(w^{u} - w^{l} &lt; \epsilon\)</span> take <span class="math inline">\(\left. s_{sf}\right.\rvert_{\Delta t} = w^{l}\)</span>.
+In this case <span class="math inline">\(\mathcal{S}\left(\left. s_{sf}\right.\rvert_{\Delta t}\right) &gt; 0\)</span> hence mass conservation can be maintained by taking
+<span class="math display">\[
+\left. q_{sf}^{+} \right\rvert_{t+\Delta t} =
+\left. q_{sf}^{-} \right\rvert_{t+\Delta t} +
+\frac{1}{\Delta t}\left(
+\left. s_{sf} \right\rvert_{t} -
+\left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t} -
+\left. s_{sf}\right.\rvert_{t + \Delta t}\right)
+\]</span></p>
+</div>
+</div>
+</div>
+<div class="section level2">
+<h2 id="surface-zone-representations">Surface Zone Representations<a class="anchor" aria-label="anchor" href="#surface-zone-representations"></a>
 </h2>
 <p>The storage in the surface zone satisfies the mass balance equation</p>
 <p><span class="math display">\[
@@ -478,40 +772,6 @@ increasing and the right hand side decreasing so long as <span class="math inlin
 A simpler, more general, semi-implicit solution is implemented in the code
 where <span class="math inline">\(\eta_{t + \Delta t}\)</span> is taken to be a function of <span class="math inline">\(s_{t}\)</span>, hence a
 known value.</p>
-</div>
-</div>
-<div class="section level2">
-<h2 id="finite-volume-formulation">Finite Volume Formulation<a class="anchor" aria-label="anchor" href="#finite-volume-formulation"></a>
-</h2>
-<p>In this section a finite volume formulation of the Dynamic TOPMODEL equations
-is derived for the evolution of the states over the time step <span class="math inline">\(t\)</span> to <span class="math inline">\(t + \Delta t\)</span>. The lateral flux rates are considered at the start and end of the
-time step. The vertical flux rates are considered as constant throughout the
-time step, allowing for a semi-analytical solution of some storage zones.</p>
-<div class="section level3">
-<h3 id="surface-zone-1">Surface zone<a class="anchor" aria-label="anchor" href="#surface-zone-1"></a>
-</h3>
-<p>The storage in the surface zone satisfies the mass balance equation</p>
-<p><span class="math display">\[
-\frac{ds_{sf}}{dt} = q^{-}_{sf} - r_{sf \rightarrow rz} - q^{+}_{sf}
-\]</span></p>
-<p>where surface storage is increased by lateral downslope flow from upslope HRUs.
-Water flows to the root zone at a constant rate <span class="math inline">\(r_{sf \rightarrow rz}\)</span>, unless limited by
-the available storage at the surface or the ability of the root zone to
-receive water (for example if the saturation storage deficit is 0 and the root zone storage is full).</p>
-<p>In cases where lateral flows in the saturated zone produce
-saturation storage deficits water may be returned from the root
-zone to the surface giving negative values of <span class="math inline">\(r_{sf \rightarrow rz}\)</span>.</p>
-<p>To determine the outflow <span class="math inline">\(q^{+}_{sf}\)</span> a second relationship between
-<span class="math inline">\(q^{-}_{sf}\)</span>, <span class="math inline">\(s_{sf}\)</span> and <span class="math inline">\(q^{+}_{sf}\)</span> is required. This is given by the
-Muskingham formulation where
-<span class="math display">\[
-\mathcal{F}\left(s_{sf},\Theta_{sf}\right) = q_{sf} = \eta_{sf}q_{sf}^{-} +
-\left(1-\eta_{sf}\right)q_{sf}^{+}
-\]</span>
-and
-<span class="math display">\[
-\mathcal{F}_{\eta}\left(s_{sf},\Theta_{sf}\right) = \eta_{sf}
-\]</span></p>
 <p>The different formulation available in the model are given in Table
 <a href="#tab:surface">2</a> with their parameters outlined in Table
 <a href="#tab:surface-param">3</a></p>
@@ -610,76 +870,10 @@ relationships.</caption>
 </tbody>
 </table>
 </div>
-<div class="section level3">
-<h3 id="root-zone">Root zone<a class="anchor" aria-label="anchor" href="#root-zone"></a>
-</h3>
-<p>The root zone gains water from precipitation and the surface zone. It loses water through
-evaporation and to the unsaturated zone. All vertical fluxes are
-considered to be spatially uniform. The root zone storage satisfies</p>
-<p><span class="math display">\[\begin{equation} 0 \leq s_{rz} \leq s_{rzmax} \end{equation}\]</span></p>
-<p>with the governing ODE
-<span class="math display">\[\begin{equation}
-\frac{ds_{rz}}{dt} = p - \frac{e_p}{s_{rzmax}} s_{rz} +
-r_{sf\rightarrow rz} - r_{rz \rightarrow uz}
-\end{equation}\]</span></p>
-<p>Fluxes from the surface and to the unsaturated zone are
-controlled by the level of root zone storage along with the state of the unsaturated
-and saturated zones.</p>
-<p>For <span class="math inline">\(s_{rz} \leq s_{rzmax}\)</span> then <span class="math inline">\(r_{rz \rightarrow uz} \leq 0\)</span>. Negative
-values of <span class="math inline">\(r_{rz \rightarrow uz}\)</span> may occur only when water is returned from the
-unsaturated zone due to saturation caused by lateral inflow to the saturated zone.</p>
-<p>When <span class="math inline">\(s_{rz} = s_{rzmax}\)</span> then
-<span class="math display">\[\begin{equation}
-p - e_p + r_{sf\rightarrow rz} - r_{rz \rightarrow uz} \leq 0
-\end{equation}\]</span>
-In this case <span class="math inline">\(r_{rz \rightarrow uz}\)</span> may be positive if
-<span class="math display">\[\begin{equation}
-p - e_p + r_{sf\rightarrow rz} &gt; 0
-\end{equation}\]</span>
-so long as the unsaturated zone can receive the water. If <span class="math inline">\(r_{rz \rightarrow uz}\)</span> is ‘throttled’ by the rate at which the unsaturated zone can
-receive water, then <span class="math inline">\(r_{sf\rightarrow rz}\)</span> is adjusted (potentially becoming
-negative) to ensure the equality is met.</p>
 </div>
-<div class="section level3">
-<h3 id="unsaturated-zone">Unsaturated Zone<a class="anchor" aria-label="anchor" href="#unsaturated-zone"></a>
-</h3>
-<p>The unsaturated zone acts as a non-linear tank subject to the constraint
-<span class="math display">\[\begin{equation} 0 \leq s_{uz} \leq s_{sz} \end{equation}\]</span></p>
-<p>The governing ODE is written as
-<span class="math display">\[\begin{equation}
-\frac{ds_{uz}}{dt} = r_{rz \rightarrow uz} - \frac{A s_{uz}}{T_d s_{sz}}
-\end{equation}\]</span></p>
-<p>If water is able to pass freely to the saturated zone, then it flows at the rate
-<span class="math inline">\(\frac{A s_{uz}}{T_d s_{sz}}\)</span>.
-In the situation where <span class="math inline">\(s_{sz}=s_{uz}\)</span> the subsurface below
-the root zone can be considered saturated, as in there is no further available
-storage for water, but separated into parts: an upper part with vertical
-flow and a lower part with lateral flux.</p>
-<p>It is possible that the downward flux is constrained by the ability of the saturated zone to receive water. If
-this is the case <span class="math inline">\(r_{uz \rightarrow sz}\)</span> occurs at the maximum
-possible rate and <span class="math inline">\(r_{rz \rightarrow uz}\)</span> is limited to ensure that
-<span class="math inline">\(s_{uz} \leq s_{sz}\)</span>.</p>
-</div>
-<div class="section level3">
-<h3 id="saturated-zone">Saturated Zone<a class="anchor" aria-label="anchor" href="#saturated-zone"></a>
-</h3>
-<p>For a HRU the alteration of the storage in the saturated zone is
-given by the kinematic equation implemented through the Muskingham
-approximation. This gives a mass balance equation considered
-in terms of storage deficits as:</p>
-<p><span class="math display">\[
-\frac{ds_{sz}}{dt} = q^{+}_{sz} - r_{sf \rightarrow rz} - q^{-}_{sz}
-\]</span>
-with the relationships between the flows and storage given by
-and
-<span class="math display">\[
-q_{sz} = \mathcal{G}\left(s_{sz},\Theta_{sz}\right) \\
-q_{sz}^{+} = 2q_{sz} - q_{sz}^{-}
-\]</span>
-Not that the assumption of increasing flow with storage means that
-<span class="math display">\[
-- \frac{d}{ds_{sz}} \mathcal{G}\left(s_{sz},\Theta_{sz}\right) \geq 0
-\]</span></p>
+<div class="section level2">
+<h2 id="saturated-zone-represetnations">Saturated Zone represetnations<a class="anchor" aria-label="anchor" href="#saturated-zone-represetnations"></a>
+</h2>
 <p>The function <span class="math inline">\(\mathcal{G}\left(s_{sz},\Theta_{sz}\right)\)</span> is related to the
 HRU width through the transmissivity function. Table
 <a href="#tab:hs-transmissivity">4</a> gives <span class="math inline">\(\mathcal{G}\left(s_{sz},\Theta_{sz}\right)\)</span> for various the transmissivity profiles present as options within the <code>dynatop</code>
@@ -792,223 +986,6 @@ required. The additional parameters are defined in Table <a href="#tab:hs-transm
 </tr>
 </tbody>
 </table>
-</div>
-</div>
-<div class="section level2">
-<h2 id="numerical-solution">Numerical Solution<a class="anchor" aria-label="anchor" href="#numerical-solution"></a>
-</h2>
-<p>No analytical solution yet exists for simultaneous integration of the system of
-ODEs outlined above. In the following an implicit scheme, where fluxes
-between stores are considered constant over the time step and gradients are
-evaluated at the final state, is presented.</p>
-<p>The basis of the solution is that a gravity driven system will maximise
-the downward flow of water within each timestep of size <span class="math inline">\(\Delta t\)</span>. Hence on
-the first downward pass through the stores the maximum downward volumes of the vertical
-fluxes <span class="math inline">\(\hat{v}_{* \rightarrow *} = \Delta t \hat{r}_{* \rightarrow *}\)</span> are determined. These then moderated by the
-solution of the saturated zone, with an upward pass gives the final states.</p>
-<div class="section level3">
-<h3 id="downward-pass">Downward Pass<a class="anchor" aria-label="anchor" href="#downward-pass"></a>
-</h3>
-<div class="section level4">
-<h4 id="surface-excess">Surface excess<a class="anchor" aria-label="anchor" href="#surface-excess"></a>
-</h4>
-<p>The implicit solution of the Muskingham methodology gives</p>
-<p><span class="math display">\[
-\left. s_{sf} \right\rvert_{t+\Delta t} = \left. s_{sf} \right\rvert_{t} +
-\Delta t
-\left( \left. q_{sf}^{-} \right\rvert_{t+\Delta t} -
-\frac{1}{1 - \left. \eta_{sf} \right\rvert_{t+\Delta t} }
-\max\left(0,
-\left. q_{sf} \right\rvert_{t+\Delta t} -
-\left. \eta_{sf} \right\rvert_{t+\Delta t}
-\left. q_{sf}^{-} \right\rvert_{t+\Delta t}
-\right) \right) -
-\left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t}
-\]</span></p>
-<p>So the maximum downward flux volume is
-<span class="math display">\[
-\left. \hat{v}_{sf \rightarrow rz} \right\rvert_{t+\Delta t} =  \left. s_{sf}
-\right\rvert_{t} + \Delta t \left. q_{sf}^{-} \right\rvert_{t+\Delta t}
-\]</span></p>
-</div>
-<div class="section level4">
-<h4 id="root-zone-1">Root Zone<a class="anchor" aria-label="anchor" href="#root-zone-1"></a>
-</h4>
-<p>The implicit formulation for the root zone gives
-<span class="math display">\[\begin{equation}
-\left. s_{rz} \right.\rvert_{t + \Delta t} =
-\left( 1 + \frac{e_{p}\Delta t}{s_{rzmax}} \right)^{-1}
-\left(
-\left. s_{rz} \right.\rvert_{0}
-+ \Delta t p +
-v_{sf \rightarrow rz} - v_{rz \rightarrow uz} \right)
-\end{equation}\]</span></p>
-<p>Since flow to the unsaturated zone occur only to keep
-<span class="math inline">\(s_{rz} \leq s_{rzmax}\)</span> then
-<span class="math display">\[\begin{equation}
-\hat{v}_{rz \rightarrow uz} = \max\left(0,
-\left. s_{rz} \right.\rvert_{0}
-+ \Delta t \left( p -e_{p}\right)
-+ \hat{v}_{sf \rightarrow rz}
-- s_{rzmax}
-\right)
-\end{equation}\]</span></p>
-</div>
-<div class="section level4">
-<h4 id="unsaturated-zone-1">Unsaturated Zone<a class="anchor" aria-label="anchor" href="#unsaturated-zone-1"></a>
-</h4>
-<p>The implicit expression for the unsaturated zone is given in terms of
-<span class="math inline">\(\left. s_{uz} \right.\rvert_{t+\Delta t}\)</span> and
-<span class="math inline">\(\left. s_{sz} \right.\rvert_{t+\Delta t}\)</span> as</p>
-<p><span class="math display">\[\begin{equation}
-\left. s_{uz} \right.\rvert_{t+\Delta t} =
-\frac{T_{d}\left. s_{sz} \right.\rvert_{t+\Delta t}}{
-T_{d}\left. s_{sz} \right.\rvert_{t+\Delta t} + A \Delta t}
-\left( \left. s_{uz} \right.\rvert_{t} +
-v_{rz \rightarrow uz}\right)
-\end{equation}\]</span></p>
-<p>Since <span class="math inline">\(\left. s_{uz} \right.\rvert_{t+\Delta t} \leq \left. s_{sz}  \right.\rvert_{t+\Delta t}\)</span> this places an additional condition of
-<span class="math display">\[\begin{equation}
-\left. s_{uz} \right.\rvert_{t} + v_{rz \rightarrow uz} \leq
-\left. s_{sz} \right.\rvert_{t+\Delta t} + \frac{A \Delta t}{T_d}
-\end{equation}\]</span></p>
-<p>By mass balance this gives the maximum downward flux volume as
-<span class="math display">\[
-\hat{v}_{uz \rightarrow sz} = A\Delta t \min\left(
-\frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
-{T_{d}\left. s_{sz} \right.\rvert_{t+\Delta t} + A \Delta t}, \frac{1}{T_{d}} \right)
-\]</span></p>
-<p>This is a function of <span class="math inline">\(\left. s_{sz} \right.\rvert_{t+\Delta t}\)</span>.</p>
-</div>
-<div class="section level4">
-<h4 id="saturated-zone-1">Saturated Zone<a class="anchor" aria-label="anchor" href="#saturated-zone-1"></a>
-</h4>
-<p>Building on the generic solution the implicit scheme for the Muskingham model gives</p>
-<p><span class="math display">\[
-\left. s_{sz} \right\rvert_{t+\Delta t} = \left. s_{sz} \right\rvert_{t} -
-\Delta t  \left. q_{sz}^{-} \right\rvert_{t+\Delta t} -
-\left. v_{uz \rightarrow sz} \right\rvert_{t+\Delta t} +
-\Delta t \min\left(q_{sz}^{max},\max\left( 0, 2 \left. q_{sz} \right\rvert_{t+\Delta t} - \left. q_{sz}^{-}
-\right\rvert_{t+\Delta t}
-\right)\right)
-\]</span></p>
-<p>where the maxima stops the outflow becoming negative. The minima derives from
-a further condition on the saturated zone; based on the maximum outflow give by
-<span class="math inline">\(f_{sz}\left(0\right) = q_{sz}^{max}\)</span>. Applying this flow limit to every
-cross section of the saturated zone mean <span class="math inline">\(q_{sz}^{-}\leq q_{sz}^{max}\)</span> and
-<span class="math inline">\(q_{sz}^{+}\leq q_{sz}^{max}\)</span>.
-The inflow inequality to handled by reassigning an inflow greater then the
-limit to the surface inflow. The outflow inequality results in the
-minima.</p>
-<p>Alternatively the upper flow limit could be evaluated by finding
-<span class="math inline">\(s_{sz}^{max}\)</span> for which
-<span class="math display">\[
-\mathcal{G}\left(s_{sz}^{max},\Theta_{sz}\right) = \frac{
-q_{sz}^{max} + \left. q_{sz}^{-}\right\rvert_{t+\Delta t} }{2}
-\]</span>
-and treating this as the saturated deficit at which point water is returned from
-the saturated to unsaturated zone. In contrast to this the minima solution
-holds the water in the saturated zone. This is preferred both conceptually,
-since the water remains immediately available for future lateral flow, and also
-computationally since it avoids the need to invert the function relating
-storage to flow.</p>
-<p>Consider the pseudo-function
-<span class="math display">\[
-\mathcal{H}\left(z\right) =
-z -
-\left. s_{sz}\right.\rvert_{t} +
-\Delta t  \left. q_{sz}^{-} \right\rvert_{t+\Delta t} +
-A\Delta t \min\left(
-\frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
-{T_{d}z + A \Delta t}, \frac{1}{T_{d}} \right) - \\
-\Delta t \min\left(q_{sz}^{max},\max\left( 0, 2 \mathcal{G}\left(z,\Theta_{sz}\right) - \left. q_{sz}^{-}
-\right\rvert_{t+\Delta t}
-\right)\right)
-\]</span></p>
-<p>adapted from the approximating equation for the saturated zone storage.
-In Appendix A it is
-shown that <span class="math inline">\(\mathcal{H}\left(z\right)\)</span> is a monotonic increasing function of
-<span class="math inline">\(z &gt; 0\)</span> and <span class="math inline">\(\mathcal{H}\left(D\right) \geq 0\)</span>.
-Hence if <span class="math inline">\(\mathcal{H}\left(0\right) \lt 0\)</span> unique solution for
-<span class="math inline">\(\left. s_{sz}\right.\rvert_{\Delta t}\)</span> can be found.
-If <span class="math inline">\(\mathcal{H}\left(0\right) \geq 0\)</span> then the incoming fluxes are enough to
-produce saturation in the subsurface and
-<span class="math inline">\(\left. s_{sz}\right.\rvert_{\Delta t} = 0\)</span>.</p>
-<p>Maintaining a water (mass) balance and
-correct limits on the state values
-depends upon the accuracy of the solution of
-<span class="math inline">\(\mathcal{H}\left(z\right)=0\)</span>. Since each evaluation of
-<span class="math inline">\(\mathcal{H}\left(z\right)\)</span> requires an evaluation of the transmissivity
-profile the search for <span class="math inline">\(z\)</span> such that <span class="math inline">\(\mathcal{H}\left(z\right)=0\)</span> can
-rapidly become the most expensive part of the code.</p>
-<p>Use of a numerical scheme which allows mass balance to maintained
-regardless of the accuracy of the solution of <span class="math inline">\(\mathcal{H}\left(z\right)=0\)</span>
-allows scope for compromises based on computational time.
-If <span class="math inline">\(\mathcal{H}\left(z\right)=0\)</span> is
-solved by a bracketing algorithm then at each iteration the lower and upper
-limits of the bracket satisfy <span class="math inline">\(z^{l} &lt; \left. s_{sz}\right.\rvert_{\Delta t} &lt; z^{u}\)</span>. Iterating until; for some
-tolerance <span class="math inline">\(\epsilon&gt;0\)</span>; <span class="math inline">\(z^{u} - z^{l} &lt; \epsilon\)</span> take <span class="math inline">\(\left. s_{sz}\right.\rvert_{\Delta t} = z^{u}\)</span>. In both is
-and the saturated case <span class="math inline">\(\mathcal{H}\left(\left. s_{sz}\right.\rvert_{\Delta t}\right)&gt;0\)</span> and the upward pass can proceed as outlined in the following
-section without compromising the mass conservation.</p>
-</div>
-</div>
-<div class="section level3">
-<h3 id="upward-pass">Upward Pass<a class="anchor" aria-label="anchor" href="#upward-pass"></a>
-</h3>
-<p>Given an estimate of <span class="math inline">\(\left. s_{sz}\right.\rvert_{\Delta t}\)</span> such that
-<span class="math inline">\(\mathcal{H}\left(\left. s_{sz}\right.\rvert_{\Delta t}\right)&gt;0\)</span> compute the
-vertical flux volumes in the following fashion</p>
-<ol style="list-style-type: decimal">
-<li><span class="math inline">\(\left. q_{sz}^{+}\right.\rvert_{t+\Delta t} = \min\left(q_{sz}^{max},\max\left( 0, 2 \mathcal{G}\left(\left. s_{sz}\right.\rvert_{t+\Delta t},\Theta_{sz}\right) - \left. q_{sz}^{-} \right\rvert_{t+\Delta t} \right)\right)\)</span></li>
-<li><span class="math inline">\(v_{uz \rightarrow sz} = \left. s_{sz}\right.\rvert_{t} + \Delta t \left(\left. q_{sz}^{+}\right.\rvert_{t+\Delta t} - \left. q_{sz}^{-} \right\rvert_{t+\Delta t}\right) - \left. s_{sz}\right.\rvert_{t+\Delta t}\)</span></li>
-<li><span class="math inline">\(\left. s_{uz}\right.\rvert_{t+\Delta t} = \min\left(\left. s_{sz}\right.\rvert_{t+\Delta t},\left. s_{uz}\right.\rvert_{t} + \hat{v}_{rz \rightarrow uz} - v_{uz \rightarrow sz}\right)\)</span></li>
-<li><span class="math inline">\(v_{rz \rightarrow uz} = \left. s_{uz}\right.\rvert_{t+\Delta t} -\left. s_{uz}\right.\rvert_{t} + v_{uz \rightarrow sz}\)</span></li>
-<li><span class="math inline">\(v_{sf \rightarrow rz} = \min\left(\hat{v}_{sf \rightarrow rz}, s_{rzmax} - \left. \bar{s}_{rz} \right.\rvert_{0} - \Delta t \left( p - e_p \right) + {v}_{rz  \rightarrow uz} \right)\)</span></li>
-<li>Solve for <span class="math inline">\(\left. s_{rz}\right.\rvert_{t+\Delta t}\)</span> using the equation
-already given.</li>
-<li>Compute the volume loss to evapotranspiration as
-<span class="math inline">\(\left. v_{e_{p}}\right.\rvert_{t+\Delta t} = \left. s_{rz}\right.\rvert_{t} + v_{sf \rightarrow rz} - v_{rz \rightarrow uz} + \Delta t p - \left. s_{rz}\right.\rvert_{t+\Delta t}\)</span>
-</li>
-</ol>
-<p>This leaves the solution of the surface zone</p>
-<div class="section level4">
-<h4 id="surface-zone-2">Surface Zone<a class="anchor" aria-label="anchor" href="#surface-zone-2"></a>
-</h4>
-<p>For the surface zone we take a semi implicit scheme where <span class="math inline">\(\eta_{sf}\)</span> is
-evaluated with the initial state giving
-<span class="math display">\[
-\left. \eta_{sf} \right\rvert_{t+\Delta t} = \mathcal{F}_{\eta}\left(\left. s_{sf} \right\rvert_{t},\Theta_{sf}\right)
-\]</span></p>
-<p>Proceeding in a similar fashion to the saturated zone consider the pseudo-function
-<span class="math display">\[
-\mathcal{S}\left(w\right) =
-\left. s_{sf} \right\rvert_{t} +
-\Delta t
-\left( \left. q_{sf}^{-} \right\rvert_{t+\Delta t} -
-\frac{1}{1 - \left. \eta_{sf} \right\rvert_{t+\Delta t} }
-\max\left(0,
-\mathcal{F}\left(w,\Theta_{sf}\right) -
-\left. \eta_{sf} \right\rvert_{t+\Delta t}
-\left. q_{sf}^{-} \right\rvert_{t+\Delta t}
-\right) \right) -
-\left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t} - w
-\]</span>
-which is monotonically decreasing for <span class="math inline">\(w \geq 0\)</span> with
-<span class="math inline">\(\mathcal{S}\left(0\right)\geq 0\)</span>.</p>
-<p>A bracketing solution algorithm gives at any iteration <span class="math inline">\(w^{l} &lt; \left. s_{sf} \right\rvert_{t+\Delta t} &lt; w^{u}\)</span>. An initial value of <span class="math inline">\(w^{u}\)</span> can be computed
-as <span class="math inline">\(\left. s_{sf} \right\rvert_{t} + \Delta t\left. q_{sf}^{-} \right\rvert_{t+\Delta t} - \left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t}\)</span>. Iterating until; for some
-tolerance <span class="math inline">\(\epsilon&gt;0\)</span>; <span class="math inline">\(w^{u} - w^{l} &lt; \epsilon\)</span> take <span class="math inline">\(\left. s_{sf}\right.\rvert_{\Delta t} = w^{l}\)</span>.
-In this case <span class="math inline">\(\mathcal{S}\left(\left. s_{sf}\right.\rvert_{\Delta t}\right) &gt; 0\)</span> hence mass conservation can be maintained by taking
-<span class="math display">\[
-\left. q_{sf}^{+} \right\rvert_{t+\Delta t} =
-\left. q_{sf}^{-} \right\rvert_{t+\Delta t} +
-\frac{1}{\Delta t}\left(
-\left. s_{sf} \right\rvert_{t} -
-\left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t} -
-\left. s_{sf}\right.\rvert_{t + \Delta t}\right)
-\]</span></p>
-</div>
-</div>
 </div>
 <div class="section level2">
 <h2 id="appendix-a---monotonicity-of-mathcalhleftzright">Appendix A - Monotonicity of <span class="math inline">\(\mathcal{H}\left(z\right)\)</span><a class="anchor" aria-label="anchor" href="#appendix-a---monotonicity-of-mathcalhleftzright"></a>
