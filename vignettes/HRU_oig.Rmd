@@ -52,7 +52,13 @@ In this section a finite volume formulation of the Dynamic TOPMODEL equations
 is derived for the evolution of the states over the time step $t$ to $t +
 \Delta t$. The lateral flux rates are considered at the start and end of the
 time step. The vertical flux rates are considered as constant throughout the
-time step, allowing for the analytical solution of the storage zones.
+time step, allowing for a semi-analytical solution of some storage zones.
+
+
+
+Two appendices provide supporting information justifying the numerical schemes
+and an alternative derivation of the governing equations based on the
+infinitesimal vertical slab used in the original derivation of Dynamic TOPMODEL.
 
 # Notation
 
@@ -92,7 +98,7 @@ over the length of the hillslope we find
 | Storage                    | $s_{sf}$                | Surface excess storage                                                   | m$^3$   |
 |                            | $s_{rz}$                | Root zone storage                                                        | m$^3$   |
 |                            | $s_{uz}$                | Unsaturated zone storage                                                 | m$^3$   |
-|                            | $s_{sz}$                | Saturated zone storage                                           | m$^3$   |
+|                            | $s_{sz}$                | Saturated zone storage deficit                                           | m$^3$   |
 | Vertical fluxes            | $r_{sf \rightarrow rz}$ | Flow from the surface excess store to the root zone                      | m$^3$/s |
 |                            | $r_{rz \rightarrow uz}$ | Flow from the root zone to the unsaturated zone                          | m$^3$/s |
 |                            | $r_{uz \rightarrow sz}$ | Flow from unsaturated to saturated zone                                  | m$^3$/s |
@@ -135,38 +141,23 @@ zone storage is full). In cases where lateral flow in the saturated zone produce
 saturation storage deficits water may be returned from the root
 zone to the surface giving negative values of $r_{sf \rightarrow rz}$.
 
-The outflow $q^{+}_{sf}$ is considered a function of $s_{sf}$ and parameters
-$\Theta_{sf}$ of the form 
-
+The outflow $q^{+}_{sf}$ is considered a function of 
+$q^{-}_{sf}$, $s_{sf}$, $r_{sf \rightarrow rz}$ and parameters $\Theta_{sf}$ denoted by
 \[
-q^{+}_{sf} = \Theta_{sf}^{\left[1\right]} s_{sf}^{\Theta_{sf}^{\left[2\right]}}
+q^{+}_{sf} = \mathcal{F}\left(s_{sf},q^{-}_{sf},r_{sf \rightarrow
+rz},\Theta_{sf}\right)
 \]
-
-This form includes the linear tank for which $\theta_{sf,2} = 1$ and
-$\theta_{sf,1}$ is the recipricol of the time cosntant.
-Alternatively approximating the ouflow cross sections area by
-$\frac{s_{sf}}{\Delta x}$ gives
+For the purposes the numerical scheme we limit the set to possible functions
+$\mathcal{F}$ to those that are non-decreasing with respect to $s_{sf}$ and
+take the value $0$ when $s_{sf}=0$. More formally
 \[
-q^{+}_{sf} = \frac{v_{sf}}{\Delta x}s_{sf}
-\]
-If in this case velocity is given by Mannings equation then
-\[
-v_{sf} = \frac{1}{n}\left( \frac{As_{sf}}{2s_{sf} \Delta x + A^2}\right)^{2/3} g^{1/2}
-\]
-The wide channel approximation gives
-\[
-v_{sf} = \frac{1}{n}\left( \frac{s_{sf}}{A}\right)^{2/3} g^{1/2}
+\frac{\partial}{\partial s_{sf}} \mathcal{F}\left(s_{sf},q^{-}_{sf},r_{sf \rightarrow
+rz},\Theta_{sf}\right) \geq 0
 \]
 and
 \[
-q^{+}_{sf} =  \frac{g^{1/2}}{n \Delta x A^{2/3}}s_{sf}^{5/3}
-\]
-
-More generally if $\tilde{h}_{sf}$ a constant valued approximation of $\frac{s_{sf}}{A}$ over
-the time period is constructed then
-\[
-q^{+}_{sf} =  \frac{g^{1/2}}{n \Delta x} \left(\frac{1}{2 \tilde{h} \Delta x +
-A}\right)^{2/3} s_{sf}^{5/3}
+\mathcal{F}\left(0,q^{-}_{sf},r_{sf \rightarrow
+rz},\Theta_{sf}\right) = 0
 \]
 
 ## Root zone
@@ -229,27 +220,30 @@ $s_{uz} \leq s_{sz}$.
 
 ## Saturated Zone
 
-For a HRU the alteration of the storage in the saturated zone is given as:
+For a HRU the alteration of the storage in the saturated zone is given in
+terms of the storage deficit $s_sz$ as:
 \[
-\frac{ds_{sz}}{dt} = r_{sf \rightarrow rz} + q^{-}_{sz} -  q^{+}_{sz} 
+\frac{ds_{sz}}{dt} = q^{+}_{sz} - r_{sf \rightarrow rz} - q^{-}_{sz} 
 \]
 
 The relationship between the outflow and storage deficit is given
 \[
-q^{+}_{sz} = \Theta_{sz}^{\left[1\right]} \left( \frac{s_{sz}}{D} \right)^{\Theta_{sz}^{\left[2\right]}}
+q^{+}_{sz} = \mathcal{G}\left(s_{sz},q^{-}_{sz},\Theta_{sz}\right)
 \]
-
-Following <ion paper> this can be used to approximate a number of standard
-forms as shown in <>.
+It is assummed that flow increases with storage so
+\[
+- \frac{d}{ds_{sz}} \mathcal{G}\left(s_{sz},q^{-}_{sz},\Theta_{sz}\right) \geq 0
+\]
+while at the maximum storage deficit
+$\mathcal{G}\left(D,q^{-}_{sz},\Theta_{sz}\right) = 0$
 
 
 # Numerical Solution
 
 No analytical solution yet exists for simultaneous integration of the system of
-ODEs outlined above. In the following an scheme, where fluxes
-between stores are considered constant over the time step the evolution of
-each store is solved by an analytical approximation. This approach allows for
-efficent numerical implimentation.
+ODEs outlined above. In the following an implicit scheme, where fluxes
+between stores are considered constant over the time step and gradients are
+evaluated at the final state, is presented.
 
 The basis of the solution is that a gravity driven system will maximise
 the downward flow of water within each timestep of size $\Delta t$. Hence on
@@ -257,53 +251,11 @@ the first downward pass through the stores the maximum downward volumes of the v
 fluxes $\hat{v}_{* \rightarrow *} = \Delta t \hat{r}_{* \rightarrow *}$ are determined. These then moderated by the
 solution of the saturated zone, with an upward pass gives the final states.
 
-## General Solution
-
-The evolution of the stores as governed by equations of the form
-
-\[
-\frac{ds}{dt} = a - \Theta^{\left[1\right]} s^{\Theta^{\left[2\right]}}
-\]
-subject to the constraint $0 \leq s \leq s_{max}$, where $a$ is the inflow.
-
-For some time step $\Delta t$ such that 
-\[
-\Theta^{\left[1\right]} s^{\Theta^{\left[2\right]}}_{t+\Delta t}
-\approx
-\Theta^{\left[1\right]} s^{\Theta^{\left[2\right]}}_{t} +
-\Theta^{\left[2\right]}
-{\Theta^{\left[1\right]}}s^{\Theta^{\left[2\right]}-1}_{t} \left(s_{t+\Delta
-t} - s_{t} \right)
-\]
-
-the implicit solution is approximated by
-
-\[
-s_{t+\Delta t} = \frac{ 
-s_{t} + a \Delta t + \Delta t \left(\Theta^{\left[2\right]}-1\right)\Theta^{\left[1\right]} s^{\Theta^{\left[2\right]}}_{t}
-}
-{ 1 + \Delta t \Theta^{\left[2\right]}
-{\Theta^{\left[1\right]}}s^{\Theta^{\left[2\right]}-1}_{t} }
-\]
-
-The value of $a\Delta t$ is then manipulated on a case by case basis to
-sensure that  $0 \leq s_{t + \Delta t} \leq s_{max}$.
-
 ## Downward Pass
 
 ### Surface excess
 
 The implicit solution of mass balance equation gives
-
-\[
-s_{t+\Delta t} = \frac{ 
-s_{t} + a \Delta t + \Delta t \left(\Theta^{\left[2\right]}-1\right)\Theta^{\left[1\right]} s^{\Theta^{\left[2\right]}}_{t}
-}
-{ 1 + \Theta^{\left[2\right]}
-{\Theta^{\left[1\right]}}s^{\Theta^{\left[2\right]}-1}_{t} \Delta t
-s_{t+\Delta t} }
-\]
-
 
 \[
 \left. s_{sf} \right\rvert_{t+\Delta t} = \left. s_{sf} \right\rvert_{t} +
@@ -851,170 +803,3 @@ Further using the range of $z$ valid for the second case
 From this it can be seen that $\frac{d}{dz} \mathcal{H}\left(z\right) \geq 0$ with
 equality possible when $z=0$.
 
-
-## Double Talyor Expansion
-\[
-\frac{du}{dt} = r - \frac{A}{T}\frac{u}{D-s}
-\]
-\[
-\frac{ds}{dt} = q + \frac{A}{T}\frac{u}{D-s} - as^{b}
-\]
-
-Taylor series
-\[
-\frac{u}{D-s} = \frac{u_{0}}{D-s_{0}} + \frac{1}{D-s_{0}}\left(u-u_{0}\right) + \frac{u_{0}}{\left(D-s_{0}\right)^2}\left(s-s_{0}\right)
-\]
-
-\[
-as^{b} = as_{0}^b + abs_{0}^{b-1}\left(s-s_{0}\right)
-\]
-
-Implict solution for $u$
-\[
-u - u_{0} = r\Delta t - \Delta t\frac{A}{T}\left(\frac{u_{0}}{D-s_{0}} +
-\frac{1}{D-s_{0}}\left(u-u_{0}\right) +
-\frac{u_{0}}{\left(D-s_{0}\right)^2}\left(s-s_{0}\right)\right)
-\]
-Let $\omega = \Delta t\frac{A}{T}\frac{1}{D-s_{0}}$
-\[
-u - u_{0} = r\Delta t - \omega u_{0} - \omega\left(u-u_{0}\right) -
-\omega u_{0}\frac{s-s_{0}}{D-s_{0}}
-\]
-which gives
-\[
-u - u_{0} = \frac{1}{1+\omega}\left( r\Delta t - \omega u_{0} -
-\omega u_{0}\frac{s-s_{0}}{D-s_{0}}\right)
-\]
-
-Implicit solution for $s$
-
-\[
-s - s_{0} = q\Delta t + \frac{A}{T}\Delta t\left(
-\frac{u_{0}}{D-s_{0}} + \frac{1}{D-s_{0}}\left(u-u_{0}\right) +
-\frac{u_{0}}{\left(D-s_{0}\right)^2}\left(s-s_{0}\right)\right) -
-\Delta t \left(as_{0}^b + abs_{0}^{b-1}\left(s-s_{0}\right)\right)
-\]
-\[
-s - s_{0} = q\Delta t + \omega u_{0} + \omega \left(u-u_{0}\right) +
-\omega u_{0}\frac{s-s_{0}}{D-s_{0}} -
-\Delta t \left(as_{0}^b + abs_{0}^{b-1}\left(s-s_{0}\right)\right)
-\]
-subsitute for $u-u_{0}$
-\[
-s - s_{0} = q\Delta t + \omega u_{0} + \frac{\omega}{1+\omega}\left( r\Delta t - \omega u_{0} -
-\omega u_{0}\frac{s-s_{0}}{D-s_{0}}\right) +
-\omega u_{0}\frac{s-s_{0}}{D-s_{0}} -
-\Delta t \left(as_{0}^b + abs_{0}^{b-1}\left(s-s_{0}\right)\right)
-\]
-\[
-s - s_{0} = q\Delta t + \frac{\omega}{1+\omega}r\Delta t
-+ \frac{\omega}{1+\omega} u_{0}
-+ \frac{\omega}{1+\omega} u_{0}\frac{s-s_{0}}{D-s_{0}}
-- \Delta t \left(as_{0}^b + abs_{0}^{b-1}\left(s-s_{0}\right)\right)
-\]
-\[
-s = s_{0} + q\Delta t + \frac{\omega}{1+\omega}r\Delta t
-+ \frac{\omega}{1+\omega} u_{0}
-- \frac{\omega}{1+\omega} u_{0}\frac{s_{0}}{D-s_{0}}
-+ \frac{\omega}{1+\omega} u_{0}\frac{s}{D-s_{0}}
-- \Delta t \left( \left(1-b\right)as_{0}^b + abs_{0}^{b-1}s\right)
-\]
-
-
-## Double Talyor Expansion - take 2
-
-$z = \frac{u}{D-s}$ and $w = D-s$
-
-\[
-\frac{du}{dt} = r - \frac{A}{T}\frac{u}{D-s}
-\]
-\[
-\frac{ds}{dt} = q + \frac{A}{T}\frac{u}{D-s} - as^{b}
-\]
-
-Taylor series
-
-\[
-\frac{du}{dt} = r - \frac{A}{T}\frac{u_{0}}{D-s_{0}} + 
-\left( -\frac{A}{T}\frac{1}{D-s_{0}} \left(u-u_{0}\right) \right) -
-\left( \frac{A}{T}\frac{u_{0}}{\left(D-s_{0}\right)^2} \left(s-s_{0}\right) \right)
-\]
-\[
-\frac{du}{dt} = r - \frac{A}{T}\frac{u}{D-s_{0}} - 
- \frac{A}{T}\frac{u_{0}}{\left(D-s_{0}\right)^2} \left(s-s_{0}\right)
-\]
-
-\[
-\frac{ds}{dt} = q + \frac{A}{T}\frac{u_0}{D-s_0} - as_0^{b}
-+ \frac{A}{T}\frac{1}{D-s_0}\left(u-u_0\right)
-+ \left( \frac{A}{T}\frac{u_{0}}{\left(D-s_{0}\right)^2} - abs_0^{b-1} \right)\left(s-s_{0}\right)
-\]
-
-\[
-\frac{ds}{dt} = q + \frac{A}{T}\frac{u}{D-s_0} + \left(b-1\right)as_{0}^{b}
-+ \frac{A}{T}\frac{u_{0}}{\left(D-s_{0}\right)^2}\left(s-s_0\right) - abs_0^{b-1}s
-\]
-
-Implict solution for $u$
-\[
-u - u_{0} = \Delta t \left( 
-r - \frac{A}{T}\frac{u}{D-s_{0}} -
-\frac{A}{T}\frac{u_{0}}{\left(D-s_{0}\right)^2} \left(s-s_{0}\right)
-\right)
-\]
-
-Let $\omega = \Delta t\frac{A}{T}\frac{1}{D-s_{0}}$
-which gives
-\[
-u - u_{0} = r \Delta t - 
-\omega u - 
-\omega u_{0}\frac{s - s_{0}}{D-s_{0}}
-\]
-
-\[
-u = \frac{1}{1+\omega}\left(u_0 +  r\Delta t -
-\omega u_{0}\frac{s-s_{0}}{D-s_{0}}\right)
-\]
-
-Implicit solution for $s$
-
-\[
-s - s_{0} = \Delta t \left(
-q + \frac{A}{T}\frac{u}{D-s_0} + \left(b-1\right)as_{0}^{b}
-+ \frac{A}{T}\frac{u_{0}}{\left(D-s_{0}\right)^2}\left(s-s_0\right) -
-	abs_0^{b-1}s
-\right)
-\]
-
-\[
-s - s_{0} = q \Delta t
-+ \omega u
-+ \left(b-1\right)as_{0}^{b} \Delta t
-+ \omega u_{0} \frac{s - s_{0}}{D-s_{0}} - 
-	abs_0^{b-1}s\Delta t
-\]
-
-\[
-s - s_{0} = q \Delta t
-+ \frac{\omega}{1+\omega}\left(u_0 +  r\Delta t -
-\omega u_{0}\frac{s-s_{0}}{D-s_{0}}\right)
-+ \left(b-1\right)as_{0}^{b} \Delta t
-+ \omega u_{0} \frac{s - s_{0}}{D-s_{0}} - 
-	abs_0^{b-1}s\Delta t
-\]
-
-\[
-s - s_{0} = q \Delta t
-+ \frac{\omega}{1+\omega}\left(u_0 +  r\Delta t \right) 
-+ \left(b-1\right)as_{0}^{b} \Delta t
-+ \left( \frac{\omega}{1+\omega}\right) u_{0} \frac{s - s_{0}}{D-s_{0}} - 
-	abs_0^{b-1}s\Delta t
-\]
-
-\[
-s - s_{0} = q \Delta t
-+ \frac{\omega}{1+\omega}\left(u_0 +  r\Delta t - \frac{u_0 s_0}{D-s_0} \right) 
-+ \left(b-1\right)as_{0}^{b} \Delta t
-+ \left( \left( \frac{\omega}{1+\omega}\right)\frac{u_0}{D-s_{0}} - 
-	abs_0^{b-1}\Delta t \right) s
-\]
