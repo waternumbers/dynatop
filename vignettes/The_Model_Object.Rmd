@@ -45,7 +45,7 @@ The top level of the model contains the following elements:
 names(model)
 ```
 
-we consider each of these separately.
+We consider each of these separately.
 
 ## map
 
@@ -102,7 +102,7 @@ Table: (\#tab:model-table) Description of top-level model components
 
 ### states
 
-A numeric vector of states, see Table \@ref{tbl:states}, such as
+A numeric vector of states, see Table \@ref(tab:states), such as
 
 ```{r}
 model$hru[[1]]$states
@@ -119,7 +119,7 @@ Table: (\#tab:states) Description of numeric state vector
 
 ### properties
 
-A numeric vector of properties, see Table \@ref{tbl:prop} such as
+A numeric vector of properties, see Table \@ref(tab:prop) such as
 
 ```{r}
 model$hru[[1]]$properties
@@ -151,7 +151,7 @@ vignette](HRU.html)
 ### sf_flow_direction & sz_flow_direction
 
 Each of these lists contains two vectors as specified in Table
-\@ref{tbl:flow}. In the special case that no outflow goes to another HRU, such
+\@ref(tab:flow). In the special case that no outflow goes to another HRU, such
 as at the outlet of the catchment, the description of the flow direction takes
 the following form:
 
@@ -169,13 +169,14 @@ Table: (\#tab:flow) Description of flow direction list variables
 ### initialisation
 
 The named numeric vector contains the values to use in the initialisation of
-the HRU as given in Table \@ref{tbl:init} and shown below.
+the HRU as given in Table \@ref(tab:init) and shown below.
 
 ```{r}
 model$hru[[1]]$initialisation
 ```
 
 | Name     | Class   | Unit | Description                                                                |
+|----------|---------|------|----------------------------------------------------------------------------|
 | s_rz0    | numeric | 0-1  | Initial root zone depth expressed as fraction of maximum depth (parameter) |
 | r_uz_sz0 | numeric | m/s  | Initial recharge to the saturated zone per unit area (parameter)           |
 
@@ -185,7 +186,7 @@ Table: (\#tab:init) Description of initialisation values
 
 These list contain the description of the precipitation (precip) and PET
 (pet) inputs used by the HRU. Each list takes the form of two vectors as given
-in Table \@ref{tbl:input} and shown below. From this the average input value
+in Table \@ref(tab:input) and shown below. From this the average input value
 is calculated.
 
 ```{r}
@@ -193,6 +194,7 @@ model$hru[[1]]$precip
 ```
 
 | Name | Class     | Unit | Description                                                                      |
+|------|-----------|------|----------------------------------------------------------------------------------|
 | name | character | -    | Character vector containing the names of the input series to use.                |
 | frc  | numeric   | 0-1  | The fraction of the HRU area for which the input series is valid. Must sum to 1. |
 
