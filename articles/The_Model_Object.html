@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Model Object • dynatop</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
@@ -115,7 +115,7 @@ catchment data supplied with the package. This can be loaded with</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "hru"         "output_flux" "map"</span></span></code></pre></div>
-<p>we consider each of these separately.</p>
+<p>We consider each of these separately.</p>
 <div class="section level2">
 <h2 id="map">map<a class="anchor" aria-label="anchor" href="#map"></a>
 </h2>
@@ -264,7 +264,7 @@ the variables names in the <a href="HRU.html">HRU vignette</a> as given in
 <div class="section level3">
 <h3 id="states">states<a class="anchor" aria-label="anchor" href="#states"></a>
 </h3>
-<p>A numeric vector of states, see Table @ref{tbl:states}, such as</p>
+<p>A numeric vector of states, see Table <a href="#tab:states">3</a>, such as</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="va">hru</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">states</span></span>
 <span><span class="co">#&gt; s_sf s_rz s_uz s_sz </span></span>
@@ -315,7 +315,7 @@ the variables names in the <a href="HRU.html">HRU vignette</a> as given in
 <div class="section level3">
 <h3 id="properties">properties<a class="anchor" aria-label="anchor" href="#properties"></a>
 </h3>
-<p>A numeric vector of properties, see Table @ref{tbl:prop} such as</p>
+<p>A numeric vector of properties, see Table <a href="#tab:prop">4</a> such as</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="va">hru</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">properties</span></span>
 <span><span class="co">#&gt;         area        width           Dx     gradient </span></span>
@@ -380,7 +380,7 @@ vignette</a></p>
 <h3 id="sf_flow_direction-sz_flow_direction">sf_flow_direction &amp; sz_flow_direction<a class="anchor" aria-label="anchor" href="#sf_flow_direction-sz_flow_direction"></a>
 </h3>
 <p>Each of these lists contains two vectors as specified in Table
-@ref{tbl:flow}. In the special case that no outflow goes to another HRU, such
+<a href="#tab:flow">5</a>. In the special case that no outflow goes to another HRU, such
 as at the outlet of the catchment, the description of the flow direction takes
 the following form:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
@@ -425,22 +425,48 @@ the following form:</p>
 <h3 id="initialisation">initialisation<a class="anchor" aria-label="anchor" href="#initialisation"></a>
 </h3>
 <p>The named numeric vector contains the values to use in the initialisation of
-the HRU as given in Table @ref{tbl:init} and shown below.</p>
+the HRU as given in Table <a href="#tab:init">6</a> and shown below.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="va">hru</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">initialisation</span></span>
 <span><span class="co">#&gt;    s_rz_0 r_uz_sz_0 </span></span>
 <span><span class="co">#&gt;   7.5e-01   1.0e-07</span></span></code></pre></div>
-<div class="line-block">Name | Class | Unit | Description |<br>
-s_rz0 | numeric | 0-1 | Initial root zone depth expressed as fraction of maximum depth (parameter) |<br>
-r_uz_sz0 | numeric | m/s | Initial recharge to the saturated zone per unit area (parameter) |</div>
-<p>Table: (#tab:init) Description of initialisation values</p>
+<table class="table">
+<caption>
+<span id="tab:init">Table 6: </span> Description of initialisation values</caption>
+<colgroup>
+<col width="9%">
+<col width="8%">
+<col width="5%">
+<col width="75%">
+</colgroup>
+<thead><tr class="header">
+<th>Name</th>
+<th>Class</th>
+<th>Unit</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>s_rz0</td>
+<td>numeric</td>
+<td>0-1</td>
+<td>Initial root zone depth expressed as fraction of maximum depth (parameter)</td>
+</tr>
+<tr class="even">
+<td>r_uz_sz0</td>
+<td>numeric</td>
+<td>m/s</td>
+<td>Initial recharge to the saturated zone per unit area (parameter)</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section level3">
 <h3 id="precip-pet">precip &amp; pet<a class="anchor" aria-label="anchor" href="#precip-pet"></a>
 </h3>
 <p>These list contain the description of the precipitation (precip) and PET
 (pet) inputs used by the HRU. Each list takes the form of two vectors as given
-in Table @ref{tbl:input} and shown below. From this the average input value
+in Table <a href="#tab:input">7</a> and shown below. From this the average input value
 is calculated.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="va">hru</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">$</span><span class="va">precip</span></span>
@@ -449,10 +475,36 @@ is calculated.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; $fraction</span></span>
 <span><span class="co">#&gt; [1] 1</span></span></code></pre></div>
-<div class="line-block">Name | Class | Unit | Description |<br>
-name | character | - | Character vector containing the names of the input series to use. |<br>
-frc | numeric | 0-1 | The fraction of the HRU area for which the input series is valid. Must sum to 1. |</div>
-<p>Table: (#tab:input) Description of precip and pet lists</p>
+<table class="table">
+<caption>
+<span id="tab:input">Table 7: </span> Description of precip and pet lists</caption>
+<colgroup>
+<col width="5%">
+<col width="10%">
+<col width="5%">
+<col width="78%">
+</colgroup>
+<thead><tr class="header">
+<th>Name</th>
+<th>Class</th>
+<th>Unit</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>name</td>
+<td>character</td>
+<td>-</td>
+<td>Character vector containing the names of the input series to use.</td>
+</tr>
+<tr class="even">
+<td>frc</td>
+<td>numeric</td>
+<td>0-1</td>
+<td>The fraction of the HRU area for which the input series is valid. Must sum to 1.</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section level3">
 <h3 id="class">class<a class="anchor" aria-label="anchor" href="#class"></a>
@@ -486,7 +538,7 @@ but the format of this is subject to change.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
 </div>
 
       </footer>

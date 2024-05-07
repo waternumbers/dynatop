@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Using Dynamic TOPMODEL • dynatop</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
 <script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
@@ -130,9 +130,9 @@ can be used for constructing models.</p>
 <div class="section level2">
 <h2 id="setting-map-locations">Setting map locations<a class="anchor" aria-label="anchor" href="#setting-map-locations"></a>
 </h2>
-<p>While not required for simulations if the locations of the files
-containing the locations of the HRUs are provided the states can be
-visualised within dynatop.</p>
+<p>While not required for simulations if the location of a file
+containing the a raster map of the locations of the HRUs is provided the
+states can be visualised within dynatop.</p>
 <p>The locations of the files are set in the <code>map</code> element of
 the model. For this example the maps are located within the
 <code>extdata</code> directory of the package and can be set using
@@ -145,17 +145,17 @@ commands</p>
 </h2>
 <p>The input to the model is expected to take the form of an
 <code>xts</code> object with constant time step whose column names are
-found in the ‘precip’ and ‘pet’ columns of the HRU tables in the model.
-Helpful functions for creating and manipulating <code>xts</code> objects
-can be found <a href="http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html" class="external-link">here</a>,
+found in the ‘precip’ and ‘pet’ variables of the HRUs descriptions in
+the model. Helpful functions for creating and manipulating
+<code>xts</code> objects can be found <a href="http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html" class="external-link">here</a>,
 see also the <code>resample_xts</code> function in this package.</p>
 <p>The discharge, precipitation and potential evapotranspiration (PET)
 inputs for Swindale are contained with <code>swindale_obs</code> on a 15
 minute time step.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">swindale_obs</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Warning: object timezone (GMT) is different from system timezone (UTC)</span></span>
-<span><span class="co">#&gt;   NOTE: set 'options(xts_check_TZ = FALSE)'to disable this warning</span></span>
+<span><span class="co">#&gt; Warning: object timezone ('GMT') is different from system timezone ('UTC')</span></span>
+<span><span class="co">#&gt;   NOTE: set 'options(xts_check_TZ = FALSE)' to disable this warning</span></span>
 <span><span class="co">#&gt;     This note is displayed once per session</span></span>
 <span><span class="co">#&gt;                     flow precip          pet</span></span>
 <span><span class="co">#&gt; 2009-11-18 16:00:00 2.78  4e-04 8.878467e-06</span></span>
@@ -188,10 +188,9 @@ values for the individual HRU’s</p>
 <div class="section level2">
 <h2 id="altering-parameters">Altering parameters<a class="anchor" aria-label="anchor" href="#altering-parameters"></a>
 </h2>
-<p>The parameter values are stored within the table describing the
-hillslope and channel HRUs. Which parameters are present depends upon
-the options selected for the transmissivity and channel solution.
-Details can be found in the <a href="HRU.html">HRU</a> Vignettes.</p>
+<p>The parameter values are stored within the HRU descriptions. Which
+parameters are present depends upon the options selected for the
+transmissivity and channel solution. Details can be found in the <a href="HRU.html">HRU</a> Vignettes.</p>
 <p>Altering parameter values requires changing their values in the HRU
 definitions. For this catchment all HRU have the same parameter values.
 For this simulation we change the parameter vectors to be more
@@ -232,7 +231,7 @@ data into a <code>dynatop</code> object. First the object is created
 using the model in list form</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ctch_mdl</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/dynatop.html">dynatop</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">hru</span>,map<span class="op">=</span><span class="va">swindale_model</span><span class="op">$</span><span class="va">map</span><span class="op">)</span></span></code></pre></div>
-<p>This step performs some basis checks on the model for consistency.
+<p>This step performs some basic checks on the model for consistency.
 The data can then be added</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">add_data</span><span class="op">(</span><span class="va">swindale_obs</span><span class="op">)</span></span></code></pre></div>
@@ -240,10 +239,7 @@ The data can then be added</p>
 <div class="section level2">
 <h2 id="running-dynamic-topmodel">Running dynamic TOPMODEL<a class="anchor" aria-label="anchor" href="#running-dynamic-topmodel"></a>
 </h2>
-<p>The model currently consists of two types of HRU; hillslope and
-channel. These can be run individually with the
-<code>sim_hillslope</code> and <code>sim_channel</code> methods or
-sequentially with the <code>sim</code> method. The individual methods
+<p>The model can be run with the <code>sim</code> method. The methods
 check that suitable input data is available, but not how it was
 generated.</p>
 <p>The initial states of the simulations can be specified in the model
@@ -254,8 +250,9 @@ then any attempt to perform a simulation will fail.</p>
 <span><span class="co">#&gt; Warning in private$digest_output_defn(output_defn): Output definition does not</span></span>
 <span><span class="co">#&gt; have scale - adding a vector of 1's</span></span>
 <span><span class="co">#&gt; Error in ctch_mdl$sim(swindale_model$output_flux): Model states have non-finite values</span></span></code></pre></div>
-<p>The states need to be initialised using the <code>initialise</code>
-method which requires an initial recharge rate. In the following we
+<p>Rather then editing each HRU to provide states they can be
+initialised using the <code>initialise</code> method which requires an
+initial recharge rate to be set for each HRU. In the following we
 initialise the states and plot the initial saturated zone storage
 deficit, using the chaining of commands.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
@@ -289,9 +286,9 @@ against observed discharge for comparison as follows:</p>
 </h2>
 <p>It is possible to output the mass balance check for each time step of
 the simulation using the <code>get_mass_errors</code> method. The
-returned matrix gives the volumes in the states at the start and end of
-the time step along with the other fluxes as volumes. This can easily be
-used to plot the errors as shown below.</p>
+returned <code>xts</code> object gives the volumes in the states at the
+start and end of the time step along with the other fluxes as volumes.
+This can easily be used to plot the errors as shown below.</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mb</span> <span class="op">&lt;-</span> <span class="va">ctch_mdl</span><span class="op">$</span><span class="fu">get_mass_errors</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span> <span class="va">mb</span><span class="op">[</span>,<span class="fl">6</span><span class="op">]</span> , main<span class="op">=</span><span class="st">"Mass Error"</span>, ylab<span class="op">=</span><span class="st">"[m^3]"</span><span class="op">)</span></span></code></pre></div>
@@ -316,7 +313,7 @@ used to plot the errors as shown below.</p>
 
 <div class="pkgdown">
   <p></p>
-<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.7.</p>
+<p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.0.9.</p>
 </div>
 
       </footer>

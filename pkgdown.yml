@@ -1,10 +1,10 @@
-pandoc: 2.19.2
-pkgdown: 2.0.7
+pandoc: 3.1.11
+pkgdown: 2.0.9
 pkgdown_sha: ~
 articles:
+  dynatop: dynatop.html
   HRU: HRU.html
   Notes_on_the_implementation_of_Dynamic_TOPMODEL: Notes_on_the_implementation_of_Dynamic_TOPMODEL.html
   The_Model_Object: The_Model_Object.html
-  dynatop: dynatop.html
-last_built: 2023-11-20T10:09Z
+last_built: 2024-05-07T11:17Z
 
