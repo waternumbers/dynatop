@@ -99,8 +99,8 @@ the computational sequence (or comments)
 ## Numerical solutions
 
 Currently the code uses a purely implicit scheme for the solution of the
-hillslope HRUs. This requires a solving two *zero finding* problems for each HRU
-at each (sub)time step. Currently a simple bisection algorithm is used with a
+HRUs. This requires a solving two *zero finding* problems for each HRU
+at each (sub)time step. Currently a bisection algorithm is used with a
 user specified tolerance and maximum number of iterations. The tolerance is
 defined as the difference between the upper and lower limits of the interval
 containing the zero point. Notionally faster algorithms (such as the TOMS-748

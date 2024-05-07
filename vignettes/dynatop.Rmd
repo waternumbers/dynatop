@@ -48,8 +48,8 @@ can be used for constructing models.
 
 # Setting map locations
 
-While not required for simulations if the locations of the files containing
-the locations of the HRUs are provided the states can be visualised within
+While not required for simulations if the location of a file containing
+the a raster map of the locations of the HRUs is provided the states can be visualised within
 dynatop.
 
 The locations of the files are set in the `map` element of the model. For this
@@ -64,7 +64,7 @@ swindale_model$map <- system.file("extdata","Swindale.tif",package="dynatop",mus
 
 The input to the model is expected to take the form of an ```xts``` object with
 constant time step whose column names are found in the 'precip' and 'pet'
-columns of the HRU tables in the model. Helpful functions for creating and
+variables of the HRUs descriptions in the model. Helpful functions for creating and
 manipulating ```xts``` objects can be found
 [here](http://rstudio-pubs-static.s3.amazonaws.com/288218_117e183e74964557a5da4fc5902fc671.html),
 see also the `resample_xts` function in this package.
@@ -87,8 +87,8 @@ head(swindale_model$hru[[1]]$pet)
 
 # Altering parameters
 
-The parameter values are stored within the table describing the hillslope and
-channel HRUs. Which parameters are present depends upon the options selected
+The parameter values are stored within the HRU descriptions. 
+Which parameters are present depends upon the options selected
 for the transmissivity and channel solution. Details can be found in the
 [HRU](HRU.html) Vignettes.
 
@@ -133,7 +133,7 @@ a `dynatop` object. First the object is created using the model in list form
 ctch_mdl <- dynatop$new(hru,map=swindale_model$map)
 ```
 
-This step performs some basis checks on the model for consistency.
+This step performs some basic checks on the model for consistency.
 The data can then be added
 
 ```{r add_data}
@@ -142,10 +142,8 @@ ctch_mdl$add_data(swindale_obs)
 
 # Running dynamic TOPMODEL
 
-The model currently consists of two types of HRU; hillslope and
-channel. These can be run individually with the `sim_hillslope` and
-`sim_channel` methods or sequentially with the `sim` method. The individual
-methods check that suitable input data is available, but not how it was generated.
+The model can be run with the `sim` method. The methods check that suitable
+input data is available, but not how it was generated.
 
 The initial states of the simulations can be specified in the model
 object. If, as in the case of this example, the states are not specified then
@@ -155,8 +153,8 @@ any attempt to perform a simulation will fail.
 ctch_mdl$sim(swindale_model$output_flux)
 ```
 
-The states need to be initialised using the `initialise` method which requires
-an initial recharge rate. In the following we initialise the states and plot
+Rather then editing each HRU to provide states they can be initialised using the `initialise` method which requires
+an initial recharge rate to be set for each HRU. In the following we initialise the states and plot
 the initial saturated zone storage deficit, using the chaining of commands.
 
 ```{r initialise}
@@ -189,7 +187,7 @@ plot(out[,c('flow','sim_1','sim_2')], main="Discharge",ylab="m3/s",legend.loc="t
 # Mass balance
 
 It is possible to output the mass balance check for each time step of the
-simulation using the `get_mass_errors` method. The returned matrix gives 
+simulation using the `get_mass_errors` method. The returned `xts` object gives 
 the volumes in the states at the start and end of the time step along with the
 other fluxes as volumes. This can easily be used to plot the errors as shown below.
 
