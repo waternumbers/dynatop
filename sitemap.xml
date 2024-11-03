@@ -1,48 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>/404.html</loc>
-  </url>
-  <url>
-    <loc>/articles/HRU.html</loc>
-  </url>
-  <url>
-    <loc>/articles/Notes_on_the_implementation_of_Dynamic_TOPMODEL.html</loc>
-  </url>
-  <url>
-    <loc>/articles/The_Model_Object.html</loc>
-  </url>
-  <url>
-    <loc>/articles/dynatop.html</loc>
-  </url>
-  <url>
-    <loc>/articles/index.html</loc>
-  </url>
-  <url>
-    <loc>/authors.html</loc>
-  </url>
-  <url>
-    <loc>/index.html</loc>
-  </url>
-  <url>
-    <loc>/news/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/Swindale.html</loc>
-  </url>
-  <url>
-    <loc>/reference/dynatop-package.html</loc>
-  </url>
-  <url>
-    <loc>/reference/dynatop.html</loc>
-  </url>
-  <url>
-    <loc>/reference/evap_est.html</loc>
-  </url>
-  <url>
-    <loc>/reference/index.html</loc>
-  </url>
-  <url>
-    <loc>/reference/resample_xts.html</loc>
-  </url>
+<urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
+<url><loc>/404.html</loc></url>
+<url><loc>/articles/HRU.html</loc></url>
+<url><loc>/articles/Notes_on_the_implementation_of_Dynamic_TOPMODEL.html</loc></url>
+<url><loc>/articles/The_Model_Object.html</loc></url>
+<url><loc>/articles/dynatop.html</loc></url>
+<url><loc>/articles/index.html</loc></url>
+<url><loc>/authors.html</loc></url>
+<url><loc>/index.html</loc></url>
+<url><loc>/news/index.html</loc></url>
+<url><loc>/reference/Swindale.html</loc></url>
+<url><loc>/reference/dynatop-package.html</loc></url>
+<url><loc>/reference/dynatop.html</loc></url>
+<url><loc>/reference/evap_est.html</loc></url>
+<url><loc>/reference/index.html</loc></url>
+<url><loc>/reference/resample_xts.html</loc></url>
 </urlset>
+
