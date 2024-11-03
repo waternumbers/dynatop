@@ -5,7 +5,7 @@
 #' @import xts
 #' @importFrom R6 R6Class
 #' @importFrom zoo index
-#' @importFrom stats start end aggregate
+#' @importFrom stats start end aggregate setNames
 #' @importFrom Rcpp evalCpp
 #' @useDynLib dynatop, .registration=TRUE
 NULL

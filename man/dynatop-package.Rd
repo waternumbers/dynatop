@@ -3,7 +3,6 @@
 \docType{package}
 \name{dynatop-package}
 \alias{dynatop-package}
-\alias{_PACKAGE}
 \title{dynatop: An Implementation of Dynamic TOPMODEL Hydrological Model in R}
 \description{
 An R implementation and enhancement of the Dynamic TOPMODEL semi-distributed hydrological model originally proposed by Beven and Freer (2001) \doi{10.1002/hyp.252}. The 'dynatop' package implements code for simulating models which can be created using the 'dynatopGIS' package.

@@ -1,3 +1,8 @@
+# dynatop 0.3.0.1011
+
+- Updated documentation
+- Rewritten code for evap_est including the ability to input daily PET totals
+
 # dynatop 0.3.0.1003
 
 - Improved linear search in optimisation step of solution

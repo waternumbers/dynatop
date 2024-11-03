@@ -4,7 +4,7 @@
 \alias{evap_est}
 \title{Create sinusoidal time series of potential evapotranspiration input}
 \usage{
-evap_est(ts, eMin = 0, eMax = 0)
+evap_est(ts, eMin = 0, eMax = 0.03, dailyPET = NULL)
 }
 \arguments{
 \item{ts}{as vector of POSIXct data/times}
@@ -12,9 +12,11 @@ evap_est(ts, eMin = 0, eMax = 0)
 \item{eMin}{Minimum daily PE total (m or mm)}
 
 \item{eMax}{Maximum daily PE total (m or mm)}
+
+\item{dailyPET}{A `xts` series of daily PET totals to use instead of eMin and eMax}
 }
 \value{
-Time series (xts) of potential evapotranspiration totals for the time steps given in same units as eMin and eMax
+Time series (xts) of potential evapotranspiration totals for the time steps given in same units as eMin and eMax, or the daily totals
 }
 \description{
 Generate series of potential evapotranspiration
@@ -37,6 +39,9 @@ Dynamic TOPMODEL requires a time series of potential
   calculated (for the catchment's latitude). Integration over the daylight
   hours allows the daily maximum to be calculated and thus a sub-daily series
   generated.
+
+  As an alternative to the generation of the sinusoidal daily total is to input
+  an `xts` object of daily PET values on which to apply the sub-daily sinusoid.
 }
 \examples{
 ## Generating daily PET data for 1970
@@ -52,8 +57,15 @@ fn <- as.POSIXct("1971-01-01 00:00:00",tz='GMT')
 hour_ts <- seq(st,fn,by=1*60*60)
 hpet <- evap_est(hour_ts,0,1)
 
-## the totals should eb the same...
+## the totals should be the same...
 stopifnot(all.equal(sum(hpet), sum(dpet)))
+
+## Generating the hourly data with daily input
+hpet2 <- evap_est(hour_ts, dailyPET=dpet)
+
+## should be identical
+stopifnot(all.equal(hpet, hpet2))
+
 }
 \references{
 Beven, K. J. (2012). Rainfall-runoff modelling : the primer. Chichester, UK, Wiley-Blackwell.
