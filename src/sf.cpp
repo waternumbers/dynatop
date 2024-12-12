@@ -102,7 +102,7 @@ double sfc_kin::fq(double const &s, double const &qin, double const &r){
 
   double qc = eta_2 * std::pow( std::max(0.0,(s-s_1)/kappa_2), (5.0/3.0) );
   double qq = std::max(0.0, (std::min(s,s_1)*kappa_1 - eta_1*q_1) / (1-eta_1) )
-    + std::max(0.0, (2*qc - q_2) / (1-eta_2)) ;
+    + std::max(0.0, (2*qc - q_2) ) ; /// (1-eta_2)) ;
   return( qq );
 }
 
@@ -125,6 +125,7 @@ double sfc_kin::fs(double const &qin, double const &r){
 }
 
 
+
 // compound channel
 sfc_comp::sfc_comp(std::vector<double> const &param, std::vector<double> const &properties){
   double const& Dx(properties[2]);
@@ -141,3 +142,32 @@ sfc_comp::sfc_comp(std::vector<double> const &param, std::vector<double> const &
 
 
 
+// Kinematic with raf bu solved as a tank with muskingham approximation
+// Assumes shallow water so wetted perimeter ~ width
+sfc_kin_tank::sfc_kin_tank(std::vector<double> const &param, std::vector<double> const &properties){
+  double const &Dx(properties[2]), &width(properties[1]), &grd(properties[3]);
+  double const &n(param[0]);
+  kappa_1 = 1.0 / param[2]; // param[2] is raf time constant
+  eta_1 = 0.0;
+  s_1 = param[1]; // raf storage
+  kappa_2 = Dx;
+  eta_2 = std::pow(grd,0.5) / (n * std::pow(width,(2.0/3.0)));
+}
+double sfc_kin_tank::fq(double const &s, double const &qin, double const &r){
+  double q = kappa_1*std::min(s,s_1) + eta_2 * std::pow( std::max(0.0,(s-s_1)/kappa_2), (5.0/3.0) );
+  return( q );
+}
+
+double sfc_kin_tank::fs(double const &qin, double const &r){
+  double q = qin - r;
+  if( q<= 0.0 ){ return(0.0); } // handle case of no outflow
+  double qq = std::max(0.0, s_1*kappa_1); // max from raf
+  double s(-999.9);
+  if( qq < q ){// then in upper part of the storage
+    q = std::max(0.0,q - qq);
+    s = s_1 + kappa_2 * std::pow( q/eta_2, 3.0/5.0 );
+  }else{ //in lower part of the storage
+    s = q/kappa_1;
+  }
+  return(s);
+}

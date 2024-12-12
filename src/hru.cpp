@@ -27,8 +27,9 @@ hru::hru(int const id_,
   id(id_), 
   s_sf(states_[0]), s_rz(states_[1]), s_uz(states_[2]), s_sz(states_[3])
 {
-  // change depths to volues for storage limits
-  area = properties_[0];
+  // change depths to volues for storage limits - not use hru area no map area
+  area = properties_[1] * properties_[2]; // width * Dx
+  map_area = properties_[0];
   //s_rzmax = s_rzmax*area;
   s_sf *= area;
   s_rz *= area;
@@ -49,6 +50,10 @@ hru::hru(int const id_,
   case 3:
     // compound channel
     sf = std::make_unique<sfc_comp>( sf_param_, properties );
+    break;
+  case 4:
+    // manning with raf solved as tank
+    sf = std::make_unique<sfc_kin_tank>( sf_param_, properties );
     break;
   }
 
@@ -92,13 +97,13 @@ void hru::update_met(std::vector<double> &obs){
   for(long unsigned int ii=0; ii<precip_lnk_id.size(); ++ii){
     const int &i = precip_lnk_id[ii];
     const double &f = precip_lnk_frc[ii];
-    precip += f * area * obs[i];
+    precip += f * map_area * obs[i];
   }
   pet = 0.0;
   for(long unsigned int ii=0; ii<pet_lnk_id.size(); ++ii){
     const int &i = pet_lnk_id[ii];
     const double &f = pet_lnk_frc[ii];
-    pet += f * area * obs[i];
+    pet += f * map_area * obs[i];
   }
 }
 
@@ -106,15 +111,27 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 	       double s_rz_0, double r_uz_sz_0,
 	       double const &vtol, double const &etol, int const &max_it){
 
-  if(area == 0.0){ // if the HRU has no area just pass on flow and set states to NaN
+  if(map_area == 0.0){
+    // if the HRU has no area then presume it is a channel, return all flow to the surface and set to saturated
     q_sf_in = vec_q_sf_in[id];
-    q_sf = q_sf_in;
-    q_sz_in = vec_q_sz_in[id];
-    q_sz = q_sz_in; 
-    s_sf = std::numeric_limits<double>::quiet_NaN();
-    s_rz = std::numeric_limits<double>::quiet_NaN();
-    s_uz = std::numeric_limits<double>::quiet_NaN();
-    s_sz = std::numeric_limits<double>::quiet_NaN();
+    double r_sf_rz = - vec_q_sz_in[id]; // add return flow from the saturated zone;
+    q_sf = q_sf_in - r_sf_rz;
+    s_sf = sf->fs(q_sf_in,r_sf_rz);
+    
+    if( std::abs( sf->fq(s_sf,q_sf_in,r_sf_rz) - q_sf ) > 1e-10 ){
+      Rcpp::Rcout << id << " surface" << std::endl;
+      Rcpp::Rcout << q_sf_in << " " << q_sf << std::endl;
+      Rcpp::Rcout << s_sf << " " << sf->fq(s_sf,q_sf_in,r_sf_rz) << std::endl;
+    }
+
+    // set the other states
+    s_rz = s_rzmax * area;
+    s_uz = 0.0;
+    s_sz = 0.0;
+
+    q_sz = 0.0;
+    
+    // redistributed the flows
     lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
     return;
   }
@@ -132,7 +149,7 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   double r_rz_uz = r_sf_rz;
 
   // injected water flux into the unsaturated zone
-  double r_inj = area * r_uz_sz_0;
+  double r_inj = map_area * r_uz_sz_0;
 
   
   // evaluate flux from unsaturated zone
@@ -148,9 +165,16 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   //s_sz = sz->fs(q_sz,q_sz_in);
   // make initial estimate of outflow
   q_sz = r_uz_sz + q_sz_in;
+  if(id == 25684){
+    Rcpp::Rcout << r_uz_sz << " " << q_sz_in << " " << q_sz << std::endl;
+  }
+
   s_sz = sz->fs(q_sz,q_sz_in);
   q_sz = sz->fq(s_sz,q_sz_in);
   r_uz_sz = q_sz - q_sz_in;
+  if(id == 25684){
+    Rcpp::Rcout << r_uz_sz << " " << s_sz << " " << q_sz << std::endl;
+  }
   
   if( std::abs( sz->fq(s_sz,q_sz_in) - q_sz ) > 1e-10 ){
     Rcpp::Rcout << id << " saturated" << std::endl;
@@ -158,10 +182,10 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
     Rcpp::Rcout << s_sz << " " << sz->fq(s_sz,q_sf_in) << std::endl;
   }
   
-  //double z = (q_sz + q_sz_in)/2.0;
-  //Rcpp::Rcout << "Initialising saturated zone " << z << std::endl;
-  //s_sz = sz->fs(z);
-
+  if(id == 25684){
+    Rcpp::Rcout << t_d << " " << r_uz_sz << " " << s_sz << " " << area << std::endl;
+  }
+  
   s_uz = t_d * r_uz_sz * s_sz / area; // compute unsaturated zone storage
   if( s_uz > s_sz ){
     Rcpp::Rcout << id << " unsaturated" << std::endl;
@@ -210,14 +234,14 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in,
 	       double const &vtol, double const &etol, int const &max_it, double const &Dt)
 {
-  if(area == 0.0){ // if the HRU has no area just pass on flow
-    q_sf_in = vec_q_sf_in[id];
-    q_sf = q_sf_in;
-    q_sz_in = vec_q_sz_in[id];
-    q_sz = q_sz_in;
-    lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
-    return;
-  }
+  // if(area == 0.0){ // if the HRU has no area just pass on flow
+  //   q_sf_in = vec_q_sf_in[id];
+  //   q_sf = q_sf_in;
+  //   q_sz_in = vec_q_sz_in[id];
+  //   q_sz = q_sz_in;
+  //   lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
+  //   return;
+  // }
     
   // redivide the inflow so q_sz_in is less then q_szmax
   //q_sz_in = std::min( vec_q_sz_in[id] , sz->q_szmax) ;

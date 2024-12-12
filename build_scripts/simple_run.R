@@ -6,8 +6,12 @@ devtools::load_all()
 data("Swindale");
 
 hru <- Swindale$model$hru
+
+tmp <- readRDS("/home/paul/Documents/Software/dynatopGIS/build_scripts/demo/new_model.rds")
+hru <- tmp$hru
+
 for(ii in 1:length(hru)){
-    if(is.na(hru[[ii]]$class$endNode)){
+    if( "endNode" %in% names(hru[[ii]]$class) ){ #is.na(hru[[ii]]$class$endNode)){
         ## then HRU is not a channel
         ## saturated zone parameters
         hru[[ii]]$sz$parameters["m"] <- 0.0063
@@ -32,7 +36,8 @@ for(ii in 1:length(hru)){
     hru[[ii]]$initialisation["r_uz_sz_0"] <- 1.755582e-07 ## initial outflow divided by catchment area
 }
 
-dt <- dynatop$new(hru,map=system.file("extdata","Swindale.tif",package="dynatop",mustWork=TRUE))
+#dt <- dynatop$new(hru,map=system.file("extdata","Swindale.tif",package="dynatop",mustWork=TRUE))
+dt <- dynatop$new(hru,map="/home/paul/Documents/Software/dynatopGIS/build_scripts/demo/new_model.tif")
 
 dt$add_data(Swindale$obs)
 dt$initialise()

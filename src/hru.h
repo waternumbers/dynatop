@@ -42,7 +42,7 @@ public:
   // variables initialised
   int const id;
   double s_sf, s_rz, s_uz, s_sz, q_sf, q_sz;
-  double area;
+  double area, map_area; // area if the area of the HRU width*Dx, map_area is area on the map (used for inputs)
   
 
   double q_sf_in, q_sz_in;

@@ -20,8 +20,10 @@ szc_exp::szc_exp(std::vector<double> const &param, std::vector<double> const &pr
   szc();
   
   double const &t0(param[0]), &m(param[1]);
-  double const &area(prop[0]), &width(prop[1]), &grd(prop[3]);
-
+  //double const &area(prop[0]), &width(prop[1]), &grd(prop[3]);
+  double const &Dx(prop[2]), &width(prop[1]), &grd(prop[3]);
+  double area = width*Dx;
+  
   double beta = std::atan(grd);
   q_szmax =  width*t0*std::sin(beta);
   psi = std::cos(beta) / (m*area); // scaling to get crosssectional depth from storage
@@ -31,7 +33,8 @@ double szc_exp::ftq(double const &s){ // get flow from storage
   return( q );
 }
 double szc_exp::fts(double const &q){ // get storage from flow
-  //Rcpp::Rcout << "In fts " << q_szmax << " " << q << std::endl;
+  //Rcpp::Rcout << q << " " << q_szmax << " " << q/q_szmax << std::endl;
+  if( q==0.0 ){ return( 100.00/psi ); } // this is to catch a -Inf return big deficit q ~ q_max * 4*10^{-44}
   double s = -std::log(q/q_szmax) / psi;
   return( s );
 }
@@ -41,7 +44,9 @@ double szc_exp::fts(double const &q){ // get storage from flow
 szc_bexp::szc_bexp(std::vector<double> const &param, std::vector<double> const &prop){
   szc();
   double const &t_0(param[0]), &m(param[1]), &h_sz_max(param[2]);
-  double const &area(prop[0]), &width(prop[1]), &grd(prop[3]);
+  //double const &area(prop[0]), &width(prop[1]), &grd(prop[3]);
+  double const &Dx(prop[2]), &width(prop[1]), &grd(prop[3]);
+  double area = width*Dx;
   double beta = std::atan(grd);
   
   psi = std::cos(beta) / (m*area) ;
@@ -63,7 +68,9 @@ szc_cnst::szc_cnst(std::vector<double> const &param,  std::vector<double> const 
   szc();
   //const double &vsz(param[0]), &maxH(param[1]);
   double const &v_sz(param[0]), &h_sz_max(param[1]);
-  double const &area(prop[0]), &width(prop[1]);
+  //double const &area(prop[0]), &width(prop[1]);
+  double const &Dx(prop[2]), &width(prop[1]);
+  double area = width*Dx;
   
   omega = width*v_sz;
   psi=1.0/area;
@@ -82,7 +89,9 @@ szc_dexp::szc_dexp(std::vector<double> const &param, std::vector<double> const &
   szc();
   
   double const &t0(param[0]), &m(param[1]), &m2(param[2]);
-  double const &area(prop[0]), &width(prop[1]), &grd(prop[3]);
+  //double const &area(prop[0]), &width(prop[1]), &grd(prop[3]);
+  double const &Dx(prop[2]), &width(prop[1]), &grd(prop[3]);
+  double area = width*Dx;
 
   double beta = std::atan(grd);
   omega = param[3]; // weight

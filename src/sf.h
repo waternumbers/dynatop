@@ -39,4 +39,12 @@ public:
   sfc_comp(std::vector<double> const&, std::vector<double> const&);
 };
 
+// kinematic with RAF solved as a tank
+class sfc_kin_tank: public sfc {
+public:
+  sfc_kin_tank(std::vector<double> const&, std::vector<double> const&);
+  double fq(double const&, double const&, double const&);
+  double fs(double const&, double const&);
+};
+
 #endif
