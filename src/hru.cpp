@@ -4,32 +4,29 @@
 hru::hru(int const id_,
 	 std::vector<double> states_,
 	 std::vector<double> const properties_,
-	 //double const area_, double const s_bar_, double const width_, 
 	 int const sf_type_, std::vector<double> const sf_param_,
 	 std::vector<double> const rz_param_,
 	 std::vector<double> const uz_param_,
 	 int const sz_type_, std::vector<double> const sz_param_,
-	 std::vector<int> const precip_lnk_id_, std::vector<double> const precip_lnk_frc_,
-	 std::vector<int> const pet_lnk_id_, std::vector<double> const pet_lnk_frc_,
-	 std::vector<int> const sf_lnk_id_, std::vector<double> const sf_lnk_frc_,
-	 std::vector<int> const sz_lnk_id_, std::vector<double> const sz_lnk_frc_
+	 std::vector<int> const precip_lnk_id_, std::vector<double> const precip_lnk_area_,
+	 std::vector<int> const pet_lnk_id_, std::vector<double> const pet_lnk_area_,
+	 std::vector<int> const sf_lnk_id_, std::vector<double> const sf_lnk_width_,
+	 std::vector<double> const sf_lnk_gradient_,
+	 std::vector<int> const sz_lnk_id_, std::vector<double> const sz_lnk_width_,
+	 std::vector<double> const sz_lnk_gradient_//,
 	 ):
-   //states(states_),
-  properties(properties_),
-  //q_sf(states_[4]), q_sz(states_[5]), // these states are only used in the flux limiters
-  //area(properties_[0]),width(properties_[1]),Dx(properties_[2]), // Dx passed in this way for future flexibility
-  sf_param(sf_param_), s_rzmax(rz_param_[0]),
-  t_d(uz_param_[0]), sz_param(sz_param_),
-  precip_lnk_id(precip_lnk_id_), precip_lnk_frc(precip_lnk_frc_),
-  pet_lnk_id(pet_lnk_id_), pet_lnk_frc(pet_lnk_frc_),
-  sf_lnk_id(sf_lnk_id_), sf_lnk_frc(sf_lnk_frc_),
-  sz_lnk_id(sz_lnk_id_), sz_lnk_frc(sz_lnk_frc_),
+  s_rzmax(rz_param_[0]),
+  t_d(uz_param_[0]),
+  //sz_param(sz_param_),
+  precip_lnk_id(precip_lnk_id_), precip_lnk_area(precip_lnk_area_),
+  pet_lnk_id(pet_lnk_id_), pet_lnk_area(pet_lnk_area_),
+  sf_lnk_id(sf_lnk_id_), //sf_lnk_frc(sf_lnk_frc_),
+  sz_lnk_id(sz_lnk_id_), //sz_lnk_frc(sz_lnk_frc_),
   id(id_), 
   s_sf(states_[0]), s_rz(states_[1]), s_uz(states_[2]), s_sz(states_[3])
 {
   // change depths to volues for storage limits - not use hru area no map area
-  area = properties_[1] * properties_[2]; // width * Dx
-  map_area = properties_[0];
+  area = properties_[0] * properties_[1]; // width * Dx
   //s_rzmax = s_rzmax*area;
   s_sf *= area;
   s_rz *= area;
@@ -38,43 +35,49 @@ hru::hru(int const id_,
   
   
   // initialise the surface flux object
-  switch(sf_type_){
-  case 1:
-    // constant celerity with raf
-    sf = std::make_unique<sfc_cnst>( sf_param_, properties );
-    break;
-  case 2:
-    // kinematic with raf
-    sf = std::make_unique<sfc_kin>( sf_param_, properties );
-    break;
-  case 3:
-    // compound channel
-    sf = std::make_unique<sfc_comp>( sf_param_, properties );
-    break;
-  case 4:
-    // manning with raf solved as tank
-    sf = std::make_unique<sfc_kin_tank>( sf_param_, properties );
-    break;
+  for(long unsigned int ii=0; ii<sf_lnk_id.size(); ++ii){
+    switch(sf_type_){
+    case 1:
+      // constant velocity with raf
+      sf.push_back( std::make_unique<sfc_cnst>( sf_param_, sf_lnk_width_[ii], sf_lnk_gradient_[ii], area ) );
+      break;
+    case 2:
+      // mannings with raf
+      sf.push_back( std::make_unique<sfc_kin>( sf_param_, sf_lnk_width_[ii], sf_lnk_gradient_[ii], area ) );
+      break;
+    case 3:
+      // compound channel
+      sf.push_back( std::make_unique<sfc_comp>( sf_param_, sf_lnk_width_[ii], sf_lnk_gradient_[ii], area ) );
+      break;
+    case 4:
+      // two stage mannings
+      sf.push_back( std::make_unique<sfc_kin_tank>( sf_param_, sf_lnk_width_[ii], sf_lnk_gradient_[ii], area ) );
+      break;
+    }
+    lambda_sf.push_back(0.0);
   }
 
   // initialise the saturated flux object
-  switch(sz_type_){
-  case 1:
-    //exp
-    sz = std::make_unique<szc_exp>( sz_param_, properties ); // properites_[3] is sbar
-    break;
-  case 2:
-    // bounded exp
-    sz = std::make_unique<szc_bexp>( sz_param_, properties ); // properites_[3] is sbar
-    break;
-  case 3:
-    // double exp
-    sz = std::make_unique<szc_dexp>( sz_param_, properties ); // properites_[3] is sbar
-    break;
-  case 4:
-    // constant celerity
-    sz = std::make_unique<szc_cnst>( sz_param_, properties ); // properites_[3] is sbar
-    break;
+  for(long unsigned int ii=0; ii<sz_lnk_id.size(); ++ii){
+    switch(sz_type_){
+    case 1:
+      //exp
+      sz.push_back( std::make_unique<szc_exp>( sz_param_, sz_lnk_width_[ii], sz_lnk_gradient_[ii], area ) );
+      break;
+    case 2:
+      // bounded exp
+      sz.push_back( std::make_unique<szc_bexp>( sz_param_, sz_lnk_width_[ii], sz_lnk_gradient_[ii], area ) );
+      break;
+    case 3:
+      // double exp
+      sz.push_back( std::make_unique<szc_dexp>( sz_param_, sz_lnk_width_[ii], sz_lnk_gradient_[ii], area ) );
+      break;
+    case 4:
+      // constant celerity
+      sz.push_back( std::make_unique<szc_cnst>( sz_param_, sz_lnk_width_[ii], sz_lnk_gradient_[ii], area ) );
+      break;
+    }
+    lambda_sz.push_back(0.0);
   }
 };
 
@@ -82,13 +85,13 @@ void hru::lateral_redistribution(std::vector<double> &vec_q_sf_in,
 				 std::vector<double> &vec_q_sz_in){
   for(long unsigned int ii=0; ii<sf_lnk_id.size(); ++ii){
     const int &i = sf_lnk_id[ii];
-    const double &f = sf_lnk_frc[ii];
-    vec_q_sf_in[i] += f * q_sf;
+    const double &f = lambda_sf[ii];
+    vec_q_sf_in[i] += f * s_sf;
   }
   for(long unsigned int ii=0; ii<sz_lnk_id.size(); ++ii){
     const int &i = sz_lnk_id[ii];
-    const double &f = sz_lnk_frc[ii];
-    vec_q_sz_in[i] += f * q_sz;
+    const double &f = lambda_sz[ii];
+    vec_q_sz_in[i] += f * s_sz;
   }
 }
 
@@ -96,14 +99,14 @@ void hru::update_met(std::vector<double> &obs){
   precip = 0.0;
   for(long unsigned int ii=0; ii<precip_lnk_id.size(); ++ii){
     const int &i = precip_lnk_id[ii];
-    const double &f = precip_lnk_frc[ii];
-    precip += f * map_area * obs[i];
+    const double &f = precip_lnk_area[ii];
+    precip += f * obs[i];
   }
   pet = 0.0;
   for(long unsigned int ii=0; ii<pet_lnk_id.size(); ++ii){
     const int &i = pet_lnk_id[ii];
-    const double &f = pet_lnk_frc[ii];
-    pet += f * map_area * obs[i];
+    const double &f = pet_lnk_area[ii];
+    pet += f * obs[i];
   }
 }
 

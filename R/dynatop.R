@@ -239,14 +239,11 @@ dynatop <- R6Class(
             
             ## check properties
             if("properties" %in% names(h)){
-                prpnm <- c("area", "width", "Dx", "gradient")
+                prpnm <- c("width", "Dx", "gradient")
                 if( !is.numeric(h$properties) ){ etxt <- c( etxt, paste0(h$id, ": properties should be a numeric vector") ) }
                 if( all(prpnm %in% names(h$properties)) ){
                     if( !all( h$properties[c("gradient","width")] >0 ) ){
                         etxt <- c( etxt, paste0(h$id, ": gradient and width but be greater then 0") )
-                    }
-                    if( h$properties["area"] < 0 ){
-                        etxt <- c( etxt, paste0(h$id, ": area must not be negative"))
                     }
                     h$properties <- h$properties[ c( prpnm, setdiff(names(h$properties),prpnm)) ]
                 }else{
@@ -318,56 +315,57 @@ dynatop <- R6Class(
             
             ## check precip and pet
             for(ii in c("precip","pet")){
-                if( !all(c("name","fraction") %in% names(h[[ii]])) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " should contain names and fractions"))
+                if( !all(c("name","area") %in% names(h[[ii]])) ){
+                    etxt <- c(etxt, paste0(h$id, ": ", ii, " should contain names and areas"))
                     next
                 }
                 if( !is.character(h[[ii]]$name) ){
                     etxt <- c(etxt, paste0(h$id, ": ", ii, " name should be a character vector"))
                     next
                 }
-                if( !is.numeric(h[[ii]]$fraction) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " fraction should be a numeric vector"))
+                if( !is.numeric(h[[ii]]$area) ){
+                    etxt <- c(etxt, paste0(h$id, ": ", ii, " area should be a numeric vector"))
                     next
                 }
-                if( length( h[[ii]]$name) != length(h[[ii]]$fraction) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " name and fraction should be the same length"))
+                if( length( h[[ii]]$name) != length(h[[ii]]$area) ){
+                    etxt <- c(etxt, paste0(h$id, ": ", ii, " name and area should be the same length"))
                     next
                 }
-                if( any(h[[ii]]$fraction < 0) | ( abs( sum(h[[ii]]$fraction) -1) > delta) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " fractions should be positive and sum to 1"))
+                if( any(h[[ii]]$area < 0) ){
+                    etxt <- c(etxt, paste0(h$id, ": ", ii, " areas should be positive"))
                     next
                 }
             }
 
             ## check lateral flow
             for(ii in c("sf_flow_direction","sz_flow_direction")){
-                if( !all(c("id","fraction") %in% names(h[[ii]])) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " should contain ids and fractions"))
+                if( !all(c("id","width","gradient") %in% names(h[[ii]])) ){
+                    etxt <- c(etxt, paste0(h$id, ": ", ii, " should contain ids, widths and gradientss"))
                     next
                 }
                 if( !is.integer(h[[ii]]$id) ){
                     etxt <- c(etxt, paste0(h$id, ": ", ii, " id should be an integer vector"))
                     next
                 }
-                if( !is.numeric(h[[ii]]$fraction) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " fraction should be a numeric vector"))
+                if( !is.numeric(h[[ii]]$width) ){
+                    etxt <- c(etxt, paste0(h$id, ": ", ii, " widths should be a numeric vector"))
                     next
                 }
-                if( length( h[[ii]]$id) != length(h[[ii]]$fraction) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " id and fraction should be the same length"))
+                if( !is.numeric(h[[ii]]$gradient) ){
+                    etxt <- c(etxt, paste0(h$id, ": ", ii, " gradients should be a numeric vector"))
+                    next
+                }
+                if( length( h[[ii]]$id) != length(h[[ii]]$width) ){
+                    etxt <- c(etxt, paste0(h$id, ": ", ii, " id and width should be the same length"))
+                    next
+                }
+                if( length( h[[ii]]$id) != length(h[[ii]]$gradient) ){
+                    etxt <- c(etxt, paste0(h$id, ": ", ii, " id and gradient should be the same length"))
                     next
                 }
                 if( any(h[[ii]]$id >= h$id) ){
                     etxt <- c(etxt, paste0(h$id, ": ", ii, " id value be less then current id"))
                     next
-                }
-                if( length(h[[ii]]$fraction)>0 ){
-                    
-                    if( any(h[[ii]]$fraction < 0) | ( abs( sum(h[[ii]]$fraction) -1) > delta) ){
-                        etxt <- c(etxt, paste0(h$id, ": ", ii, " fractions should be positive and sum to 1"))
-                        next
-                    }
                 }
             }
 
@@ -387,7 +385,7 @@ dynatop <- R6Class(
         },
         regurge_hru = function(h){
             ## convert for C++
-            for(ii in c("sf","rz","uz","sz")){ ## convert type to integer
+            for(ii in c("sf","rz","uz","sz")){ ## convert type from integer
                 h[[ii]]$type <- private$info[[ii]][ h[[ii]]$type ]
             }
             return(h)
@@ -400,7 +398,6 @@ dynatop <- R6Class(
             idx <- order(id)
             id <- id[idx]
             if( !all( id == 0:(length(id)-1) ) ){ stop("ids are not in sequence") }
-            
             private$model <- m[idx]
         },
         ## function to digest maps
@@ -555,4 +552,3 @@ dynatop <- R6Class(
     )
     
 )
-    

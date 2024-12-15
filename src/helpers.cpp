@@ -25,13 +25,17 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
 			 Rcpp::as<std::vector<double>>(svec),
 			 Rcpp::as<std::vector<double>>(pvec),
 			 Rcpp::as<int>(sf_list["type"]), Rcpp::as<std::vector<double>>(sf_list["parameters"]), // surface type and parameters
-			 rz_list["parameters"], // root zone type and parameters passed explicitly
-			 uz_list["parameters"], // unsaturated zone type and parameters passed explicitly
+			 Rcpp::as<std::vector<double>>(rz_list["parameters"]), // root zone type and parameters passed explicitly
+			 Rcpp::as<std::vector<double>>(uz_list["parameters"]), // unsaturated zone type and parameters passed explicitly
 			 Rcpp::as<int>(sz_list["type"]), Rcpp::as<std::vector<double>>(sz_list["parameters"]), // saturated zone type and parameters passed explicitly
-			 Rcpp::as<std::vector<int>>(pcp_list["idx"]), Rcpp::as<std::vector<double>>(pcp_list["fraction"]), // precipiataion inputs
-			 Rcpp::as<std::vector<int>>(pet_list["idx"]), Rcpp::as<std::vector<double>>(pet_list["fraction"]), // pet inputs
-			 Rcpp::as<std::vector<int>>(q_sf_list["id"]), Rcpp::as<std::vector<double>>(q_sf_list["fraction"]), // surface zone redistribution
-			 Rcpp::as<std::vector<int>>(q_sz_list["id"]), Rcpp::as<std::vector<double>>(q_sz_list["fraction"]) // saturated zone redistribution
+			 Rcpp::as<std::vector<int>>(pcp_list["idx"]), Rcpp::as<std::vector<double>>(pcp_list["area"]), // precipiataion inputs
+			 Rcpp::as<std::vector<int>>(pet_list["idx"]), Rcpp::as<std::vector<double>>(pet_list["area"]), // pet inputs
+			 Rcpp::as<std::vector<int>>(q_sf_list["id"]),
+			 Rcpp::as<std::vector<double>>(q_sf_list["width"]), // surface zone redistribution
+			 Rcpp::as<std::vector<double>>(q_sf_list["gradient"]), // surface zone redistribution
+			 Rcpp::as<std::vector<int>>(q_sz_list["id"]),
+			 Rcpp::as<std::vector<double>>(q_sz_list["width"]), // saturated zone redistribution
+			 Rcpp::as<std::vector<double>>(q_sz_list["gradient"]) // saturated zone redistributio
 			 )
 		    );
     
