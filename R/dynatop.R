@@ -137,25 +137,11 @@ dynatop <- R6Class(
                           order.by=private$time_series$index)
             return(x)
         },
-        #' @description Plot the channel inflow
+        #' @description Plot one or more simulation outputs
         #' @param name of series to plot
         plot_output = function(name=colnames(private$time_series$output)){
             x <- self$get_output(name)
             plot(x)
-            
-            
-            ## if(seperate){
-            ##     oldpar <- par(no.readonly = TRUE)
-            ##     on.exit(par(oldpar))
-            ##     nc <- floor(sqrt(length(name)))
-            ##     nr <- ceiling( length(name)/nc )
-            ##     par(mfrow=c(nr,nc))
-            ##     for(ii in name){
-            ##         plot(x[,ii])
-            ##     }
-            ## }else{
-            ##     plot(x)
-            ## }
         },
         #' @description Get the observed data
         get_obs_data = function(){
@@ -507,10 +493,10 @@ dynatop <- R6Class(
         ## ###########################################
         ## Initialise the states
         init = function(vtol,etol,max_it){
-            ##TODO we could initialise without obs - maybe change to allow this
-            if( length(private$model[[1]]$precip$idx)==0 ){
-                stop("Please add data before initialisation")
-            }
+            ## ##TODO we could initialise without obs - maybe change to allow this
+            ## if( length(private$model[[1]]$precip$idx)==0 ){
+            ##     stop("Please add data before initialisation")
+            ## }
             dt_init(private$model,
                     vtol,etol,max_it)
             

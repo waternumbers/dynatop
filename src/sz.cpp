@@ -34,7 +34,8 @@ double szc_exp::ftq(double const &s){ // get flow from storage
 }
 double szc_exp::fts(double const &q){ // get storage from flow
   //Rcpp::Rcout << q << " " << q_szmax << " " << q/q_szmax << std::endl;
-  if( q==0.0 ){ return( 100.00/psi ); } // this is to catch a -Inf return big deficit q ~ q_max * 4*10^{-44}
+  if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
+  //  if( q==0.0 ){ return( 100.00/psi ); } // this is to catch a -Inf return big deficit q ~ q_max * 4*10^{-44}
   double s = -std::log(q/q_szmax) / psi;
   return( s );
 }
@@ -59,6 +60,7 @@ double szc_bexp::ftq(double const &s){ // get flow from storage
   return( q );
 }
 double szc_bexp::fts(double const &q){ // get storage from flow
+  if( omega ==0.0 ){ return( 0.0 ); }  // since there can be no flow or storage
   return( -std::log((q/omega)+kappa)/psi );
 };
 
@@ -81,6 +83,7 @@ double szc_cnst::ftq(double const &s){
   return( std::max(0.0, omega*(kappa - (s*psi))) );
 };
 double szc_cnst::fts(double const &q){
+  if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
   return( -psi*((q/omega)-kappa) );
 };
 
@@ -104,6 +107,7 @@ double szc_dexp::ftq(double const &s){ // get flow from storage
   return( q );
 }
 double szc_dexp::fts(double const &q){ // get storage from flow
+  if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
   double z;
   if( q > q_szmax ){
     Rcpp::Rcout << "q > qmax " << q << " " << q_szmax << " " << q - q_szmax << std::endl;

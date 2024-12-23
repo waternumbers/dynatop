@@ -96,33 +96,45 @@ sfc_kin::sfc_kin(std::vector<double> const &param, std::vector<double> const &pr
   eta_2 = std::pow(grd,0.5) / (n * std::pow(width,(2.0/3.0)));
 }
 double sfc_kin::fq(double const &s, double const &qin, double const &r){
-  double q_1_max = std::max(0.0, s_1*kappa_1 + (1-eta_1)*r);
-  double q_1 = std::min(qin,q_1_max);
-  double q_2 = std::max(0.0,qin-q_1_max);
-
-  double qc = eta_2 * std::pow( std::max(0.0,(s-s_1)/kappa_2), (5.0/3.0) );
-  double qq = std::max(0.0, (std::min(s,s_1)*kappa_1 - eta_1*q_1) / (1-eta_1) )
-    + std::max(0.0, (2*qc - q_2) ) ; /// (1-eta_2)) ;
-  return( qq );
+  double q_1 = kappa_1*std::min(s_1,s);
+  double q_2 = eta_2 * std::pow( std::max(0.0,(s-s_1)/kappa_2), (5.0/3.0) );
+  return( q_1 + q_2 );
 }
-
+ //  //muskingham solution
+//   double q_1_max = std::max(0.0, s_1*kappa_1 + (1-eta_1)*r);
+//   double q_1 = std::min(qin,q_1_max);
+//   double q_2 = std::max(0.0,qin-q_1_max);
+  
+//   double qc = eta_2 * std::pow( std::max(0.0,(s-s_1)/kappa_2), (5.0/3.0) );
+//   double qq = std::max(0.0, (std::min(s,s_1)*kappa_1 - eta_1*q_1) / (1-eta_1) )
+//     + std::max(0.0, (2*qc - q_2) ) ; /// (1-eta_2)) ;
+//   return( qq );
+// }
 double sfc_kin::fs(double const &qin, double const &r){
   double q = qin - r;
   if( q<= 0.0 ){ return(0.0); } // handl case of no outflow
-  
-  double q_1_max = std::max(0.0, s_1*kappa_1 + (1-eta_1)*r);
-  double q_1 = std::min(qin,q_1_max);
-  double q_2 = std::max(0.0,qin-q_1_max);
-  double qq = std::max(0.0, (s_1*kappa_1 - eta_1*q_1) / (1-eta_1) );// flow at s_1
-  double s(-999.9);
-  if( qq < q ){// then in upper part of the storage
-    double qc = 0.5*(q-qq+q_2);
-    s = s_1 + kappa_2 * std::pow( qc/eta_2, 3.0/5.0 );
-  }else{ //in lower part of the storage
-    s = ( (1-eta_1)*q + eta_1*q_1 )/kappa_1;
-  }
-  return(s);
+
+  double q_1_max = s_1*kappa_1;
+  double q_1 = std::min(q,q_1_max);
+  double s_1 = q_1 / kappa_1;
+  double q_2 = std::max(0.0,q-q_1_max);
+  double s_2 = kappa_2 * std::pow( q_2/eta_2, 3.0/5.0 );
+  return( s_1 + s_2 );
 }
+// // Muskingham solution
+//   double q_1_max = std::max(0.0, s_1*kappa_1 + (1-eta_1)*r);
+//   double q_1 = std::min(qin,q_1_max);
+//   double q_2 = std::max(0.0,qin-q_1_max);
+//   double qq = std::max(0.0, (s_1*kappa_1 - eta_1*q_1) / (1-eta_1) );// flow at s_1
+//   double s(-999.9);
+//   if( qq < q ){// then in upper part of the storage
+//     double qc = 0.5*(q-qq+q_2);
+//     s = s_1 + kappa_2 * std::pow( qc/eta_2, 3.0/5.0 );
+//   }else{ //in lower part of the storage
+//     s = ( (1-eta_1)*q + eta_1*q_1 )/kappa_1;
+//   }
+//   return(s);
+// }
 
 
 

@@ -196,7 +196,7 @@ Return channel inflow as an xts series or list of xts series
 \if{html}{\out{<a id="method-dynatop-plot_output"></a>}}
 \if{latex}{\out{\hypertarget{method-dynatop-plot_output}{}}}
 \subsection{Method \code{plot_output()}}{
-Plot the channel inflow
+Plot one or more simulation outputs
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_output(name = colnames(private$time_series$output))}\if{html}{\out{</div>}}
 }

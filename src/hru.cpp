@@ -27,10 +27,9 @@ hru::hru(int const id_,
   id(id_), 
   s_sf(states_[0]), s_rz(states_[1]), s_uz(states_[2]), s_sz(states_[3])
 {
-  // change depths to volues for storage limits - not use hru area no map area
-  area = properties_[1] * properties_[2]; // width * Dx
-  map_area = properties_[0];
-  //s_rzmax = s_rzmax*area;
+  // change depths to volues for storage limits - use hru area not map area
+  area = properties_[1] * properties_[2]; // width * Dx - parea propertiy of the hru
+  map_area = properties_[0]; // area used to scale the inputs
   s_sf *= area;
   s_rz *= area;
   s_uz *= area;
@@ -111,34 +110,6 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 	       double s_rz_0, double r_uz_sz_0,
 	       double const &vtol, double const &etol, int const &max_it){
 
-  if(map_area == 0.0){
-    // if the HRU has no area then presume it is a channel, return all flow to the surface and set to saturated
-    q_sf_in = vec_q_sf_in[id];
-    double r_sf_rz = - vec_q_sz_in[id]; // add return flow from the saturated zone;
-    q_sf = q_sf_in - r_sf_rz;
-    s_sf = sf->fs(q_sf_in,r_sf_rz);
-    
-    if( std::abs( sf->fq(s_sf,q_sf_in,r_sf_rz) - q_sf ) > 1e-10 ){
-      Rcpp::Rcout << id << " surface" << std::endl;
-      Rcpp::Rcout << q_sf_in << " " << q_sf << std::endl;
-      Rcpp::Rcout << s_sf << " " << sf->fq(s_sf,q_sf_in,r_sf_rz) << std::endl;
-    }
-
-    // set the other states
-    s_rz = s_rzmax * area;
-    s_uz = 0.0;
-    s_sz = 0.0;
-
-    q_sz = 0.0;
-    
-    // redistributed the flows
-    lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
-    return;
-  }
-
-  // redivide the inflow so q_sz_in is less then q_szmax
-  //q_sz_in = std::min( vec_q_sz_in[id] , sz->q_szmax) ;
-  //q_sf_in = vec_q_sf_in[id] + vec_q_sz_in[id] - q_sz_in;
   q_sz_in = vec_q_sz_in[id];
   q_sf_in = vec_q_sf_in[id];
 
@@ -149,41 +120,22 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   double r_rz_uz = r_sf_rz;
 
   // injected water flux into the unsaturated zone
-  double r_inj = map_area * r_uz_sz_0;
-
+  double r_inj = map_area * r_uz_sz_0; // use map area since input is standardised by map area
   
   // evaluate flux from unsaturated zone
   double r_uz_sz = std::min( r_rz_uz + r_inj, area/t_d ); // ensure downward flux is possible
 
-  //  double q_sz_max = sz->fq(0,q_sz_in);
-  // r_uz_sz = std::min( r_uz_sz , q_sz_max - q_sz_in );
-
-  //r_uz_sz = std::min( r_uz_sz , sz->q_szmax - q_sz_in ); // revise down so that outflow from saturated zone is possible
-  
-  // initialise saturated zone to match q_sz
-  //q_sz = r_uz_sz + q_sz_in;
-  //s_sz = sz->fs(q_sz,q_sz_in);
   // make initial estimate of outflow
   q_sz = r_uz_sz + q_sz_in;
-  if(id == 25684){
-    Rcpp::Rcout << r_uz_sz << " " << q_sz_in << " " << q_sz << std::endl;
-  }
 
   s_sz = sz->fs(q_sz,q_sz_in);
   q_sz = sz->fq(s_sz,q_sz_in);
   r_uz_sz = q_sz - q_sz_in;
-  if(id == 25684){
-    Rcpp::Rcout << r_uz_sz << " " << s_sz << " " << q_sz << std::endl;
-  }
   
   if( std::abs( sz->fq(s_sz,q_sz_in) - q_sz ) > 1e-10 ){
     Rcpp::Rcout << id << " saturated" << std::endl;
     Rcpp::Rcout << q_sz_in << " " << q_sz << std::endl; 
     Rcpp::Rcout << s_sz << " " << sz->fq(s_sz,q_sf_in) << std::endl;
-  }
-  
-  if(id == 25684){
-    Rcpp::Rcout << t_d << " " << r_uz_sz << " " << s_sz << " " << area << std::endl;
   }
   
   s_uz = t_d * r_uz_sz * s_sz / area; // compute unsaturated zone storage
@@ -234,18 +186,7 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in,
 	       double const &vtol, double const &etol, int const &max_it, double const &Dt)
 {
-  // if(area == 0.0){ // if the HRU has no area just pass on flow
-  //   q_sf_in = vec_q_sf_in[id];
-  //   q_sf = q_sf_in;
-  //   q_sz_in = vec_q_sz_in[id];
-  //   q_sz = q_sz_in;
-  //   lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
-  //   return;
-  // }
-    
-  // redivide the inflow so q_sz_in is less then q_szmax
-  //q_sz_in = std::min( vec_q_sz_in[id] , sz->q_szmax) ;
-  //q_sf_in = vec_q_sf_in[id] + vec_q_sz_in[id]  - q_sz_in;
+
   q_sz_in = vec_q_sz_in[id];
   q_sf_in = vec_q_sf_in[id];
 
@@ -314,56 +255,6 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 		    id, it, ub - lb); //bnd.second - bnd.first);
     }
   }
-      
-  // std::pair<double,double> ubnd = lbnd;// make sure have same solution is saturated
-  
-  // if( lbnd.second < 0 ){ // need a numeric solution
-  //   // find upper limits of search
-  //   ubnd.first = s_sz+3*vtol;
-  //   z = ubnd.first;
-  //   v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
-  //   qq = sz->fq(z,q_sz_in);
-  //   Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
-  //   ubnd.second = Hz;
-  //   int it(0);
-  //   while( (ubnd.second < 0) and (it < max_it) ){
-  //     ubnd.first *= 2.0;
-  //     double z = ubnd.first;
-  //     v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
-  //     qq = sz->fq(z,q_sz_in);
-  //     Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
-  //     ubnd.second = Hz;
-  //     it +=1;
-  //   }
-  //   if( ubnd.second < 0 ){
-  //     Rcpp::warning("SZ: No bound found within %i iterations. Difference between bounds is %d.",
-  // 		    it, ubnd.first - lbnd.first); //bnd.second - bnd.first);
-  //   }
-  //   // shrink
-  //   it = 0;  
-  //   while( (it <= max_it) and ( ubnd.second > vtol ) ){
-  //     //z = (lbnd.first+ubnd.first)/2.0;
-  //     double iW = ubnd.second / (ubnd.second-lbnd.second);
-  //     iW = std::max(0.001,std::min(iW,0.999));
-  //     z = (iW*lbnd.first) + (1.0-iW)*ubnd.first;
-  //     v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
-  //     qq = sz->fq(z,q_sz_in);
-  //     Hz = z - s_sz + v_uz_sz + Dt*(q_sz_in - qq);
-      
-  //     if( Hz < 0 ){
-  // 	lbnd.first = z;
-  // 	lbnd.second = Hz;
-  //     }else{
-  // 	ubnd.first = z;
-  // 	ubnd.second = Hz;
-  //     }
-  //     it += 1;  
-  //   }
-  //   if(it > max_it){
-  //     Rcpp::warning("HRU %i SZ: No solution found within %i iterations. Difference between bounds is %d",
-  // 		    id, it, ubnd.first - lbnd.first); //bnd.second - bnd.first);
-  //   }
-  // }
 
   // upward pass
   q_sz = sz->fq(ub,q_sz_in);
@@ -389,8 +280,7 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // redistributed the flows
   lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
     
-  //Rcpp::Rcout << s_sf << " " << q_sf << " " << q_sf_in << " " << r_sf_rz << " " << Dt << std::endl;
-  // // single HRU mass balance for development
+  // single HRU mass balance for development
   mass_ballance[0] += Dt*(q_sf_in - q_sf) - v_sf_rz - s_sf; // surface
   mass_ballance[1] += Dt*(precip - aet) + v_sf_rz - v_rz_uz - s_rz; // root zone
   mass_ballance[2] += v_rz_uz - v_uz_sz - s_uz; // unsaturated zone
@@ -407,19 +297,3 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
       Rcpp::Rcout << "     s_sz:  " << mass_ballance[3] << std::endl;
   }
 }
-
-
-// double hru::fsz(double& s, double &qin, double &q_lower, double &q_upper, double const &Dt){ // compute for saturated zone function
-//   double r = std::min(  area / t_d, (s_uz + Dt*r_rz_uz)/( (s*t_d) + area*Dt) ); // compute recharge
-//   double q = sz->fq(s,qin);
-//   q = std::min( std::max(q ,q_lower),q_upper );
-//   //Rcpp::Rcout << q << " " << s << " " << r << std:endl;
-//   return( s - s_sz + Dt * (qin + r - q) );
-// }
-
-// double hru::fsf(double& s, double &qin, double &q_lower, double &q_upper, double const &Dt){ // compute for saturated zone function
-//   double q = sf->fq(s,qin);
-//   q = std::min( std::max(q ,q_lower),q_upper );
-//   //Rcpp::Rcout << q << " " << s << " " << r << std:endl;
-//   return( s - s_sf + Dt * (q + r_sf_rz - qin) );
-// }
