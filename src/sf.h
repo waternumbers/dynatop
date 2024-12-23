@@ -9,42 +9,24 @@
 // generic class
 class sfc {
 protected:
-  double kappa_1, eta_1, s_1, kappa_2, eta_2;
+  double v_1, s_1, v_2, rho;
 public:
-   // initialisation
+  // initialisation
   sfc();
-  virtual double fq(double const&, double const&, double const&); // outflow given storage and inflow
-  virtual double fs(double const&, double const&); // storage given outflow and inflow
-  virtual void update(double&, double&, double const&, double const&,
-		      double const&, double const&, int const&);
+  virtual double fk(double const&); // multiply value by storage to give outflow
 };
 
-// constant celerity & diffusivity with RAF
+// two section constant velocity
 class sfc_cnst: public sfc {
 public:
-  sfc_cnst(std::vector<double> const&, std::vector<double> const&);
+  sfc_cnst(std::vector<double> const&, double const&, double const&);
 };
 
 // kinematic with RAF
 class sfc_kin: public sfc {
 public:
-  sfc_kin(std::vector<double> const&, std::vector<double> const&);
-  double fq(double const&, double const&, double const&);
-  double fs(double const&, double const&);
-};
-
-// compound channel with RAF
-class sfc_comp: public sfc {  
-public:
-  sfc_comp(std::vector<double> const&, std::vector<double> const&);
-};
-
-// kinematic with RAF solved as a tank
-class sfc_kin_tank: public sfc {
-public:
-  sfc_kin_tank(std::vector<double> const&, std::vector<double> const&);
-  double fq(double const&, double const&, double const&);
-  double fs(double const&, double const&);
+  sfc_kin(std::vector<double> const&, double const&, double const&, double const&);
+  double fk(double const&);
 };
 
 #endif

@@ -38,20 +38,12 @@ hru::hru(int const id_,
   for(long unsigned int ii=0; ii<sf_lnk_id.size(); ++ii){
     switch(sf_type_){
     case 1:
-      // constant velocity with raf
-      sf.push_back( std::make_unique<sfc_cnst>( sf_param_, sf_lnk_width_[ii], sf_lnk_gradient_[ii], area ) );
+      // two stage constant velocity
+      sf.push_back( std::make_unique<sfc_cnst>( sf_param_, sf_lnk_width_[ii], area ) );
       break;
     case 2:
       // mannings with raf
       sf.push_back( std::make_unique<sfc_kin>( sf_param_, sf_lnk_width_[ii], sf_lnk_gradient_[ii], area ) );
-      break;
-    case 3:
-      // compound channel
-      sf.push_back( std::make_unique<sfc_comp>( sf_param_, sf_lnk_width_[ii], sf_lnk_gradient_[ii], area ) );
-      break;
-    case 4:
-      // two stage mannings
-      sf.push_back( std::make_unique<sfc_kin_tank>( sf_param_, sf_lnk_width_[ii], sf_lnk_gradient_[ii], area ) );
       break;
     }
     lambda_sf.push_back(0.0);
