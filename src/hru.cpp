@@ -54,6 +54,10 @@ hru::hru(int const id_,
     // manning with raf solved as tank
     sf = std::make_unique<sfc_kin_tank>( sf_param_, properties );
     break;
+  case 5:
+    // power law on storage
+    sf = std::make_unique<sfc_power_law>( sf_param_, properties );
+    break;
   }
 
   // initialise the saturated flux object

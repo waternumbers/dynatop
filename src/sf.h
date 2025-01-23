@@ -47,4 +47,11 @@ public:
   double fs(double const&, double const&);
 };
 
+// power law with raf
+class sfc_power_law: public sfc {
+public:
+  sfc_power_law(std::vector<double> const&, std::vector<double> const&);
+  double fq(double const&, double const&, double const&);
+  double fs(double const&, double const&);
+};
 #endif

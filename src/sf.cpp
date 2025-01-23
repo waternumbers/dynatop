@@ -183,3 +183,29 @@ double sfc_kin_tank::fs(double const &qin, double const &r){
   }
   return(s);
 }
+
+//power law
+sfc_power_law::sfc_power_law(std::vector<double> const &param, std::vector<double> const &properties){
+  //double const &Dx(properties[2]), &width(properties[1]), &grd(properties[3]);
+  s_1 = param[0]; // raf storage & offset in power law
+  kappa_1 = 1.0 / param[1]; // param[2] is raf time constant
+  kappa_2 = 0.0; // not used
+  eta_1 = param[2]; // multiplier in power law
+  eta_2 = param[3]; // power in power law
+}
+double sfc_power_law::fq(double const &s, double const &qin, double const &r){
+  double q_1 = kappa_1*std::min(s_1,s);
+  double q_2 = eta_1 * std::pow( std::max(0.0,(s-s_1)),eta_2);
+  return( q_1 + q_2 );
+}
+double sfc_power_law::fs(double const &qin, double const &r){
+  double q = qin - r;
+  if( q<= 0.0 ){ return(0.0); } // handl case of no outflow
+
+  double q_1_max = s_1*kappa_1;
+  double q_1 = std::min(q,q_1_max);
+  double s_1 = q_1 / kappa_1;
+  double q_2 = std::max(0.0,q-q_1_max);
+  double s_2 = std::pow( q_2/eta_1, 1.0/eta_2 );
+  return( s_1 + s_2 );
+}
