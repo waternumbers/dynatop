@@ -23,7 +23,7 @@ swindale_obs <- Swindale$obs
 
 new <- do.call(rbind,lapply(swindale_model$hru,function(h){h$properties}))
 old <- do.call(rbind,lapply(Swindale$model$hru,function(h){h$properties}))
-    
+
 names(swindale_model)
 
 swindale_model$map <- "../dynatopGIS/build_scripts/demo/new_model.tif"

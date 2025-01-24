@@ -201,7 +201,7 @@ dynatop <- R6Class(
         map  = NULL, # storage for map object
         output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
-        info = list(sf = setNames(as.integer(1:4),c("cnst","kin","comp","kin_tank")),
+        info = list(sf = setNames(as.integer(1:5),c("cnst","kin","comp","kin_tank","power_law")),
                     rz = setNames(as.integer(1),c("orig")),
                     uz = setNames(as.integer(1),c("orig")),
                     sz = setNames(as.integer(1:4),c("exp","bexp","dexp","cnst")),
@@ -375,7 +375,7 @@ dynatop <- R6Class(
         regurge_hru = function(h){
             ## convert for C++
             for(ii in c("sf","rz","uz","sz")){ ## convert type to integer
-                h[[ii]]$type <- private$info[[ii]][ h[[ii]]$type ]
+                h[[ii]]$type <- names(private$info[[ii]])[ h[[ii]]$type ]
             }
             return(h)
         },
