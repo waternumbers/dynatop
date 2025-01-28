@@ -13,9 +13,9 @@ protected:
 public:
    // initialisation
   sfc();
-  virtual double fq(double const&, double const&, double const&); // outflow given storage and inflow
-  virtual double fs(double const&, double const&); // storage given outflow and inflow
-  virtual void update(double&, double&, double const&, double const&,
+  virtual double fq(double const&); // outflow given storage
+  virtual double fs(double const&); // storage given outflow
+  virtual void update(double&, double&,
 		      double const&, double const&, int const&);
 };
 
@@ -29,29 +29,15 @@ public:
 class sfc_kin: public sfc {
 public:
   sfc_kin(std::vector<double> const&, std::vector<double> const&);
-  double fq(double const&, double const&, double const&);
-  double fs(double const&, double const&);
-};
-
-// compound channel with RAF
-class sfc_comp: public sfc {  
-public:
-  sfc_comp(std::vector<double> const&, std::vector<double> const&);
-};
-
-// kinematic with RAF solved as a tank
-class sfc_kin_tank: public sfc {
-public:
-  sfc_kin_tank(std::vector<double> const&, std::vector<double> const&);
-  double fq(double const&, double const&, double const&);
-  double fs(double const&, double const&);
+  double fq(double const&);
+  double fs(double const&);
 };
 
 // power law with raf
 class sfc_power_law: public sfc {
 public:
   sfc_power_law(std::vector<double> const&, std::vector<double> const&);
-  double fq(double const&, double const&, double const&);
-  double fs(double const&, double const&);
+  double fq(double const&);
+  double fs(double const&);
 };
 #endif

@@ -1,18 +1,14 @@
 #include "sz.h"
 
 szc::szc(){}
-double szc::fq(double const &s, double const &qin){
+double szc::fq(double const &s){
   // outflow
-  double qt = ftq(s);
-  return( std::max(0.0, 2*qt - qin) );
+  return( -999.9 );
 }
-double szc::fs(double const &q, double const& qin){
+double szc::fs(double const &q){
   // storage
-  double qt = std::min(q_szmax, (q+qin)/2); // ensure no negative outflows
-  return( fts(qt) );
+  return( -999.9 );
 }
-double szc::ftq(double const &s){ return(-999.9); }
-double szc::fts(double const &q){ return(-999.9); }
 
 
 // exponential
@@ -28,14 +24,12 @@ szc_exp::szc_exp(std::vector<double> const &param, std::vector<double> const &pr
   q_szmax =  width*t0*std::sin(beta);
   psi = std::cos(beta) / (m*area); // scaling to get crosssectional depth from storage
 }
-double szc_exp::ftq(double const &s){ // get flow from storage
+double szc_exp::fq(double const &s){ // get flow from storage
   double q = q_szmax * std::exp(-psi*s);
   return( q );
 }
-double szc_exp::fts(double const &q){ // get storage from flow
-  //Rcpp::Rcout << q << " " << q_szmax << " " << q/q_szmax << std::endl;
+double szc_exp::fs(double const &q){ // get storage from flow
   if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
-  //  if( q==0.0 ){ return( 100.00/psi ); } // this is to catch a -Inf return big deficit q ~ q_max * 4*10^{-44}
   double s = -std::log(q/q_szmax) / psi;
   return( s );
 }
@@ -45,7 +39,6 @@ double szc_exp::fts(double const &q){ // get storage from flow
 szc_bexp::szc_bexp(std::vector<double> const &param, std::vector<double> const &prop){
   szc();
   double const &t_0(param[0]), &m(param[1]), &h_sz_max(param[2]);
-  //double const &area(prop[0]), &width(prop[1]), &grd(prop[3]);
   double const &Dx(prop[2]), &width(prop[1]), &grd(prop[3]);
   double area = width*Dx;
   double beta = std::atan(grd);
@@ -55,11 +48,11 @@ szc_bexp::szc_bexp(std::vector<double> const &param, std::vector<double> const &
   kappa = std::exp(-psi*h_sz_max);
   q_szmax = omega * ( 1 -  kappa );
 }
-double szc_bexp::ftq(double const &s){ // get flow from storage
+double szc_bexp::fq(double const &s){ // get flow from storage
   double q = std::max(0.0, omega*( std::exp(-psi*s) - kappa ) );
   return( q );
 }
-double szc_bexp::fts(double const &q){ // get storage from flow
+double szc_bexp::fs(double const &q){ // get storage from flow
   if( omega ==0.0 ){ return( 0.0 ); }  // since there can be no flow or storage
   return( -std::log((q/omega)+kappa)/psi );
 };
@@ -79,10 +72,10 @@ szc_cnst::szc_cnst(std::vector<double> const &param,  std::vector<double> const 
   kappa = h_sz_max;
   q_szmax = omega*h_sz_max;
 };
-double szc_cnst::ftq(double const &s){
+double szc_cnst::fq(double const &s){
   return( std::max(0.0, omega*(kappa - (s*psi))) );
 };
-double szc_cnst::fts(double const &q){
+double szc_cnst::fs(double const &q){
   if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
   return( -psi*((q/omega)-kappa) );
 };
@@ -102,11 +95,11 @@ szc_dexp::szc_dexp(std::vector<double> const &param, std::vector<double> const &
   psi = std::cos(beta) / (m*area); // scaling to get crosssectional depth from storage
   kappa = std::cos(beta) / (m2*area); // scaling to get crosssectional depth from storage
 }
-double szc_dexp::ftq(double const &s){ // get flow from storage
+double szc_dexp::fq(double const &s){ // get flow from storage
   double q = q_szmax * ( omega*std::exp(-psi*s) + (1.0-omega)*std::exp(-kappa*s) );
   return( q );
 }
-double szc_dexp::fts(double const &q){ // get storage from flow
+double szc_dexp::fs(double const &q){ // get storage from flow
   if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
   double z;
   if( q > q_szmax ){
@@ -128,7 +121,7 @@ double szc_dexp::fts(double const &q){ // get storage from flow
     double qq; //z, qq;
     while( (it <= max_it) and ( (upr-lwr)>1e-10 ) ){
       z = (lwr+upr)/2.0;
-      qq = ftq(z);
+      qq = fq(z);
       if( qq <= q ){ upr = z; } else { lwr = z; }
       it += 1;
     }
