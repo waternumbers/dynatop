@@ -1,60 +1,95 @@
 ## example from Ezio's paper
 rm(list=ls())
 
-## generate inflows and time steps
-Qbase <- 100
-Qpeak <- 100 #900
-beta <- 16
-Tp <- 24*60*60
-Dt <- 1800
-ts <- seq(0,96*3600,by=Dt)
-Qin <- Qbase + (Qpeak-Qbase)*((ts/Tp)*exp(1-(ts/Tp)))^beta
-plot(ts/3600,Qin,type="l")
+sim_time <- 96*60*60
+sim_length <- 100*1000
 
-## channel
-S0 <- 0.00025
-n <- 0.035
+## function to generate forcing
+Qinflow <- function(tt){
+    Qbase <- 100
+    Qpeak <- 900
+    beta <- 16
+    Tp <- 24*60*60
+    Qbase + (Qpeak-Qbase)*( (tt/Tp)*exp(1-(tt/Tp)) )^beta
+}
+
+### model steps
+Dt <- 1800
 Dx <- 2000
 
-width <- 50
+## generate time steps
+ts <- seq(0,sim_time,by=Dt)
+nx <- ceiling(sim_length / Dx)
 
-Qout <- rep(NA,length(Qin))
-Qref <- cel <- beta <- Cstar <- Dstar <- y <- rep(NA,length(Qin))
+## initial outflow storage
+Qrec <- rep(NA,length(ts)) ## outflow at end of simulation reach
 
-## initialise
-Qout[1] <- Qref[1] <- Qin[1] ## steady state
+Q <- rep(NA,nx+1) ## flow at previous time step
+Qcur <- rep(NA,nx+1) ## flow at current time step
 
-fy <- function(y,q,n,s,w){
-    A <- y*w
-    wp <- 2*y + w ## rectangular
-    qhat <- (sqrt(S0)/n) * (A^(5/3)) / (wp^(2/3))
-    q-qhat
+## need to keep these for next timestep
+Cstar <- rep(NA,nx) ## need to keep these for next
+Dstar <- rep(NA,nx)
+
+
+## channel definition
+S0 <- rep(0.00025,nx)
+n <- rep(0.035,nx)
+B0 <- rep(50,nx)
+ca <- rep(0,nx)
+sa <- rep(1,nx)
+
+
+Ay <- function(y){ (B0[ii] + y*ca[ii])*y }
+By <- function(y){ B0[ii] + 2*y*ca[ii] }
+Py <- function(y){ B0[ii] + 2*(y/sa[ii]) }
+Qy <- function(y){ (sqrt(S0[ii])/n[ii]) * (Ay(y)^(5/3)) / (Py(y)^(2/3)) }
+cy <- function(y){ (5/3)* (sqrt(S0[ii])/n[ii]) * (Ay(y)^(2/3)) / (Py(y)^(2/3)) *
+                       ( 1 - ( (4*Ay(y))/(5*By(y)*Py(y)*sa[ii]) ) )
 }
+vy <- function(y){ (sqrt(S0[ii])/n[ii]) * (Ay(y)/Py(y))^(2/3) }
+betay <- function(y){ (5/3)*( 1 - ( (4*Ay(y))/(5*By(y)*Py(y)*sa[ii]) ) ) }
+fy <- function(y,q){q - Qy(y)}
+
+## initialise as steady state
 tt <- 1
-y[tt] <- uniroot(fy,c(0,100),q=Qref[tt],n=n,s=S0,w=width)$root
-beta[tt] <- (5/3)*( 1- (4/5)*( y[tt]/(width + 2*y[tt])) )
-cel[tt] <- beta[tt]*Qref[tt]/(width*y[tt])
-Cstar[tt] <- (cel[tt]*Dt)/(beta[tt]*Dx)
-Dstar[tt] <- Qref[tt]/(beta[tt]*width*S0*cel[tt]*Dx)
+Q[] <- Qinflow(ts[tt])
+for(ii in 1:nx){
+    Qref <- (Q[ii+1]+ Q[ii])/2
+    y <- uniroot(fy,c(0,100),q=Qref)$root
+    beta <- betay(y)
+    cel <- cy(y)
+    Cstar[ii] <- (cel*Dt)/(beta[tt]*Dx)
+    Dstar[ii] <- Qref/(beta*By(y)*S0[ii]*cel*Dx)
+}
+Qrec[1] <- Q[nx+1]
 
-for(tt in 2:length(Qin)){
-    Qout[tt] <- Qout[tt-1] + (Qin[tt]-Qin[tt-1])
-    for(ii in 1:10){
-        Qref[tt] <- (Qin[tt]+Qout[tt])/2
-        y[tt] <- uniroot(fy,c(0,100),q=Qref[tt],n=n,s=S0,w=width)$root
-        beta[tt] <- (5/3)*( 1- (4/5)*( y[tt]/(width + 2*y[tt])) )
-        cel[tt] <- beta[tt]*Qref[tt]/(width*y[tt])
-        Cstar[tt] <- (cel[tt]*Dt)/(beta[tt]*Dx)
-        Dstar[tt] <- Qref[tt]/(beta[tt]*width*S0*cel[tt]*Dx)
-
-        K <- c(
-            -1+Cstar[tt-1]+Dstar[tt-1] ,
-            (1+Cstar[tt-1]+Dstar[tt-1])*(Cstar[tt]/Cstar[tt-1]),
-            (1-Cstar[tt-1]+Dstar[tt-1])*(Cstar[tt]/Cstar[tt-1])
-        ) / (1 + Cstar[tt] + Dstar[tt])
-        Qout[tt] <- K[1]*Qin[tt] + K[2]*Qin[tt-1] + K[3]*Qout[tt-1]
+for(tt in 2:length(ts)){
+    Qcur[1] <- Qinflow(ts[tt])
+    for(ii in 1:nx){
+        Qcur[ii+1] <- Q[ii+1] + (Qcur[ii]-Q[ii])
+        for(it in 1:10){
+            Qref <- (Qcur[ii+1] + Qcur[ii])/2
+            y <- uniroot(fy,c(0,100),q=Qref)$root
+            beta <- betay(y)
+            cel <- cy(y)
+            Cs <- (cel*Dt)/(beta*Dx)
+            Ds <- Qref/(beta*By(y)*S0[ii]*cel*Dx)
+            
+            K <- c(
+                -1+Cs+Ds ,
+                (1+Cstar[ii]-Dstar[ii])*(Cs/Cstar[ii]),
+                (1-Cstar[ii]+Dstar[ii])*(Cs/Cstar[ii])
+            ) / (1 + Cs + Ds)
+            Qcur[ii+1] <- K[1]*Qcur[ii] + K[2]*Q[ii] + K[3]*Q[ii+1]
+        }
+        Cstar[ii] <- Cs
+        Dstar[ii] <- Ds
     }
+    Qrec[tt] <- Qcur[nx+1]
+    Q <- Qcur
 }
 
-plot(ts/3600,Qin)
-lines(ts/3600,Qout)
+#plot(ts/3600,Qinflow(ts),type="l")
+#lines(ts/3600,Qrec,col="red")
+lines(ts/3600,Qrec,col="green")
