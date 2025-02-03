@@ -74,7 +74,7 @@ sfc_power_law::sfc_power_law(std::vector<double> const &param, std::vector<doubl
 double sfc_power_law::fq(double const &s){
   if( s <= 0.0 ){ return(0.0); } // handle case of no storage
   double q = eta_1 * std::pow( std::min(s,s_1), kappa_1 ) +
-    eta_2 * std::pow( std::min(s-s_1,0.0), kappa_2 );  
+    eta_2 * std::pow( std::max(s-s_1,0.0), kappa_2 );  
   return( q );
 }
 // fs computes storage given the outflow
