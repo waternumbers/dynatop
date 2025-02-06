@@ -125,7 +125,7 @@ time step, allowing for a semi-analytical solution of some storage zones.
 The storage in the surface zone satisfies the mass balance equation
 
 \[
-\frac{ds_{sf}}{dt} = q_{sf}^{-} - q_{sf}^{+} - r_{sf \rightarrow rz}
+- \frac{ds_{sf}}{dt} = r_{sf \rightarrow rz} + \sum\limits_{i=1}^{8}  q_{sf,i} 
 \]
 
 where surface storage is increased by lateral downslope flow from upslope HRUs. 
@@ -136,118 +136,22 @@ zone storage is full). In cases where lateral flow in the saturated zone produce
 saturation storage deficits water may be returned from the root
 zone to the surface giving negative values of $r_{sf \rightarrow rz}$.
 
-The Muskingham-Cunge method offers a parsimonious method for relating
-inflow, outflow and stroage that can capture a range of surface
-dynamics. 
-This section outlines the key equations and shows
-how they may be used to capture a range of conceptual models. Muskingham-Cunge routing can be derived in a number of ways. Here we
-offer a direct approach that reclaims the mass consrvative formulaton
-given in Todini <2007>.
-
-The surface storage $s_{sf}$ in a reach or hillslope of length $\Delta
-x$ can be expressed in terms of the representative flow $q_{sf}$ and velocity $v_{sf}$
-as
+The outflow over the $i$th boundary is given with reference to the hydraulic
+gradient $S_{h,i}$ and cross sectional flow area $a_{sf_i}$ using the Mannings
+formula for velocity
 \[
-s_{sf} = \frac{q_{sf} \Delta x}{v_{sf}}
-\]
-The representative flow is related to the inflow $q_{sf}^{-}$ and outflow
-$q_{sf}^{+}$ using the parameter $\eta$ through
-\[
-q_{sf} = \eta q_{sf}^{-} + \left(1-\eta\right) q_{sf}^{+}
-\]
-which gives
-\[
-s_{sf} = \frac{\Delta x}{v_{sf}} \left(\eta q_{sf}^{-} + \left(1-\eta\right) q_{sf}^{+} \right)
+v_{sf,i} = \mathrm{sign}\left(s_{h,i}\right) \frac{1}{n}R_{h}\left(a_{sf,i}\right) \left|S_{h,i}\right|^{0.5}
 \]
 
-### Approximating Tank Models
+Differing formulations are derived by differing approximations to the
+hydraulic gradient. The two considered are as follows
 
-Taking $\eta=0$ gives
-\[
-\frac{ds}{dt} = q^{-} + r - \frac{sv}{\Delta x}
-\]
-which is the equation of a tank model with possibly varying time constant $T =
-\frac{\Delta x}{v}$
-
-### Approximating Diffusion Wave Routing
-
-Diffuse routing with lateral inflow can be expressed as the parabolic
-equation (see for example [doi:10.1016/j.advwatres.2005.08.008](https://doi.org/10.1016/j.advwatres.2005.08.008))
-
-\[
-\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl - D \frac{dl}{dx}
-\]
-where $l$ is lateral inflow per unit length. Simplify this by
-considering that the lateral inflow $r$ uniformly
-distributed so that $l=\frac{r}{\Delta x}$ and $\frac{dl}{dx}=0$ to give
-
-\[
-\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl
-\]
-
-Let us relate this to the Muskingham Solution using the relationship
-\[
-q = \eta q^{-} + \left(1-\eta\right) q^{+}
-\]
-
-Taking Taylor series expansions for $q^{-}$ and
-$q^{+}$ based on $q$ gives
-
-\[
-q^{+} \approx q + \eta \Delta x \frac{dq}{dx} + \frac{1}{2}\eta^2\Delta x^2 \frac{d^2 q}{dx^2}
-\]
-and
-\[
-q^{-} \approx q - \left(1-\eta\right) \Delta x \frac{dq}{dx} + \frac{1}{2}\left(1-\eta\right)^2 \Delta x^2 \frac{d^2 q}{dx^2}
-\]
-
-Subtracting the expression for $q^{-}$ from that for $q^{+}$ gives
-
-\[
-q^{-} - q^{+} \approx
--\Delta x \frac{dq}{dx} +
-\frac{1}{2}\left(1-2\eta\right) \Delta x^2 \frac{d^2 q}{dx^2}
-\]
-
-From the mass balance condition
-\[
-\frac{ds}{dt} \approx \Delta x l -\Delta x \frac{dq}{dx} +
-\frac{1}{2}\left(1-2\eta\right)\Delta x^2 \frac{d^2 q}{dx^2} 
-\]
-
-Using the expression for storage and relationship between flow and area
-\[
-\frac{dq}{dt} = \frac{dq}{da} \frac{da}{dt} = \frac{c}{\Delta x} \frac{ds}{dt}
-\]
-
-Then combining this with the approximation produces
-\[
-\frac{dq}{dt} + c\frac{dq}{dx} -
-\frac{c}{2}\left(1-2\eta\right)\Delta x \frac{d^2 q}{dx^2}
-\approx c l
-\]
-
-Comparison to the original diffuse routing equation shows that
-\[
-\eta \approx \frac{1}{2} - \frac{D}{c \Delta x}
-\]
-
-The value of $\eta$ is limited to between 0 and $\frac{1}{2}$. Firstly $\eta =
-1/2$ results from $D=0$; that is the Kinematic wave equation. Taking  $\eta=0$
-produces the maximum dispersion of $D = \frac{c\Delta x}{2}$, which is given by
-the linear tank.
-
-### Compound Channels
-
-Compound channels are considered as channels with two regimes corresponding to
-different reltionships between the $s_{sf}$, $q_{sf}$ and $\eta$ depending
-upon whether $s_{sf} \leq s_{c}$, for some storage threshold $s_{1}$.
-This allows a basic representation of surface storage such as runoff attenuation
-features, or out of bank channel flow.
-
-In solving this inflow is partitioned to ensure, where possible, $s_sf > s_{c}$
-
-
+- Kinematic Approximation where the hydrualic graient equal the bed slope so
+  $S_{h,i} = S_{0,i}$
+- Poor mans diffuse approximation where for constant $A$ the aproximation is
+  given by $S_{h,i} = \max\left(0, S_{0,i} + \frac{1}{A}\frac{d}{dx}
+  s_{sf}\right)$, which does not allow upslope flow, but stops downslope flow
+  when the surface water evelations match.
 
 ## Root zone
 
@@ -292,12 +196,12 @@ The unsaturated zone acts as a non-linear tank subject to the constraint
 
 The governing ODE is written as
 \begin{equation}
-\frac{ds_{uz}}{dt} = r_{rz \rightarrow uz} - \frac{A s_{uz}}{T_d s_{sz}}
+\frac{ds_{uz}}{dt} = r_{rz \rightarrow uz} - \frac{A s_{uz}}{T_d \left(AD - s_{sz}\right)}
 \end{equation}
 
 If water is able to pass freely to the saturated zone, then it flows at the rate
-$\frac{A s_{uz}}{T_ds_{sz}}$. 
-In the situation where $s_{sz}=s_{uz}$ the subsurface below
+$\frac{A s_{uz}}{T_d \left(AD - s_{sz}\right)}$. 
+In the situation where $AD - s_{sz}=s_{uz}$ the subsurface below
 the root zone can be considered saturated, as in there is no further available
 storage for water, but separated into two parts: an upper part with vertical
 flow and a lower part with lateral flux.
@@ -310,17 +214,15 @@ $s_{uz} \leq s_{sz}$.
 ## Saturated Zone
 
 For a HRU the alteration of the storage in the saturated zone is given in
-terms of the storage deficit $s_{sz}$ as
+terms of the storage $s_{sz} <= AD$ as:
 \[
-\frac{ds_{sz}}{dt} = q_{sz}^{+} - r_{uz \rightarrow sz} q_{sz}^{-}
+\frac{ds_{sz}}{dt} = r_{uz \rightarrow sz} - \sum\limits_{1}^{8} q^{sz,i}
 \]
+where when $s_{sz} = AD$ the flow from the unsaturated zone becomes negative.
 
-Beven et al. propose a Kinematic subsurface approximation where the
-flow across a give cross section is expressed as a function of the
-unsaturated area $a_{sz}$ by a function form
-$\mathcal{G}\left(a_{sz}\right)$
-
-and a velocity dependent upon the storage
+The Kinematic subsurface approximation allows the lateral fluxes to be
+expressed in terns of the surface gradient, flow croess section area
+$a_{sf_i}$ and a velocity dependent upon the storage
 $\mathcal{v}\left(s_{sz}\right) as
 \[
 q_{sz,i} = a_{sf,i} S_{0,i} \mathcal{v}\left(s_{sz}\right)
