@@ -15,7 +15,7 @@ Qinflow <- function(tt){
 
 ### model steps
 Dt <- 900
-Dx <- 100
+Dx <- 10000
 
 ## generate time steps
 ts <- seq(0,sim_time,by=Dt)
@@ -92,6 +92,6 @@ for(tt in 2:length(ts)){
     Q <- Qcur
 }
 
-plot(ts/3600,Qinflow(ts),type="l")
-lines(ts/3600,Qrec,col="red")
-##lines(ts/3600,Qrec,col="green")
+#plot(ts/3600,Qinflow(ts),type="l")
+#lines(ts/3600,Qrec,col="red")
+lines(ts/3600,Qrec,col="green")

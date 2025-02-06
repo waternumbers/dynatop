@@ -30,6 +30,7 @@ double szc_exp::fq(double const &s){ // get flow from storage
 }
 double szc_exp::fs(double const &q){ // get storage from flow
   if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
+  if( q >= q_szmax ){ return(0.0); } // since saturated
   double s = -std::log(q/q_szmax) / psi;
   return( s );
 }
@@ -54,6 +55,7 @@ double szc_bexp::fq(double const &s){ // get flow from storage
 }
 double szc_bexp::fs(double const &q){ // get storage from flow
   if( omega ==0.0 ){ return( 0.0 ); }  // since there can be no flow or storage
+  if( q >= q_szmax ){ return(0.0); } // since saturated
   return( -std::log((q/omega)+kappa)/psi );
 };
 
@@ -77,6 +79,7 @@ double szc_cnst::fq(double const &s){
 };
 double szc_cnst::fs(double const &q){
   if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
+  if( q >= q_szmax ){ return(0.0); } // since saturated
   return( -psi*((q/omega)-kappa) );
 };
 
@@ -103,7 +106,6 @@ double szc_dexp::fs(double const &q){ // get storage from flow
   if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
   double z;
   if( q > q_szmax ){
-    Rcpp::Rcout << "q > qmax " << q << " " << q_szmax << " " << q - q_szmax << std::endl;
     z = 0.0;
   }
   if( q == q_szmax ){ z = 0.0; }

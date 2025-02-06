@@ -5,14 +5,14 @@ sfc::sfc(){ }
 double sfc::fq(double const &s){
   if( s <= 0.0 ){ return(0.0); } // handle case of no storage
   double q = eta_1 * std::min(s,s_1) +
-    eta_2 * std::min(s-s_1,0.0);  
+    eta_2 * std::max(s-s_1,0.0);  
   return( q );
 }
 double sfc::fs(double const &q){
   if( q<= 0.0 ){ return(0.0); } // handle case of no outflow
   double q_1 = fq(s_1); // flow at change storage
   double s = ( std::min(q,q_1)/eta_1 ) +
-    ( std::min(q-q_1,0.0)/eta_2 );
+    ( std::max(q-q_1,0.0)/eta_2 );
   return( s );
 }
 void sfc::update(double &s, double &q,

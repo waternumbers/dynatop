@@ -15,7 +15,7 @@ Qinflow <- function(tt){
 
 ### model steps
 Dt <- 1800
-Dx <- 10
+Dx <- 2000
 
 ## generate time steps
 ts <- seq(0,sim_time,by=Dt)
