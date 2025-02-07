@@ -34,7 +34,7 @@ chn <- R6Class(
             betay <- function(y){ (5/3)*( 1 - ( (4*Ay(y))/(5*By(y)*Py(y)*self$sa) ) ) }
             fy <- function(y,q){q - Qy(y)}
             y <- uniroot(fy,c(0,100),q=Q)$root
-            print(y)
+            #print(y)
             beta <- betay(y)
             cel <- cy(y)
             self$Cs <- cel/(beta*self$Dx) ## removed Dt compared to paper
@@ -73,7 +73,7 @@ hru <- R6::R6Class(
                        q_sf_hat <- q_in #self$q_sf + (q_in - self$q_sf_in)
                        shat <- self$s_sf + Dt*q_in
                        for(it in 1:10){
-                           browser()
+                           #browser()
                            Qref <- (q_sf_hat + q_in)/2
                            self$chn$update(Qref)
                            Cs <- self$chn$Cs
@@ -112,7 +112,7 @@ sim_time <- 96*60*60
 sim_length <- 100*1000
 ## function to generate forcing
 Qinflow <- function(tt){
-    Qbase <- 0
+    Qbase <- 100
     Qpeak <- 900
     beta <- 16
     Tp <- 24*60*60

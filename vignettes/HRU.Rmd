@@ -145,10 +145,11 @@ offer a direct approach that reclaims the mass consrvative formulaton
 given in Todini <2007>.
 
 The surface storage $s_{sf}$ in a reach or hillslope of length $\Delta
-x$ can be expressed in terms of the representative flow $q_{sf}$ and velocity $v_{sf}$
+x$ can be expressed in terms of the representative flow $q_{sf}$, velocity
+$v_{sf}$ and cross-sectional area $a_{sf}$
 as
 \[
-s_{sf} = \frac{q_{sf} \Delta x}{v_{sf}}
+s_{sf} = \frac{q_{sf} \Delta x}{v_{sf}} = a_{sf} \Delta x
 \]
 The representative flow is related to the inflow $q_{sf}^{-}$ and outflow
 $q_{sf}^{+}$ using the parameter $\eta$ through
@@ -311,20 +312,73 @@ $s_{uz} \leq s_{sz}$.
 
 For a HRU the alteration of the storage in the saturated zone is given in
 terms of the storage deficit $s_{sz}$ as
+
 \[
-\frac{ds_{sz}}{dt} = q_{sz}^{+} - r_{uz \rightarrow sz} q_{sz}^{-}
+\frac{ds_{sz}}{dt} = q_{sz}^{+} - r_{uz \rightarrow sz} - q_{sz}^{-}
 \]
 
-Beven et al. propose a Kinematic subsurface approximation where the
+<Beven et al.> propose a Kinematic subsurface approximation where the
 flow across a give cross section is expressed as a function of the
-unsaturated area $a_{sz}$ by a function form
-$\mathcal{G}\left(a_{sz}\right)$
+unsaturated area $a_{sz}$ where the functional form
+$\mathcal{G}\left(a_{sz}, \Theta_{sz}\right)$ takes its maximum value when $a_{sz}=0$.
 
-and a velocity dependent upon the storage
-$\mathcal{v}\left(s_{sz}\right) as
+Table \@ref(tab:hs-transmissivity) gives
+$\mathcal{G}\left(a_{sz},\Theta_{sz}\right)$ for various the transmissivity
+profiles present as options within the `dynatop`
+package, the corresponding value to use for the `type` value
+in the saturated zone specification and the additional parameters
+required. The additional parameters are defined in Table
+\@ref(tab:hs-transmissivity-param).
+
+
+| Name                | $G\left(\bar{s}_{sz},\Theta_{sz}\right)$                                                                                                                            | $\Theta_{sz}$            | `type` value | Notes                                                                     |   |
+|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------|--------------|---------------------------------------------------------------------------|---|
+| Exponential         | $T_{0}w\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{Am}s_{sz}\right)$                                                                                          | $T_0,\beta,m$            | exp          | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |   |
+| Bounded Exponential | $T_{0}w\sin\left(\beta\right)\left(\exp\left(-\frac{\cos\beta}{Am}s_{sz}\right) - \exp\left(-\frac{\cos\beta}{m}D\right)\right)$                                    | $T_0,\beta,m,D$          | bexp         | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |   |
+| Constant Celerity   | $\frac{c_{sz}w}{A}\left(AD-s_{sz}\right)$                                                                                                                           | $c_{sz},D$               | cnst         |                                                                           |   |
+| Double Exponential  | $T_{0}w\sin\left(\beta\right)\left( \omega\exp\left(-\frac{\cos\beta}{Am}s_{sz}\right) + \left(1-\omega\right)\exp\left(\frac{\cos\beta}{Am_2}s_{sz}\right)\right)$ | $T_0,\beta,m,m_2,\omega$ | dexp         |                                                                           |   |
+
+Table: (\#tab:hs-transmissivity) Transmissivity profiles available with the
+`dynatop` package <TODO rewrite in terms of a_sz>.
+
+
+| Symbol    | Description                                       | unit     |
+|-----------|---------------------------------------------------|----------|
+| $T_0$     | Transmissivity at saturation                      | m$^2$/s  |
+| $m$,$m_2$ | Exponential transmissivity constants              | m$^{-1}$ |
+| $\beta$   | Angle of hill slope                               | rad      |
+| $c_{sz}$  | Saturated zone celerity                           | m/s      |
+| $D$       | Storage deficit at which zero lateral flow occurs | m        |
+| $\omega$  | weighting parameter                               | -        |
+
+Table: (\#tab:hs-transmissivity-param) Additional parameters used in the transmissivity profiles.
+
+
+The kinematic assumption can be well captured by a Muskingum-Cunge
+representation. Direct application of the method used for the surface zone is
+not possible due to the inability to compute flow velocities for some
+$\mathcal{G}\left(a_{sz},\Theta_{sz}\right)$ due to the lack of an upper bound
+on $a_{sz}$. 
+
+To adress this we instead formulate the model in terms of the difference
+between the current and saturated flow rates; that is 
 \[
-q_{sz,i} = a_{sf,i} S_{0,i} \mathcal{v}\left(s_{sz}\right)
+\tilde{q}_{sz}^{+} = \mathcal{G}\left(0,\Theta_{sz}\right) - q_{sz}^{+}
 \]
+and
+\[
+\tilde{q}_{sz}^{-} = \mathcal{G}\left(0,\Theta_{sz}\right) - q_{sz}^{-}
+\]
+giving
+\[
+\frac{ds_{sz}}{dt} = \tilde{q}_{sz}^{-} - r_{uz \rightarrow sz} - \tilde{q}_{sz}^{+}
+\]
+which is directly ameanable to the approach taken for the surface. Since for a
+kineatic wave $\eta=0.5$ this gives a representaive flow
+\[
+\tilde{q}_{sz} = \frac{1}{2}\left( \tilde{q}_{sz}^{-} + \tilde{q}_{sz}^{+} \right)
+\]
+
 
 # Numerical Solution
 
@@ -340,43 +394,25 @@ the downward flow of water within each timestep of size $\Delta t$. Hence on
 the first downward pass through the stores the maximum downward volumes of the vertical
 fluxes $\hat{v}_{* \rightarrow *} = \Delta t \hat{r}_{* \rightarrow *}$ are determined. These then moderated by the
 solution of the saturated zone, with an upward pass giving the final states.
-  2. The kinematic (or poor mans diffuse) approximations allow an ordering of
-     the HRUs which allows a solution to be derived based on the premis that
+  2. The an ordering of
+     the HRUs exists which allows a solution to be derived based on the premis that
      the inflows can be determined before evolving the HRU states.
 
 ## Downward Pass
 
 ### Surface excess
 
-Given the ordering of the HRUs we are interested only in the evaluating the
-velocities across to those HRUs downslope. Given this and the desire for the
-evaluation o feach HRU to be independent take
-\[ 
-\tilde{a}_{sf,i} = \frac{w_{i}}{A}\left.s_{sf}\right|_{t}
-\]
-and subsequently
+The maximum downward flux $\hat{v}_{sf \rightarrow rz}$ is acheived when
+$q_{sf}^{+}=0$ and is given by
 \[
-\tilde{v}_{sf,i} = \frac{1}{n}R_{h}\left(\tilde{a}_{sf,i}\right) \left|S_{0,i}\right|^{0.5}
+\hat{v}_{sf \rightarrow rz} = \left.s_{sf}\right\rvert_{t} + \Delta t
+\left.q_{sf}^{-}\right\rvert_{t+\Delta t} - \left.s_{sf}\right\rvert_{t+\Delta t}
 \]
-
-With $\left. q_{sf}^{-} \right\rvert_{t+\Delta t}$ being the already
-determined inflows and, by convention $w_i=0 \iff S_{0,i} \leq 0$ The implicit solution of mass balance equation gives
-
+Noting that bot the representative flow $q_{sf}$ and $\eta$ are functions of
+$s_{sf}$ the value of $\left.s_{sf}\right\rvert_{t+\Delta t}$ can be found by
+solving
 \[
-\left. s_{sf} \right\rvert_{t+\Delta t} = 
-\left( 1 + \Delta t \sum\limits_{i=1}^{8} \frac{w_{i}\tilde{v}_{sf,i}}{A} \right)^{-1}
-\left(
-\left. s_{sf} \right\rvert_{t} +
-\Delta t 
-\left. q_{sf}^{-} \right\rvert_{t+\Delta t} -
-\left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t}
-\right)
-\]
-
-Since the outflow is 0 when the $s_sf=0$ the maximum downward flux volume is
-\[
-\left. \hat{v}_{sf \rightarrow rz} \right\rvert_{t+\Delta t} =  \left. s_{sf}
-\right\rvert_{t} + \Delta t \left. q_{sf}^{-} \right\rvert_{t+\Delta t}
+\left.q_{sf}\right\rvert_{t+\Delta t} = \left.\eta\right\rvert_{t+\Delta t} \left.q_{sf}^{-}\right\rvert_{t+\Delta t}
 \]
 
 ### Root Zone
@@ -411,112 +447,58 @@ $\left. s_{sz} \right.\rvert_{t+\Delta t}$ as
 \begin{equation}
 \left. s_{uz} \right.\rvert_{t+\Delta t} = 
 \frac{T_{d}\left(AD - \left. s_{sz} \right.\rvert_{t+\Delta t}\right)}{
-T_{d}\left(AD - \left. s_{sz} \right.\rvert_{t+\Delta t}\right) + A \Delta t}
+T_{d} \left. s_{sz} \right.\rvert_{t+\Delta t} + A \Delta t}
 \left( \left. s_{uz} \right.\rvert_{t} + 
 v_{rz \rightarrow uz}\right)
 \end{equation}
 
-Since $\left. s_{uz} \right.\rvert_{t+\Delta t} \leq AD - \left. s_{sz}
+Since $\left. s_{uz} \right.\rvert_{t+\Delta t} \leq \left. s_{sz}
 	   \right.\rvert_{t+\Delta t}$ this places an additional condition of
 \begin{equation}
 \left. s_{uz} \right.\rvert_{t} + v_{rz \rightarrow uz} \leq 
-AD - \left. s_{sz} \right.\rvert_{t+\Delta t} + \frac{A \Delta t}{T_d}
+\left. s_{sz} \right.\rvert_{t+\Delta t} + \frac{A \Delta t}{T_d}
 \end{equation}
 
 By mass balance this gives the maximum downward flux volume as
 \[
 A\Delta t \min\left(
 \frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
-{T_{d}\left(AD - \left. s_{sz} \right.\rvert_{t+\Delta t}\right) + A \Delta t}, \frac{1}{T_{d}} \right)
+{T_{d}\left. s_{sz} \right.\rvert_{t+\Delta t} + A \Delta t}, \frac{1}{T_{d}} \right)
 \]
-which is apporximated as
-\[
-\hat{v}_{uz \rightarrow sz} = A\Delta t \min\left(
-\frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
-{T_{d}\left(AD - \left. s_{sz} \right.\rvert_{t} \right) + A \Delta t}, \frac{1}{T_{d}} \right)
-\]
-
 
 ### Saturated Zone
 
-As with the surface zone the ordering of the HRUs means we are interested only in the evaluating the
-velocities across to those HRUs downslope. Given this and the desire for the
-evaluation of each HRU to be independent take
-\[ 
-a_{sz,i} = \frac{w_{i}}{A}\left.s_{sf}\right|_{t+\Delta t}
-\]
-and an explicit approximation of the velocity
-\[
-\tilde{v}_{sz,i} = \mathcal{v} \left( \left.s_{sz}\right\rvert_{t} \right)
-\]
-With $\left. q_{sz}^{-} \right\rvert_{t+\Delta t}$ being the already
-determined inflows and, by convention $w_i=0 \iff S_{0,i} \leq 0$ The implicit solution of mass balance equation gives
+The solution of the saturated zone is complicated by the formulation of the
+unsaturated zone solution. The iterative numerical scheme, based on a
+semi-implicit step can be formulated to provide a solution
 
-\[
-\left. s_{sz} \right\rvert_{t+\Delta t} = \min\left(AD,
-\left( 1 + \Delta t \sum\limits_{i=1}^{8} \frac{w_{i}\tilde{v}_{sf,i}}{A} \right)^{-1}
-\left(
-\left. s_{sz} \right\rvert_{t} +
-\Delta t 
-\left. q_{sz}^{-} \right\rvert_{t+\Delta t} +
-\left. v_{uz \rightarrow uz} \right\rvert_{t+\Delta t}
-\right)
-\right)
-\]
-Building on the generic solution the implicit scheme for the saturated zone gives
+1. Take an initial outflow estimate $\tilde{q}^* = \max \left(0,
+   2\mathcal{G}\left(0,\Theta_{sz}\right) -
+   2\mathcal{G}\left(\frac{\left.s_{sz}\right\rvert_{t}}{\Delta
+   x},\Theta_{sz}\right) - \left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} \right)$
 
-\[
-\left. s_{sz} \right\rvert_{t+\Delta t} = \left. s_{sz} \right\rvert_{t} +
-\Delta t  \left(
-\left. \mathcal{G}\left(s_{sz},q^{-}_{sz},\Theta_{sz}\right)\right\rvert_{t+\Delta t} -
-\left. q_{sz}^{-} \right\rvert_{t+\Delta t} \right) -
-\left. v_{uz \rightarrow sz} \right\rvert_{t+\Delta t}
-\]
+2. For a number of iterations:
 
-Consider the pseudo-function 
-\[
-\mathcal{H}\left(z\right) = 
-z - 
-\left. s_{sz}\right.\rvert_{t} +
-\Delta t  \left. q_{sz}^{-} \right\rvert_{t+\Delta t} +
-A\Delta t \min\left(
+   a. Solve for $s_{sz}^{*}$ such that $\mathcal{G}\left(0,\Theta_{sz}\right) -
+   \mathcal{G}\left(\frac{s_{sz}^{*}}{\Delta x},\Theta_{sz}\right) =
+   \frac{1}{2}\left(\left.q_{sz}^{-}\right\rvert_{t+\Delta t} + q^{*} \right)$
+   
+   b. Compute $v_{uz \rightarrow sz}^{*} = A\Delta t \min\left(
 \frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
-{T_{d}z + A \Delta t}, \frac{1}{T_{d}} \right) - \\
-\Delta t \min\left(q_{sz}^{max},\max\left( 0, 2 \mathcal{G}\left(z,\Theta_{sz}\right) - \left. q_{sz}^{-}
-\right\rvert_{t+\Delta t}
-\right)\right)
-\]
+{T_{d}s_{sz}^{*} + A \Delta t}, \frac{1}{T_{d}} \right)$
 
-adapted from the approximating equation for the saturated zone storage.
-In Appendix A it is
-shown that $\mathcal{H}\left(z\right)$ is a monotonic increasing function of
-$z > 0$ and $\mathcal{H}\left(D\right) \geq 0$. 
-Hence if $\mathcal{H}\left(0\right) \lt 0$ unique solution for
-$\left. s_{sz}\right.\rvert_{\Delta t}$ can be found. 
-If  $\mathcal{H}\left(0\right) \geq 0$ then the incoming fluxes are enough to
-produce saturation in the subsurface and
-$\left. s_{sz}\right.\rvert_{\Delta t} = 0$. 
-
-Maintaining a water (mass) balance and
-correct limits on the state values
-depends upon the accuracy of the solution of
-$\mathcal{H}\left(z\right)=0$. Since each evaluation of
-$\mathcal{H}\left(z\right)$ requires an evaluation of $\mathcal{G}$ this
-rapidly become the most expensive part of the code.
-Use of a numerical scheme which allows mass balance to maintained
-regardless of the accuracy of the solution of $\mathcal{H}\left(z\right)=0$
-allows scope for compromises based on computational time.
-
-The upward pass presented below is mass conservative so long as
-$\mathcal{H}\left(\left. s_{sz}\right.\rvert_{\Delta t}\right)\geq0$. 
-We therefore seek $z$ which satifies for some tolerance $\epsilon>0$
-\[
-\epsilon \geq \mathcal{H}\left(z\right) \geq 0
-\]
-One approach to finding such a value is use a bracketing algorithm. At each iteration the lower and upper limits  $z^{l} <
-z^{u}$ satisify $\mathcal{H}\left(z^{l}\right)\leq 0 \leq
-\mathcal{H}\left(z^{u}\right)$, thus bracket the solution. Iterating (using for example bisection) until
- $\mathcal{H}\left(z^{l}\right) \leq \epsilon$ give the approximation $\left. s_{sz}\right.\rvert_{\Delta t} = z^{u}$.
+   c. Compute $\tilde{v}_{sz}^{*}$ from $s_{sz}^{*}$
+   
+   d. Take
+   \[\tilde{q}_{*} = \max\left(0,\left(
+   \frac{2\tilde{v}_{sz}^{*}}{2\tilde{v}_{sz}^{*}\Delta t + \Delta x}\right)
+   \left( \left.s_{sz}\right\rvert_{t} + \frac{2\tilde{v}_{sz}^{*}\Delta t -
+   \Delta x}{2\tilde{v}_{sz}^{*}}\left.q_{sz}^{-}\right\rvert_{t+\Delta t} -
+   v_{uz \rightarrow sz}^{*}\right)\right)
+   \]
+   
+3. Set $\left.s_{sz}\right\rvert_{t+\Delta t} = s_{sz}^{*}$ and $\left.q_{sz}^{+}\right\rvert_{t+\Delta t} = \tilde{q}^{*}$
+   
 
 ## Upward Pass
 
@@ -856,42 +838,6 @@ Table: (\#tab:surface) Outline formulations for the storage-flow relationship in
 Table: (\#tab:surface-param) Parameters used in the surface zone storage-flow
 relationships.
 
-# Saturated Zone representations
-
-The function $q_{sz$ = \mathcal{G}\left(s_{sz},\Theta_{sz}\right)$ dscribing
-the representative lateral flow is related to the
-HRU width through the transmissivity function. Table
-\@ref(tab:hs-transmissivity) gives $\mathcal{G}\left(s_{sz},\Theta_{sz}\right)$ for various the transmissivity profiles present as options within the `dynatop`
-package, the corresponding value to use for the `type` value
-in the saturated zone specification and the additional parameters
-required. The additional parameters are defined in Table
-\@ref(tab:hs-transmissivity-param).
-
-Since the subsurface has a kinematic approximation
-\[
-q_{sz}^{+} = \max\left(0, 2\left( q_{sz} - \frac{1}{2} q_{sf}^{-}\right)\right)
-\]
-
-| Name                | $G\left(\bar{s}_{sz},\Theta_{sz}\right)$                                                                                                                            | $\Theta_{sz}$            | `type` value | Notes                                                                     |   |
-|---------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------|--------------|---------------------------------------------------------------------------|---|
-| Exponential         | $T_{0}w\sin\left(\beta\right)\exp\left(-\frac{\cos\beta}{Am}s_{sz}\right)$                                                                                          | $T_0,\beta,m$            | exp          | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |   |
-| Bounded Exponential | $T_{0}w\sin\left(\beta\right)\left(\exp\left(-\frac{\cos\beta}{Am}s_{sz}\right) - \exp\left(-\frac{\cos\beta}{m}D\right)\right)$                                    | $T_0,\beta,m,D$          | bexp         | Originally given in [Beven & Freer 2001](https://doi.org/10.1002/hyp.252) |   |
-| Constant Celerity   | $\frac{c_{sz}w}{A}\left(AD-s_{sz}\right)$                                                                                                                           | $c_{sz},D$               | cnst         |                                                                           |   |
-| Double Exponential  | $T_{0}w\sin\left(\beta\right)\left( \omega\exp\left(-\frac{\cos\beta}{Am}s_{sz}\right) + \left(1-\omega\right)\exp\left(\frac{\cos\beta}{Am_2}s_{sz}\right)\right)$ | $T_0,\beta,m,m_2,\omega$ | dexp         |                                                                           |   |
-
-Table: (\#tab:hs-transmissivity) Transmissivity profiles available with the `dynatop` package.
-
-
-| Symbol    | Description                                       | unit     |
-|-----------|---------------------------------------------------|----------|
-| $T_0$     | Transmissivity at saturation                      | m$^2$/s  |
-| $m$,$m_2$ | Exponential transmissivity constants              | m$^{-1}$ |
-| $\beta$   | Angle of hill slope                               | rad      |
-| $c_{sz}$  | Saturated zone celerity                           | m/s      |
-| $D$       | Storage deficit at which zero lateral flow occurs | m        |
-| $\omega$  | weighting parameter                               | -        |
-
-Table: (\#tab:hs-transmissivity-param) Additional parameters used in the transmissivity profiles.
 
 
 
