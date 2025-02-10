@@ -35,16 +35,16 @@ chn <- R6Class(
             fa <- function(y,a){a - Ay(y)}
             fq <- function(y,q){q - Qy(y)}
 
-            y <- uniroot(fq,c(0,1000),q=Q)$root ## solve for depth
-            if(y<1e-6){
+            y <- uniroot(fq,c(0,100),q=Q)$root
+            if(y<0.00001){
                 self$kappa <- self$eta <- 0
             }else{
-                q <- Qy(y)
-                B <- By(y)
-                cel <- cy(y)
-                v <- vy(y)
-                self$kappa <- self$Dx / v
-                self$eta <- 0.5*(1 - (q*v)/(B*self$S0*(cel^2)*self$Dx))
+                self$kappa <- self$Dx / vy(y)
+                D <- Q/ (2*By(y)*self$S0)
+                Ds <- D / (cy(y)*Dx)
+                #Ds <- Ds * (vy(y)/cy(y))
+                ##self$eta <- 0.5 - Ds
+                self$eta <- (vy(y)/cy(y))*(0.5-Ds) ## this is wrong
             }
         }
     )
@@ -54,6 +54,7 @@ hru <- R6::R6Class(
                "hru",
                public = list(
                    ## states
+
                    s_sf = NA,
                    q_sf = NA,
                    chn = NA,
@@ -70,19 +71,17 @@ hru <- R6::R6Class(
                    evolve = function(q_in,Dt){
                        #browser()
                        q_out <- q_in
-                       for(it in 1:10){
-                           q <- 0.5*(q_in + q_out)
-                           self$chn$update(q)
-                           
-                           q_out <- ( (s/self$chn$kappa) - (self$chn$kappa*self$chn$eta) ) / (1-self$chn$eta)
-                           q_out <- max(0,q_out)
-                           s <- max(0, self$s_sf + Dt*(q_in-q_out))
+
+                       for(it in 1){
+                           q_ref <- 0.5*(q_in + q_out)
+                           self$chn$update(q_ref)
+                           q_out <- max(0, (self$s_sf + (Dt - self$chn$kappa*self$chn$eta)*q_in) / (Dt + self$chn$kappa*(1-self$chn$eta)))
                        }
-                       shat <- max(0,self$chn$kappa*(self$chn$eta*q_in + (1-self$chn$eta)*q_out))
+                       shat <- self$chn$kappa*(self$chn$eta*q_in + (1-self$chn$eta)*q_out)
                        stmp <- self$s_sf + Dt*(q_in - q_out)
                        self$e_sf <- shat - stmp
                        self$q_sf <- q_out
-                       self$s_sf <- stmp
+                       self$s_sf <- stmp #shat
                    }
                )
            )
@@ -93,7 +92,7 @@ sim_time <- 96*60*60
 sim_length <- 100*1000
 ## function to generate forcing
 Qinflow <- function(tt){
-    Qbase <- 0
+    Qbase <- 100
     Qpeak <- 900
     beta <- 16
     Tp <- 24*60*60
@@ -101,7 +100,7 @@ Qinflow <- function(tt){
 }
 
 ## model steps
-Dt <- 900
+Dt <- 1800
 Dx <- 2000
 
 ## generate time steps
@@ -129,7 +128,7 @@ for(tt in 2:length(ts)){
             print(paste(c("negative",tt,ii,hrus[[ii]]$s_sf)))
         }
         if( hrus[[ii]]$e_sf > 1e-3 ){
-            print(paste(c("error",tt,ii,hrus[[ii]]$e_sf)))
+            print(paste(c("error",tt,ii,hrus[[ii]]$e_sf,hrus[[ii]]$s_sf,hrus[[ii]]$q_sf)))
         }
         qq <- hrus[[ii]]$q_sf
     }
@@ -139,4 +138,4 @@ for(tt in 2:length(ts)){
 #x11()
 #plot(ts/3600,Qinflow(ts),type="l")
 #lines(ts/3600,Qrec,col="red")
-lines(ts/3600,Qrec,col="green")
+lines(ts/3600,Qrec,col="blue")
