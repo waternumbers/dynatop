@@ -41,10 +41,10 @@ chn <- R6Class(
             }else{
                 self$kappa <- self$Dx / vy(y)
                 D <- Q/ (2*By(y)*self$S0)
-                Ds <- D / (cy(y)*Dx)
-                #Ds <- Ds * (vy(y)/cy(y))
-                ##self$eta <- 0.5 - Ds
-                self$eta <- (vy(y)/cy(y))*(0.5-Ds) ## this is wrong
+                Ds <- 2*D / (cy(y)*Dx)                
+                Ds <- Ds * (vy(y)/cy(y))
+                self$eta <- 0.5*(1 - Ds)
+##                self$eta <- (vy(y)/cy(y))*(0.5-Ds) ## this is wrong
             }
         }
     )
@@ -136,6 +136,6 @@ for(tt in 2:length(ts)){
 }
 
 #x11()
-#plot(ts/3600,Qinflow(ts),type="l")
-#lines(ts/3600,Qrec,col="red")
+plot(ts/3600,Qinflow(ts),type="l")
+lines(ts/3600,Qrec,col="red")
 lines(ts/3600,Qrec,col="blue")

@@ -151,7 +151,7 @@ s_{sf} = \frac{\Delta x}{v_{sf}} \left(\eta q_{sf}^{-} + \left(1-\eta\right) q_{
 \]
 where
 \[
-\eta = \frac{1}{2}\left( 1 - \frac{D v_{sf}}{c_{sf}^{2} \Delta x} \right)
+\eta = \frac{1}{2}\left( 1 - \frac{2D v_{sf}}{c_{sf}^{2} \Delta x} \right)
 \]
 The dispersion $D_{sf}$ varies depending upon teh formulation required. A
 diffusion wave approximation takes 
@@ -161,6 +161,8 @@ D_{sf} = \frac{q_{sf}}{2BS_f} \approx  \frac{q_{sf}}{2BS_0}
 where for a Kinemativ wave formulation $D_{sf}=0$ and for a linear tank with
 time constant $\frac{\Delta x}{v_{sf}}$ is given by $\eta=0$.
 
+In the numerical solution we consider the representaive values to be computed
+for with reference to the flow $q_{sf} = \frac{q_{sf}^{+}+q_{sf}^{-}}{2}$
 
 ### Compound Channels
 
@@ -330,13 +332,12 @@ The maximum downward flux $\hat{v}_{sf \rightarrow rz}$ is acheived when
 $q_{sf}^{+}=0$ and is given by
 \[
 \hat{v}_{sf \rightarrow rz} = \left.s_{sf}\right\rvert_{t} + \Delta t
-\left.q_{sf}^{-}\right\rvert_{t+\Delta t} - \left.s_{sf}\right\rvert_{t+\Delta t}
+\left.q_{sf}^{-}\right\rvert_{t+\Delta t} - s^{*}
 \]
-Noting that bot the representative flow $q_{sf}$ and $\eta$ are functions of
-$s_{sf}$ the value of $\left.s_{sf}\right\rvert_{t+\Delta t}$ can be found by
-solving
+where by noting that the representative flow is $q_{sf} = \frac{1}{2}\left. q_{sf}^{-}
+\right\rvert_{t+\Delta t}$ the value of $s^{*}$ can be readily computed as
 \[
-\left.q_{sf}\right\rvert_{t+\Delta t} = \left.\eta\right\rvert_{t+\Delta t} \left.q_{sf}^{-}\right\rvert_{t+\Delta t}
+s^{*} = \frac{\Delta x}{v_{sf}} \eta_{sf} q_{sf}
 \]
 
 ### Root Zone
@@ -397,46 +398,43 @@ unsaturated zone solution. The iterative numerical scheme, based on a
 semi-implicit step can be formulated to provide a solution
 
 1. Take an initial outflow estimate $\tilde{q}^* = \max \left(0,
-   2\mathcal{G}\left(0,\Theta_{sz}\right) -
-   2\mathcal{G}\left(\frac{\left.s_{sz}\right\rvert_{t}}{\Delta
-   x},\Theta_{sz}\right) - \left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} \right)$
+   2\left( \mathcal{G}\left(0,\Theta_{sz}\right) -
+   \mathcal{G}\left(\frac{\left.s_{sz}\right\rvert_{t}}{\Delta
+   x},\Theta_{sz}\right)\right) - \left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} \right)$
 
 2. For a number of iterations:
 
-   a. Solve for $s_{sz}^{*}$ such that $\mathcal{G}\left(0,\Theta_{sz}\right) -
-   \mathcal{G}\left(\frac{s_{sz}^{*}}{\Delta x},\Theta_{sz}\right) =
-   \frac{1}{2}\left(\left.q_{sz}^{-}\right\rvert_{t+\Delta t} + q^{*} \right)$
+   a. Solve for $s_{sz}^{*}$ such that
+   $\mathcal{G}\left(\frac{s_{sz}^{*}}{\Delta x},\Theta_{sz}\right) = \mathcal{G}\left(0,\Theta_{sz}\right) -
+   \frac{1}{2}\left(\left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} + \tilde{q}^{*} \right)$
    
    b. Compute $v_{uz \rightarrow sz}^{*} = A\Delta t \min\left(
 \frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
 {T_{d}s_{sz}^{*} + A \Delta t}, \frac{1}{T_{d}} \right)$
 
-   c. Compute $\tilde{v}_{sz}^{*}$ from $s_{sz}^{*}$
+   c. Compute $\tilde{v}_{sz}^{*} = \frac{\tilde{q}_{sz}^{*} \Delta x}{s_{sz}^{*}}$
    
    d. Take
-   \[\tilde{q}_{*} = \max\left(0,\left(
+   \[\tilde{q}^{*} = \max\left(0,\left(
    \frac{2\tilde{v}_{sz}^{*}}{2\tilde{v}_{sz}^{*}\Delta t + \Delta x}\right)
    \left( \left.s_{sz}\right\rvert_{t} + \frac{2\tilde{v}_{sz}^{*}\Delta t -
-   \Delta x}{2\tilde{v}_{sz}^{*}}\left.q_{sz}^{-}\right\rvert_{t+\Delta t} -
+   \Delta x}{2\tilde{v}_{sz}^{*}}\left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} -
    v_{uz \rightarrow sz}^{*}\right)\right)
    \]
    
-3. Set $\left.s_{sz}\right\rvert_{t+\Delta t} = s_{sz}^{*}$ and $\left.q_{sz}^{+}\right\rvert_{t+\Delta t} = \tilde{q}^{*}$
-   
+3. Set $\left.\tilde{q}_{sz}^{+}\right\rvert_{t+\Delta t} = \tilde{q}^{*}$ and
+   compute
+   $\left.s_{sz}\right\rvert_{t+\Delta t} = \max\left( 0,\left.s_{sz}\right\rvert_{t} +
+   \Delta t \left(\left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} -
+   \left.\tilde{q}_{sz}^{+}\right\rvert_{t+\Delta t}\right) - v_{uz \rightarrow sz}^{*}\right)$
 
 ## Upward Pass
 
-Given an estimate of $\left. s_{sz}\right.\rvert_{\Delta t}$ such that
-$\mathcal{H}\left(\left. s_{sz}\right.\rvert_{\Delta t}\right)>0$ compute the
-vertical flux volumes in the following fashion
-
-1. $\left. q_{sz}^{+}\right.\rvert_{t+\Delta t} =
-   \min\left(q_{sz}^{max},\max\left( 0, 2
-   \mathcal{G}\left(\left. s_{sz}\right.\rvert_{t+\Delta t},\Theta_{sz}\right) -
-   \left. q_{sz}^{-} \right\rvert_{t+\Delta t}\right)\right)$
+Given an results from teh downward pass the upward pass starts with mass
+balance across the stores giving
 
 1. $v_{uz \rightarrow sz} = \left. s_{sz}\right.\rvert_{t} +\Delta t
-   \left(\left. q_{sz}^{+}\right.\rvert_{t+\Delta t} - \left. q_{sz}^{-}
+   \left(\left. \tilde{q}_{sz}^{-}\right.\rvert_{t+\Delta t} - \left. \tilde{q}_{sz}^{+}
    \right\rvert_{t+\Delta t}\right) - \left. s_{sz}\right.\rvert_{t+\Delta t}$
    
 1. $\left. s_{uz}\right.\rvert_{t+\Delta t} =
@@ -464,36 +462,30 @@ This leaves the solution of the surface zone
 
 ### Surface Zone
 
-Proceeding in a similar fashion to the saturated zone consider the pseudo-function
-\[
-\mathcal{S}\left(w\right) =
-\left. s_{sf} \right\rvert_{t} +
-\Delta t 
-\left( \left. q_{sf}^{-} \right\rvert_{t+\Delta t} -
-\mathcal{F}\left(w,q_{sf}^{-},\frac{\left. v_{sf \rightarrow rz}
-\right\rvert_{t+\Delta t}}{\Delta t},\Theta_{sf}\right) 
-\right) - 
-\left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t} - w
-\]
-which is monotonically decreasing for $w \geq 0$ with
-$\mathcal{S}\left(0\right)\geq 0$.
+Proceeding in a similar fashion to the saturated zone 
 
-A bracketing solution algorithm gives at any iteration $w^{l} < \left. s_{sf}
-\right\rvert_{t+\Delta t} < w^{u}$. An initial value of $w^{u}$ can be computed
-as $\left. s_{sf} \right\rvert_{t} + \Delta t\left. q_{sf}^{-}
-\right\rvert_{t+\Delta t} - \left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t}$. Iterating until; for some
-tolerance $\epsilon>0$; $w^{u} - w^{l}
-< \epsilon$ take $\left. s_{sf}\right.\rvert_{\Delta t} = w^{l}$.
-In this case $\mathcal{S}\left(\left. s_{sf}\right.\rvert_{\Delta t}\right) >
-0$ hence mass conservation can be maintained by taking
-\[
-\left. q_{sf}^{+} \right\rvert_{t+\Delta t} = 
-\left. q_{sf}^{-} \right\rvert_{t+\Delta t} +
-\frac{1}{\Delta t}\left( 
-\left. s_{sf} \right\rvert_{t} - 
-\left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t} -
-\left. s_{sf}\right.\rvert_{t + \Delta t}\right)
-\]
+1. Take an initial outflow estimate $q^* = \left.q_{sf}^{-}\right\rvert_{t+\Delta t}$
+
+2. For a number of iterations:
+
+   a. Compute $q_{sf} = \frac{1}{2}\left(\left.\tilde{q}_{sf}^{-}\right\rvert_{t+\Delta t} + q^{*} \right)$
+   
+   b. Solve for $v_{sf}$ and $\eta_{sf}$ based on $q_{sf}$.
+   
+   c. Take
+   \[q^{*} = \max\left(0,
+	   \frac{v_{sf}}{\Delta x\left(1-\eta_{sf}\right) + \Delta t v_{sf}}
+	   \left( \left.s_{s}\right\rvert_{t} - v_{sf \rightarrow rz} +
+   \frac{v_{f} \Delta t - \Delta x \eta_{sf}}{v_{sf}} \left. q_{sf}^{-}
+   \right.\rvert_{t+\Delta t} \right) \right)
+   \]
+   
+3. Set $\left.q_{sz}^{+}\right\rvert_{t+\Delta t} = q^{*}$ and
+   compute $\left.s_{sf}\right\rvert_{t+\Delta t} =
+   \left.s_{sf}\right\rvert_{t} +
+   \Delta t \left(\left.q_{sf}^{-}\right\rvert_{t+\Delta t} -
+   \left.q_{sf}^{+}\right\rvert_{t+\Delta t}\right) - v_{sf
+   \rightarrow rz}$ 
 
 
 
