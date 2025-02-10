@@ -140,103 +140,27 @@ The Muskingham-Cunge method offers a parsimonious method for relating
 inflow, outflow and stroage that can capture a range of surface
 dynamics. 
 This section outlines the key equations and shows
-how they may be used to capture a range of conceptual models. Muskingham-Cunge routing can be derived in a number of ways. Here we
-offer a direct approach that reclaims the mass consrvative formulaton
-given in Todini <2007>.
-
-The surface storage $s_{sf}$ in a reach or hillslope of length $\Delta
-x$ can be expressed in terms of the representative flow $q_{sf}$, velocity
-$v_{sf}$ and cross-sectional area $a_{sf}$
-as
-\[
-s_{sf} = \frac{q_{sf} \Delta x}{v_{sf}} = a_{sf} \Delta x
-\]
-The representative flow is related to the inflow $q_{sf}^{-}$ and outflow
-$q_{sf}^{+}$ using the parameter $\eta$ through
-\[
-q_{sf} = \eta q_{sf}^{-} + \left(1-\eta\right) q_{sf}^{+}
-\]
-which gives
+how they may be used to capture a range of conceptual models. Muskingham-Cunge
+routing can be derived in a number of ways. [Reggiani et
+al.](https://doi.org/10.1016/j.jhydrol.2014.08.057) give the following
+equation for the surface storage $s_{sf}$ in a reach or hillslope of length $\Delta
+x$ in terms of a representative velocity $v_{sf}$, celerity $c_{sf}$ and
+dispersion $D_{sf}$ as
 \[
 s_{sf} = \frac{\Delta x}{v_{sf}} \left(\eta q_{sf}^{-} + \left(1-\eta\right) q_{sf}^{+} \right)
 \]
-
-### Approximating Tank Models
-
-Taking $\eta=0$ gives
+where
 \[
-\frac{ds}{dt} = q^{-} + r - \frac{sv}{\Delta x}
+\eta = \frac{1}{2}\left( 1 - \frac{D v_{sf}}{c_{sf}^{2} \Delta x} \right)
 \]
-which is the equation of a tank model with possibly varying time constant $T =
-\frac{\Delta x}{v}$
-
-### Approximating Diffusion Wave Routing
-
-Diffuse routing with lateral inflow can be expressed as the parabolic
-equation (see for example [doi:10.1016/j.advwatres.2005.08.008](https://doi.org/10.1016/j.advwatres.2005.08.008))
-
+The dispersion $D_{sf}$ varies depending upon teh formulation required. A
+diffusion wave approximation takes 
 \[
-\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl - D \frac{dl}{dx}
+D_{sf} = \frac{q_{sf}}{2BS_f} \approx  \frac{q_{sf}}{2BS_0}
 \]
-where $l$ is lateral inflow per unit length. Simplify this by
-considering that the lateral inflow $r$ uniformly
-distributed so that $l=\frac{r}{\Delta x}$ and $\frac{dl}{dx}=0$ to give
+where for a Kinemativ wave formulation $D_{sf}=0$ and for a linear tank with
+time constant $\frac{\Delta x}{v_{sf}}$ is given by $\eta=0$.
 
-\[
-\frac{dq}{dt} + c\frac{dq}{dx} - D \frac{d^2 q}{dx^2} = cl
-\]
-
-Let us relate this to the Muskingham Solution using the relationship
-\[
-q = \eta q^{-} + \left(1-\eta\right) q^{+}
-\]
-
-Taking Taylor series expansions for $q^{-}$ and
-$q^{+}$ based on $q$ gives
-
-\[
-q^{+} \approx q + \eta \Delta x \frac{dq}{dx} + \frac{1}{2}\eta^2\Delta x^2 \frac{d^2 q}{dx^2}
-\]
-and
-\[
-q^{-} \approx q - \left(1-\eta\right) \Delta x \frac{dq}{dx} + \frac{1}{2}\left(1-\eta\right)^2 \Delta x^2 \frac{d^2 q}{dx^2}
-\]
-
-Subtracting the expression for $q^{-}$ from that for $q^{+}$ gives
-
-\[
-q^{-} - q^{+} \approx
--\Delta x \frac{dq}{dx} +
-\frac{1}{2}\left(1-2\eta\right) \Delta x^2 \frac{d^2 q}{dx^2}
-\]
-
-From the mass balance condition
-\[
-\frac{ds}{dt} \approx \Delta x l -\Delta x \frac{dq}{dx} +
-\frac{1}{2}\left(1-2\eta\right)\Delta x^2 \frac{d^2 q}{dx^2} 
-\]
-
-Using the expression for storage and relationship between flow and area
-\[
-\frac{dq}{dt} = \frac{dq}{da} \frac{da}{dt} = \frac{c}{\Delta x} \frac{ds}{dt}
-\]
-
-Then combining this with the approximation produces
-\[
-\frac{dq}{dt} + c\frac{dq}{dx} -
-\frac{c}{2}\left(1-2\eta\right)\Delta x \frac{d^2 q}{dx^2}
-\approx c l
-\]
-
-Comparison to the original diffuse routing equation shows that
-\[
-\eta \approx \frac{1}{2} - \frac{D}{c \Delta x}
-\]
-
-The value of $\eta$ is limited to between 0 and $\frac{1}{2}$. Firstly $\eta =
-1/2$ results from $D=0$; that is the Kinematic wave equation. Taking  $\eta=0$
-produces the maximum dispersion of $D = \frac{c\Delta x}{2}$, which is given by
-the linear tank.
 
 ### Compound Channels
 

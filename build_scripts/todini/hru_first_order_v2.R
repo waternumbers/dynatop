@@ -35,17 +35,16 @@ chn <- R6Class(
             fa <- function(y,a){a - Ay(y)}
             fq <- function(y,q){q - Qy(y)}
 
-            if(Q<1e-10){
+            y <- uniroot(fq,c(0,1000),q=Q)$root ## solve for depth
+            if(y<1e-6){
                 self$kappa <- self$eta <- 0
             }else{
-                browser()
-                y <- uniroot(fq,c(0,100),q=Q)$root ## solve for depth
-                A <- Ay(y)
-                
+                q <- Qy(y)
+                B <- By(y)
+                cel <- cy(y)
                 v <- vy(y)
-                self$kappa <- ifelse(v==0,0,self$Dx / vy(y))
-                Ds <- ifelse(Q<=1e-16,0,vy(y)*Q/(2*By(y)*self$S0*cy(y)^2))
-                self$eta <- 0.5 - Ds/Dx
+                self$kappa <- self$Dx / v
+                self$eta <- 0.5*(1 - (q*v)/(B*self$S0*(cel^2)*self$Dx))
             }
         }
     )
@@ -72,16 +71,18 @@ hru <- R6::R6Class(
                        #browser()
                        q_out <- q_in
                        for(it in 1:10){
-                           q_ref <- 0.5*(q_in + q_out)
-                           self$chn$update(q_ref)
-                           q_out <- max(0, (self$s_sf + (Dt - self$chn$kappa*self$chn$eta)*q_in) / (Dt + self$chn$kappa*(1-self$chn$eta)))
-
+                           q <- 0.5*(q_in + q_out)
+                           self$chn$update(q)
+                           
+                           q_out <- ( (s/self$chn$kappa) - (self$chn$kappa*self$chn$eta) ) / (1-self$chn$eta)
+                           q_out <- max(0,q_out)
+                           s <- max(0, self$s_sf + Dt*(q_in-q_out))
                        }
                        shat <- max(0,self$chn$kappa*(self$chn$eta*q_in + (1-self$chn$eta)*q_out))
                        stmp <- self$s_sf + Dt*(q_in - q_out)
                        self$e_sf <- shat - stmp
                        self$q_sf <- q_out
-                       self$s_sf <- shat
+                       self$s_sf <- stmp
                    }
                )
            )
