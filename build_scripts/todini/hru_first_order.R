@@ -155,7 +155,7 @@ for(tt in 2:length(ts)){
     Qrec[tt] <- qq
 }
 
-x11()
-plot(ts/3600,Qinflow(ts),type="l")
-lines(ts/3600,Qrec,col="red")
-##lines(ts/3600,Qrec,col="green")
+#x11()
+#plot(ts/3600,Qinflow(ts),type="l")
+#lines(ts/3600,Qrec,col="red")
+lines(ts/3600,Qrec,col="green")

@@ -54,15 +54,23 @@ hru <- R6::R6Class(
                "hru",
                public = list(
                    ## states
-
                    s_sf = NA,
                    q_sf = NA,
-                   chn = NA,
+                   s_rz = NA,
+                   s_uz = NA,
+                   s_sz = NA,
+                   q_sz = NA,
+                   sf = NA,
+                   sz = NA,
                    e_sf = NA,
+                   e_sz = NA,
                    ## initialisation
-                   initialize = function(q_in,chn){
-                       self$chn <- chn
-                       q_out <- q_in
+                   initialize = function(sf,sz){
+                       self$sf <- sf
+                       self$sz <- sz
+                   },
+                   init = function(q_sf_in,q_sz_in,
+
                        self$chn$update( q_in )
                        self$s_sf <- self$chn$kappa*(self$chn$eta*q_in + (1-self$chn$eta)*q_out)
                        self$q_sf <- q_out
@@ -72,7 +80,7 @@ hru <- R6::R6Class(
                        #browser()
                        q_out <- q_in
 
-                       for(it in 1:2){
+                       for(it in 1:10){
                            q_ref <- 0.5*(q_in + q_out)
                            self$chn$update(q_ref)
                            q_out <- max(0, (self$s_sf + (Dt - self$chn$kappa*self$chn$eta)*q_in) / (Dt + self$chn$kappa*(1-self$chn$eta)))
@@ -100,7 +108,7 @@ Qinflow <- function(tt){
 }
 
 ## model steps
-Dt <- 60
+Dt <- 900
 Dx <- 2000
 
 ## generate time steps
@@ -138,4 +146,4 @@ for(tt in 2:length(ts)){
 #x11()
 #plot(ts/3600,Qinflow(ts),type="l")
 #lines(ts/3600,Qrec,col="red")
-lines(ts/3600,Qrec,col="orange")
+lines(ts/3600,Qrec,col="blue")
