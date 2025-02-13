@@ -143,7 +143,7 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   }
   
   s_uz = t_d * r_uz_sz * s_sz / area; // compute unsaturated zone storage
-  if( s_uz > s_sz ){
+  if( s_uz - s_sz > 1e-10 ){
     Rcpp::Rcout << id << " unsaturated" << std::endl;
     Rcpp::Rcout << s_sz << " " << s_uz << " " << r_uz_sz << std::endl;
     Rcpp::Rcout << q_sz << " " << q_sz_in << " " << sz->fq(0.0) << std::endl;
