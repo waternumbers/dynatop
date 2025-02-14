@@ -103,7 +103,7 @@ Qinflow <- function(tt){
 }
 
 ## model steps
-Dt <- 900
+Dt <- 1800
 Dx <- 2000
 
 ## generate time steps

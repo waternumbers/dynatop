@@ -2,18 +2,22 @@
 
 // solve 
 sfc::sfc(){ }
-// fq compute the multiplier of storage that gives outflow
-double sfc::fk(double const &s){
-  double vbar = (v_1 * std::min(s,s_1) + v_2 * std::max(0.0,s-s_1))/s;
-  return( vbar*rho );
-}
+void szc::update(double const &q){}
+
 
 // two section constant velocity
-sfc_cnst::sfc_cnst(std::vector<double> const &param, double const &width, double const &area){
+sfc_cnst::sfc_cnst(std::vector<double> const &param, double const &_Dx){
   v_1 = param[0]; // lower section
   v_2 = param[2]; // upper section
-  s_1 = param[1]; // threshold volumne
-  rho = width/area;
+  q_1 = param[0] * param[1] / _Dx; // threshold volume
+  Dx = _Dx;
+  eta = 0.0;
+}
+// fq compute the multiplier of storage that gives outflow
+double sfc::fk(double const &q){
+  double a = ( std::min(q,q_1) /v_1 ) + std::max(0.0, q-q_1)/v_2 ;
+  kappa = Dx *a /q;
+  return( vbar*rho );
 }
 
 

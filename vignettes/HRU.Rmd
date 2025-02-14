@@ -147,34 +147,34 @@ equation for the surface storage $s_{sf}$ in a reach or hillslope of length $\De
 x$ in terms of a representative velocity $v_{sf}$, celerity $c_{sf}$ and
 dispersion $D_{sf}$ as
 \[
-s_{sf} = \frac{\Delta x}{v_{sf}} \left(\eta q_{sf}^{-} + \left(1-\eta\right) q_{sf}^{+} \right)
+s_{sf} = \kappa \left(\eta q_{sf}^{-} + \left(1-\eta\right) q_{sf}^{+} \right)
 \]
 where
 \[
-\eta = \frac{1}{2}\left( 1 - \frac{2D v_{sf}}{c_{sf}^{2} \Delta x} \right)
+\kappa = \frac{\Delta x}{v_{sf}}
 \]
-The dispersion $D_{sf}$ varies depending upon teh formulation required. A
+and
+\[
+\eta = \frac{1}{2}\left( 1 - \frac{2D_{sf} v_{sf}}{c_{sf}^{2} \Delta x} \right)
+\]
+The dispersion $D_{sf}$ varies depending upon the formulation required. A
 diffusion wave approximation takes 
 \[
 D_{sf} = \frac{q_{sf}}{2BS_f} \approx  \frac{q_{sf}}{2BS_0}
 \]
-where for a Kinemativ wave formulation $D_{sf}=0$ and for a linear tank with
+For a Kinematic wave formulation $D_{sf}=0$ while a linear tank with
 time constant $\frac{\Delta x}{v_{sf}}$ is given by $\eta=0$.
 
 In the numerical solution we consider the representaive values to be computed
-for with reference to the flow $q_{sf} = \frac{q_{sf}^{+}+q_{sf}^{-}}{2}$
+with reference to the representative flow $q_{sf} = \frac{q_{sf}^{+}+q_{sf}^{-}}{2}$
 
 ### Compound Channels
 
 Compound channels are considered as channels with two regimes corresponding to
-different reltionships between the $s_{sf}$, $q_{sf}$ and $\eta$ depending
-upon whether $s_{sf} \leq s_{c}$, for some storage threshold $s_{1}$.
+different reltionships between the $q_{sf}$, $\kappa$ and $\eta$ depending
+upon whether $s_{sf} \leq s_{c}$, for some storage threshold(s).
 This allows a basic representation of surface storage such as runoff attenuation
-features, or out of bank channel flow.
-
-In solving this inflow is partitioned to ensure, where possible, $s_sf > s_{c}$
-
-
+features, or out of bank channel flow. Examples are given later.
 
 ## Root zone
 
@@ -244,12 +244,12 @@ terms of the storage deficit $s_{sz}$ as
 \]
 
 <Beven et al.> propose a Kinematic subsurface approximation where the
-flow across a give cross section is expressed as a function of the
-unsaturated area $a_{sz}$ where the functional form
-$\mathcal{G}\left(a_{sz}, \Theta_{sz}\right)$ takes its maximum value when $a_{sz}=0$.
+flow across a given cross section is a function of the
+depth to the saturated layer $h_{sz}$ with the functional form
+$\mathcal{G}\left(h_{sz}, \Theta_{sz}\right)$ taking its maximum value when $h_{sz}=0$.
 
 Table \@ref(tab:hs-transmissivity) gives
-$\mathcal{G}\left(a_{sz},\Theta_{sz}\right)$ for various the transmissivity
+$\mathcal{G}\left(h_{sz},\Theta_{sz}\right)$ for various the transmissivity
 profiles present as options within the `dynatop`
 package, the corresponding value to use for the `type` value
 in the saturated zone specification and the additional parameters
@@ -265,7 +265,7 @@ required. The additional parameters are defined in Table
 | Double Exponential  | $T_{0}w\sin\left(\beta\right)\left( \omega\exp\left(-\frac{\cos\beta}{Am}s_{sz}\right) + \left(1-\omega\right)\exp\left(\frac{\cos\beta}{Am_2}s_{sz}\right)\right)$ | $T_0,\beta,m,m_2,\omega$ | dexp         |                                                                           |   |
 
 Table: (\#tab:hs-transmissivity) Transmissivity profiles available with the
-`dynatop` package <TODO rewrite in terms of a_sz>.
+`dynatop` package <TODO rewrite in terms of h_sz>.
 
 
 | Symbol    | Description                                       | unit     |
@@ -280,13 +280,13 @@ Table: (\#tab:hs-transmissivity) Transmissivity profiles available with the
 Table: (\#tab:hs-transmissivity-param) Additional parameters used in the transmissivity profiles.
 
 
-The kinematic assumption can be well captured by a Muskingum-Cunge
-representation. Direct application of the method used for the surface zone is
-not possible due to the inability to compute flow velocities for some
-$\mathcal{G}\left(a_{sz},\Theta_{sz}\right)$ due to the lack of an upper bound
-on $a_{sz}$. 
+The outlined for the surface zone a kinematic model can be represented using a Muskingum-Cunge
+formulation, However direct application of method given for the surface zone is
+not possible since for some of the formulations in Table
+\@ref(tab:hs-transmissivity) $h_{sz}$ is unbounded so no
+representative flow velocity can be computed.
 
-To adress this we instead formulate the model in terms of the difference
+To address this we instead formulate the model in terms of the difference
 between the current and saturated flow rates; that is 
 \[
 \tilde{q}_{sz}^{+} = \mathcal{G}\left(0,\Theta_{sz}\right) - q_{sz}^{+}
@@ -299,11 +299,9 @@ giving
 \[
 \frac{ds_{sz}}{dt} = \tilde{q}_{sz}^{-} - r_{uz \rightarrow sz} - \tilde{q}_{sz}^{+}
 \]
-which is directly ameanable to the approach taken for the surface. Since for a
-kineatic wave $\eta=0.5$ this gives a representaive flow
-\[
-\tilde{q}_{sz} = \frac{1}{2}\left( \tilde{q}_{sz}^{-} + \tilde{q}_{sz}^{+} \right)
-\]
+which is directly ameanable to the approach taken for the surface;
+since for some reference flow $\tilde{q}_{sz}$ a corresponding $h_{sz}$ can
+be computed giving $v_{sz} = \frac{\tilde{q}_{sz}}{ w h_{sz} }$.
 
 
 # Numerical Solution
@@ -337,7 +335,7 @@ $q_{sf}^{+}=0$ and is given by
 where by noting that the representative flow is $q_{sf} = \frac{1}{2}\left. q_{sf}^{-}
 \right\rvert_{t+\Delta t}$ the value of $s^{*}$ can be readily computed as
 \[
-s^{*} = \frac{\Delta x}{v_{sf}} \eta_{sf} q_{sf}
+s^{*} = \kappa_{sf} \eta_{sf} q_{sf}
 \]
 
 ### Root Zone
@@ -371,7 +369,7 @@ $\left. s_{sz} \right.\rvert_{t+\Delta t}$ as
 
 \begin{equation}
 \left. s_{uz} \right.\rvert_{t+\Delta t} = 
-\frac{T_{d}\left(AD - \left. s_{sz} \right.\rvert_{t+\Delta t}\right)}{
+\frac{T_{d} \left. s_{sz} \right.\rvert_{t+\Delta t}}{
 T_{d} \left. s_{sz} \right.\rvert_{t+\Delta t} + A \Delta t}
 \left( \left. s_{uz} \right.\rvert_{t} + 
 v_{rz \rightarrow uz}\right)
@@ -397,40 +395,38 @@ The solution of the saturated zone is complicated by the formulation of the
 unsaturated zone solution. The iterative numerical scheme, based on a
 semi-implicit step can be formulated to provide a solution
 
-1. Take an initial outflow estimate $\tilde{q}^* = \max \left(0,
-   2\left( \mathcal{G}\left(0,\Theta_{sz}\right) -
-   \mathcal{G}\left(\frac{\left.s_{sz}\right\rvert_{t}}{\Delta
-   x},\Theta_{sz}\right)\right) - \left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} \right)$
+1. Take an initial outflow estimate $\tilde{q}^* = \left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t}$
 
 2. For a number of iterations:
 
-   a. Solve for $s_{sz}^{*}$ such that
-   $\mathcal{G}\left(\frac{s_{sz}^{*}}{\Delta x},\Theta_{sz}\right) = \mathcal{G}\left(0,\Theta_{sz}\right) -
-   \frac{1}{2}\left(\left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} + \tilde{q}^{*} \right)$
+   a. Compute $\tilde{q}_{sz} = \frac{1}{2}\left(\tilde{q}^* + \left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t}\right)$
    
-   b. Compute $v_{uz \rightarrow sz}^{*} = A\Delta t \min\left(
+   b. Solve for $h_{sz}$, $\kappa_{sz}$ and $\eta_{sf}$ based on $q_{sz}$.
+   
+   c. Approximate the saturated storage deficit by $Ah_{sf}$ to give 
+   \[ v_{uz \rightarrow sz}^{*} = \Delta t \min\left(
 \frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
-{T_{d}s_{sz}^{*} + A \Delta t}, \frac{1}{T_{d}} \right)$
+{T_{d}h_{sz} + \Delta t}, \frac{A}{T_{d}} \right)
+	\]
 
-   c. Compute $\tilde{v}_{sz}^{*} = \frac{\tilde{q}_{sz}^{*} \Delta x}{s_{sz}^{*}}$
-   
    d. Take
-   \[\tilde{q}^{*} = \max\left(0,\left(
-   \frac{2\tilde{v}_{sz}^{*}}{2\tilde{v}_{sz}^{*}\Delta t + \Delta x}\right)
-   \left( \left.s_{sz}\right\rvert_{t} + \frac{2\tilde{v}_{sz}^{*}\Delta t -
-   \Delta x}{2\tilde{v}_{sz}^{*}}\left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} -
-   v_{uz \rightarrow sz}^{*}\right)\right)
+   \[\tilde{q}^{*} = \max\left(0, \frac{
+   \left.s_{sz}\right\rvert_{t} - v_{uz \rightarrow sz}^{*} + 
+   \left( \Delta t - \kappa_{sz}\eta_{sz}\right)
+   \left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} }{
+   \Delta t + \kappa_{sz}\left(1-\eta_{sz}\right) } \right)
    \]
    
-3. Set $\left.\tilde{q}_{sz}^{+}\right\rvert_{t+\Delta t} = \tilde{q}^{*}$ and
+3. Set $\left.q_{sz}^{+}\right\rvert_{t+\Delta t} =
+   \mathcal{G}\left(0,\Theta_{sz}\right) - \tilde{q}^{*}$ and
    compute
-   $\left.s_{sz}\right\rvert_{t+\Delta t} = \max\left( 0,\left.s_{sz}\right\rvert_{t} +
-   \Delta t \left(\left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} -
-   \left.\tilde{q}_{sz}^{+}\right\rvert_{t+\Delta t}\right) - v_{uz \rightarrow sz}^{*}\right)$
+   \[\left.s_{sz}\right\rvert_{t+\Delta t} = \max\left( 0,\left.s_{sz}\right\rvert_{t} +
+   \Delta t \left(\left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} - \tilde{q}^{*}
+   \right) - v_{uz \rightarrow sz}^{*}\right)\]
 
 ## Upward Pass
 
-Given an results from teh downward pass the upward pass starts with mass
+Given the results from the downward pass the upward pass starts with mass
 balance across the stores giving
 
 1. $v_{uz \rightarrow sz} = \left. s_{sz}\right.\rvert_{t} +\Delta t
@@ -470,14 +466,14 @@ Proceeding in a similar fashion to the saturated zone
 
    a. Compute $q_{sf} = \frac{1}{2}\left(\left.\tilde{q}_{sf}^{-}\right\rvert_{t+\Delta t} + q^{*} \right)$
    
-   b. Solve for $v_{sf}$ and $\eta_{sf}$ based on $q_{sf}$.
+   b. Solve for $\kappa_{sf}$ and $\eta_{sf}$ based on $q_{sf}$.
    
    c. Take
-   \[q^{*} = \max\left(0,
-	   \frac{v_{sf}}{\Delta x\left(1-\eta_{sf}\right) + \Delta t v_{sf}}
-	   \left( \left.s_{s}\right\rvert_{t} - v_{sf \rightarrow rz} +
-   \frac{v_{f} \Delta t - \Delta x \eta_{sf}}{v_{sf}} \left. q_{sf}^{-}
-   \right.\rvert_{t+\Delta t} \right) \right)
+   \[q^{*} = \max\left(0, \frac{
+   \left.s_{sf}\right\rvert_{t} - v_{sf \rightarrow rz}^{*} + 
+   \left( \Delta t - \kappa_{sf}\eta_{sf}\right)
+   \left.\tilde{q}_{sf}^{-}\right\rvert_{t+\Delta t} }{
+   \Delta t + \kappa_{sf}\left(1-\eta_{sf}\right) } \right)
    \]
    
 3. Set $\left.q_{sz}^{+}\right\rvert_{t+\Delta t} = q^{*}$ and

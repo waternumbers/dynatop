@@ -1,9 +1,105 @@
-## example from Ezio's paper
 rm(list=ls())
+library(R6)
 
+chn <- R6Class(
+    "channel",
+    public = list(
+        S0 = NA,
+        B0 = NA,
+        ca = NA, ## cot a
+        sa = NA, ## sin angle
+        Dx = NA,
+        n = NA,
+        kappa = NA,
+        eta = NA,
+        initialize = function(S0,B0,grd,Dx,n){
+            self$S0 <- S0
+            self$B0 <- B0
+            self$ca <- 1/grd
+            self$sa <- sin(atan(grd))
+            self$Dx <- Dx
+            self$n <- n
+        },
+        update = function(S,isQ=FALSE){
+            ## solve for depth
+            Qy <- function(y){ (sqrt(self$S0)/n) * (Ay(y)^(5/3)) / (Py(y)^(2/3)) }
+            Ay <- function(y){ (self$B0 + y*self$ca)*y }
+            By <- function(y){ self$B0 + 2*y*self$ca }
+            Py <- function(y){ self$B0 + 2*(y/self$sa) }
+            Qy <- function(y){ (sqrt(self$S0)/self$n) * (Ay(y)^(5/3)) / (Py(y)^(2/3)) }
+            cy <- function(y){ (5/3)* (sqrt(self$S0)/self$n) * (Ay(y)^(2/3)) / (Py(y)^(2/3)) *
+                                   ( 1 - ( (4*Ay(y))/(5*By(y)*Py(y)*self$sa) ) )
+            }
+            vy <- function(y){ (sqrt(self$S0)/self$n) * (Ay(y)/Py(y))^(2/3) }
+            betay <- function(y){ (5/3)*( 1 - ( (4*Ay(y))/(5*By(y)*Py(y)*self$sa) ) ) }
+            fa <- function(y,a){a - Ay(y)}
+            fq <- function(y,q){q - Qy(y)}
+
+            if( isQ ){
+                y <- uniroot(fq,c(0,100),q=S)$root
+                Q <- S
+            }else{
+                y <- uniroot(fa,c(0,100),a=S/self$Dx)$root
+                Q <- Qy(y)
+            }
+            if(y<0.00001){
+                self$kappa <- self$eta <- 0
+            }else{
+                self$kappa <- self$Dx / vy(y)
+                D <- Q/ (2*By(y)*self$S0)
+                Ds <- 2*D / (cy(y)*Dx)
+                Ds <- Ds * (vy(y)/cy(y))
+                self$eta <- 0.5*(1 - Ds)
+##                self$eta <- (vy(y)/cy(y))*(0.5-Ds) ## this is wrong
+            }
+        }
+    )
+)
+
+hru <- R6::R6Class(
+               "hru",
+               public = list(
+                   ## states
+
+                   s_sf = NA,
+                   q_sf = NA,
+                   chn = NA,
+                   e_sf = NA,
+                   ## initialisation
+                   initialize = function(q_in,chn){
+                       self$chn <- chn
+                       q_out <- q_in
+                       self$chn$update( q_in, isQ=TRUE )
+                       self$s_sf <- self$chn$kappa*(self$chn$eta*q_in + (1-self$chn$eta)*q_out)
+                       self$q_sf <- q_out
+                   },
+                   ## evolve
+                   evolve = function(q_in,Dt){
+                       #browser()
+                       q_out <- q_in
+                       smax <- self$s_sf + Dt*q_in
+                       s <- self$s_sf #smax
+                       for(it in 1:10){
+                           self$chn$update(s)
+                           q_out <- max(0, (self$s_sf + (Dt - self$chn$kappa*self$chn$eta)*q_in) / (Dt + self$chn$kappa*(1-self$chn$eta)))
+                           s <- max(0,smax - Dt*q_out)
+                       }
+                       q_out <- (smax-s)/Dt
+
+                       shat <- self$chn$kappa*(self$chn$eta*q_in + (1-self$chn$eta)*q_out)
+
+                       #stmp <- self$s_sf + Dt*(q_in - q_out)
+                       self$e_sf <- shat - s #tmp
+                       self$q_sf <- q_out
+                       self$s_sf <- s #tmp #shat
+                   }
+               )
+           )
+
+
+## ##############################################################################
 sim_time <- 96*60*60
 sim_length <- 100*1000
-
 ## function to generate forcing
 Qinflow <- function(tt){
     Qbase <- 100
@@ -13,9 +109,9 @@ Qinflow <- function(tt){
     Qbase + (Qpeak-Qbase)*( (tt/Tp)*exp(1-(tt/Tp)) )^beta
 }
 
-### model steps
-Dt <- 900
-Dx <- 100
+## model steps
+Dt <- 1800
+Dx <- 2000
 
 ## generate time steps
 ts <- seq(0,sim_time,by=Dt)
@@ -24,74 +120,32 @@ nx <- ceiling(sim_length / Dx)
 ## initial outflow storage
 Qrec <- rep(NA,length(ts)) ## outflow at end of simulation reach
 
-Q <- rep(NA,nx+1) ## flow at previous time step
-Qcur <- rep(NA,nx+1) ## flow at current time step
-
-## need to keep these for next timestep
-Cstar <- rep(NA,nx) ## need to keep these for next
-Dstar <- rep(NA,nx)
-
-
-## channel definition
-S0 <- rep(0.00025,nx)
-n <- rep(0.035,nx)
-B0 <- rep(50,nx)
-ca <- rep(0,nx)
-sa <- rep(1,nx)
-
-
-Ay <- function(y){ (B0[ii] + y*ca[ii])*y }
-By <- function(y){ B0[ii] + 2*y*ca[ii] }
-Py <- function(y){ B0[ii] + 2*(y/sa[ii]) }
-Qy <- function(y){ (sqrt(S0[ii])/n[ii]) * (Ay(y)^(5/3)) / (Py(y)^(2/3)) }
-cy <- function(y){ (5/3)* (sqrt(S0[ii])/n[ii]) * (Ay(y)^(2/3)) / (Py(y)^(2/3)) *
-                       ( 1 - ( (4*Ay(y))/(5*By(y)*Py(y)*sa[ii]) ) )
-}
-vy <- function(y){ (sqrt(S0[ii])/n[ii]) * (Ay(y)/Py(y))^(2/3) }
-betay <- function(y){ (5/3)*( 1 - ( (4*Ay(y))/(5*By(y)*Py(y)*sa[ii]) ) ) }
-fy <- function(y,q){q - Qy(y)}
-
-## initialise as steady state
+## make HRUs
+hrus <- list()
 tt <- 1
-Q[] <- Qinflow(ts[tt])
+q0 <- Qinflow(ts[tt])
 for(ii in 1:nx){
-    Qref <- (Q[ii+1]+ Q[ii])/2
-    y <- uniroot(fy,c(0,100),q=Qref)$root
-    beta <- betay(y)
-    cel <- cy(y)
-    Cstar[ii] <- (cel*Dt)/(beta[tt]*Dx)
-    Dstar[ii] <- Qref/(beta*By(y)*S0[ii]*cel*Dx)
+    hrus[[ii]] <- hru$new(q0, chn$new(0.00025,50,Inf,Dx,0.035))
 }
 
-Qrec[1] <- Q[nx+1]
-
+## simulate
 for(tt in 2:length(ts)){
-    Qcur[1] <- Qinflow(ts[tt])
+    qq <- Qinflow(ts[tt])
+    ##if(tt==3){browser()}
     for(ii in 1:nx){
-        Qcur[ii+1] <- Q[ii+1] + (Qcur[ii]-Q[ii])
-        for(it in 1:10){
-            Qref <- (Qcur[ii+1] + Qcur[ii])/2
-            y <- uniroot(fy,c(0,100),q=Qref)$root
-            beta <- betay(y)
-            cel <- cy(y)
-            Cs <- (cel*Dt)/(beta*Dx)
-            Ds <- Qref/(beta*By(y)*S0[ii]*cel*Dx)
-
-            K <- c(
-                -1+Cs+Ds ,
-                (1+Cstar[ii]-Dstar[ii])*(Cs/Cstar[ii]),
-                (1-Cstar[ii]+Dstar[ii])*(Cs/Cstar[ii])
-            ) / (1 + Cs + Ds)
-            Qcur[ii+1] <- K[1]*Qcur[ii] + K[2]*Q[ii] + K[3]*Q[ii+1]
+        hrus[[ii]]$evolve(qq,Dt)
+         if( hrus[[ii]]$s_sf < 0 ){
+            print(paste(c("negative",tt,ii,hrus[[ii]]$s_sf)))
         }
-        Cstar[ii] <- Cs
-        Dstar[ii] <- Ds
+        if( hrus[[ii]]$e_sf > 1e-3 ){
+            print(paste(c("error",tt,ii,hrus[[ii]]$e_sf,hrus[[ii]]$s_sf,hrus[[ii]]$q_sf)))
+        }
+        qq <- hrus[[ii]]$q_sf
     }
-
-    Qrec[tt] <- Qcur[nx+1]
-    Q <- Qcur
+    Qrec[tt] <- qq
 }
 
-plot(ts/3600,Qinflow(ts),type="l")
-lines(ts/3600,Qrec,col="red")
-##lines(ts/3600,Qrec,col="green")
+#x11()
+#plot(ts/3600,Qinflow(ts),type="l")
+#lines(ts/3600,Qrec,col="red")
+lines(ts/3600,Qrec,col="blue")

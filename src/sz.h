@@ -9,55 +9,51 @@
 // generic class for the saturated zone flow
 class szc {
 protected:
-  double psi, omega, kappa, q_szmax;
 public:
   // initialisation
-  szc(); //std::vector<double> const&, double const& ,double const&, double const&);
-  virtual double fq(double const&, double const&); // compute outflow given storage and lateral inflow
-  virtual double fs(double const&, double const&); // compute storage given lateral inflow and outflow
-  virtual double ftq(double const&); // compute transmissivity flow given storage
-  virtual double fts(double const&); // compute transmissivity storage given transmissivity flow
-  //virtual void update(double&, double&, double&, double const&, double const&, int const&); // update
+  szc();
+  double q_szmax;
+  double h;
+  double kappa;
+  double eta;
+  virtual void update(double const&); // update
 };
 
 // exponential
 class szc_exp: public szc {
  protected:
+  double const psi, width, Dx;
  public:
   szc_exp(std::vector<double> const&, std::vector<double> const&);
-  double fts(double const&);
-  double ftq(double const&);
+  void update(double const&); // update
 };
 
-// bounded exponential
-class szc_bexp: public szc {
- protected:
- public:
-  szc_bexp(std::vector<double> const&, std::vector<double> const&);
-  double fts(double const&);
-  double ftq(double const&);
-};
+// // bounded exponential
+// class szc_bexp: public szc {
+//  protected:
+//  public:
+//   szc_bexp(std::vector<double> const&, std::vector<double> const&);
+//   double fts(double const&);
+//   double ftq(double const&);
+// };
 
-// constant velocity
-class szc_cnst: public szc {
-protected:
-public:
-  szc_cnst(std::vector<double> const&, std::vector<double> const&);
-  double ftq(double const&);
-  double fts(double const&);
-};
+// // constant velocity
+// class szc_cnst: public szc {
+// protected:
+// public:
+//   szc_cnst(std::vector<double> const&, std::vector<double> const&);
+//   double ftq(double const&);
+//   double fts(double const&);
+// };
 
 // double exponential
 class szc_dexp: public szc {
 protected:
+  double const psi, psi2, omega, width, Dx;
 public:
   szc_dexp(std::vector<double> const&, std::vector<double> const&);
-  double ftq(double const&);
-  double fts(double const&);
+  void update(double const&); // update
 };
-
-
-
 
 #endif
 
