@@ -10,23 +10,21 @@ hru::hru(int const id_,
 	 int const sz_type_, std::vector<double> const sz_param_,
 	 std::vector<int> const precip_lnk_id_, std::vector<double> const precip_lnk_area_,
 	 std::vector<int> const pet_lnk_id_, std::vector<double> const pet_lnk_area_,
-	 std::vector<int> const sf_lnk_id_, std::vector<double> const sf_lnk_width_,
-	 std::vector<double> const sf_lnk_gradient_,
-	 std::vector<int> const sz_lnk_id_, std::vector<double> const sz_lnk_width_,
+	 std::vector<int> const sf_lnk_id_, std::vector<double> const sf_lnk_frc_,
+	 std::vector<int> const sz_lnk_id_, std::vector<double> const sz_lnk_frc_,
 	 std::vector<double> const sz_lnk_gradient_//,
 	 ):
   s_rzmax(rz_param_[0]),
   t_d(uz_param_[0]),
-  //sz_param(sz_param_),
   precip_lnk_id(precip_lnk_id_), precip_lnk_area(precip_lnk_area_),
   pet_lnk_id(pet_lnk_id_), pet_lnk_area(pet_lnk_area_),
-  sf_lnk_id(sf_lnk_id_), //sf_lnk_frc(sf_lnk_frc_),
-  sz_lnk_id(sz_lnk_id_), //sz_lnk_frc(sz_lnk_frc_),
+  sf_lnk_id(sf_lnk_id_), sf_lnk_frc(sf_lnk_frc_),
+  sz_lnk_id(sz_lnk_id_), sz_lnk_frc(sz_lnk_frc_),
   id(id_), 
   s_sf(states_[0]), s_rz(states_[1]), s_uz(states_[2]), s_sz(states_[3])
 {
   // change depths to volues for storage limits - not use hru area no map area
-  area = properties_[0] * properties_[1]; // width * Dx
+  // area = properties_[0] * properties_[1]; // width * Dx
   //s_rzmax = s_rzmax*area;
   s_sf *= area;
   s_rz *= area;
@@ -39,14 +37,13 @@ hru::hru(int const id_,
     switch(sf_type_){
     case 1:
       // two stage constant velocity
-      sf.push_back( std::make_unique<sfc_cnst>( sf_param_, sf_lnk_width_[ii], area ) );
+      sf.push_back( std::make_unique<sfc_cnst>( sf_param_, properties_[2] ) );
       break;
     case 2:
-      // mannings with raf
-      sf.push_back( std::make_unique<sfc_kin>( sf_param_, sf_lnk_width_[ii], sf_lnk_gradient_[ii], area ) );
+      // mannings with raf  <TODO> check properties
+      sf.push_back( std::make_unique<sfc_kin>( sf_param_, properties_[1], properties_[3], properties_[2] ) );
       break;
     }
-    lambda_sf.push_back(0.0);
   }
 
   // initialise the saturated flux object
@@ -69,7 +66,6 @@ hru::hru(int const id_,
       sz.push_back( std::make_unique<szc_cnst>( sz_param_, sz_lnk_width_[ii], sz_lnk_gradient_[ii], area ) );
       break;
     }
-    lambda_sz.push_back(0.0);
   }
 };
 

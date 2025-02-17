@@ -176,6 +176,25 @@ upon whether $s_{sf} \leq s_{c}$, for some storage threshold(s).
 This allows a basic representation of surface storage such as runoff attenuation
 features, or out of bank channel flow. Examples are given later.
 
+\[
+q = a_{1}v_{1} + a_{2}v_{2}
+v = q / \left(a_{1} + a_{2}\right)
+a_{2} = \frac{q - q_{1}}{v_{2}}
+\]
+
+\[
+v_{2} = \frac{1}{n}R_{h}^{2/3}S_{0}^{0.5}
+\]
+\[
+R_{h} \approx h
+\]
+\[
+q_{2} = \frac{w}{n}h^{5/3}S_{0}^{0.5}
+h^{5/3} = q_{2}\frac{n}{wS_{0}^{0.5}}
+\]
+
+
+
 ## Root zone
 
 The root zone gains water from precipitation and the surface zone. It loses water through

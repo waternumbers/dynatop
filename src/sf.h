@@ -23,11 +23,14 @@ class sfc_cnst: public sfc {
 protected:
   double const v_1, q_1, v_2;
 public:
+  sfc_cnst(std::vector<double> const&, double const&);
   void update(double const&);
 };
 
 // kinematic with RAF
 class sfc_kin: public sfc {
+protected:
+  double const v_1, q_1, rho;
 public:
   sfc_kin(std::vector<double> const&, double const&, double const&, double const&);
   void update(double const&);

@@ -1,7 +1,7 @@
 #' R6 Class for Dynamic TOPMODEL
 #' @examples
 #' ## the vignettes contains further details of the method calls.
-#' 
+#'
 #' data("Swindale") ## example data
 #' mdl <- Swindale$model
 #' mdl$map <- system.file("extdata","Swindale.tif",package="dynatop",mustWork=TRUE)
@@ -84,7 +84,7 @@ dynatop <- R6Class(
         #' @return invisible(self) for chaining
         sim = function(output_defn,keep_states=NULL,sub_step=NULL,
                        vtol=0.001,ftol=sqrt(.Machine$double.eps), max_it=1000){
-            
+
             ## check the solver options
             vtol <- as.double(vtol); ftol <- as.double(ftol)
             if(any( c(vtol,ftol) < .Machine$double.eps)){
@@ -95,7 +95,7 @@ dynatop <- R6Class(
 
             ## check digest output defn
             private$digest_output_defn(output_defn)
-            
+
             ## check presence of finite states
             tmp <- sapply(private$model, function(x){ x$properties["area"]==0 | all(is.finite(x$states)) })
             if( !all(tmp) ){
@@ -105,12 +105,12 @@ dynatop <- R6Class(
             if( !is.null(sub_step) && !is.finite(sub_step[1]) ){
                 stop("sub_step should be a single finite value")
             }
-            
+
             ## check presense of obs
             if( length(private$time_series$index) < 2 ){
                 stop("Insufficent data to perform a simulation")
             }
-            
+
             ## check keep_states is valid
             if( length(keep_states)>0 ){
                 if( !("POSIXct" %in% class(keep_states)) ){
@@ -131,7 +131,7 @@ dynatop <- R6Class(
             if( length(private$time_series$output) == 0 ){
                 stop("No output data available")
             }
-            
+
             name <- match.arg(name, colnames(private$time_series$output), several.ok=TRUE)
             x <- xts::xts(private$time_series$output[,name,drop=FALSE],
                           order.by=private$time_series$index)
@@ -142,8 +142,8 @@ dynatop <- R6Class(
         plot_output = function(name=colnames(private$time_series$output)){
             x <- self$get_output(name)
             plot(x)
-            
-            
+
+
             ## if(seperate){
             ##     oldpar <- par(no.readonly = TRUE)
             ##     on.exit(par(oldpar))
@@ -177,7 +177,7 @@ dynatop <- R6Class(
         #' @description Return states
         #' @param record logical TRUE if the record should be returned. Otherwise the current states returned
         get_states = function(record=FALSE){
-            
+
             if( record ){
                 return( setNames(private$time_series$state_record,
                                  private$time_series$index) )
@@ -191,22 +191,22 @@ dynatop <- R6Class(
        # #' @param add_channel Logical indicating if the channel should be added to the plot
        plot_state = function(state=c("s_sf","s_rz","s_uz","s_sz")){ #,add_channel=TRUE){
            state <- match.arg(state)
-           
+
            if( is.null(private$map) | ( length(private$map)==0) ){
                stop("The model contains no map of HRU locations")
            }
 
            x <- self$get_states()
            rst <- terra::subst(private$map[["hru"]], x$id, x[[state]])
-           
+
            terra::plot(rst)
            ## if( add_channel & file.exists(private$model$map$channel) ){
            ##   chn <- terra::vect(private$model$map$channel)
            ##    terra::plot(chn,add=TRUE)
            ## }
-           
+
        }
-       
+
     ),
     private = list(
         ## stores of data
@@ -219,7 +219,7 @@ dynatop <- R6Class(
                     rz = setNames(as.integer(1),c("orig")),
                     uz = setNames(as.integer(1),c("orig")),
                     sz = setNames(as.integer(1:4),c("exp","bexp","dexp","cnst")),
-                    
+
                     output = setNames(1:14, c("precip","pet","aet",
                                               "q_sf","q_sf_in","q_sz","q_sz_in",
                                               "s_sf","s_rz","s_uz","s_sz",
@@ -227,7 +227,7 @@ dynatop <- R6Class(
                     ),
         digest_hru = function(h, use_states, delta){ ## check HRU returns a text string of errors
             etxt = character(0)
-            
+
             ## check id
             if("id" %in% names(h)){
                 if( length( h$id ) > 1 ){ etxt <- c(etxt, paste0(h$id[1], ": ID should be of length 1")) }
@@ -236,7 +236,7 @@ dynatop <- R6Class(
                 etxt <- c(etxt, "No ID is specified")
                 h$id <- NA ## for error messages
             }
-            
+
             ## check properties
             if("properties" %in% names(h)){
                 prpnm <- c("width", "Dx", "gradient")
@@ -252,7 +252,7 @@ dynatop <- R6Class(
             }else{
                 etxt <- c(etxt,paste0(h$id, ": properties is missing") )
             }
-                
+
             ## check states
             snm <- c("s_sf","s_rz","s_uz","s_sz")
             if("states" %in% names(h)){
@@ -264,7 +264,7 @@ dynatop <- R6Class(
             }else{
                 etxt <- c(etxt,paste0(h$id, ": states is missing") )
             }
-            
+
             ## check sf, rz, uz, sz
             for(ii in c("sf","rz","uz","sz")){
                 if(!(ii %in% names(h))){
@@ -279,16 +279,21 @@ dynatop <- R6Class(
                     etxt <- c(etxt, paste0(h$id[1], ": ", ii, " type should be of length 1"))
                     next
                 }
-                
+
                 if( !( h[[ii]]$type %in% names(private$info[[ii]])) ){
                     etxt <- c(etxt, paste0(h$id[1], ": ", ii, " type is not valid"))
                     next
                 }
                 pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
-                              "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
+                               ## "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
                               "sf_kin" = c("n","s_raf","t_raf"),
-                              "sf_comp" = c("v_sf_1","d_sf_1","s_1","v_sf_2","d_sf_2"),
-                              "sf_kin_tank" = c("n","s_raf","t_raf"),
+                              "sf_cnst" = c("v_sf_1","s_1","v_sf_2"),
+                              ## "sf_kin_tank" = c("n","s_raf","t_raf"),
+                              "sf_power_law" = c("pwr_raf","sc_raf","s_raf","pwr","sc"),
+                              ## "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
+                              ## "sf_kin" = c("n","s_raf","t_raf"),
+                              ## "sf_comp" = c("v_sf_1","d_sf_1","s_1","v_sf_2","d_sf_2"),
+                              ## "sf_kin_tank" = c("n","s_raf","t_raf"),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
                               "sz_exp" = c("t_0","m"),
@@ -312,7 +317,7 @@ dynatop <- R6Class(
                 h[[ii]]$parameters <- h[[ii]]$parameters[ c(pnm,setdiff(names(h[[ii]]$parameters),pnm)) ] ## make sure parameters are in correct order
                 ## print(h[[ii]]$parameters)
             }
-            
+
             ## check precip and pet
             for(ii in c("precip","pet")){
                 if( !all(c("name","area") %in% names(h[[ii]])) ){
@@ -413,15 +418,15 @@ dynatop <- R6Class(
         },
         ## convert the form the internal storage to that input
         ## we presume the model has been checked!!
-        reform_model = function(){            
+        reform_model = function(){
             return( lapply( private$model, private$regurge_hru) )
-        },        
+        },
         ## check and add observations
         digest_obs = function(obs){
-            
+
             ## check types
             if(!is.xts(obs)){ stop("observations should be an xts object") }
-            
+
             ## check constant time step
             tmp <- diff(as.numeric(index(obs)))
             if( !all( tmp == tmp[1] ) ){
@@ -438,7 +443,7 @@ dynatop <- R6Class(
             if( !all(idx) ){
                 stop(paste(c("Missing series:",nm[!idx]),collaspe=" "))
             }
-            
+
             ## check all required values are finite
             if( !all(is.finite(obs[,nm])) ){
                 stop("There are non finite values in the required time series")
@@ -451,11 +456,11 @@ dynatop <- R6Class(
                 h$pet$idx <- nm[ h$pet$name ]
                 h
             }
-            
+
             private$model <- lapply( private$model, faddobs,nm = nm)
             private$time_series$obs_data <- as.matrix(obs)
             private$time_series$index <- index(obs)
-            
+
         },
         ## digest the output definition
         digest_output_defn = function(defn){
@@ -465,12 +470,12 @@ dynatop <- R6Class(
             if( !all(defn$id %in% (0:(length(private$model)-1))) ){
                 stop(paste("id should be between 0 and",length(private$model)-1))
             }
-            
+
             if( !("scale" %in% names(defn) ) ){
                 warning("Output definition does not have scale - adding a vector of 1's")
                 defn$scale <- 1
             }
-            
+
             defn$name <- as.character(defn$name)
             defn$id <- as.integer(defn$id)
             defn$flux <- as.character(defn$flux)
@@ -490,7 +495,7 @@ dynatop <- R6Class(
             defn <- private$output_defn
             defn$flux_int <- defn$name_idx <- NULL
             return( defn )
-        },    
+        },
         ## compute the simulation timestep
         comp_ts = function(sub_step=NULL){
             ## work out time steps for use in simulation
@@ -510,15 +515,15 @@ dynatop <- R6Class(
             }
             dt_init(private$model,
                     vtol,etol,max_it)
-            
+
         },
         ## ###############################
         ## function to perform simulations
         sim_dyna= function(keep_states,sub_step,vtol,etol,max_it){
-            
+
             ## compute time substep
             if(length(sub_step)>1){ sub_step <- sub_step[1] }
-            ts <- private$comp_ts(sub_step)            
+            ts <- private$comp_ts(sub_step)
 
             ## Logical if states to be kept and store
             keep_states <- private$time_series$index %in% keep_states
@@ -527,12 +532,12 @@ dynatop <- R6Class(
             }else{
                 private$time_series$state_record <- list()
             }
-            
+
             ## Initialise the mass error store
             private$time_series$mass_balance <- matrix(as.numeric(NA),nrow(private$time_series$obs),6)
             colnames(private$time_series$mass_balance) <-
                 c("initial_state","p","e_t","outflow","final_state","error")
-            
+
             ## simulate
             dt_sim(private$model,
                    private$output_defn,
@@ -545,10 +550,10 @@ dynatop <- R6Class(
                    ts$n_sub_step,
                    as.double(vtol),
                    as.double(etol),
-                   as.integer(max_it))            
-            
+                   as.integer(max_it))
+
         }
-        
+
     )
-    
+
 )

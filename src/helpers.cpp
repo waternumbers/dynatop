@@ -16,12 +16,12 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
     Rcpp::List pet_list = m["pet"];
     Rcpp::List q_sf_list = m["sf_flow_direction"];
     Rcpp::List q_sz_list = m["sz_flow_direction"];
-    int id = m["id"];
+    //int id = m["id"];
 
     //svec = svec * pvec["area"];
 
     // all passed explicity, not by reference
-    hrus.push_back( hru( Rcpp::as<int>(id), //m["id"], // id passed explicitly
+    hrus.push_back( hru( Rcpp::as<int>(m["id"]), // id passed explicitly
 			 Rcpp::as<std::vector<double>>(svec),
 			 Rcpp::as<std::vector<double>>(pvec),
 			 Rcpp::as<int>(sf_list["type"]), Rcpp::as<std::vector<double>>(sf_list["parameters"]), // surface type and parameters
