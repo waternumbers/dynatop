@@ -82,7 +82,7 @@ szc_dexp::szc_dexp(std::vector<double> const &param, std::vector<double> const &
   double const &grd(prop[3]);
   width = prop[1];
   Dx = prop[2];
-
+  double const &area = prop[0];
   double beta = std::atan(grd);
   omega = param[3]; // weight
   q_szmax =  width*t0*std::sin(beta);
@@ -92,7 +92,7 @@ szc_dexp::szc_dexp(std::vector<double> const &param, std::vector<double> const &
   eta = 0.5;
 }
 
-void szc_exp::update(double const& q){
+void szc_dexp::update(double const& q){
   if( q == 0.0 ){
     h = 0.0;
     kappa = 0.0;
@@ -111,7 +111,7 @@ void szc_exp::update(double const& q){
     double qq; //z, qq;
     while( (it <= max_it) and ( (upr-lwr)>1e-10 ) ){
       z = (lwr+upr)/2.0;
-      qq = q_szmax * ( omega*std::exp(-psi*z) + (1.0-omega)*std::exp(-kappa*z) );ftq(z);
+      qq = q_szmax * ( omega*std::exp(-psi*z) + (1.0-omega)*std::exp(-kappa*z) );
       if( qq <= q ){ upr = z; } else { lwr = z; }
       it += 1;
     }

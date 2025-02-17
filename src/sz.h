@@ -22,7 +22,7 @@ public:
 // exponential
 class szc_exp: public szc {
  protected:
-  double const psi, width, Dx;
+  double psi, width, Dx;
  public:
   szc_exp(std::vector<double> const&, std::vector<double> const&);
   void update(double const&); // update
@@ -49,7 +49,7 @@ class szc_exp: public szc {
 // double exponential
 class szc_dexp: public szc {
 protected:
-  double const psi, psi2, omega, width, Dx;
+  double psi, psi2, omega, width, Dx;
 public:
   szc_dexp(std::vector<double> const&, std::vector<double> const&);
   void update(double const&); // update

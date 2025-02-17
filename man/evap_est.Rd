@@ -71,4 +71,6 @@ stopifnot(all.equal(hpet, hpet2))
 Beven, K. J. (2012). Rainfall-runoff modelling : the primer. Chichester, UK, Wiley-Blackwell.
 
 Calder, I. R. (1986). A stochastic model of rainfall interception. Journal of Hydrology, 89(1), 65-71.
+
+Calder, I. R., Harding, R. J. & Rosier, P. T. W. (1983) An Objective Assessment of soil-moisture deficit models. Journal of Hydrology, 60, 329-355
 }

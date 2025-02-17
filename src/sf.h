@@ -9,30 +9,33 @@
 // generic class
 class sfc {
 protected:
-  double const& Dx;
+  double Dx;
 public:
   // initialisation
   sfc();
   double kappa;
-  double eta ;
+  double eta;
   virtual void update(double const&); // multiply value by storage to give outflow
 };
 
 // two section constant velocity
 class sfc_cnst: public sfc {
-protected:
-  double const v_1, q_1, v_2;
+  double v_1, q_1, v_2;
 public:
-  sfc_cnst(std::vector<double> const&, double const&);
+  //double kappa;
+  //double eta;
+  sfc_cnst(std::vector<double> const&, std::vector<double> const&);
   void update(double const&);
 };
 
 // kinematic with RAF
 class sfc_kin: public sfc {
-protected:
-  double const v_1, q_1, rho;
+  double v_1, q_1, rho, width;
 public:
-  sfc_kin(std::vector<double> const&, double const&, double const&, double const&);
+  //double kappa;
+  //double eta;
+  
+  sfc_kin(std::vector<double> const&, std::vector<double> const&);
   void update(double const&);
 };
 
