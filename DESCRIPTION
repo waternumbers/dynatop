@@ -18,7 +18,8 @@ Imports:
 	R6,	
 	zoo,
 	xts,
-	Rcpp
+	Rcpp,
+	terra
 LinkingTo:
 	Rcpp
 Depends:
@@ -27,10 +28,9 @@ BugReports: https://github.com/waternumbers/dynatop/issues
 URL: https://waternumbers.github.io/dynatop/, https://github.com/waternumbers/dynatop
 RoxygenNote: 7.3.2
 Suggests:
-    terra,
     knitr,
     rmarkdown,
     bookdown,
-    testthat (>= 3.0.0)
+    tinytest
 VignetteBuilder: knitr
 Language: en-GB
