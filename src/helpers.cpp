@@ -5,6 +5,7 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
   std::vector<hru> hrus;
   
   for(int ii=0; ii<nhru; ++ii){
+    Rcpp::Rcout << ii << std::endl;
     Rcpp::List m = mdl[ii];
     Rcpp::NumericVector svec = m["states"];
     Rcpp::NumericVector pvec = m["properties"];
@@ -12,24 +13,26 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
     Rcpp::List rz_list = m["rz"];
     Rcpp::List uz_list = m["uz"];
     Rcpp::List sz_list = m["sz"];
-    Rcpp::List pcp_list = m["precip"];
-    Rcpp::List pet_list = m["pet"];
+    Rcpp::NumericVector pcp_frc = m["precip"];
+    Rcpp::IntegerVector pcp_idx = m["precip_idx"];
+    Rcpp::NumericVector pet_frc = m["pet"];
+    Rcpp::IntegerVector pet_idx = m["pet_idx"];
     Rcpp::List q_sf_list = m["sf_flow_direction"];
     Rcpp::List q_sz_list = m["sz_flow_direction"];
-    //int id = m["id"];
+    Rcpp::IntegerVector uid = m["uid"];//int id = m["id"];
 
     //svec = svec * pvec["area"];
 
     // all passed explicity, not by reference
-    hrus.push_back( hru( Rcpp::as<int>(m["id"]), // id passed explicitly
+    hrus.push_back( hru( Rcpp::as<int>(uid["id"]), // id passed explicitly
 			 Rcpp::as<std::vector<double>>(svec),
 			 Rcpp::as<std::vector<double>>(pvec),
 			 Rcpp::as<int>(sf_list["type"]), Rcpp::as<std::vector<double>>(sf_list["parameters"]), // surface type and parameters
 			 Rcpp::as<std::vector<double>>(rz_list["parameters"]), // root zone type and parameters passed explicitly
 			 Rcpp::as<std::vector<double>>(uz_list["parameters"]), // unsaturated zone type and parameters passed explicitly
 			 Rcpp::as<int>(sz_list["type"]), Rcpp::as<std::vector<double>>(sz_list["parameters"]), // saturated zone type and parameters passed explicitly
-			 Rcpp::as<std::vector<int>>(pcp_list["idx"]), Rcpp::as<std::vector<double>>(pcp_list["fraction"]), // precipiataion inputs
-			 Rcpp::as<std::vector<int>>(pet_list["idx"]), Rcpp::as<std::vector<double>>(pet_list["fraction"]), // pet inputs
+			 Rcpp::as<std::vector<int>>(pcp_idx), Rcpp::as<std::vector<double>>(pcp_frc), // precipiataion inputs
+			 Rcpp::as<std::vector<int>>(pet_idx), Rcpp::as<std::vector<double>>(pet_frc), // pet inputs
 			 Rcpp::as<std::vector<int>>(q_sf_list["id"]),
 			 Rcpp::as<std::vector<double>>(q_sf_list["fraction"]), // surface zone redistribution
 			 Rcpp::as<std::vector<int>>(q_sz_list["id"]),

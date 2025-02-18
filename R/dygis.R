@@ -1363,7 +1363,7 @@ dynatopGIS <- R6::R6Class(
                     area <- cell_area * (1-chn_frc)
                     if(chn_frc>0){
                         ## flow goes to the channel
-                        hru[[cnt]]$sf_flow_direction = list(id = hru_data[ii,"channel"],fraction=1)
+                        hru[[cnt]]$sf_flow_direction = list(id = as.integer(hru_data[ii,"channel"]),fraction=1)
                         ## work out gradient from upslope area
                         is_higher <- is.finite(gcl) & gcl<0 #& is.finite(cjdx) & cjdx==ctch[ii]
                         sum_gcl <- sum( gcl[is_higher] )
@@ -1386,7 +1386,8 @@ dynatopGIS <- R6::R6Class(
                         sum_gcl <- sum( gcl[is_lower] )
                         sum_dcl <- sum( dcl[is_lower] )
                         ## set flow directions
-                        hru[[cnt]]$sf_flow_direction = list(id = id[kk], fraction = gcl[is_lower]/sum(gcl[is_lower]))
+                        hru[[cnt]]$sf_flow_direction = list(id = as.integer(id[kk]),
+                                                            fraction = gcl[is_lower]/sum(gcl[is_lower]))
                         ## set proerties
                         hru[[cnt]]$properties[c("area","Dx","gradient")] <-
                             as.numeric(c(cell_area,

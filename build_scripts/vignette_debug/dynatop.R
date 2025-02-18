@@ -113,7 +113,8 @@ terra::plot(ctch$combine_classes("atb_20_band_500",pairs=c("atb_20","band"),burn
 
 
 ## ----model_atb_split----------------------------------------------------------
-ctch$create_model(file.path(demo_dir,"new_model"),"atb_20")
+##ctch$create_model(file.path(demo_dir,"new_model"),"atb_20")
+ctch$create_model(file.path(".","/build_scripts","vignette_debug","new_model"),"atb_20")
 
 
 ## ----model files--------------------------------------------------------------
@@ -130,7 +131,10 @@ data("Swindale")
 
 
 ## ----sep----------------------------------------------------------------------
-swindale_model <- readRDS(file.path(demo_dir,"new_model.rds")) #Swindale$model
+##swindale_model <- readRDS(file.path(demo_dir,"new_model.rds")) #Swindale$model
+swindale_model <- readRDS(file.path(".","/build_scripts","vignette_debug","new_model.rds"))
+
+
 swindale_obs <- Swindale$obs
 
 
@@ -139,7 +143,8 @@ names(swindale_model)
 
 
 ## ----set_map------------------------------------------------------------------
-swindale_model$map <- file.path(demo_dir,"new_model.tif")
+#swindale_model$map <- file.path(demo_dir,"new_model.tif")
+swindale_model$map <- file.path(".","/build_scripts","vignette_debug","new_model.tif")
 ##system.file("extdata","mdl","Swindale.tif",package="dynatop",mustWork=TRUE)
 
 
@@ -182,6 +187,7 @@ for(ii in 1:length(hru)){
 
 
 ## ----create_object------------------------------------------------------------
+devtools::load_all()
 ctch_mdl <- dynatop$new(hru,map=swindale_model$map)
 
 
@@ -192,7 +198,8 @@ ctch_mdl$add_data(swindale_obs)
 
 
 ## ----initialise---------------------------------------------------------------
-ctch_mdl$initialise()$plot_state("s_sz")
+ctch_mdl$initialise()
+$plot_state("s_sz")
 
 
 ## ----sim1---------------------------------------------------------------------
