@@ -228,20 +228,18 @@ dynatop <- R6Class(
         digest_hru = function(h, use_states, delta){ ## check HRU returns a text string of errors
             etxt = character(0)
 
-            stopifnot("No uids specified" = "uid" %in% names(h),
-                      "No id in uid" = "id" %in% names(h$uid))
-            id <- h$uid["id"]
-
-            ## check uids
-            nm <- c("id","band","cell")
-            if( !all(nm %in% names(h$uid)) ){
-                etxt <- c(etxt, paste0(id, ": uid is missing named values") )
+            ## check id
+            if("id" %in% names(h)){
+                if( length( h$id ) > 1 ){ etxt <- c(etxt, paste0(h$id[1], ": ID should be of length 1")) }
+                if( !is.integer( h$id ) ){ etxt <- c(etxt, paste0( h$id, ": ID should be an integer")) }
+            }else{
+                etxt <- c(etxt, "No ID is specified")
+                h$id <- NA ## for error messages
             }
-            if( !is.integer(h$uid) ){ etxt <- c( etxt, paste0(id, ": uid should be an integer vector") ) }
 
             ## check properties
             if("properties" %in% names(h)){
-                prpnm <- c("area", "Dx", "gradient")
+                prpnm <- c("width", "Dx", "gradient")
                 if( !is.numeric(h$properties) ){ etxt <- c( etxt, paste0(h$id, ": properties should be a numeric vector") ) }
                 if( all(prpnm %in% names(h$properties)) ){
                     if( !all( h$properties[c("gradient","width")] >0 ) ){
@@ -287,9 +285,9 @@ dynatop <- R6Class(
                     next
                 }
                 pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
-                              ## "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
+                               ## "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
                               "sf_kin" = c("n","s_raf","t_raf"),
-                              "sf_cnst" = c("v_sf","s_raf","t_raf"),
+                              "sf_cnst" = c("v_sf_1","s_1","v_sf_2"),
                               ## "sf_kin_tank" = c("n","s_raf","t_raf"),
                               "sf_power_law" = c("pwr_raf","sc_raf","s_raf","pwr","sc"),
                               ## "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
@@ -299,8 +297,8 @@ dynatop <- R6Class(
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
                               "sz_exp" = c("t_0","m"),
-                              ###"sz_bexp" = c("t_0","m","h_sz_max"),
-                              ##"sz_cnst" = c("v_sz","h_sz_max"),
+                              "sz_bexp" = c("t_0","m","h_sz_max"),
+                              "sz_cnst" = c("v_sz","h_sz_max"),
                               "sz_dexp" = c("t_0","m","m2","omega"),
                               stop("Invalid options for pname")
                               )

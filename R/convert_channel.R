@@ -15,7 +15,7 @@
 #' @param drop logical, should non-required proerties be dropped
 #'
 #' @return A SpatVect containing polygons of the channel network, with at least the following properties: name, length, area, width, slope, startNode, endNode and channelVol.
-#' 
+#'
 #' @details The processing follows the follwoing sequence:
 #'   - The `property_names` input is used to rename the data associated with spatial objects. Existing variables may be deleted or overwritten if names clash.
 #'   - Varaibles are converted to the expected type then checked for missing values; in doing this
@@ -31,7 +31,7 @@
 #'      - Missing `area` values are computed from the polygons
 #'   - Missing `channelVol` values are populated by the `area` multiplied by the default depth.
 #'   - if `drop=TRUE` all columns except those required are dropped
-#' 
+#'
 #' @examples
 #' channel_file <- system.file("extdata", "SwindaleRiverNetwork.shp",
 #' package="dynatopGIS", mustWork = TRUE)
@@ -49,7 +49,7 @@ convert_channel <- function(chn,
                             defaults = c("width"=2,"slope"=0.001),
                             min_slope = 1e-6,
                             drop = TRUE){
-    
+
     ## read in the chn sp object is a character sting
     if(is.character(chn)){
         if(file.exists(chn)){
@@ -64,7 +64,7 @@ convert_channel <- function(chn,
               "A field given in chn_property_names does not exist" = all( property_names %in% names(chn) )
               )
     is_polygon <- terra::geomtype(chn)=="polygons"
-    
+
     ## mutate the names so that they match those on the property_names
     nm <- names(chn)
     for(ii in names(property_names)){
@@ -72,11 +72,11 @@ convert_channel <- function(chn,
     }
     names(chn) <- nm
 
-    ## populate required values that don't have columns
+    ## populate required values and width that don't have columns
     for(ii in setdiff( c("name","length","area","width","slope","startNode","endNode"), names(chn) )){
         chn[[ii]] <- NA
     }
-    
+
     ## some type conversions
     chn$name <- as.character(chn$name)
     chn$length <- as.numeric(chn$length)
@@ -94,7 +94,7 @@ convert_channel <- function(chn,
               "names should be unique" = length(unique(chn$names)) == length(chn$names),
               "lengths should be finite" = all(is.finite(chn$length))
               )
-    
+
     ## populate the easier missing values
     idx <- is.na(chn$slope); if(any(idx)){ warning("Replacing missing slopes with default") }
     chn$slope[ idx ] <- defaults["slope"]
@@ -104,9 +104,12 @@ convert_channel <- function(chn,
 
     idx <- is.na(chn$endNode); if(any(idx)){ warning("Generating missing endNode values") }
     chn$endNode[idx] <- paste0("en_", chn$name[idx])
-    
+
     ## process width and buffer if not a polygon
     if(!is_polygon){
+        idx <- is.na(chn$length); if(any(idx)){ warning("Replacing missing lengths with computed values") }
+        chn$length[idx] <- terra::perim(chn[idx,])
+
         idx <- is.na(chn$width); if(any(idx)){ warning("Replacing missing widths with default") }
         chn$width[idx] <- defaults["width"]
         warning("Buffering channel with specified widths")
@@ -118,7 +121,7 @@ convert_channel <- function(chn,
     chn <- chn[order(chn$area,decreasing=TRUE),]
     chn <- terra::erase(chn, sequential=TRUE)
     chn$area <- terra::expanse(chn)
-    
+
     ## drop
     if(drop){
         chn <- chn[, c("name","length","area","slope","startNode","endNode") ]
@@ -142,11 +145,11 @@ convert_channel <- function(chn,
 #' connectivity given by the start and end node, only those flaged as connected are returned.
 #' @export
 trim_channel <- function(chn,outlets,removed=FALSE){
-    
+
     ## check chn is a channel
     if(is.character(chn)){ x <- terra::vect(chn) }
     check_channel(chn)
-    
+
     ## check outlets are in the channel
     stopifnot("Not all outlets are in the channel object" = all( outlets %in% chn$name ))
 
@@ -154,7 +157,7 @@ trim_channel <- function(chn,outlets,removed=FALSE){
     idx <- chn$name %in% outlets
     not_eval <- !idx
     in_network <- idx
-    
+
     ## for speed
     sN <- chn$startNode
     eN <- chn$endNode
@@ -164,9 +167,9 @@ trim_channel <- function(chn,outlets,removed=FALSE){
         not_eval[idx] <- FALSE
         in_network[idx] <- TRUE
     }
-    
+
     if( removed ){ in_network <- !in_network }
-    
+
     chn <- chn[in_network,]
 
     if( !removed ){ check_channel(chn,outlets) }
@@ -191,7 +194,7 @@ merge_channels <- function(x,y,outlets=NULL,verbose=FALSE){
     ## check x is a channel
     if(is.character(x)){ x <- terra::vect(x) }
     check_channel(x,outlets)
-    
+
     ## check y is a channel
     if(is.character(y)){ x <- terra::vect(y) }
     check_channel(y)
@@ -215,36 +218,36 @@ merge_channels <- function(x,y,outlets=NULL,verbose=FALSE){
     x_en <- x$endNode
     y_sn <- y$startNode
     y_en <- y$endNode
-    
+
     for(ii in 1:nrow(y)){
         idx <- terra::is.related(x, y[ii,], "intersects")
         idx <- idx & keep_x ## drop any intersection with already dropped items
-        if(any(idx)){ 
+        if(any(idx)){
             keep_y[ii] <- TRUE
-            
+
             if(sum(idx)==1){
                 ## assume an outlet else there should be two intersections
                 ## presumes no intersection at the outlet of x
                 edx <- FALSE
                 sdx <- TRUE
             }else{
-                edx <- x_en[idx] %in% x_sn[idx] ## true is end of reach is start of another reach in subset                
+                edx <- x_en[idx] %in% x_sn[idx] ## true is end of reach is start of another reach in subset
                 sdx <- x_sn[idx] %in% x_en[idx] ## true is start is also and endNode for another reach i
-                ## edx <- x$endNode[idx] %in% x$startNode[idx] ## true is end of reach is start of another reach in subset                
+                ## edx <- x$endNode[idx] %in% x$startNode[idx] ## true is end of reach is start of another reach in subset
                 ## sdx <- x$startNode[idx] %in% x$endNode[idx] ## true is start is also and endNode for another reach in subet
             }
 
             ## redo end nodes
             tmp <- unique( x_en[idx][ edx ] ) ## end Nodes in the new object
             x_en[ x_en %in% tmp ] <- y_sn[ii]
-            
+
             ## redo start nodes
             tmp <- unique( x_sn[idx][sdx] )
             x_sn[ x_sn %in% tmp ] <- y_en[ii]
-            
+
             ## flag ones to remove
             keep_x[idx][ (edx & sdx) ] <- FALSE
-            
+
         }
 
         if( verbose ){ setTxtProgressBar(pb, ii, title = NULL, label = NULL) }
@@ -261,7 +264,7 @@ merge_channels <- function(x,y,outlets=NULL,verbose=FALSE){
     chn <- chn[order(chn$area,decreasing=TRUE),]
     chn <- terra::erase(chn, sequential=TRUE)
     chn$area <- terra::expanse(chn)
-    
+
     check_channel(x,outlets)
 
     return(x)
@@ -291,7 +294,7 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
     if( simplify_length <= 0 ){
         stop("simplify_length must be positive")
     }
-    
+
 
     ## split geom and data - seems quicker...
     gm <- chn
@@ -306,16 +309,16 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
         lp <- lp + 1
         print(paste("starting loop",lp))
 
-        
+
         to_keep <- rep(TRUE,nrow(chn))
-    
+
         if("is_wb" %in% names(chn)){ not_wb <- !chn$is_wb }
         else{ not_wb <- rep(TRUE, nrow(chn)) }
-        
+
         ## find channels to merge and order
         idx <- which( (chn$length < simplify_length) & not_wb)
         idx <- idx[order(chn$length[idx])]
-        
+
         n <- length(idx)
         if( verbose ){
             pb <- txtProgressBar(min = 0, max = n, initial = 0, char = "=",
@@ -324,16 +327,16 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
             cnt <- 0
         }
 
-    
-    
+
+
         for(ii in idx){
             if( chn$length[ii] >= simplify_length ){
                 ## catch incase a merge has already made it long
                 cnt <- cnt+1
                 setTxtProgressBar(pb, cnt, title = NULL, label = NULL)
                 next
-            } 
-            
+            }
+
             in_hn <-  which( chn$endNode == chn$startNode[ii] )
             out_hn <-  which( chn$startNode == chn$startNode[ii] )
             in_en <- which( chn$endNode == chn$endNode[ii] )
@@ -348,7 +351,7 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
             }
             if( length(in_hn)==1 &&
                 not_wb[in_hn] &&
-                length(out_hn)==1 &&               
+                length(out_hn)==1 &&
                 is.na(jj) ){
                 ## startNode is a 1-to-1 join and can merge u/s
                 jj <- in_hn
@@ -373,31 +376,31 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
                 if(!is.na(jj)){
                     chn$endNode[in_hn] <- chn$endNode[ii]
                 }
-                
-                
+
+
                 ## ## endNode is a single outlet so merge d/s but reroute other flows to
                 ## ## new start of reach
                 ## jj <- out_en
                 ## chn$endNode[ in_en ] <- chn$startNode[ii]
                 ## chn$startNode[jj] <- chn$startNode[ii]
             }
-            
+
             if(!is.na(jj)){ ## can simplify
-                
+
                 ##print(paste(cnt,ii,jj))
-                
+
                 ## merge properties (default to those for jj)
                 chn$length[jj] <- chn$length[jj] + chn$length[ii]
                 chn$area[jj] <- chn$area[jj] + chn$area[ii]
                 chn$width[jj] <- chn$area[jj] / chn$length[jj]
                 chn$channelVol[jj] <- chn$channelVol[jj] + chn$channelVol[ii]
                 chn$endNode[ii] <- chn$startNode[ii] <- NA # to stop matching on deleted segments
-                
+
                 ## merge geom
                 gm[[jj]] <- terra::combineGeoms( gm[[jj]], gm[[ii]], minover=0 )
                 to_keep[ii] <- FALSE
             }
-            
+
             if( verbose ){
                 cnt <- cnt+1
                 setTxtProgressBar(pb, cnt, title = NULL, label = NULL)
@@ -413,13 +416,13 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
         }
 
     }
-    
+
     ## merge back into data.frame
     chn <- cbind(terra::vect(gm[to_keep]),chn[to_keep,])
     chn$area <- terra::expanse(chn)
-    
+
     check_channel(chn,outlets)
-    
+
     return(chn)
 }
 
@@ -484,7 +487,7 @@ locate_gauges <- function(chn,gauges,gauge_name="name",max_dist = 100){
     ## check chn is a channel
     if(is.character(chn)){ chn <- terra::vect(chn) }
     check_channel(chn)
-    
+
     ## check y is a terra object of points of polygons
     if(is.character(gauges)){ gauges <- terra::vect(gauges) }
     stopifnot("The gauges do not have a point or polygon geometry (even when read in)" =
@@ -516,7 +519,7 @@ locate_gauges <- function(chn,gauges,gauge_name="name",max_dist = 100){
                                         channel_name = NA_character_
                                         )
             }
-            
+
         }
         out <- do.call(rbind,out)
     }

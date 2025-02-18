@@ -6,10 +6,9 @@
 \usage{
 convert_channel(
   chn,
-  property_names = c(name = "name", length = "length", area = "area", startNode =
-    "startNode", endNode = "endNode", width = "width", slope = "slope", channelVol =
-    "channelVol"),
-  defaults = c(width = 2, slope = 0.001, depth = 1),
+  property_names = c(name = "name", length = "length", startNode = "startNode", endNode =
+    "endNode", width = "width", slope = "slope"),
+  defaults = c(width = 2, slope = 0.001),
   min_slope = 1e-06,
   drop = TRUE
 )

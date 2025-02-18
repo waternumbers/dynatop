@@ -9,7 +9,7 @@ demo_dir <- tempdir()
 
 ## ----initialisation-----------------------------------------------------------
 ctch <- dynatopGIS$new(file.path(demo_dir,"example.tif"))
-
+ctch$create_model(file.path(demo_dir,"new_model"),"atb_20")
 
 ## ----data_files---------------------------------------------------------------
 dem_file <- system.file("extdata", "gis","SwindaleDTM40m.tif", package="dynatop", mustWork = TRUE)
@@ -104,13 +104,12 @@ ctch$plot_layer("atb_20_band")
 
 
 ## ----atb_20_band_burn---------------------------------------------------------
-## this doesn;t work..
 terra::plot(ctch$combine_classes("atb_20_band_500",pairs=c("atb_20","band"),burns="greater_500"))
-ctch$plot_layer("atb_20_band_500")
+##ctch$plot_layer("atb_20_band_500")
 
 
 ## ----see_class----------------------------------------------------------------
-head( ctch$get_method("atb_20_band_500")$groups )
+##head( ctch$get_method("atb_20_band_500")$groups )
 
 
 ## ----model_atb_split----------------------------------------------------------
