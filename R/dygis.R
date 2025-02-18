@@ -274,11 +274,11 @@ dynatopGIS <- R6::R6Class(
         ## }
     ),
     private = list(
-        version = "0.3.5",
+        version = "0.4.0",
         projectFile = character(0),
         brk = NULL,
         chn = NULL,
-        reserved_layers = c("catchment","dem","channel","filled_dem",
+        reserved_layers = c("catchment","dem","channel","channel_fraction","filled_dem",
                             "gradient","upslope_area","atb",
                             "band"),
         ## save and reload changes
@@ -394,7 +394,7 @@ dynatopGIS <- R6::R6Class(
             chn_variables <- c(
                 "name" = "character",
                 "length" = "numeric",
-                ## "area" = "numeric",
+                "area" = "numeric",
                 "startNode" = "character",
                 "endNode" = "character",
                 "slope" = "numeric"
@@ -419,7 +419,10 @@ dynatopGIS <- R6::R6Class(
             }
             stopifnot(
                 "Some non-finite values of length found!" = all(is.finite(chn$length)),
-                "Some non-finite values of slope found!" = all(is.finite(chn$slope))
+                "Some non-finite values of area found!" = all(is.finite(chn$area)),
+                "Some non-finite values of slope found!" = all(is.finite(chn$slope)),
+                "Some non-posiive values of area found!" = all( chn$area > 0),
+                ## <TODO check other values are positive>
             )
 
             ## arrange id and band in order of flow direction - so lowest values at outlets of the network
@@ -459,12 +462,16 @@ dynatopGIS <- R6::R6Class(
 
             ## create a raster of channel id numbers
             ## TODO - possibly sort on length to try to identify bigger channels??
+            chn_frac <- terra::rasterize(chn,private$brk[["catchment"]],background=0,cover=TRUE) ## fraction of cell covered by channel
+            chn_frac <- terra::mask(chn_frac,private$brk[["catchment"]])
+            names(chn_frac) <- "channel_fraction"
             chn_rst <- terra::rasterize(chn,private$brk[["catchment"]],field = "id",touches=TRUE)
+            chn_rst[chn_frac==0] <- NA
             chn_rst <- terra::mask(chn_rst,private$brk[["catchment"]])
             names(chn_rst) <- "channel"
 
             ## save output
-            private$brk <- c(private$brk,chn_rst)
+            private$brk <- c(private$brk,chn_rst,chn_frac)
             private$chn <- chn
             private$save_project(chn=TRUE)
         },
@@ -625,6 +632,7 @@ dynatopGIS <- R6::R6Class(
 
             ## rasterize channel band to start
             rbnd <- terra::rasterize(private$chn, private$brk[["catchment"]],field = "band",touches=TRUE)
+            
             rbnd <- terra::mask(rbnd,private$brk$catchment) ## ensure channel bands are within the catchment - else later code fails
             names(rbnd) <- "band"
 
@@ -632,7 +640,8 @@ dynatopGIS <- R6::R6Class(
             d <- terra::as.matrix( private$brk[["filled_dem"]], wide=TRUE )
             bnd <- terra::as.matrix( rbnd,  wide=TRUE )
             ##ctch <- terra::as.matrix( private$brk[["catchment"]],  wide=TRUE )
-
+            bnd <- bnd + 1 ##since land area will be 1 band higher then river area
+            
             if( verbose ){ print("Computing upward pass") }
 
             idx <- order(d,na.last=NA) ## search order
@@ -684,7 +693,8 @@ dynatopGIS <- R6::R6Class(
             ## load raster layer
             d <- terra::as.matrix( private$brk[["filled_dem"]] , wide=TRUE)
             ch <- terra::as.matrix( private$brk[["channel"]] , wide=TRUE)
-
+            ch_frc <- terra::as.matrix( private$brk[["channel_fraction"]] , wide=TRUE)
+            
             if( verbose ){ print("Setting up computation") }
 
             ## distance between cell centres
@@ -696,7 +706,7 @@ dynatopGIS <- R6::R6Class(
 
             ## initialise output
             gr <- upa <- atb <- d*NA
-            upa[is.finite(d)] <- prod(rs) ## initialise upslope area from resolution
+            upa <- prod(rs)*(1-ch_frc) ## initialise upslope area from resolution
 
             idx <- order(d,na.last=NA,decreasing=TRUE) ## search order
 
@@ -707,11 +717,17 @@ dynatopGIS <- R6::R6Class(
 
             if( verbose ){ print("Computing hillslope") }
 
+            uA <- private$chn$area ## upsteam areas for channels
+            
             ## loop downslope
             w <- rep(0,8)
             for(ii in idx){
 
-                if( is.finite(ch[ii]) ){ next } ## skip channel cells
+                if( is.finite(ch[ii]) ){
+                    ## channel cells
+                    uA[ ch[ii] ] <- uA[ ch[ii] ] + upa[ii]
+                    next
+                } 
 
                 ## it is not a channel
                 w[] <- 0
@@ -744,18 +760,18 @@ dynatopGIS <- R6::R6Class(
             }
 
             if( verbose ){ print("Computing channel") }
-            sN <- chn$startNode
-            eN <- chn$endNode
-            uA <- rep(0,length(sN))
+            sN <- private$chn$startNode
+            eN <- private$chn$endNode
+            
 
             ## merge upslope areas into the channel object
-            ch_upa <- tapply(upa,ch,sum)
-            ch_upa <- ch_upa[setdiff(names(ch_upa),"NaN")]
-            idx <- match(names(ch_upa),paste(private$chn$id)) #,names(ch_upa))
-            uA[idx] <- as.numeric(ch_upa)
+            ##ch_upa <- tapply(upa,ch,sum)
+            ##ch_upa <- ch_upa[setdiff(names(ch_upa),"NaN")]
+            ##idx <- match(names(ch_upa),paste(private$chn$id)) #,names(ch_upa))
+            ##uA[idx] <- as.numeric(ch_upa)
 
             ## remove channel area bit from hillslope upslope area
-            upa[is.finite(ch)] <- NA
+            upa[chn_frc==1] <- NA
 
             ## compute catchment area to each reach
             for(ii in length(sN):1){
@@ -764,7 +780,7 @@ dynatopGIS <- R6::R6Class(
             }
             stopifnot(
                 "All channel upstream areas should be finite" = all(is.finite(uA)),
-                "All channel upstream areas should be non-negative" = all(uA>=0) ## TODO - make this strict with an options to disable
+                "All channel upstream areas should be non-negative" = all(uA>0)
             )
 
             private$chn$upstream_area <- uA
@@ -1091,7 +1107,8 @@ dynatopGIS <- R6::R6Class(
             )
 
             ## load base layer and mask out channel
-            x <-  terra::mask( private$brk[[base_layer]], private$brk[["channel"]], inverse=TRUE)
+            ##x <-  terra::mask( private$brk[[base_layer]], private$brk[["channel"]], inverse=TRUE)
+            x <- private$brk[[base_layer]]
 
             ## work out breaks
             brk <- as.numeric(cuts)

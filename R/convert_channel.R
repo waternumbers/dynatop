@@ -2,6 +2,7 @@
 ## warningnote when gm[] <- NULL
 ## documentation
 ## crop channels when merging in waterbodies - check same number  of inputs and outputs (unless wb added at top)
+## <TODO> cropped area but not altered length - implies we need to add waterbodies prior to buffering channels?
 
 
 #' Function for assisting in the conversion of object to be suitable channel inputs to a dynatopGIS object
@@ -41,13 +42,11 @@
 convert_channel <- function(chn,
                             property_names=c(name = "name",
                                              length = "length",
-                                             area = "area",
                                              startNode = "startNode",
                                              endNode = "endNode",
                                              width = "width",
-                                             slope = "slope",
-                                             channelVol = "channelVol"),
-                            defaults = c("width"=2,"slope"=0.001,"depth"=1),
+                                             slope = "slope"),
+                            defaults = c("width"=2,"slope"=0.001),
                             min_slope = 1e-6,
                             drop = TRUE){
     
@@ -74,7 +73,7 @@ convert_channel <- function(chn,
     names(chn) <- nm
 
     ## populate required values that don't have columns
-    for(ii in setdiff( c("name","length","area","width","slope","startNode","endNode", "channelVol"), names(chn) )){
+    for(ii in setdiff( c("name","length","area","width","slope","startNode","endNode"), names(chn) )){
         chn[[ii]] <- NA
     }
     
@@ -86,12 +85,11 @@ convert_channel <- function(chn,
     chn$slope <- pmax(as.numeric(chn$slope), min_slope)
     chn$startNode <- as.character(chn$startNode)
     chn$endNode <- as.character(chn$endNode)
-    chn$channelVol <- as.numeric(chn$channelVol)
 
     ## checks the on defults and can proccess
     stopifnot("defaults should be numeric" = is.numeric(defaults),
               "defaults should be finite" = all(is.finite(defaults)),
-              "default values for width, slope and depth required" = all( c("width","slope","depth") %in% names(defaults) ),
+              "default values for width, slope and depth required" = all( c("width","slope") %in% names(defaults) ),
               "names should not be missing" = !any(is.na(chn$names)),
               "names should be unique" = length(unique(chn$names)) == length(chn$names),
               "lengths should be finite" = all(is.finite(chn$length))
@@ -107,28 +105,23 @@ convert_channel <- function(chn,
     idx <- is.na(chn$endNode); if(any(idx)){ warning("Generating missing endNode values") }
     chn$endNode[idx] <- paste0("en_", chn$name[idx])
     
-    ## process width depending upon if a SpatialPolygon object
-    if(is_polygon){
-        idx <- is.na(chn$area); if(any(idx)){ warning("Computing missing area values") }
-        chn$area[idx] <- terra::expanse(chn[idx,])
-        idx <- is.na(chn$width); if(any(idx)){ warning("Computing missing width values") }
-        chn$width[idx] <- chn$area[idx] / chn$length[idx]
-    }else{
+    ## process width and buffer if not a polygon
+    if(!is_polygon){
         idx <- is.na(chn$width); if(any(idx)){ warning("Replacing missing widths with default") }
         chn$width[idx] <- defaults["width"]
         warning("Buffering channel with specified widths")
         chn <- terra::buffer(chn, width=chn$width/2)
-        idx <- is.na(chn$area); if(any(idx)){ warning("Computing missing area values") }
-        chn$area[idx] <- terra::expanse(chn[idx,])
     }
 
-    ## fill missing channel volumes
-    idx <- is.na(chn$channelVol); if(any(idx)){ warning("Replacing missing channel volumes with computed values") }
-    chn$channelVol[idx] <- chn$area[idx] * defaults["depth"]
-
+    ## remove overlapping channel sections - start with largest...
+    chn$area <- terra::expanse(chn)
+    chn <- chn[order(chn$area,decreasing=TRUE),]
+    chn <- terra::erase(chn, sequential=TRUE)
+    chn$area <- terra::expanse(chn)
+    
     ## drop
     if(drop){
-        chn <- chn[, c("name","length","area","width","slope","startNode","endNode", "channelVol") ]
+        chn <- chn[, c("name","length","area","slope","startNode","endNode") ]
     }
 
     ## final check it is a channel...
@@ -263,6 +256,11 @@ merge_channels <- function(x,y,outlets=NULL,verbose=FALSE){
 #    y$startNode <- y_sn
 
     x <- rbind(x[keep_x,],y[keep_y,])
+
+    ## trim overlaps according to area
+    chn <- chn[order(chn$area,decreasing=TRUE),]
+    chn <- terra::erase(chn, sequential=TRUE)
+    chn$area <- terra::expanse(chn)
     
     check_channel(x,outlets)
 
@@ -418,7 +416,8 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
     
     ## merge back into data.frame
     chn <- cbind(terra::vect(gm[to_keep]),chn[to_keep,])
-
+    chn$area <- terra::expanse(chn)
+    
     check_channel(chn,outlets)
     
     return(chn)
@@ -451,17 +450,17 @@ check_channel <- function(chn,outlets=NULL){
         "slopes should be numeric" = is.numeric(chn$slope),
         "slopes cannot be missing" = !any(is.na(chn$slope)),
         ## width
-        "width property is missing" = "width" %in% names(chn),
-        "widths should be numeric" = is.numeric(chn$width),
-        "widths cannot be missing" = !any(is.na(chn$width)),
+        ## "width property is missing" = "width" %in% names(chn),
+        ## "widths should be numeric" = is.numeric(chn$width),
+        ## "widths cannot be missing" = !any(is.na(chn$width)),
         ## area
         "area property is missing" = "area" %in% names(chn),
         "areas should be numeric" = is.numeric(chn$area),
         "areas cannot be missing" = !any(is.na(chn$area)),
         ## channelVol
-        "channelVol property is missing" = "channelVol" %in% names(chn),
-        "channelVols should be numeric" = is.numeric(chn$channelVol),
-        "channelVols cannot be missing" = !any(is.na(chn$channelVol)),
+        ## "channelVol property is missing" = "channelVol" %in% names(chn),
+        ## "channelVols should be numeric" = is.numeric(chn$channelVol),
+        ## "channelVols cannot be missing" = !any(is.na(chn$channelVol)),
         ## outlets
         "Outlets differ" = is.null(outlets) || setequal(outlets,chn_outlets)
     )
