@@ -6,14 +6,23 @@ rst <- rast("./inst/extdata/gis/SwindaleDTM40m.tif")
 vec <- vect("./inst/extdata/gis/SwindaleRiverNetwork.shp")
 
 
-writeRaster(rst,"test.gpkg",gdal = c("RASTER_TABLE=dem"),overwrite=TRUE)
+writeRaster(rst,"test.gpkg",gdal = c("RASTER_TABLE=dem","FIELD_NAME=dem"),overwrite=TRUE)
+
+names(rst) <- "egg"
+writeRaster(
+  rst,
+  "test.gpkg",
+  filetype = "GPKG",
+  gdal = c("APPEND_SUBDATASET=YES", "RASTER_TABLE=dem2", "FIELD_NAME=dem2")
+)
 
 writeRaster(
   rst,
   "test.gpkg",
   filetype = "GPKG",
-  gdal = c("APPEND_SUBDATASET=YES", "RASTER_TABLE=dem2")
+  gdal = c("APPEND_SUBDATASET=YES", "RASTER_TABLE=dem", "FIELD_NAME=egg")
 )
+
 
 writeVector(
   vec,
