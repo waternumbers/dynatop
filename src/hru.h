@@ -12,16 +12,14 @@
 
 // Class for the Hillslope HRU
 class hru {
+
+  //std::vector<double> states;
+  //std::vector<double> const properties;
+
   std::unique_ptr<sfc> sf;
+  std::vector<double> const rz_param;
+  std::vector<double> const uz_param;
   std::unique_ptr<szc> sz;
-
-
-  //std::vector<double> const states;
-  // std::vector<double> const properties;
-
-  //std::vector<double> const sf_param;
-  double const s_rzmax, t_d;
-  //std::vector<double> const sz_param;
   
   std::vector<int> const precip_lnk_id;
   std::vector<double> const precip_lnk_frc;
@@ -31,16 +29,24 @@ class hru {
   std::vector<double> const sf_lnk_frc;
   std::vector<int> const sz_lnk_id;
   std::vector<double> const sz_lnk_frc;
-    
-  //double fsz(double&, double&, double&, double&, double const&);
-  //double fsf(double&, double&, double&, double&, double const&);
+
+  //double const &s_rzmax = rz_param[0];
+  //double const &t_d = uz_param[0];
   
 public:
   // variables initialised
   int const id;
-  double s_sf, s_rz, s_uz, s_sz, q_sf, q_sz;
-  double area; // area if the area of the HRU width*Dx
+
+  double s_sf, s_rz, s_uz, s_sz;
+  double const area;
   
+  //double &s_sf = states[0];
+  //double &s_rz = states[1];
+  //double &s_uz = states[2];
+  //double &s_sz = states[3];
+  //double const &area{ properties[0] }; // area if the area of the HRU
+
+  double q_sf, q_sz;
   double q_sf_in, q_sz_in;
   double v_sf_rz, v_rz_uz, v_uz_sz;
   double precip, pet, aet;

@@ -5,7 +5,7 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
   std::vector<hru> hrus;
   
   for(int ii=0; ii<nhru; ++ii){
-    Rcpp::Rcout << ii << std::endl;
+    //Rcpp::Rcout << ii << std::endl;
     Rcpp::List m = mdl[ii];
     Rcpp::NumericVector svec = m["states"];
     Rcpp::NumericVector pvec = m["properties"];

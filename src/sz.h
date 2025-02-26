@@ -13,16 +13,14 @@ public:
   // initialisation
   szc();
   double q_szmax;
-  double h;
-  double kappa;
-  double eta;
+  double eta{0.5}, kappa{-999.9}, h{-999.9};
   virtual void update(double const&); // update
 };
 
 // exponential
 class szc_exp: public szc {
  protected:
-  double psi, width, Dx;
+  double psi, Dx, width;
  public:
   szc_exp(std::vector<double> const&, std::vector<double> const&);
   void update(double const&); // update
@@ -49,7 +47,7 @@ class szc_exp: public szc {
 // double exponential
 class szc_dexp: public szc {
 protected:
-  double psi, psi2, omega, width, Dx;
+  double psi, psi2, omega, Dx, width;
 public:
   szc_dexp(std::vector<double> const&, std::vector<double> const&);
   void update(double const&); // update

@@ -9,10 +9,9 @@ szc_exp::szc_exp(std::vector<double> const &param, std::vector<double> const &pr
   szc();
   
   double const &t0(param[0]), &m(param[1]);
-  //double const &area(prop[0]), &width(prop[1]), &grd(prop[3]);
-  double const &grd(prop[3]);
-  width = prop[1];
-  Dx = prop[2];
+  double const &grd(prop[2]);
+  Dx = prop[1];
+  width = prop[0] / Dx;
   double beta = std::atan(grd);
   q_szmax =  width*t0*std::sin(beta);
   psi = std::cos(beta) / m; // scaling to get crosssectional depth from storage
@@ -78,17 +77,15 @@ szc_dexp::szc_dexp(std::vector<double> const &param, std::vector<double> const &
   szc();
   
   double const &t0(param[0]), &m(param[1]), &m2(param[2]);
-  //double const &area(prop[0]), &width(prop[1]), &grd(prop[3]);
-  double const &grd(prop[3]);
-  width = prop[1];
+  omega = param[3];
+  double const &area(prop[0]), &grd(prop[2]);
   Dx = prop[2];
-  double const &area = prop[0];
+
+  width = area/Dx;
   double beta = std::atan(grd);
-  omega = param[3]; // weight
   q_szmax =  width*t0*std::sin(beta);
   psi = std::cos(beta) / (m*area); // scaling to get crosssectional depth from storage
-  kappa = std::cos(beta) / (m2*area); // scaling to get crosssectional depth from storage
-
+  psi2 = std::cos(beta) / (m2*area); // scaling to get crosssectional depth from storage
   eta = 0.5;
 }
 
@@ -100,7 +97,7 @@ void szc_dexp::update(double const& q){
     double z;
         
     double lwr = -std::log(q/q_szmax) / psi;
-    double upr = -std::log(q/q_szmax) / kappa;
+    double upr = -std::log(q/q_szmax) / psi2;
     if(upr < lwr){
       double tmp(upr);
       upr=lwr;
@@ -111,7 +108,7 @@ void szc_dexp::update(double const& q){
     double qq; //z, qq;
     while( (it <= max_it) and ( (upr-lwr)>1e-10 ) ){
       z = (lwr+upr)/2.0;
-      qq = q_szmax * ( omega*std::exp(-psi*z) + (1.0-omega)*std::exp(-kappa*z) );
+      qq = q_szmax * ( omega*std::exp(-psi*z) + (1.0-omega)*std::exp(-psi2*z) );
       if( qq <= q ){ upr = z; } else { lwr = z; }
       it += 1;
     }

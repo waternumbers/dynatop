@@ -25,18 +25,18 @@ void dt_init(Rcpp::List mdl, // hru data frame
 
   // start loop of hrus
   for(int ii=nhru-1; ii>=0; --ii){
-    Rcpp::Rcout << "hru number " << ii << std::endl;
+    //Rcpp::Rcout << "hru number " << ii << std::endl;
     Rcpp::List L = mdl[ii];
     Rcpp::NumericVector ivec = L["initialisation"];
     
     hrus[ii].init(q_sf_in,q_sz_in,ivec["s_rz_0"], ivec["r_uz_sz_0"], max_it); // initialise
     //hrus[ii].lateral_redistribution(q_sf_in,q_sz_in); // spread flow downslope
   }
-
+  Rcpp::Rcout << "start state copying" << std::endl;
   // Rcpp::Rcout << "copying back states" << std::endl;
   // copy back states
   for(int ii=0; ii<nhru; ++ii){
-    Rcpp::Rcout << "copy hru " << ii << std::endl;
+    //Rcpp::Rcout << "copy hru " << ii << std::endl;
     Rcpp::List tmp = mdl[ii];
     Rcpp::NumericVector svec = tmp["states"];
     svec["s_sf"] = hrus[ii].s_sf / hrus[ii].area;

@@ -349,7 +349,7 @@ Combine any number of classifications based on unique combinations and burns
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
-This applies the given cuts to the supplied landscape layers to produce areal groupings of the catchment. Burns are added directly in the order they are given. Cuts are implement using \code{terra::cut} with \code{include.lowest = TRUE}. Note that is specifying a vector of cuts values outside the limits will be set to NA.
+This applies the given cuts to the supplied landscape layers to produce areal groupings of the catchment. Burns are added directly in the order they are given, only positive burn values are applied.
 }
 
 }
@@ -368,6 +368,7 @@ Compute a Dynamic TOPMODEL
   rain_label = character(0),
   pet_layer = NULL,
   pet_label = character(0),
+  min_grad = 1e-04,
   verbose = FALSE
 )}\if{html}{\out{</div>}}
 }

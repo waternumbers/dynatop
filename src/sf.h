@@ -13,28 +13,23 @@ protected:
 public:
   // initialisation
   sfc();
-  double kappa;
-  double eta;
+  double kappa{-999.9}, eta{-999.9};
   virtual void update(double const&); // multiply value by storage to give outflow
 };
 
 // two section constant velocity
 class sfc_cnst: public sfc {
-  double v_1, q_1, v_2;
+protected:
+  double v_raf, q_raf, v_sf;
 public:
-  //double kappa;
-  //double eta;
   sfc_cnst(std::vector<double> const&, std::vector<double> const&);
   void update(double const&);
 };
 
 // kinematic with RAF
 class sfc_kin: public sfc {
-  double v_1, q_1, rho, width;
+  double v_raf, q_raf, rho, width;
 public:
-  //double kappa;
-  //double eta;
-  
   sfc_kin(std::vector<double> const&, std::vector<double> const&);
   void update(double const&);
 };
