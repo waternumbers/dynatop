@@ -262,10 +262,11 @@ terms of the storage deficit $s_{sz}$ as
 \frac{ds_{sz}}{dt} = q_{sz}^{+} - r_{uz \rightarrow sz} - q_{sz}^{-}
 \]
 
-<Beven et al.> propose a Kinematic subsurface approximation where the
+<Beven et al.> propose a Kinematic subsurface approximation. The
 flow across a given cross section is a function of the
 depth to the saturated layer $h_{sz}$ with the functional form
-$\mathcal{G}\left(h_{sz}, \Theta_{sz}\right)$ taking its maximum value when $h_{sz}=0$.
+$\mathcal{G}\left(h_{sz}, \Theta_{sz}\right)$ taking its maximum value
+when $h_{sz}=0$ and zero when $h_{sz}=D$.
 
 Table \@ref(tab:hs-transmissivity) gives
 $\mathcal{G}\left(h_{sz},\Theta_{sz}\right)$ for various the transmissivity
@@ -300,28 +301,12 @@ Table: (\#tab:hs-transmissivity-param) Additional parameters used in the transmi
 
 
 The outlined for the surface zone a kinematic model can be represented using a Muskingum-Cunge
-formulation, However direct application of method given for the surface zone is
-not possible since for some of the formulations in Table
-\@ref(tab:hs-transmissivity) $h_{sz}$ is unbounded so no
-representative flow velocity can be computed.
-
-To address this we instead formulate the model in terms of the difference
-between the current and saturated flow rates; that is 
+formulation. In applying the Muskingham-Cunge approach the velocity
+can be computed as
 \[
-\tilde{q}_{sz}^{+} = \mathcal{G}\left(0,\Theta_{sz}\right) - q_{sz}^{+}
+v_{sz} = \frac{\mathcal{G}\left(h_{sz},\Theta_{sz}\right)}{
+w\left(D-h_{sz}\right) }
 \]
-and
-\[
-\tilde{q}_{sz}^{-} = \mathcal{G}\left(0,\Theta_{sz}\right) - q_{sz}^{-}
-\]
-giving
-\[
-\frac{ds_{sz}}{dt} = \tilde{q}_{sz}^{-} - r_{uz \rightarrow sz} - \tilde{q}_{sz}^{+}
-\]
-which is directly ameanable to the approach taken for the surface;
-since for some reference flow $\tilde{q}_{sz}$ a corresponding $h_{sz}$ can
-be computed giving $v_{sz} = \frac{\tilde{q}_{sz}}{ w h_{sz} }$.
-
 
 # Numerical Solution
 
@@ -414,11 +399,11 @@ The solution of the saturated zone is complicated by the formulation of the
 unsaturated zone solution. The iterative numerical scheme, based on a
 semi-implicit step can be formulated to provide a solution
 
-1. Take an initial outflow estimate $\tilde{q}^* = \left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t}$
+1. Take an initial outflow estimate $q^* = \left. q_{sz}^{-}\right\rvert_{t+\Delta t}$
 
 2. For a number of iterations:
 
-   a. Compute $\tilde{q}_{sz} = \frac{1}{2}\left(\tilde{q}^* + \left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t}\right)$
+   a. Compute $q_{sz} = \frac{1}{2}\left(q^* + \left.q_{sz}^{-}\right\rvert_{t+\Delta t}\right)$
    
    b. Solve for $h_{sz}$, $\kappa_{sz}$ and $\eta_{sf}$ based on $q_{sz}$.
    
@@ -429,18 +414,18 @@ semi-implicit step can be formulated to provide a solution
 	\]
 
    d. Take
-   \[\tilde{q}^{*} = \max\left(0, \frac{
+   \[q^{*} = \min \left( \mathcal{G}\left(0,\Theta_{sz}\right), \max\left(0, \frac{
    \left.s_{sz}\right\rvert_{t} - v_{uz \rightarrow sz}^{*} + 
    \left( \Delta t - \kappa_{sz}\eta_{sz}\right)
-   \left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} }{
-   \Delta t + \kappa_{sz}\left(1-\eta_{sz}\right) } \right)
+   \left.q_{sz}^{-}\right\rvert_{t+\Delta t} }{
+   \Delta t + \kappa_{sz}\left(1-\eta_{sz}\right) } \right)\right)
    \]
    
 3. Set $\left.q_{sz}^{+}\right\rvert_{t+\Delta t} =
-   \mathcal{G}\left(0,\Theta_{sz}\right) - \tilde{q}^{*}$ and
+   \mathcal{G}\left(0,\Theta_{sz}\right) - q^{*}$ and
    compute
    \[\left.s_{sz}\right\rvert_{t+\Delta t} = \max\left( 0,\left.s_{sz}\right\rvert_{t} +
-   \Delta t \left(\left.\tilde{q}_{sz}^{-}\right\rvert_{t+\Delta t} - \tilde{q}^{*}
+   \Delta t \left(\left.q_{sz}^{+}\right\rvert_{t+\Delta t} - \left.q_{sz}^{-}\right\rvert_{t+\Delta t}
    \right) - v_{uz \rightarrow sz}^{*}\right)\]
 
 ## Upward Pass

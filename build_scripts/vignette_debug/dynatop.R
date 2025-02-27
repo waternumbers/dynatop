@@ -219,10 +219,12 @@ for(ii in 1:length(hru)){
     hru[[ii]]$initialisation["s_rz_0"] <- 0.98
     hru[[ii]]$initialisation["r_uz_sz_0"] <- 1.755582e-07 ## initial outflow divided by catchment area
 }
+
 ctch_mdl <- dynatop$new(hru,map=swindale_model$map)
 ## ----add_data-----------------------------------------------------------------
 data("Swindale")
 swindale_obs <- Swindale$obs
+#swindale_obs$precip <- 999
 ctch_mdl$add_data(swindale_obs)
 ## ----initialise---------------------------------------------------------------
 ctch_mdl$initialise()
@@ -232,7 +234,8 @@ ctch_mdl$initialise()
 
 ## ----sim1---------------------------------------------------------------------
 sim1 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()
-
+apply(ctch_mdl$get_states(),2,range)
+plot(sim1)
 
 ## ----new_states---------------------------------------------------------------
 ctch_mdl$plot_state("s_sz")

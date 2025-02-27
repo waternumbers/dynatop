@@ -87,12 +87,14 @@ void hru::update_met(std::vector<double> &obs){
     const double &f = precip_lnk_frc[ii];
     precip += f * obs[i];
   }
+  precip *= area; // make into flux
   pet = 0.0;
   for(long unsigned int ii=0; ii<pet_lnk_id.size(); ++ii){
     const int &i = pet_lnk_id[ii];
     const double &f = pet_lnk_frc[ii];
     pet += f * obs[i];
   }
+  pet *= area; // make into flux
 }
 
 void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in,
@@ -214,6 +216,13 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // redivide the inflow so q_sz_in is less then q_szmax
   q_sz_in = std::min( vec_q_sz_in[id] , sz->q_szmax) ;
   q_sf_in = vec_q_sf_in[id] + vec_q_sz_in[id]  - q_sz_in;
+ 
+  if( q_sf_in < 0.0 ){
+    Rcpp::Rcout << "q_sf_in error " << q_sf_in << " " << id << std::endl;
+  }
+  if( q_sz_in < 0.0 ){
+    Rcpp::Rcout << "q_sz_in error " << q_sz_in << " " << id << std::endl;
+  }
 
   // single HRU mass balance for development
   std::vector<double> mass_ballance = {s_sf, s_rz, s_uz, s_sz};
@@ -222,19 +231,12 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // limites by outflow of 0
   double q_ref = q_sf_in / 2.0;
   sf->update(q_ref);
-  v_sf_rz = s_sf + Dt*q_sf_in - (sf->kappa*sf->eta*q_sf_in) ;
-  
+  v_sf_rz = std::max(0.0, s_sf + Dt*q_sf_in - (sf->kappa*sf->eta*q_sf_in)) ;
+
   // change r_rz_uz to present the maximum downward flux
   v_rz_uz = std::max(0.0 ,
 		     s_rz - (area*s_rzmax)  + Dt*(precip - pet) + v_sf_rz);
 
-  // Rcpp::Rcout << "q_sf_in " << q_sf_in << std::endl;
-  // Rcpp::Rcout << "q_ref " << q_ref << std::endl;
-  // Rcpp::Rcout << "v_sf_rz " << v_sf_rz << std::endl;
-  // Rcpp::Rcout << "v_rz_uz " << v_rz_uz << std::endl;
-  // Rcpp::Rcout << "s_sf " << s_sf << std::endl;
-    
-  
   // solve for saturated zone
   double q_in = sz->q_szmax - q_sz_in;
   double q_out = q_in;
@@ -245,17 +247,35 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
     double& kappa = sz->kappa;
     double& eta = sz->eta;
     v_uz_sz = Dt * std::min( (s_uz+v_rz_uz)/(t_d*h + Dt), area/t_d );
-    q_out = std::max(0.0, ( s_sz - v_uz_sz + (Dt-kappa*eta)*q_in ) / ( Dt + kappa*(1.0-eta) ) );
+    q_out = std::min(sz->q_szmax, std::max(0.0, ( s_sz - v_uz_sz + (Dt-kappa*eta)*q_in ) / ( Dt + kappa*(1.0-eta) ) ));
   }
-  double z = s_sz + Dt*(q_in - q_out); // max storage
-  s_sz = std::max(0.0, z - v_uz_sz);
-  v_uz_sz = z - s_sz;
   q_sz = sz->q_szmax - q_out;
+  double z = s_sz + Dt*(q_sz - q_sz_in); // max storage
+  s_sz = std::max(0.0, z - v_uz_sz);
+  double pjs2 = v_uz_sz;
+  v_uz_sz = z - s_sz;
+
+  double pjs = mass_ballance[3] + Dt*(q_sz - q_sz_in) - v_uz_sz - s_sz;
+  if( std::abs(pjs) > 1e-10 ){
+    Rcpp::Rcout << "id = " << id << std::endl;
+    Rcpp::Rcout << "error = " << pjs << std::endl;
+    Rcpp::Rcout << "Initial s_sz = " << mass_ballance[3] << " " << sz->h << " " << t_d << std::endl;
+    Rcpp::Rcout << "Initial v_uz_sz = " << pjs2 << std::endl;
+    Rcpp::Rcout << "q_sz = " << q_sz << std::endl;
+    Rcpp::Rcout << "q_sz_in = " << q_sz_in << std::endl;
+    Rcpp::Rcout << "s_uz = " << s_uz << std::endl;
+    Rcpp::Rcout << "s_sz = " << s_sz << std::endl;
+    Rcpp::Rcout << "v_rz_uz = " << v_rz_uz << std::endl;
+    Rcpp::Rcout << "v_uz_sz = " << v_uz_sz << std::endl;
+  }
+
+
 
   // solve unsaturated zone
-  z = std::min(s_sz, s_uz+v_rz_uz-v_uz_sz);
+  z = std::max(0.0, std::min(s_sz, s_uz+v_rz_uz-v_uz_sz));
   v_rz_uz = z + v_uz_sz - s_uz;
   s_uz = z;
+
   // solve root zone
   v_sf_rz = std::min( v_sf_rz, (area*s_rzmax) - s_rz - Dt*(precip - pet) + v_rz_uz);
   s_rz = ((area*s_rzmax) / ((area*s_rzmax) + Dt*pet)) * (s_rz + Dt*precip + v_sf_rz - v_rz_uz);
@@ -271,7 +291,7 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
     q_out = std::max(0.0, ( s_sf - v_sf_rz + (Dt - kappa*eta)*q_sf_in ) / ( Dt + kappa*(1.0-eta) ) );
   }
   q_sf = q_out;
-  s_sf = s_sf - v_sf_rz + Dt*(q_sf_in-q_out);
+  s_sf = s_sf - v_sf_rz + Dt*(q_sf_in-q_sf);
   // Rcpp::Rcout << "q_sf " << q_sf << std::endl;
   // Rcpp::Rcout << "s_sf " << s_sf << std::endl;
   //  Rcpp::Rcout << "v_sf_rz " << s_sf << std::endl;
