@@ -218,7 +218,7 @@ dynatop <- R6Class(
         info = list(sf = setNames(as.integer(1:4),c("cnst","kin","comp","kin_tank")),
                     rz = setNames(as.integer(1),c("orig")),
                     uz = setNames(as.integer(1),c("orig")),
-                    sz = setNames(as.integer(1:4),c("exp","bexp","dexp","cnst")),
+                    sz = setNames(as.integer(1:3),c("bexp","bdexp","cnst")),
 
                     output = setNames(1:14, c("precip","pet","aet",
                                               "q_sf","q_sf_in","q_sz","q_sz_in",
@@ -281,7 +281,7 @@ dynatop <- R6Class(
                     etxt <- c(etxt, paste0(id[1], ": ", ii, " type should be of length 1"))
                     next
                 }
-                
+
                 if( !( h[[ii]]$type %in% names(private$info[[ii]])) ){
                     etxt <- c(etxt, paste0(id[1], ": ", ii, " type is not valid"))
                     next
@@ -298,10 +298,10 @@ dynatop <- R6Class(
                               ## "sf_kin_tank" = c("n","s_raf","t_raf"),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
-                              "sz_exp" = c("t_0","m"),
-                              ## "sz_bexp" = c("t_0","m","h_sz_max"),
-                              ##"sz_cnst" = c("v_sz","h_sz_max"),
-                              "sz_dexp" = c("t_0","m","m2","omega"),
+                              ##"sz_exp" = c("t_0","m"),
+                              "sz_bexp" = c("t_0","m","h_max"),
+                              "sz_cnst" = c("v_sz","h_max"),
+                              "sz_bdexp" = c("t_0","m","m2","omega","h_max"),
                               stop("Invalid options for pname")
                               )
                 if( !is.numeric( h[[ii]]$parameters )){
@@ -317,9 +317,9 @@ dynatop <- R6Class(
                     next
                 }
                 h[[ii]]$parameters <- h[[ii]]$parameters[ c(pnm,setdiff(names(h[[ii]]$parameters),pnm)) ] ## make sure parameters are in correct order
-                ## print(h[[ii]]$parameters)
+                ## TODO check omega in sz_bdexp
             }
-            
+
             ## check precip and pet
             for(ii in c("precip","pet")){
                 if( length(h[[ii]]) == 0 ){ next }
@@ -340,7 +340,7 @@ dynatop <- R6Class(
                     next
                 }
             }
-            
+
             ## check lateral flow
             for(ii in c("sf_flow_direction","sz_flow_direction")){
                 if( !all(c("id","fraction") %in% names(h[[ii]])) ){
@@ -364,20 +364,20 @@ dynatop <- R6Class(
                     next
                 }
             }
-            
+
             ## fail if errors
             if( length( etxt ) >0 ){
                 stop( paste(etxt,collapse = "\n") )
             }
-            
+
             ## convert for C++
             for(ii in c("sf","rz","uz","sz")){ ## convert type to integer
                 h[[ii]]$type <- private$info[[ii]][ h[[ii]]$type ]
             }
-            
+
             if( !use_states ){ h$states[] <- NA }
             return(h)
-            
+
         },
         regurge_hru = function(h){
             ## convert for C++

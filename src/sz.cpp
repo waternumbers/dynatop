@@ -4,27 +4,25 @@ szc::szc(){}
 void szc::update(double const &q){}
 
 
-// exponential
-szc_exp::szc_exp(std::vector<double> const &param, std::vector<double> const &prop){
+// bounded exponential
+szc_bexp::szc_bexp(std::vector<double> const &param, std::vector<double> const &prop){
   szc();
   
-  double const &t0(param[0]), &m(param[1]);
-  double const &grd(prop[2]);
-  Dx = prop[1];
-  width = prop[0] / Dx;
+  double const &t0(param[0]), &m(param[1]), &h_max(param[2]);
+  double const &Dx(prop[1]), &grd(prop[2]);
+  area = prop[0];
+  s_szmax = area*h_max; // max storage
+  double width = area / Dx;
   double beta = std::atan(grd);
-  q_szmax =  width*t0*std::sin(beta);
-  psi = std::cos(beta) / m; // scaling to get crosssectional depth from storage
-  eta = 0.5;
+  psi = std::cos(beta) / m; // scaling within exp
+  lambda = std::exp(-psi*h_max);
+  q_szmax =  width*t0*std::sin(beta)*(1-lambda);
+  eta = 0.0;
 }
-void szc_exp::update(double const& q){
-  if( q == 0.0 ){
-    h = 0.0;
-    kappa = 0.0;
-  }else{
-    h = -std::log(q/q_szmax) / psi;
-    kappa = Dx * (h*width) / q;
-  }
+void szc_bexp::update(double const& q){
+  double qr = std::min(1.0,std::max(0.0, q/q_szmax));
+  h = -std::log( lambda + (1.0-lambda)*qr ) / psi;
+  kappa = (s_szmax - (area*h)) / q;
 }
 
   
@@ -86,7 +84,7 @@ szc_dexp::szc_dexp(std::vector<double> const &param, std::vector<double> const &
   q_szmax =  width*t0*std::sin(beta);
   psi = std::cos(beta) / (m*area); // scaling to get crosssectional depth from storage
   psi2 = std::cos(beta) / (m2*area); // scaling to get crosssectional depth from storage
-  eta = 0.5;
+  eta = 0.0;
 }
 
 void szc_dexp::update(double const& q){

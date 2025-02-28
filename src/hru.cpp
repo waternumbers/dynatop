@@ -49,7 +49,7 @@ hru::hru(int const id_,
   switch(sz_type_){
   case 1:
     //exp
-    sz = std::make_unique<szc_exp>( sz_param_, properties_ );
+    sz = std::make_unique<szc_bexp>( sz_param_, properties_ );
     break;
     // case 2:
     //   // bounded exp
@@ -148,17 +148,17 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   sz->update(q_ref);
   double& k = sz->kappa;
   double& eta = sz->eta;
-  //Rcpp::Rcout << "kappa " << k << std::endl;
-  //Rcpp::Rcout << "eta " << eta << std::endl;
-  
-  s_sz = k*( eta*q_sz_in + (1-eta)*q_sz );
+  Rcpp::Rcout << "kappa " << k << std::endl;
+  Rcpp::Rcout << "eta " << eta << std::endl;
+  Rcpp::Rcout << "sz_max " << sz->s_szmax << std::endl;
+  s_sz = sz->s_szmax - (k*( eta*q_sz_in + (1-eta)*q_sz ));
   //Rcpp::Rcout << "s_sz " << s_sz << std::endl;
   
   //Rcpp::Rcout << "start upward" << std::endl;
   
   r_uz_sz = q_sz - q_sz_in;
     
-  s_uz = t_d * r_uz_sz * sz->h; // compute unsaturated zone storage
+  s_uz = t_d * r_uz_sz * (s_sz/area) ; //sz->h; // compute unsaturated zone storage
   if( s_uz > s_sz ){
     Rcpp::Rcout << id << " unsaturated" << std::endl;
     Rcpp::Rcout << s_sz << " " << s_uz << " " << r_uz_sz << std::endl;
@@ -237,24 +237,23 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   v_rz_uz = std::max(0.0 ,
 		     s_rz - (area*s_rzmax)  + Dt*(precip - pet) + v_sf_rz);
 
+  v_uz_sz = area* Dt * std::min( (s_uz+v_rz_uz)/(t_d*s_sz + Dt), 1/t_d ); // could put back into the loop
   // solve for saturated zone
-  double q_in = sz->q_szmax - q_sz_in;
-  double q_out = q_in;
+  double q_out = q_sz_in;
   for(long unsigned int ii=0; ii<max_it; ++ii){
-    q_ref = (q_in + q_out) /2.0;
+    q_ref = (q_sz_in + q_out) /2.0;
     sz->update(q_ref);
-    double& h = sz->h; // storage comparamble to q_ref
+    //double& h = sz->h; // storage comparamble to q_ref
     double& kappa = sz->kappa;
     double& eta = sz->eta;
-    v_uz_sz = Dt * std::min( (s_uz+v_rz_uz)/(t_d*h + Dt), area/t_d );
-    q_out = std::min(sz->q_szmax, std::max(0.0, ( s_sz - v_uz_sz + (Dt-kappa*eta)*q_in ) / ( Dt + kappa*(1.0-eta) ) ));
+    q_out = std::min(sz->q_szmax, std::max(0.0, ( sz->s_szmax - s_sz + v_uz_sz + (Dt-kappa*eta)*q_sz_in ) / ( Dt + kappa*(1.0-eta) ) ));
   }
-  q_sz = sz->q_szmax - q_out;
+  q_sz = q_out;
   double z = s_sz + Dt*(q_sz - q_sz_in); // max storage
   s_sz = std::max(0.0, z - v_uz_sz);
   double pjs2 = v_uz_sz;
   v_uz_sz = z - s_sz;
-
+  
   double pjs = mass_ballance[3] + Dt*(q_sz - q_sz_in) - v_uz_sz - s_sz;
   if( std::abs(pjs) > 1e-10 ){
     Rcpp::Rcout << "id = " << id << std::endl;
@@ -268,8 +267,10 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
     Rcpp::Rcout << "v_rz_uz = " << v_rz_uz << std::endl;
     Rcpp::Rcout << "v_uz_sz = " << v_uz_sz << std::endl;
   }
-
-
+  if( s_sz > sz->s_szmax ){
+    Rcpp::Rcout << "id = " << id << std::endl;
+    Rcpp::Rcout << "error = " << s_sz - sz->s_szmax << std::endl;
+  }
 
   // solve unsaturated zone
   z = std::max(0.0, std::min(s_sz, s_uz+v_rz_uz-v_uz_sz));

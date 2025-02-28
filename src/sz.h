@@ -12,17 +12,17 @@ protected:
 public:
   // initialisation
   szc();
-  double q_szmax;
+  double q_szmax, s_szmax;
   double eta{0.5}, kappa{-999.9}, h{-999.9};
   virtual void update(double const&); // update
 };
 
 // exponential
-class szc_exp: public szc {
+class szc_bexp: public szc {
  protected:
-  double psi, Dx, width;
+  double psi, area, lambda;
  public:
-  szc_exp(std::vector<double> const&, std::vector<double> const&);
+  szc_bexp(std::vector<double> const&, std::vector<double> const&);
   void update(double const&); // update
 };
 

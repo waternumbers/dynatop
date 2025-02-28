@@ -177,7 +177,7 @@ for(ii in 1:length(hru)){
     }else{
         ## then HRU is a channel - set so no subsurface response
         ## saturated zone parameters
-        hru[[ii]]$sz$parameters["t_0"] <- 0.001
+        hru[[ii]]$sz$parameters["t_0"] <- 0.000
         ## root zone parameters
         hru[[ii]]$rz$parameters["s_rzmax"] <- 0.001
         ## surface parameters
@@ -195,11 +195,13 @@ devtools::load_all()
 swindale_model <- readRDS(file.path(".","/build_scripts","vignette_debug","new_model.rds"))
 hru <- swindale_model$hru
 for(ii in 1:length(hru)){
-    if("endNode" %in% names(hru[[ii]]$class)){
+    hru[[ii]]$sz$type <- "bexp"
+    hru[[ii]]$sz$parameters <- c(hru[[ii]]$sz$parameters,"h_max"=2)
+    if(!("endNode" %in% names(hru[[ii]]$class))){
         ## then HRU is not a channel
         ## saturated zone parameters
-        hru[[ii]]$sz$parameters["m"] <- 0.0063
-        hru[[ii]]$sz$parameters["t_0"] <- exp(7.46)
+        hru[[ii]]$sz$parameters["m"] <- 0.063
+        hru[[ii]]$sz$parameters["t_0"] <- 10
         ## unsaturated zone parameters
         hru[[ii]]$uz$parameters["t_d"] <- 8*60*60
         ## root zone parameters
@@ -209,11 +211,11 @@ for(ii in 1:length(hru)){
     }else{
         ## then HRU is a channel - set so no subsurface response
         ## saturated zone parameters
-        hru[[ii]]$sz$parameters["t_0"] <- 0.001
+        hru[[ii]]$sz$parameters["t_0"] <- 0.0001
         ## root zone parameters
         hru[[ii]]$rz$parameters["s_rzmax"] <- 0.001
         ## surface parameters
-        hru[[ii]]$sf$parameters["c_sf"] <- 0.8
+        hru[[ii]]$sf$parameters["c_sf"] <- 1
     }
     ## initialisation parameters
     hru[[ii]]$initialisation["s_rz_0"] <- 0.98
@@ -228,24 +230,21 @@ swindale_obs <- Swindale$obs
 ctch_mdl$add_data(swindale_obs)
 ## ----initialise---------------------------------------------------------------
 ctch_mdl$initialise()
-
+st <- list(initial=ctch_mdl$get_states())
 ##ctch_mdl$plot_state("s_sz")
 
 
 ## ----sim1---------------------------------------------------------------------
 sim1 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()
-apply(ctch_mdl$get_states(),2,range)
-plot(sim1)
-
-## ----new_states---------------------------------------------------------------
-ctch_mdl$plot_state("s_sz")
-
-
-## ----sim2---------------------------------------------------------------------
+st[["sim1"]] <- ctch_mdl$get_states()
 sim2 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()
-out <- merge( merge(swindale_obs,sim1),sim2)
-names(out) <- c(names(swindale_obs),'sim_1','sim_2')
-plot(out[,c('flow','sim_1','sim_2')], main="Discharge",ylab="m3/s",legend.loc="topright")
+st[["sim2"]] <- ctch_mdl$get_states()
+sim3 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()
+st[["sim3"]] <- ctch_mdl$get_states()
+
+out <- Reduce(merge,list(swindale_obs,sim1,sim2,sim3))
+names(out) <- c(names(swindale_obs),'sim_1','sim_2',"sim_3")
+plot(out[,c('flow','sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
 
 
 ## ----mass_check---------------------------------------------------------------
