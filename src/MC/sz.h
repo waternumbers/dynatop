@@ -13,8 +13,8 @@ public:
   // initialisation
   szc();
   double q_szmax, s_szmax;
-  virtual double fv(double const&); // update
-  virtual double fs(double const&); // update
+  double eta{0.5}, kappa{-999.9}, h{-999.9};
+  virtual void update(double const&); // update
 };
 
 // exponential
@@ -23,8 +23,7 @@ class szc_bexp: public szc {
   double psi, area, lambda;
  public:
   szc_bexp(std::vector<double> const&, std::vector<double> const&);
-  double fv(double const&); // update
-  double fs(double const&); // update
+  void update(double const&); // update
 };
 
 // // bounded exponential
@@ -45,14 +44,14 @@ class szc_bexp: public szc {
 //   double fts(double const&);
 // };
 
-// // double exponential
-// class szc_dexp: public szc {
-// protected:
-//   double psi, psi2, omega, Dx, width;
-// public:
-//   szc_dexp(std::vector<double> const&, std::vector<double> const&);
-//   void update(double const&); // update
-// };
+// double exponential
+class szc_dexp: public szc {
+protected:
+  double psi, psi2, omega, Dx, width;
+public:
+  szc_dexp(std::vector<double> const&, std::vector<double> const&);
+  void update(double const&); // update
+};
 
 #endif
 

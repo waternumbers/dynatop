@@ -1,8 +1,7 @@
 #include "sz.h"
 
 szc::szc(){}
-double szc::fs(double const &q){return(-999.9);}
-double szc::fv(double const &s){return(-999.9);}
+void szc::update(double const &q){}
 
 
 // bounded exponential
@@ -15,21 +14,17 @@ szc_bexp::szc_bexp(std::vector<double> const &param, std::vector<double> const &
   s_szmax = area*h_max; // max storage
   double width = area / Dx;
   double beta = std::atan(grd);
-  psi = std::cos(beta) / (m*area); // scaling within exp
-  lambda = std::exp(-psi*s_szmax);
+  psi = std::cos(beta) / m; // scaling within exp
+  lambda = std::exp(-psi*h_max);
   q_szmax =  width*t0*std::sin(beta)*(1-lambda);
-  //eta = 0.0;
+  eta = 0.0;
 }
-double szc_bexp::fs(double const& q){ // convert an outflow to a storage deficit
+void szc_bexp::update(double const& q){
   double qr = std::min(1.0,std::max(0.0, q/q_szmax));
-  return(  -std::log( lambda + (1.0-lambda)*qr )/psi );
+  h = -std::log( lambda + (1.0-lambda)*qr ) / psi;
+  kappa = (s_szmax - (area*h)) / q;
 }
-double szc_bexp::fv(double const& s_sz){ // convert a storage to an outflow
-  double z = std::max(0.0, std::min(s_szmax,s_sz)); // limit storage deficit
-  double zz = s_szmax - z; // as storage
-  if(zz == 0.0){ return(0.0); }
-  return( (q_szmax/(1-lambda))*(exp(-psi*z)-lambda) / zz );
-}
+
   
 // // bounded exponential
 // szc_bexp::szc_bexp(std::vector<double> const &param, std::vector<double> const &prop){
@@ -75,52 +70,52 @@ double szc_bexp::fv(double const& s_sz){ // convert a storage to an outflow
 //   return( -psi*((q/omega)-kappa) );
 // };
 
-// // double exponential
-// szc_dexp::szc_dexp(std::vector<double> const &param, std::vector<double> const &prop){
-//   szc();
+// double exponential
+szc_dexp::szc_dexp(std::vector<double> const &param, std::vector<double> const &prop){
+  szc();
   
-//   double const &t0(param[0]), &m(param[1]), &m2(param[2]);
-//   omega = param[3];
-//   double const &area(prop[0]), &grd(prop[2]);
-//   Dx = prop[2];
+  double const &t0(param[0]), &m(param[1]), &m2(param[2]);
+  omega = param[3];
+  double const &area(prop[0]), &grd(prop[2]);
+  Dx = prop[2];
 
-//   width = area/Dx;
-//   double beta = std::atan(grd);
-//   q_szmax =  width*t0*std::sin(beta);
-//   psi = std::cos(beta) / (m*area); // scaling to get crosssectional depth from storage
-//   psi2 = std::cos(beta) / (m2*area); // scaling to get crosssectional depth from storage
-//   eta = 0.0;
-// }
+  width = area/Dx;
+  double beta = std::atan(grd);
+  q_szmax =  width*t0*std::sin(beta);
+  psi = std::cos(beta) / (m*area); // scaling to get crosssectional depth from storage
+  psi2 = std::cos(beta) / (m2*area); // scaling to get crosssectional depth from storage
+  eta = 0.0;
+}
 
-// void szc_dexp::update(double const& q){
-//   if( q == 0.0 ){
-//     h = 0.0;
-//     kappa = 0.0;
-//   }else{
-//     double z;
+void szc_dexp::update(double const& q){
+  if( q == 0.0 ){
+    h = 0.0;
+    kappa = 0.0;
+  }else{
+    double z;
         
-//     double lwr = -std::log(q/q_szmax) / psi;
-//     double upr = -std::log(q/q_szmax) / psi2;
-//     if(upr < lwr){
-//       double tmp(upr);
-//       upr=lwr;
-//       lwr=tmp;
-//     }
-//     //bisection to find solution
-//     int it(0), max_it(1000);
-//     double qq; //z, qq;
-//     while( (it <= max_it) and ( (upr-lwr)>1e-10 ) ){
-//       z = (lwr+upr)/2.0;
-//       qq = q_szmax * ( omega*std::exp(-psi*z) + (1.0-omega)*std::exp(-psi2*z) );
-//       if( qq <= q ){ upr = z; } else { lwr = z; }
-//       it += 1;
-//     }
-//     h = (lwr+upr)/2.0;
-//     if(it == max_it){ Rcpp::Rcout << "max_it reached " <<lwr << " " << z << " " << upr << std::endl; }
+    double lwr = -std::log(q/q_szmax) / psi;
+    double upr = -std::log(q/q_szmax) / psi2;
+    if(upr < lwr){
+      double tmp(upr);
+      upr=lwr;
+      lwr=tmp;
+    }
+    //bisection to find solution
+    int it(0), max_it(1000);
+    double qq; //z, qq;
+    while( (it <= max_it) and ( (upr-lwr)>1e-10 ) ){
+      z = (lwr+upr)/2.0;
+      qq = q_szmax * ( omega*std::exp(-psi*z) + (1.0-omega)*std::exp(-psi2*z) );
+      if( qq <= q ){ upr = z; } else { lwr = z; }
+      it += 1;
+    }
+    h = (lwr+upr)/2.0;
+    if(it == max_it){ Rcpp::Rcout << "max_it reached " <<lwr << " " << z << " " << upr << std::endl; }
     
-//     kappa = Dx * (h*width) / q;
-//   }
-// }
+    kappa = Dx * (h*width) / q;
+  }
+}
 
 // double szc_dexp::ftq(double const &s){ // get flow from storage
 //   double q = q_szmax * ( omega*std::exp(-psi*s) + (1.0-omega)*std::exp(-kappa*s) );

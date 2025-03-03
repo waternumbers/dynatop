@@ -227,7 +227,7 @@ ctch_mdl <- dynatop$new(hru,map=swindale_model$map)
 data("Swindale")
 swindale_obs <- Swindale$obs
 #swindale_obs$precip <- 999
-ctch_mdl$add_data(swindale_obs)
+ctch_mdl$add_data(swindale_obs[1:2,])
 ## ----initialise---------------------------------------------------------------
 ctch_mdl$initialise()
 st <- list(initial=ctch_mdl$get_states())
