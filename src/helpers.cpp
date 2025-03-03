@@ -53,9 +53,7 @@ Rcpp::List makeStateList(std::vector<hru> &hrus){
 							Rcpp::Named("s_sf", hrus[ii].s_sf / hrus[ii].area),
 							Rcpp::Named("s_rz", hrus[ii].s_rz / hrus[ii].area),
 							Rcpp::Named("s_uz", hrus[ii].s_uz / hrus[ii].area),
-							Rcpp::Named("s_sz", hrus[ii].s_sz / hrus[ii].area),
-							Rcpp::Named("q_sf", hrus[ii].q_sf / hrus[ii].area),
-							Rcpp::Named("q_sz", hrus[ii].q_sz / hrus[ii].area));
+							Rcpp::Named("s_sz", hrus[ii].s_sz / hrus[ii].area));
     Rcpp::List L = Rcpp::List::create(Rcpp::Named("id") = hrus[ii].id , Rcpp::Named("states") = s);
     state_list.push_back(L);
   }

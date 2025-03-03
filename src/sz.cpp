@@ -8,7 +8,6 @@ double szc::fv(double const &s){return(-999.9);}
 // bounded exponential
 szc_bexp::szc_bexp(std::vector<double> const &param, std::vector<double> const &prop){
   szc();
-  
   double const &t0(param[0]), &m(param[1]), &h_max(param[2]);
   double const &Dx(prop[1]), &grd(prop[2]);
   area = prop[0];
@@ -18,17 +17,15 @@ szc_bexp::szc_bexp(std::vector<double> const &param, std::vector<double> const &
   psi = std::cos(beta) / (m*area); // scaling within exp
   lambda = std::exp(-psi*s_szmax);
   q_szmax =  width*t0*std::sin(beta)*(1-lambda);
-  //eta = 0.0;
 }
-double szc_bexp::fs(double const& q){ // convert an outflow to a storage deficit
+double szc_bexp::fs(double const& q){ // convert an outflow to a storage
   double qr = std::min(1.0,std::max(0.0, q/q_szmax));
-  return(  -std::log( lambda + (1.0-lambda)*qr )/psi );
+  return(  s_szmax + std::log( lambda + (1.0-lambda)*qr )/psi );
 }
 double szc_bexp::fv(double const& s_sz){ // convert a storage to an outflow
   double z = std::max(0.0, std::min(s_szmax,s_sz)); // limit storage deficit
-  double zz = s_szmax - z; // as storage
-  if(zz == 0.0){ return(0.0); }
-  return( (q_szmax/(1-lambda))*(exp(-psi*z)-lambda) / zz );
+  if(z == 0.0){ return(0.0); }
+  return( (q_szmax/(1-lambda))*(exp(-psi*(s_szmax - z))-lambda) / z );
 }
   
 // // bounded exponential

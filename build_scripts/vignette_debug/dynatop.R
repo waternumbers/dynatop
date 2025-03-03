@@ -211,9 +211,9 @@ for(ii in 1:length(hru)){
     }else{
         ## then HRU is a channel - set so no subsurface response
         ## saturated zone parameters
-        hru[[ii]]$sz$parameters["t_0"] <- 0.0001
+        hru[[ii]]$sz$parameters["t_0"] <- 0.000
         ## root zone parameters
-        hru[[ii]]$rz$parameters["s_rzmax"] <- 0.001
+        hru[[ii]]$rz$parameters["s_rzmax"] <- 0.1
         ## surface parameters
         hru[[ii]]$sf$parameters["c_sf"] <- 1
     }
@@ -226,8 +226,8 @@ ctch_mdl <- dynatop$new(hru,map=swindale_model$map)
 ## ----add_data-----------------------------------------------------------------
 data("Swindale")
 swindale_obs <- Swindale$obs
-#swindale_obs$precip <- 999
-ctch_mdl$add_data(swindale_obs[1:2,])
+#swindale_obs$precip <- 0
+ctch_mdl$add_data(swindale_obs)
 ## ----initialise---------------------------------------------------------------
 ctch_mdl$initialise()
 st <- list(initial=ctch_mdl$get_states())
@@ -237,6 +237,7 @@ st <- list(initial=ctch_mdl$get_states())
 ## ----sim1---------------------------------------------------------------------
 sim1 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()
 st[["sim1"]] <- ctch_mdl$get_states()
+
 sim2 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()
 st[["sim2"]] <- ctch_mdl$get_states()
 sim3 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()

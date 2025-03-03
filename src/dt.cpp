@@ -114,7 +114,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     // compute the mass balance initial storage
     for(int ii=0; ii<nhru; ++ii){
       if( hrus[ii].area > 0.0){
-	mbv[0] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz); // initial state volume
+	mbv[0] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz + hrus[ii].s_sz); // initial state volume
 	mbv[1] += hrus[ii].precip; // precip volume
       }
     }
@@ -156,7 +156,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     // finish off mass balance at end of step
     for(int ii=0; ii<nhru; ++ii){
       if( hrus[ii].area > 0.0){
-	mbv[4] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz); // final state volume
+	mbv[4] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz + hrus[ii].s_sz); // final state volume
       }
     }
     mbv[5] = mbv[0] + mbv[1] - mbv[2] - mbv[3] - mbv[4];

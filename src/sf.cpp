@@ -21,7 +21,7 @@ double sfc_cnst::fs(double const &q){
 }
 double sfc_cnst::fv(double const &s){ // constant to times storage by to get flow v/Dx
   double z = std::max(0.0,s);
-  if( z == 0.0 ){ return(0.0); }
+  if( z <= 0.0 ){ return(0.0); }
   return( (v_raf*std::min(s_raf,z) +  v_sf*(std::max(0.0,z-s_raf))) / (Dx*z) );
 }
 
