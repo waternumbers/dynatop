@@ -392,6 +392,8 @@ Compute a Dynamic TOPMODEL
 
 \item{\code{pet_label}}{Prepended to pet_layer values to give pet series name}
 
+\item{\code{min_grad}}{minimum gradient between cell centres (or channel reaches)}
+
 \item{\code{verbose}}{print more details of progress}
 }
 \if{html}{\out{</div>}}

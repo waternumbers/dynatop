@@ -228,6 +228,7 @@ dynatopGIS <- R6::R6Class(
         #' @param rain_label Prepended to rain_layer values to give rainfall series name
         #' @param pet_layer the layer defining the pet inputs
         #' @param pet_label Prepended to pet_layer values to give pet series name
+        #' @param min_grad minimum gradient between cell centres (or channel reaches)
         #' @param verbose print more details of progress
         #'
         #' @details The \code{class_layer} is used to define the HRUs. Flow between HRUs is based on the ordering of the catchment (see the \code{compute_band} method). Flow from a HRU can only go to a HRU with a lower band.

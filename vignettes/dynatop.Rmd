@@ -62,14 +62,13 @@ library("dynatop")
 For this vignette we will store the data into a temporary directory
 
 ```{r tempory_dir}
-demo_dir <- tempfile("dygis")
-dir.create(demo_dir)
+demo_dir <- tempdir()
 ```
 and initialise the analysis by creating a new object specifying the location
 of the meta data file, which will be created if it doesn't exist.
 
 ```{r, initialisation}
-ctch <- dynatopGIS$new(file.path(demo_dir))
+ctch <- dynatopGIS$new(file.path(demo_dir,"example.tif"))
 ```
 
 # Adding catchment data
@@ -88,8 +87,8 @@ the difference between the cell centres (in meters) does not alter.
 For Swindale the suitable DEM and channel files can be found using:
 
 ```{r, data_files}
-dem_file <- system.file("extdata", "SwindaleDTM40m.tif", package="dynatopGIS", mustWork = TRUE)
-channel_file <- system.file("extdata", "SwindaleRiverNetwork.shp", package="dynatopGIS", mustWork = TRUE)
+dem_file <- system.file("extdata", "gis", "SwindaleDTM40m.tif", package="dynatop", mustWork = TRUE)
+channel_file <- system.file("extdata", "gis", "SwindaleRiverNetwork.shp", package="dynatop", mustWork = TRUE)
 ```
 
 Before adding either the DEM or channel a raster map of the catchment outline must be
@@ -218,22 +217,10 @@ terra::plot( ctch$get_layer('filled_dem') - ctch$get_layer('dem'),
             main="Changes to height")
 ```
 
-## Determining Ordering
-
-The computational scheme in the `dynatop` package works with an ordered
-sequence of HRUs constructed such that the sequence moves downslope to
-catchment outlet. This is achieved by banding the channel reaches and
-hillslope cells such that the catchment outlet(s) are in band 1, those cells
-or reaches draining only into band 1 are in band 2 and so forth. banding is
-achieved by the following call
-
-```{r, band}
-ctch$compute_band()
-ctch$plot_layer("band")
-```
-
 # Computing properties
 
+** THIS IS INCORRECT NO PROPERTIES ARE NEEDED IN dynatop since no grouping
+into HRUs is used **
 Two sets of properties are required for Dynamic TOPMODEL. The first set is
 those required within the evaluation of the model; gradient and contour
 length. The second set are those used for dividing the catchment up into
@@ -268,26 +255,25 @@ to the river channels
 ctch$plot_layer('atb')
 ```
 
-Although not used in ordering the HRUs `dynatopGIS` also provides the ability to compute flow distances for the hill slope cells.
-The calculation of three distances is supported
+<!-- Although not used in ordering the HRUs `dynatop` also provides the ability to compute flow distances for the hill slope cells. -->
+<!-- The calculation of three distances is supported -->
 
-- *shortest flow length* - the shortest length based on the pixel flow paths
-to a channel
-- *Dominant flow length* - the distance to a channel moving in the dominant
-(largest fraction) flow direction from any grid cell
-- *Expected flow length* - the distance to the channel based on a weighted
-average of the down-slope flow lengths. Weights are given by the fraction of
-flow in each direction.
+<!-- - *shortest flow length* - the shortest length based on the pixel flow paths -->
+<!-- to a channel -->
+<!-- - *Dominant flow length* - the distance to a channel moving in the dominant -->
+<!-- (largest fraction) flow direction from any grid cell -->
+<!-- - *Expected flow length* - the distance to the channel based on a weighted -->
+<!-- average of the down-slope flow lengths. Weights are given by the fraction of -->
+<!-- flow in each direction. -->
 
-The computation, in this example for the shortest flow length, is initiated with
-```{r, flow_length}
-ctch$compute_flow_lengths(flow_routing="shortest")
-```
+<!-- The computation, in this example for the shortest flow length, is initiated with -->
+<!-- ```{r, flow_length} -->
+<!-- ctch$compute_flow_lengths(flow_routing="shortest") -->
+<!-- ``` -->
 
 The additional layers can be examined as expected
 ```{r, flow_length_plot}
 ctch$get_layer()
-ctch$plot_layer("shortest_flow_length")
 ```
 
 
@@ -304,7 +290,7 @@ then separate it into a layers representing land above and below 500m.
 
 ```{r height layer}
 ## T
-tmp <- terra::ifel(tmp<=500,NA,-999)
+tmp <- terra::ifel(tmp<=500,0,1)
 ```
 
 The resulting raster object can now be added to the project with
@@ -331,16 +317,16 @@ The `classify` method of a `dynatopGIS` allows a landscape property to be
 For example to cut the topographic index for Swindale into 21 classes:
 
 ```{r, atb_split}
-ctch$classify("atb_20","atb",cuts=20)
+ctch$add_layer( ctch$classify("atb_20","atb",cuts=20) )
 ctch$plot_layer("atb_20")
 ```
 
 Providing a single value to the cuts argument determines the number of classes.
-The values used to cut the variable can be extracted from the meta data with
+<!-- The values used to cut the variable can be extracted from the meta data with -->
 
-```{r,atb_splt_get_class}
-ctch$get_method("atb_20")
-```
+<!-- ```{r,atb_splt_get_class} -->
+<!-- ctch$get_method("atb_20") -->
+<!-- ``` -->
 
 The `combine_classes` method of a `dynatopGIS` allows classes to be combined
 in two ways, which are applied in the order shown
@@ -352,25 +338,25 @@ To demonstrate a pairing combination consider combining the atb classes
 generated above with the classification provided by the distance band
 
 ```{r, atb_20_band}
-ctch$combine_classes("atb_20_band",c("atb_20","band"))
+ctch$add_layer( ctch$combine_classes("atb_20_band",c("atb_20","band")) )
 ctch$plot_layer("atb_20_band")
 ```
 
 Additionally the land greater then 500 in altitude can be burnt in with
 
 ```{r, atb_20_band_burn}
-ctch$combine_classes("atb_20_band_500",pairs=c("atb_20","band"),burns="greater_500")
-ctch$plot_layer("atb_20_band_500")
+terra::plot( ctch$combine_classes("atb_20_band_500",pairs=c("atb_20","band"),burns="greater_500") )
 ```
 
-The each class in the combined classification the values of the classes used
-in the computations can be returned
+<!-- The each class in the combined classification the values of the classes used -->
+<!-- in the computations can be returned -->
 
 
-```{r see_class}
-head( ctch$get_method("atb_20_band_500")$groups )
-```
+<!-- ```{r see_class} -->
+<!-- head( ctch$get_method("atb_20_band_500")$groups ) -->
+<!-- ``` -->
 
+** IS THIS CORRECT?? **
 Note that by giving the area to be burnt in a negative value when it was
 generated above we have ensured that the values do not clash with those generated by the cuts which
 (except potentially when a cut is NA) which will always be positive.
@@ -500,7 +486,7 @@ we change the parameter vectors to be more representative of the catchment
 ```{r, change_param}
 hru <- swindale_model$hru
 for(ii in 1:length(hru)){
-    if(is.na(hru[[ii]]$class$endNode)){
+    if(!("endNode" %in% names(hru[[ii]]$class))){
         ## then HRU is not a channel
         ## saturated zone parameters
         hru[[ii]]$sz$parameters["m"] <- 0.0063
@@ -514,7 +500,7 @@ for(ii in 1:length(hru)){
     }else{
         ## then HRU is a channel - set so no subsurface response
         ## saturated zone parameters
-        hru[[ii]]$sz$parameters["t_0"] <- 0.001
+        hru[[ii]]$sz$parameters["t_0"] <- 0
         ## root zone parameters
         hru[[ii]]$rz$parameters["s_rzmax"] <- 0.001
         ## surface parameters

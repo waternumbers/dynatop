@@ -4,7 +4,7 @@
 #'
 #' data("Swindale") ## example data
 #' mdl <- Swindale$model
-#' mdl$map <- system.file("extdata","Swindale.tif",package="dynatop",mustWork=TRUE)
+#' mdl$map <- system.file("extdata","mdl","Swindale.tif",package="dynatop",mustWork=TRUE)
 #' ctch_mdl <- dynatop$new(mdl$hru,map=mdl$map) ## create with model
 #' ctch_mdl$add_data(Swindale$obs) ## add observations
 #' ctch_mdl$initialise() ## initialise model
@@ -182,7 +182,7 @@ dynatop <- R6Class(
                 return( setNames(private$time_series$state_record,
                                  private$time_series$index) )
             }else{
-                tmp <- do.call(rbind, lapply(private$model, function(x){ c(id=x$id, x$states) }))
+                tmp <- do.call(rbind, lapply(private$model, function(x){ c(id=x$uid["id"], x$states) }))
                 return( as.data.frame(tmp) )
             }
        },
