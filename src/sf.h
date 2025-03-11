@@ -13,10 +13,12 @@ protected:
 public:
    // initialisation
   sfc();
-  virtual double fq(double const&, double const&, double const&); // outflow given storage and inflow
-  virtual double fs(double const&, double const&); // storage given outflow and inflow
+  virtual double fq(double const&); //, double const&, double const&); // outflow given storage and inflow
+  virtual double fs(double const&); //, double const&); // storage given outflow and inflow
   virtual void update(double&, double&, double const&, double const&,
 		      double const&, double const&, int const&);
+  virtual void iter_update(double&, double&, double const&, double const&,
+			   double const&, double const&, int const&);
 };
 
 // constant celerity & diffusivity with RAF
@@ -29,8 +31,8 @@ public:
 class sfc_kin: public sfc {
 public:
   sfc_kin(std::vector<double> const&, std::vector<double> const&);
-  double fq(double const&, double const&, double const&);
-  double fs(double const&, double const&);
+  double fq(double const&); //, double const&, double const&);
+  double fs(double const&); //, double const&);
 };
 
 // compound channel with RAF
@@ -43,8 +45,8 @@ public:
 class sfc_kin_tank: public sfc {
 public:
   sfc_kin_tank(std::vector<double> const&, std::vector<double> const&);
-  double fq(double const&, double const&, double const&);
-  double fs(double const&, double const&);
+  double fq(double const&); //, double const&, double const&);
+  double fs(double const&); //, double const&);
 };
 
 #endif

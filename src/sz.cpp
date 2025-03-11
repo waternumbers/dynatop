@@ -1,12 +1,12 @@
 #include "sz.h"
 
 szc::szc(){}
-double szc::fq(double const &s, double const &qin){
+double szc::fq(double const &s){ //, double const &qin){
   // outflow
   double qt = ftq(s);
   return( qt ); //std::max(0.0, 2*qt - qin) );
 }
-double szc::fs(double const &q, double const& qin){
+double szc::fs(double const &q){ //, double const& qin){
   // storage
   double qt = q; //std::min(q_szmax, (q+qin)/2); // ensure no negative outflows
   return( fts(qt) );
@@ -21,9 +21,9 @@ szc_exp::szc_exp(std::vector<double> const &param, std::vector<double> const &pr
   
   double const &t0(param[0]), &m(param[1]);
   //double const &area(prop[0]), &width(prop[1]), &grd(prop[3]);
-  double const &width(prop[0]/prop[1]), &grd(prop[2]);
+  double const &Dx(prop[1]), &grd(prop[2]);
   double area = prop[0];
-  
+  double width = area/Dx;
   double beta = std::atan(grd);
   q_szmax =  width*t0*std::sin(beta);
   psi = std::cos(beta) / (m*area); // scaling to get crosssectional depth from storage
@@ -90,8 +90,8 @@ szc_dexp::szc_dexp(std::vector<double> const &param, std::vector<double> const &
   szc();
   
   double const &t0(param[0]), &m(param[1]), &m2(param[2]);
-  double const &Dx(prop[1]), &width(prop[0]/prop[1]), &grd(prop[2]);
-  double area = prop[0];
+  double const &area(prop[0]), &Dx(prop[1]), &grd(prop[2]);
+  double width = area/Dx;
 
   double beta = std::atan(grd);
   omega = param[3]; // weight

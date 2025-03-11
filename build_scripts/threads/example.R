@@ -3,4 +3,3 @@ rm(list=ls())
 library(Rcpp)
 setwd("./build_scripts/threads/")
 sourceCpp("example.cpp")
-ex

@@ -235,20 +235,20 @@ st <- list(initial=ctch_mdl$get_states())
 
 
 ## ----sim1---------------------------------------------------------------------
-sim1 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()
+print( system.time({sim1 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()}) )
 st[["sim1"]] <- ctch_mdl$get_states()
 
 ctch_mdl$initialise()
-sim2 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=300)$get_output()
+print(system.time({sim2 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=300)$get_output()}))
 st[["sim2"]] <- ctch_mdl$get_mass_errors()
 
 ctch_mdl$initialise()
-sim3 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=60)$get_output()
+print(system.time({ sim3 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=10)$get_output() }))
 st[["sim3"]] <- ctch_mdl$get_mass_errors()
 
 out <- Reduce(merge,list(swindale_obs,sim1,sim2,sim3))
 names(out) <- c(names(swindale_obs),'sim_1','sim_2',"sim_3")
-plot(out[,c('flow','sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
+plot(out["2009-11-19",c('flow','sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
 
 
 ## ----mass_check---------------------------------------------------------------

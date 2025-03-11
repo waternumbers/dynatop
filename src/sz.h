@@ -9,12 +9,12 @@
 // generic class for the saturated zone flow
 class szc {
 protected:
-  double psi, omega, kappa, q_szmax;
+  double psi, q_szmax;
 public:
   // initialisation
   szc(); //std::vector<double> const&, double const& ,double const&, double const&);
-  virtual double fq(double const&, double const&); // compute outflow given storage and lateral inflow
-  virtual double fs(double const&, double const&); // compute storage given lateral inflow and outflow
+  virtual double fq(double const&); //, double const&); // compute outflow given storage and lateral inflow
+  virtual double fs(double const&); //, double const&); // compute storage given lateral inflow and outflow
   virtual double ftq(double const&); // compute transmissivity flow given storage
   virtual double fts(double const&); // compute transmissivity storage given transmissivity flow
   //virtual void update(double&, double&, double&, double const&, double const&, int const&); // update
@@ -32,6 +32,7 @@ class szc_exp: public szc {
 // bounded exponential
 class szc_bexp: public szc {
  protected:
+  double kappa, omega;
  public:
   szc_bexp(std::vector<double> const&, std::vector<double> const&);
   double fts(double const&);
@@ -41,6 +42,7 @@ class szc_bexp: public szc {
 // constant velocity
 class szc_cnst: public szc {
 protected:
+  double kappa, omega;
 public:
   szc_cnst(std::vector<double> const&, std::vector<double> const&);
   double ftq(double const&);
@@ -50,6 +52,7 @@ public:
 // double exponential
 class szc_dexp: public szc {
 protected:
+  double kappa, omega;
 public:
   szc_dexp(std::vector<double> const&, std::vector<double> const&);
   double ftq(double const&);
