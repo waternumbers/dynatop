@@ -218,7 +218,7 @@ dynatop <- R6Class(
         info = list(sf = setNames(as.integer(1:4),c("cnst","kin","comp","kin_tank")),
                     rz = setNames(as.integer(1),c("orig")),
                     uz = setNames(as.integer(1),c("orig")),
-                    sz = setNames(as.integer(1:3),c("bexp","bdexp","cnst")),
+                    sz = setNames(as.integer(1:4),c("exp","bexp","dexp","cnst")),
 
                     output = setNames(1:14, c("precip","pet","aet",
                                               "q_sf","q_sf_in","q_sz","q_sz_in",
@@ -298,10 +298,10 @@ dynatop <- R6Class(
                               ## "sf_kin_tank" = c("n","s_raf","t_raf"),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
-                              ##"sz_exp" = c("t_0","m"),
+                              "sz_exp" = c("t_0","m"),
                               "sz_bexp" = c("t_0","m","h_max"),
                               "sz_cnst" = c("v_sz","h_max"),
-                              "sz_bdexp" = c("t_0","m","m2","omega","h_max"),
+                              "sz_dexp" = c("t_0","m","m2","omega"),
                               stop("Invalid options for pname")
                               )
                 if( !is.numeric( h[[ii]]$parameters )){

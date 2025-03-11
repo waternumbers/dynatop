@@ -29,10 +29,10 @@ void dt_init(Rcpp::List mdl, // hru data frame
     Rcpp::List L = mdl[ii];
     Rcpp::NumericVector ivec = L["initialisation"];
     
-    hrus[ii].init(q_sf_in,q_sz_in,ivec["s_rz_0"], ivec["r_uz_sz_0"], vtol, etol, max_it); // initialise
+    hrus[ii].init(q_sf_in,q_sz_in,ivec["s_rz_0"], ivec["r_uz_sz_0"], max_it); // initialise
     //hrus[ii].lateral_redistribution(q_sf_in,q_sz_in); // spread flow downslope
   }
-
+  Rcpp::Rcout << "start state copying" << std::endl;
   // Rcpp::Rcout << "copying back states" << std::endl;
   // copy back states
   for(int ii=0; ii<nhru; ++ii){
@@ -114,7 +114,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     // compute the mass balance initial storage
     for(int ii=0; ii<nhru; ++ii){
       if( hrus[ii].area > 0.0){
-	mbv[0] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz); // initial state volume
+	mbv[0] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz + hrus[ii].s_sz); // initial state volume
 	mbv[1] += hrus[ii].precip; // precip volume
       }
     }
@@ -134,7 +134,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
       // start loop of hrus
       for(int ii= nhru-1; ii >= 0; --ii){
   	///Rcpp::Rcout << "hru " << ii << " at timestep " << tt << std::endl;
-  	hrus[ii].step(q_sf_in,q_sz_in,vtol,etol,max_it,Dt);
+  	hrus[ii].step(q_sf_in,q_sz_in,max_it,Dt);
 
 	// mass balance components
 	if( hrus[ii].area > 0.0){
@@ -156,7 +156,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     // finish off mass balance at end of step
     for(int ii=0; ii<nhru; ++ii){
       if( hrus[ii].area > 0.0){
-	mbv[4] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz); // final state volume
+	mbv[4] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz + hrus[ii].s_sz); // final state volume
       }
     }
     mbv[5] = mbv[0] + mbv[1] - mbv[2] - mbv[3] - mbv[4];

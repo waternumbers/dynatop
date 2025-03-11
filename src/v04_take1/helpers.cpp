@@ -5,6 +5,7 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
   std::vector<hru> hrus;
   
   for(int ii=0; ii<nhru; ++ii){
+    //Rcpp::Rcout << ii << std::endl;
     Rcpp::List m = mdl[ii];
     Rcpp::NumericVector svec = m["states"];
     Rcpp::NumericVector pvec = m["properties"];
@@ -18,22 +19,24 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
     Rcpp::IntegerVector pet_idx = m["pet_idx"];
     Rcpp::List q_sf_list = m["sf_flow_direction"];
     Rcpp::List q_sz_list = m["sz_flow_direction"];
-    Rcpp::IntegerVector uid = m["uid"];
+    Rcpp::IntegerVector uid = m["uid"];//int id = m["id"];
 
     //svec = svec * pvec["area"];
 
     // all passed explicity, not by reference
     hrus.push_back( hru( Rcpp::as<int>(uid["id"]), // id passed explicitly
-			 Rcpp::as<std::vector<double>>(svec), // states
-			 Rcpp::as<std::vector<double>>(pvec), // properties
+			 Rcpp::as<std::vector<double>>(svec),
+			 Rcpp::as<std::vector<double>>(pvec),
 			 Rcpp::as<int>(sf_list["type"]), Rcpp::as<std::vector<double>>(sf_list["parameters"]), // surface type and parameters
-			 Rcpp::as<int>(rz_list["type"]), Rcpp::as<std::vector<double>>(rz_list["parameters"]), // root zone type and parameters
-			 Rcpp::as<int>(uz_list["type"]), Rcpp::as<std::vector<double>>(uz_list["parameters"]), // unsaturated zone type and parameters
-			 Rcpp::as<int>(sz_list["type"]), Rcpp::as<std::vector<double>>(sz_list["parameters"]), // saturated zone type and parameters
+			 Rcpp::as<std::vector<double>>(rz_list["parameters"]), // root zone type and parameters passed explicitly
+			 Rcpp::as<std::vector<double>>(uz_list["parameters"]), // unsaturated zone type and parameters passed explicitly
+			 Rcpp::as<int>(sz_list["type"]), Rcpp::as<std::vector<double>>(sz_list["parameters"]), // saturated zone type and parameters passed explicitly
 			 Rcpp::as<std::vector<int>>(pcp_idx), Rcpp::as<std::vector<double>>(pcp_frc), // precipiataion inputs
 			 Rcpp::as<std::vector<int>>(pet_idx), Rcpp::as<std::vector<double>>(pet_frc), // pet inputs
-			 Rcpp::as<std::vector<int>>(q_sf_list["id"]), Rcpp::as<std::vector<double>>(q_sf_list["fraction"]), // surface zone redistribution
-			 Rcpp::as<std::vector<int>>(q_sz_list["id"]), Rcpp::as<std::vector<double>>(q_sz_list["fraction"]) // saturated zone redistribution
+			 Rcpp::as<std::vector<int>>(q_sf_list["id"]),
+			 Rcpp::as<std::vector<double>>(q_sf_list["fraction"]), // surface zone redistribution
+			 Rcpp::as<std::vector<int>>(q_sz_list["id"]),
+			 Rcpp::as<std::vector<double>>(q_sz_list["fraction"]) // saturated zone redistribution
 			 )
 		    );
     
@@ -50,9 +53,7 @@ Rcpp::List makeStateList(std::vector<hru> &hrus){
 							Rcpp::Named("s_sf", hrus[ii].s_sf / hrus[ii].area),
 							Rcpp::Named("s_rz", hrus[ii].s_rz / hrus[ii].area),
 							Rcpp::Named("s_uz", hrus[ii].s_uz / hrus[ii].area),
-							Rcpp::Named("s_sz", hrus[ii].s_sz / hrus[ii].area));//,
-							//Rcpp::Named("q_sf", hrus[ii].q_sf / hrus[ii].area),
-							//Rcpp::Named("q_sz", hrus[ii].q_sz / hrus[ii].area));
+							Rcpp::Named("s_sz", hrus[ii].s_sz / hrus[ii].area));
     Rcpp::List L = Rcpp::List::create(Rcpp::Named("id") = hrus[ii].id , Rcpp::Named("states") = s);
     state_list.push_back(L);
   }
