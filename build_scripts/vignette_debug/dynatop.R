@@ -201,13 +201,13 @@ for(ii in 1:length(hru)){
         ## then HRU is not a channel
         ## saturated zone parameters
         hru[[ii]]$sz$parameters["m"] <- 0.063
-        hru[[ii]]$sz$parameters["t_0"] <- 10
+        hru[[ii]]$sz$parameters["t_0"] <- 0#1
         ## unsaturated zone parameters
         hru[[ii]]$uz$parameters["t_d"] <- 8*60*60
         ## root zone parameters
         hru[[ii]]$rz$parameters["s_rzmax"] <- 0.1
         ## surface parameters
-        hru[[ii]]$sf$parameters["c_sf"] <- 0.4
+        hru[[ii]]$sf$parameters["v_sf"] <- 1e-6 #0.4
     }else{
         ## then HRU is a channel - set so no subsurface response
         ## saturated zone parameters
@@ -215,7 +215,7 @@ for(ii in 1:length(hru)){
         ## root zone parameters
         hru[[ii]]$rz$parameters["s_rzmax"] <- 0.1
         ## surface parameters
-        hru[[ii]]$sf$parameters["c_sf"] <- 1
+        hru[[ii]]$sf$parameters["v_sf"] <- 1e-6 #10
     }
     ## initialisation parameters
     hru[[ii]]$initialisation["s_rz_0"] <- 0.98
@@ -238,8 +238,11 @@ st <- list(initial=ctch_mdl$get_states())
 sim1 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()
 st[["sim1"]] <- ctch_mdl$get_states()
 
-sim2 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()
+ctch_mdl$initialise()
+sim2 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=60)$get_output()
 st[["sim2"]] <- ctch_mdl$get_states()
+
+ctch_mdl$initialise()
 sim3 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()
 st[["sim3"]] <- ctch_mdl$get_states()
 
@@ -252,3 +255,32 @@ plot(out[,c('flow','sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legen
 mb <- ctch_mdl$get_mass_errors()
 plot( mb[,6] , main="Mass Error", ylab="[m^3]")
 
+
+
+New time step
+q_sz_in = 0
+v_uz_sz = 3.88625
+z = 750.046
+s_sz = 746.16
+v_sz = 0
+s_szmax = 746.16
+q_sz = 0
+v_uz_sz final = 2.84217e-14
+z = 750.046
+Unsat
+v_rz_uz = 187738
+s_uz = 0
+v_rz_uz final = 2.84217e-14
+z = 0
+Rootzone
+v_sf_rz = 187738
+s_rz = 37.308
+s_rz = 37.308
+v_sf_rz final = -0.0486399
+Surface
+q_sf_in = 610.614
+s_sf = 37.308
+z = 187738
+s_sf = 158676
+v_sf = 0.000610501
+q_sf = 96.8719

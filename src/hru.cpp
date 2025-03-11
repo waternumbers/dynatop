@@ -124,12 +124,8 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 
   // work out outflow
   q_sz = r_uz_sz + q_sz_in; // this is throttled in the sz definition
-  Rcpp::Rcout << "id " << id << std::endl;
-  Rcpp::Rcout << "initial q_sz " << q_sz << std::endl;
   s_sz = sz->fs(q_sz);
-  Rcpp::Rcout << "storage s_sz " << s_sz << std::endl;
   q_sz = sz->fv(s_sz) * s_sz; // 'velocity' * storage
-  Rcpp::Rcout << "revised q_sz " << q_sz << std::endl;
   
   //Rcpp::Rcout << "start upward" << std::endl;
   r_uz_sz = q_sz - q_sz_in;
@@ -148,11 +144,6 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   }else{
     s_rz = s_rzmax * s_rz_0 * area;    
   }
-  Rcpp::Rcout << "id " << id << std::endl;
-  Rcpp::Rcout << "r_sf_rz " << r_sf_rz << std::endl;
-  Rcpp::Rcout << "s_rz " << s_rz << std::endl;
-  Rcpp::Rcout << "max vol" << s_rzmax * area << std::endl;
-  Rcpp::Rcout << "max depth" << s_rzmax << std::endl;
   
   // balance flux through root zone
   r_sf_rz = std::min( r_sf_rz , r_rz_uz );
@@ -161,7 +152,16 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // solve surface
   q_sf = q_sf_in - r_sf_rz;
   s_sf = sf->fs(q_sf);
-  
+  if( id == 0 ){
+    Rcpp::Rcout << "id " << id << std::endl;
+    Rcpp::Rcout << "q_sz_in = " << q_sz_in << std::endl;
+    Rcpp::Rcout << "q_sf_in = " << q_sf_in << std::endl;
+    Rcpp::Rcout << "s_sz = " << s_sz << std::endl;
+    Rcpp::Rcout << "s_sf = " << s_sf << std::endl;
+    Rcpp::Rcout << "s_szmax = " << sz->s_szmax << std::endl;
+    Rcpp::Rcout << "q_sz = " << q_sz << std::endl;
+    Rcpp::Rcout << "q_sf = " << q_sf << std::endl;
+  }
   //Rcpp::Rcout << "s_sf " << s_sf << std::endl;
   // redistributed the flows
   //Rcpp::Rcout << "q_sf " << q_sf << std::endl;
@@ -187,6 +187,8 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 
   double const &s_rzmax = rz_param[0];
   double const &t_d = uz_param[0];
+
+  int id_write = 0; //9915;
   
   // redivide the inflow so q_sz_in is less then q_szmax
   q_sz_in = std::min( vec_q_sz_in[id] , sz->q_szmax) ;
@@ -210,85 +212,86 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 		     s_rz - (area*s_rzmax)  + Dt*(precip - pet) + v_sf_rz);
 
   v_uz_sz = area* Dt * std::min( (s_uz+v_rz_uz)/(t_d*(sz->s_szmax-s_sz) + area*Dt), 1/t_d ); // could put back into the loop
-  double pjs2 = v_uz_sz;
  
   double z = s_sz + Dt*q_sz_in + v_uz_sz; // initial estimate of deficit without outflow
-  if(id == 2 ){
-    Rcpp::Rcout << "before" << std::endl;
-    Rcpp::Rcout << "v_uz_sz = " << v_uz_sz << std::endl;
-    Rcpp::Rcout << "q_sz_in = " << Dt*q_sz_in << std::endl;
-    Rcpp::Rcout << "s_sz = " << s_sz << std::endl;
-    Rcpp::Rcout << "z = " << z <<std::endl;
-  }
-   
-  //Rcpp::Rcout << "z = " << z << std::endl;
+
+  // semi implicit
+  double v = sz->fv(z); // multiple storage by this to get flow
+  //s_sz = z / ( 1+(Dt*v) ); // revised storage deficit
+  //s_sz = std::max(0.0, std::min(s_sz,sz->s_szmax));
   for(long unsigned int ii=0; ii<max_it; ++ii){
-    double v = sz->fv(s_sz); // multiple storage by this to get flow
+    v = sz->fv(s_sz); // multiple storage by this to get flow
     s_sz = z / ( 1+(Dt*v) ); // revised storage deficit
     s_sz = std::max(0.0, std::min(s_sz,sz->s_szmax));
   }
-  q_sz = s_sz * sz->fv(s_sz);
-  z = z - Dt*q_sz; // unthresholded estimates
-  if(id == 2 ){
-    Rcpp::Rcout << "after" << std::endl;
+  if( id == id_write ){
+    Rcpp::Rcout << "New time step" << std::endl;
+    Rcpp::Rcout << "q_sz_in = " << q_sz_in << std::endl;
     Rcpp::Rcout << "v_uz_sz = " << v_uz_sz << std::endl;
-    Rcpp::Rcout << "q_sz_in = " << Dt*q_sz_in << std::endl;
-    Rcpp::Rcout << "s_sz = " << s_sz << std::endl;
     Rcpp::Rcout << "z = " << z << std::endl;
-  }
-  //s_sz = std::min(s_sz, sz->s_szmax); // apply upper limit
-  v_uz_sz -= (z - s_sz);
-  if(id == 2 ){
-    Rcpp::Rcout << "v_uz_sz = " << v_uz_sz << std::endl;
-  }
-  double pjs = mass_ballance[3] + Dt*(q_sz_in - q_sz) + v_uz_sz - s_sz;
-  if( std::abs(pjs) > 1e-10 ){
-    Rcpp::Rcout << "id = " << id << std::endl;
-    Rcpp::Rcout << "error = " << pjs << std::endl;
-    Rcpp::Rcout << "Initial s_sz = " << mass_ballance[3] << std::endl;
-    Rcpp::Rcout << "Initial v_uz_sz = " << pjs2 << std::endl;
-    Rcpp::Rcout << "q_sz = " << Dt*q_sz << std::endl;
-    Rcpp::Rcout << "q_sz_in = " << Dt*q_sz_in << std::endl;
-    Rcpp::Rcout << "s_uz = " << s_uz << std::endl;
     Rcpp::Rcout << "s_sz = " << s_sz << std::endl;
+    Rcpp::Rcout << "v_sz = " << v << std::endl;
+    Rcpp::Rcout << "s_szmax = " << sz->s_szmax << std::endl;
+  }
+  
+  q_sz = s_sz * v; //sz->fv(s_sz);
+  z = z - Dt*q_sz; // unthresholded estimates
+  v_uz_sz -= (z - s_sz);
+  
+  if( id == id_write ){
+    Rcpp::Rcout << "q_sz = " << q_sz_in << std::endl;
+    Rcpp::Rcout << "v_uz_sz final = " << v_uz_sz << std::endl;
+    Rcpp::Rcout << "z = " << z << std::endl;
+    Rcpp::Rcout << "Unsat" << std::endl;
     Rcpp::Rcout << "v_rz_uz = " << v_rz_uz << std::endl;
-    Rcpp::Rcout << "v_uz_sz = " << v_uz_sz << std::endl;
   }
-  if( s_sz > sz->s_szmax ){
-    Rcpp::Rcout << "id = " << id << std::endl;
-    Rcpp::Rcout << "error = s_sz to large" << s_sz - sz->s_szmax << std::endl;
-  }
-  if( s_sz <0.0 ){
-    Rcpp::Rcout << "id = " << id << std::endl;
-    Rcpp::Rcout << "error negative s_sz = " << s_sz  << std::endl;
-  }
+  
   // solve unsaturated zone
-  if(id ==2){
-    Rcpp::Rcout << "initial s_uz = " << s_uz << std::endl;
-    Rcpp::Rcout << "v_rz_uz = " << v_rz_uz << std::endl;
-    Rcpp::Rcout << "v_uz_sz = " << v_uz_sz << std::endl;
-  }
   z = std::max(0.0, std::min(sz->s_szmax - s_sz, s_uz+v_rz_uz-v_uz_sz));
   v_rz_uz = z + v_uz_sz - s_uz;
   s_uz = z;
-  if(id==2){
-    Rcpp::Rcout << "final s_uz = " << s_uz << std::endl;
-    Rcpp::Rcout << "final v_rz_uz = " << v_rz_uz << std::endl;
+  
+  if( id == id_write ){
+    Rcpp::Rcout << "s_uz = " << s_uz << std::endl;
+    Rcpp::Rcout << "v_rz_uz final = " << v_rz_uz << std::endl;
+    Rcpp::Rcout << "z = " << z << std::endl;
+    Rcpp::Rcout << "Rootzone" << std::endl;
+    Rcpp::Rcout << "v_sf_rz = " << v_sf_rz << std::endl;
+    Rcpp::Rcout << "s_rz = " << s_rz << std::endl;
   }
-
+  
   // solve root zone
   v_sf_rz = std::min( v_sf_rz, (area*s_rzmax) - s_rz - Dt*(precip - pet) + v_rz_uz);
   s_rz = ((area*s_rzmax) / ((area*s_rzmax) + Dt*pet)) * (s_rz + Dt*precip + v_sf_rz - v_rz_uz);
   aet = pet * s_rz / (area*s_rzmax);
-  
+
+    if( id == id_write ){
+    Rcpp::Rcout << "s_rz = " << s_rz << std::endl;
+    Rcpp::Rcout << "v_sf_rz final = " << v_sf_rz << std::endl;
+    Rcpp::Rcout << "Surface" << std::endl;
+    Rcpp::Rcout << "q_sf_in = " << q_sf_in << std::endl;
+    Rcpp::Rcout << "s_sf = " << s_sf << std::endl;
+  }
   // surface
   z = s_sf + Dt*q_sf_in - v_sf_rz; // initial estimate of storage without outflow
+  //v = sf->fv(s_sf);
+  //s_sf = z / ( 1+(Dt*v) ); // revised storage deficit
+  //s_sf = std::max(0.0,s_sf);
   for(long unsigned int ii=0; ii<max_it; ++ii){
-    double v = sf->fv(s_sf); // multiple storage deficit by this to get flow
+    //double
+    v = sf->fv(s_sf); // multiple storage deficit by this to get flow
     s_sf = z / ( 1+(Dt*v) ); // revised storage deficit
     s_sf = std::max(0.0,s_sf);
   }
-  q_sf = s_sf * sf->fv(s_sf);
+  q_sf = s_sf * v ; //sf->fv(s_sf);
+
+  if( id == id_write ){
+    Rcpp::Rcout << "z = " << z << std::endl;
+    Rcpp::Rcout << "s_sf = " << s_sf << std::endl;
+    Rcpp::Rcout << "v_sf = " << v << std::endl;
+    Rcpp::Rcout << "q_sf = " << q_sf << std::endl;
+  }  
+
   
   // redistributed the flows
   lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
