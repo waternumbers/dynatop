@@ -29,14 +29,14 @@ szc_exp::szc_exp(std::vector<double> const &param, std::vector<double> const &pr
   psi = std::cos(beta) / (m*area); // scaling to get crosssectional depth from storage
 }
 double szc_exp::ftq(double const &s){ // get flow from storage
-  double q = q_szmax * std::exp(-psi*s);
+  double ss = std::max(0.0,s);
+  double q = q_szmax * std::exp( -psi*ss );
   return( q );
 }
 double szc_exp::fts(double const &q){ // get storage from flow
-  //Rcpp::Rcout << q << " " << q_szmax << " " << q/q_szmax << std::endl;
-  if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
-  //  if( q==0.0 ){ return( 100.00/psi ); } // this is to catch a -Inf return big deficit q ~ q_max * 4*10^{-44}
-  double s = -std::log(q/q_szmax) / psi;
+  if( q_szmax<=0.0 ){ return(0.0); } // since there can be no flow or storage
+  double qq = std::min(q,q_szmax);
+  double s = -std::log( qq/q_szmax ) / psi;
   return( s );
 }
 
@@ -55,12 +55,14 @@ szc_bexp::szc_bexp(std::vector<double> const &param, std::vector<double> const &
   q_szmax = omega * ( 1 -  kappa );
 }
 double szc_bexp::ftq(double const &s){ // get flow from storage
-  double q = std::max(0.0, omega*( std::exp(-psi*s) - kappa ) );
+  double ss = std::max(0.0,s);
+  double q = std::max(0.0, omega*( std::exp(-psi*ss) - kappa ) );
   return( q );
 }
 double szc_bexp::fts(double const &q){ // get storage from flow
   if( omega ==0.0 ){ return( 0.0 ); }  // since there can be no flow or storage
-  return( -std::log((q/omega)+kappa)/psi );
+  double qq = std::min(q,q_szmax);
+  return( -std::log((qq/omega)+kappa)/psi );
 };
 
 
@@ -78,11 +80,13 @@ szc_cnst::szc_cnst(std::vector<double> const &param,  std::vector<double> const 
   q_szmax = omega*h_sz_max;
 };
 double szc_cnst::ftq(double const &s){
-  return( std::max(0.0, omega*(kappa - (s*psi))) );
+  double ss = std::max(0.0,s);
+  return( std::max(0.0, omega*(kappa - (ss*psi))) );
 };
 double szc_cnst::fts(double const &q){
   if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
-  return( -psi*((q/omega)-kappa) );
+  double qq = std::min(q,q_szmax);
+  return( -psi*((qq/omega)-kappa) );
 };
 
 // double exponential
@@ -100,7 +104,8 @@ szc_dexp::szc_dexp(std::vector<double> const &param, std::vector<double> const &
   kappa = std::cos(beta) / (m2*area); // scaling to get crosssectional depth from storage
 }
 double szc_dexp::ftq(double const &s){ // get flow from storage
-  double q = q_szmax * ( omega*std::exp(-psi*s) + (1.0-omega)*std::exp(-kappa*s) );
+  double ss = std::max(0.0,s);
+  double q = q_szmax * ( omega*std::exp(-psi*ss) + (1.0-omega)*std::exp(-kappa*ss) );
   return( q );
 }
 double szc_dexp::fts(double const &q){ // get storage from flow

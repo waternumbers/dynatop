@@ -7,7 +7,7 @@
 #' dir.create(demo_dir)
 #'
 #' ## initialise processing
-#' ctch <- dynatopGIS$new(file.path(demo_dir,"test"))
+#' ctch <- dynatopGIS$new(file.path(demo_dir,"test.tif"))
 #'
 #' ## add a catchment outline based on the digital elevation model
 #' dem_file <- system.file("extdata", "SwindaleDTM40m.tif", package="dynatopGIS", mustWork = TRUE)
@@ -28,14 +28,14 @@
 #' ## compute properties
 #' ctch$sink_fill() ## fill sinks in the catchment and computes dem flow directions
 #' \donttest{
-#' ctch$compute_band()
+#' ##ctch$compute_band()
 #' ctch$compute_properties() # like topograpihc index and contour length
-#' ctch$compute_flow_lengths()
+#' ##ctch$compute_flow_lengths()
 #' }
 #' ## classify and create a model
 #' \donttest{
-#' ctch$classify("atb_20","atb",cuts=20) # classify using the topographic index
-#' ctch$get_method("atb_20") ## see the details of the classification
+#' ctch$add_layer( ctch$classify("atb_20","atb",cuts=20) )# classify using the topographic index
+#' ##ctch$get_method("atb_20") ## see the details of the classification
 #' ctch$combine_classes("atb_20_band",c("atb_20","band")) ## combine classes
 #' ctch$create_model(file.path(demo_dir,"new_model"),"atb_20") ## create a model
 #' list.files(demo_dir,pattern="new_model*") ## look at the output files for the model

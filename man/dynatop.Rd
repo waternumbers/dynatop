@@ -13,7 +13,7 @@ R6 Class for Dynamic TOPMODEL
 
 data("Swindale") ## example data
 mdl <- Swindale$model
-mdl$map <- system.file("extdata","Swindale.tif",package="dynatop",mustWork=TRUE)
+mdl$map <- system.file("extdata","mdl","Swindale.tif",package="dynatop",mustWork=TRUE)
 ctch_mdl <- dynatop$new(mdl$hru,map=mdl$map) ## create with model
 ctch_mdl$add_data(Swindale$obs) ## add observations
 ctch_mdl$initialise() ## initialise model
