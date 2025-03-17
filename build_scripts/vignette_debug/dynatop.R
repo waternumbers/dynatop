@@ -189,42 +189,44 @@ for(ii in 1:length(hru)){
 
 
 ## ----create_object------------------------------------------------------------
-## rm(list=ls())
-## devtools::load_all()
-## swindale_model <- readRDS(file.path(".","/build_scripts","vignette_debug","new_model.rds"))
-## hru <- swindale_model$hru
-## for(ii in 1:length(hru)){
-##     hru[[ii]]$sz$type <- "exp"
-## ##    hru[[ii]]$sz$parameters <- hru[[ii]]$sz$parameters,"h_max"=2)
-##     if(!("endNode" %in% names(hru[[ii]]$class))){
-##         ## then HRU is not a channel
-##         ## saturated zone parameters
-##         hru[[ii]]$sz$parameters["m"] <- 0.0063
-##         hru[[ii]]$sz$parameters["t_0"] <- exp(7.46)
-##         ## unsaturated zone parameters
-##         hru[[ii]]$uz$parameters["t_d"] <- 8*60*60
-##         ## root zone parameters
-##         hru[[ii]]$rz$parameters["s_rzmax"] <- 0.1
-##         ## surface parameters
-##         hru[[ii]]$sf$parameters["v_sf"] <- 0.4
-##     }else{
-##         ## then HRU is a channel - set so no subsurface response
-##         ## saturated zone parameters
-##         hru[[ii]]$sz$parameters["t_0"] <- 0.000
-##         ## root zone parameters
-##         hru[[ii]]$rz$parameters["s_rzmax"] <- 0.001
-##         ## surface parameters
-##         hru[[ii]]$sf$parameters["v_sf"] <- 0.8
-##     }
-##     ## initialisation parameters
-##     hru[[ii]]$initialisation["s_rz_0"] <- 0.98
-##     hru[[ii]]$initialisation["r_uz_sz_0"] <- 1.755582e-07 ## initial outflow divided by catchment area
-## }
+rm(list=ls())
+devtools::load_all()
+data("Swindale")
+swindale_model = Swindale$model
+#swindale_model <- readRDS(file.path(".","/build_scripts","vignette_debug","new_model.rds"))
+hru <- swindale_model$hru
+for(ii in 1:length(hru)){
+    hru[[ii]]$sz$type <- "exp"
+##    hru[[ii]]$sz$parameters <- hru[[ii]]$sz$parameters,"h_max"=2)
+    if(!("endNode" %in% names(hru[[ii]]$class))){
+        ## then HRU is not a channel
+        ## saturated zone parameters
+        hru[[ii]]$sz$parameters["m"] <- 0.0063
+        hru[[ii]]$sz$parameters["t_0"] <- exp(7.46)
+        ## unsaturated zone parameters
+        hru[[ii]]$uz$parameters["t_d"] <- 8*60*60
+        ## root zone parameters
+        hru[[ii]]$rz$parameters["s_rzmax"] <- 0.1
+        ## surface parameters
+        hru[[ii]]$sf$parameters["v_sf"] <- 0.4
+    }else{
+        ## then HRU is a channel - set so no subsurface response
+        ## saturated zone parameters
+        hru[[ii]]$sz$parameters["t_0"] <- 0.000
+        ## root zone parameters
+        hru[[ii]]$rz$parameters["s_rzmax"] <- 0.001
+        ## surface parameters
+        hru[[ii]]$sf$parameters["v_sf"] <- 0.8
+    }
+    ## initialisation parameters
+    hru[[ii]]$initialisation["s_rz_0"] <- 0.98
+    hru[[ii]]$initialisation["r_uz_sz_0"] <- 1.755582e-07 ## initial outflow divided by catchment area
+}
 
-ctch_mdl <- dynatop$new(hru,map=swindale_model$map)
+ctch_mdl <- dynatop$new(hru) #,map=swindale_model$map)
 ## ----add_data-----------------------------------------------------------------
 #data("Swindale")
-#swindale_obs <- Swindale$obs
+swindale_obs <- Swindale$obs
 #swindale_obs$precip <- 0
 ctch_mdl$add_data(swindale_obs)
 ## ----initialise---------------------------------------------------------------
@@ -247,7 +249,7 @@ st[["sim3"]] <- ctch_mdl$get_mass_errors()
 
 out <- Reduce(merge,list(swindale_obs,sim1,sim2,sim3))
 names(out) <- c(names(swindale_obs),'sim_1','sim_2',"sim_3")
-plot(out["2009-11-19",c('flow','sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
+plot(out[,c('flow','sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
 
 
 ## ----mass_check---------------------------------------------------------------

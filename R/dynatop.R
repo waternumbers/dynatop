@@ -287,20 +287,19 @@ dynatop <- R6Class(
                     next
                 }
                 pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
-                              ## "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
                               "sf_kin" = c("n","s_raf","t_raf"),
                               "sf_cnst" = c("v_sf","s_raf","t_raf"),
-                              ## "sf_kin_tank" = c("n","s_raf","t_raf"),
                               "sf_power_law" = c("pwr_raf","sc_raf","s_raf","pwr","sc"),
+                              "sf_comp" = c("v_sf_1","s_1","v_sf_2"),
                               ## "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
                               ## "sf_kin" = c("n","s_raf","t_raf"),
-                              ## "sf_comp" = c("v_sf_1","d_sf_1","s_1","v_sf_2","d_sf_2"),
+
                               ## "sf_kin_tank" = c("n","s_raf","t_raf"),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
                               "sz_exp" = c("t_0","m"),
-                              "sz_bexp" = c("t_0","m","h_max"),
-                              "sz_cnst" = c("v_sz","h_max"),
+                              "sz_bexp" = c("t_0","m","h_szmax"),
+                              "sz_cnst" = c("v_sz","h_szmax"),
                               "sz_dexp" = c("t_0","m","m2","omega"),
                               stop("Invalid options for pname")
                               )

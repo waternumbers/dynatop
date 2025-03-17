@@ -496,7 +496,7 @@ for(ii in 1:length(hru)){
         ## root zone parameters
         hru[[ii]]$rz$parameters["s_rzmax"] <- 0.1
         ## surface parameters
-        hru[[ii]]$sf$parameters["c_sf"] <- 0.4
+        hru[[ii]]$sf$parameters["v_sf"] <- 0.4
     }else{
         ## then HRU is a channel - set so no subsurface response
         ## saturated zone parameters
@@ -504,7 +504,7 @@ for(ii in 1:length(hru)){
         ## root zone parameters
         hru[[ii]]$rz$parameters["s_rzmax"] <- 0.001
         ## surface parameters
-        hru[[ii]]$sf$parameters["c_sf"] <- 0.8
+        hru[[ii]]$sf$parameters["v_sf"] <- 0.8
     }
     ## initialisation parameters
     hru[[ii]]$initialisation["s_rz_0"] <- 0.98

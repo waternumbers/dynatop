@@ -470,12 +470,12 @@ dynatopGIS <- R6::R6Class(
             ## TODO - possibly sort on length to try to identify bigger channels??
             chn_frac <- terra::rasterize(chn,private$brk[["catchment"]],background=0,cover=TRUE) ## fraction of cell covered by channel
             chn_frac <- terra::mask(chn_frac,private$brk[["catchment"]])
+            terra::values(chn_frac) <- round(terra::values(chn_frac),2)## else get horrible rounding errors close to 1
             names(chn_frac) <- "channel_fraction"
             chn_rst <- terra::rasterize(chn,private$brk[["catchment"]],field = "id",touches=TRUE)
-            chn_rst[chn_frac==0] <- NA
+            ##chn_rst[chn_frac==0] <- NA - since can have channel with less then 0.01 of area
             chn_rst <- terra::mask(chn_rst,private$brk[["catchment"]])
             names(chn_rst) <- "channel"
-
             ## save output
             private$brk <- c(private$brk,chn_rst,chn_frac)
             private$chn <- chn
@@ -630,7 +630,7 @@ dynatopGIS <- R6::R6Class(
         ## could add back in flow distances here
         apply_upward_pass = function(verbose){
 
-            rq <- c("filled_dem","channel")
+            rq <- c("filled_dem","channel","channel_fraction")
             stopifnot(
                 "Not all required input layers have been generated \n Try running sink_fill first" =
                     all( rq %in% names( private$brk) )
@@ -638,12 +638,12 @@ dynatopGIS <- R6::R6Class(
 
             ## rasterize channel band to start
             rbnd <- terra::rasterize(private$chn, private$brk[["catchment"]],field = "band",touches=TRUE)
-
             rbnd <- terra::mask(rbnd,private$brk$catchment) ## ensure channel bands are within the catchment - else later code fails
             names(rbnd) <- "band"
 
             ## load raster layer
             d <- terra::as.matrix( private$brk[["filled_dem"]], wide=TRUE )
+            chn <- terra::as.matrix( private$brk[["channel"]], wide=TRUE )
             chn_frc <- terra::as.matrix( private$brk[["channel_fraction"]], wide=TRUE )
             bnd <- terra::as.matrix( rbnd,  wide=TRUE )
 
@@ -660,9 +660,10 @@ dynatopGIS <- R6::R6Class(
             ## main loop
             dz <- rep(NA,8)
             for(ii in idx){
-                if(chn_frc[ii] > 0 ){
+
+                if( is.finite(ch[ii]) ){ ## then cell is a channel
                     if(chn_frc[ii]<1){
-                        ## since drains to the channel
+                        ## since it is mixed cell - partly landuse , partly channel
                         bnd[ii] <- bnd[ii] + 1
                     }
                 }else{
@@ -734,18 +735,28 @@ dynatopGIS <- R6::R6Class(
             for(ii in idx){
 
                 if( is.finite(ch[ii]) ){
-                    ## channel cells
-                    ## pass on upslope are to channel
-                    uA[ ch[ii] ] <- uA[ ch[ii] ] + upa[ii]
-                    ## work out gradient from cells flowing in
-                    jdx <- ii+delta
-                    grd <- (d[ii]-d[jdx])/dxy
-                    gcl <- grd*dcl
-                    is_higher <- is.finite(gcl) & gcl<0 #& is.finite(cjdx) & cjdx==ctch[ii]
-                    sum_gcl <- sum( gcl[is_higher] )
-                    sum_dcl <- sum( dcl[is_higher] )
-                    gr[ii] <- max(-sum_gcl / sum_dcl,min_grad)
-                    atb[ii] <- log(upa[ii]/gr[ii])
+                    if( ch_frc[ii] < 1 ){
+                        ## channel cells
+                        ## pass on upslope area to channel
+                        uA[ ch[ii] ] <- uA[ ch[ii] ] + upa[ii]
+                        ## work out gradient from cells flowing in
+                        jdx <- ii+delta
+                        grd <- (d[ii]-d[jdx])/dxy
+                        gcl <- grd*dcl
+                        is_higher <- is.finite(gcl) & gcl<0 #& is.finite(cjdx) & cjdx==ctch[ii]
+                        if( any(is_higher) ){
+                            sum_gcl <- sum( gcl[is_higher] )
+                            sum_dcl <- sum( dcl[is_higher] )
+                            gr[ii] <- max(-sum_gcl / sum_dcl,min_grad)
+                        }else{ ## nothing flows into the cell
+                            gr[ii] <- min_grad
+                        }
+                        atb[ii] <- log(upa[ii]/gr[ii])
+                    }else{
+                        upa[ii] <- NA
+                        gr[ii] <- NA
+                        atb[ii] <- NA
+                    }
 
                 }else{
 
@@ -792,7 +803,7 @@ dynatopGIS <- R6::R6Class(
             ##uA[idx] <- as.numeric(ch_upa)
 
             ## remove channel area bit from hillslope upslope area
-            upa[ch_frc==1] <- NA
+            ##upa[ch_frc==1] <- NA
 
             ## compute catchment area to each reach
             for(ii in length(sN):1){
@@ -815,307 +826,6 @@ dynatopGIS <- R6::R6Class(
 
             private$save_project(chn=TRUE)
         },
-
-        ## ## Function to compute the bands
-        ## apply_band = function(type,verbose){
-        ##     rq <- c("filled_dem","channel","catchment")
-        ##     if(!all( rq %in% names( private$brk) )){
-        ##         stop("Not all required input layers have been generated \n",
-        ##              "Try running sink_fill first")
-        ##     }
-
-        ##     ## rasterize channel band to start
-        ##     rbnd <- terra::rasterize(private$shp, private$brk[["catchment"]],field = "band",touches=TRUE)
-
-        ##     ## load raster layer
-        ##     d <- terra::as.matrix( private$brk[["filled_dem"]], wide=TRUE )
-        ##     bnd <- terra::as.matrix( rbnd,  wide=TRUE )
-        ##     ctch <- terra::as.matrix( private$brk[["catchment"]],  wide=TRUE )
-
-        ##     if( verbose ){ print("Computing hillslope routing and band") }
-
-        ##     ## distances and contour lengths
-        ##     ## distance between cell centres
-        ##     rs <- terra::res( private$brk )
-        ##     dxy <- rep(sqrt(sum(rs^2)),8)
-        ##     dxy[c(2,7)] <- rs[1]; dxy[c(4,5)] <- rs[2]
-        ##     dcl <- c(0.35,0.5,0.35,0.5,0.5,0.35,0.5,0.35)*mean(rs)
-        ##     nr <- nrow(d); delta <- c(-nr-1,-nr,-nr+1,-1,1,nr-1,nr,nr+1)
-
-        ##     ## if we go up in height order then we are working from near the channel to the heighest point
-        ##     idx <- order(d,na.last=NA)
-
-        ##     ## create flow direction storage
-        ##     fd <- matrix(as.numeric(NA),length(idx),11)
-        ##     colnames(fd) <- c("cell","gcl","dcl","topLeft","left","bottomLeft","top","bottom","topRight","right","bottomRight")
-        ##     fd_cnt <- 0
-
-        ##     n_to_eval <- length(idx)
-
-        ##     it <- 1
-        ##     if(verbose){
-        ##         print_step <- round(n_to_eval/20)
-        ##         next_print <- print_step
-        ##     }else{
-        ##         next_print <- Inf
-        ##     }
-
-        ##     w <- rep(0,8)
-        ##     for(ii in idx){
-        ##         ## skip if in a channel
-        ##         if(is.finite( bnd[ii])){ next }
-
-        ##         ## it is not a channel
-        ##         w[] <- 0
-        ##         jdx <- ii+delta
-        ##         grd <- (d[ii]-d[jdx])/dxy
-        ##         gcl <- grd*dcl
-        ##         cjdx <- ctch[jdx]
-        ##         is_lower <- is.finite(gcl) & gcl>0 & is.finite(cjdx) & cjdx==ctch[ii]
-        ##         ## compute weights
-        ##         if(type == "d8"){
-        ##             grd[!is_lower] <- Inf
-        ##             is_lower[] <- FALSE
-        ##             is_lower[ which.min(grd) ] <- TRUE
-        ##         }
-        ##         sum_gcl <- sum( gcl[is_lower] )
-        ##         sum_dcl <- sum( dcl[is_lower] )
-        ##         w[is_lower] <- gcl[is_lower] / sum_gcl
-
-        ##         fd_cnt <- fd_cnt + 1
-        ##         fd[fd_cnt,] <- c(ii,sum_gcl,sum_dcl,w)
-
-        ##         ## compute the band
-        ##         bnd[ii] <- max( bnd[jdx[w>0]] ) + 1
-
-        ##         ## verbose output here
-        ##         if(it >= next_print){
-        ##             cat(round(100*it / n_to_eval,1),
-        ##                 "% complete","\n")
-        ##             next_print <- next_print+print_step
-        ##         }
-
-        ##         it <- it+1
-        ##     }
-
-        ##     ## save flow direction
-        ##     saveRDS(fd[1:fd_cnt,],file.path(private$projectFolder,"dem.rds"))
-
-        ##     ## save band
-        ##     terra::values(rbnd) <- bnd
-        ##     names(rbnd) <- "band"
-        ##     rstFile <- file.path(private$projectFolder,"band.tif")
-        ##     terra::writeRaster(rbnd, rstFile);
-        ##     private$brk <- c( private$brk, terra::rast(rstFile))
-        ## },
-
-##         ## Function to compute the properties
-##         apply_compute_properties = function(min_grad,verbose){
-
-##             if( verbose ){ print("Loading data") }
-##             rq <- c("filled_dem","channel")
-##             if(!all( rq %in% names( private$brk) )){
-##                 stop("Not all required input layers have been generated \n",
-##                      "Try running sink_fill first")
-##             }
-
-##             rq <- c( file.path(private$projectFolder,"dem.rds"),
-##                     file.path(private$projectFolder,"channel.rds") )
-##             if( ! all( file.exists(rq) ) ){
-##                 stop("No flow routing records defined\n",
-##                      "Try running compute_flow_paths first")
-##             }else{
-##                 flow_routing <- readRDS(rq[1])
-##                 channel_routing <- readRDS( rq[2] )
-##             }
-
-##             ## load raster layer
-##             d <- terra::as.matrix( private$brk[["filled_dem"]] , wide=TRUE)
-##             ch <- terra::as.matrix( private$brk[["channel"]] , wide=TRUE)
-
-##             if( verbose ){ print("Setting up output") }
-
-##             ## work out order to pass through the cells
-##             n_to_eval <- nrow(flow_routing)
-
-##             ## distance between cell centres
-##             rs <- terra::res( private$brk )
-##             ##dxy <- rep(sqrt(sum(rs^2)),8)
-##             ##dxy[c(2,7)] <- rs[1]; dxy[c(4,5)] <- rs[2]
-##             ##dcl <- c(0.35,0.5,0.35,0.5,0.5,0.35,0.5,0.35)*mean(rs)
-##             nr <- nrow(d); delta <- c(-nr-1,-nr,-nr+1,-1,1,nr-1,nr,nr+1)
-
-##             ## initialise output
-##             gr <- upa <- atb <- d*NA
-##             upa[is.finite(d)] <- prod(rs) ## initialise upslope area from resolution
-
-##             it <- 1
-##             if(verbose){
-##                 print_step <- round(n_to_eval/20)
-##                 next_print <- print_step
-##             }else{
-##                 next_print <- Inf
-##             }
-
-##             if( verbose ){ print("Computing hillslope") }
-##             ## loop downslope
-##             for(rwnum in nrow(flow_routing):1){
-##                 ii <- flow_routing[rwnum,1]
-##                 gcl <- flow_routing[rwnum,2] # sum of gradient * contour length for all d/s
-##                 dcl <- flow_routing[rwnum,3] # sum of contour length for all d/s
-##                 w <- flow_routing[rwnum,4:11] # weight of flow direction
-##                 to_use <- w>0
-
-##                 if( !is.na(ch[ii]) ){ stop("Propergating from a channel cell") }
-
-##                 if( !any(w>0) ){ stop(paste("Cell",ii,"is a hillslope cell with no outflows")) }
-
-##                 ngh <- ii + delta ## neighbouring cells
-##                 ##grd <- (d[ii]-d[ngh])/dxy ## compute gradient
-
-##                 ##gcl <- grd[to_use]*dcl[to_use]
-##                 ## gradient
-##                 ##gr[ii] <- max(sum(gcl) / sum(dcl[to_use]),min_grad)
-##                 gr[ii] <- max( gcl/dcl, min_grad )
-##                 ## topographic index
-##                 atb[ii] <- log(upa[ii]/gr[ii]) #log( upa[ii] / sum(gcl) )
-##                 ## propogate area downslope
-##                 upa[ ngh ]  <- upa[ ngh ] + w*upa[ii]
-
-##                 ## verbose output here
-##                 if(it >= next_print){
-##                     cat(round(100*it / n_to_eval,1),
-##                         "% complete","\n")
-##                     next_print <- next_print+print_step
-##                 }
-
-##                 it <- it+1
-##             }
-
-##             ## merge upslope areas into the channel object
-##             ch_upa <- tapply(upa,ch,sum)
-##             ch_upa <- ch_upa[setdiff(names(ch_upa),"NaN")]
-##             idx <- match(names(ch_upa),paste(private$shp$id)) #,names(ch_upa))
-##             private$shp$up_area = 0
-##             private$shp$up_area[idx] <- as.numeric(ch_upa)
-##             if( !all(is.finite(private$shp$up_area)) ){ stop("All upslope channel areas should be finite") }
-
-##             ## remove channel area bit from upa
-##             upa[is.finite(ch)] <- NA
-## ##            upa <- upa * !is.finite(ch)
-
-##             ## compute catchment area to each reach
-##             ct_area <- private$shp$up_area
-##             for(ii in nrow(channel_routing):1){
-##                 ct_area[channel_routing[ii,"to"]] <- ct_area[channel_routing[ii,"to"]] +
-##                     ct_area[channel_routing[ii,"from"]]*channel_routing[ii,"fraction"]
-##             }
-##             private$shp$ct_area <- ct_area
-
-##             ## save raster maps
-##             out <- terra::rast( private$brk[["dem"]], names="gradient", vals=gr )
-##             rstFile <- file.path(private$projectFolder,"gradient.tif")
-##             terra::writeRaster(out, rstFile);
-##             private$brk <- c( private$brk, terra::rast(rstFile))
-
-##             out <- terra::rast( private$brk[["dem"]], names="upslope_area", vals=upa )
-##             rstFile <- file.path(private$projectFolder,"upslope_area.tif")
-##             terra::writeRaster(out, rstFile);
-##             private$brk <- c( private$brk, terra::rast(rstFile))
-
-##             out <- terra::rast( private$brk[["dem"]], names="atb", vals=atb )
-##             rstFile <- file.path(private$projectFolder,"atb.tif")
-##             terra::writeRaster(out, rstFile);
-##             private$brk <- c( private$brk, terra::rast(rstFile))
-
-##             shpFile <- file.path(private$projectFolder,"channel.shp")
-##             terra::writeVector(private$shp, shpFile, overwrite=TRUE)
-
-##         },
-        ## ## work out flow lengths to channel
-        ## ## TO DO reimpliment in upward pass
-        ## apply_flow_lengths = function(type,verbose){
-
-        ##     type <- paste0(type,"_flow_length")
-
-        ##     ## check not already computed
-        ##     if(type %in% names(private$brk)){ stop("Already computed") }
-
-        ##     rq <- c("channel")
-        ##     if(!all( rq %in% names( private$brk) )){
-        ##         stop("Not all required input layers have been generated \n",
-        ##              "Try running sink_fill first")
-        ##     }
-
-        ##     ## load raster layer
-        ##     ##d <- terra::as.matrix( private$brk[["filled_dem"]], wide=TRUE )
-        ##     ch <- terra::as.matrix( private$brk[["channel"]],  wide=TRUE )
-
-        ##     rq <- c( file.path(private$projectFolder,"dem.rds"),
-        ##             file.path(private$projectFolder,"channel.rds") )
-        ##     if( ! all( file.exists(rq) ) ){
-        ##         stop("No flow routing records defined\n",
-        ##              "Try running compute_flow_paths first")
-        ##     }else{
-        ##         flow_routing <- readRDS(rq[1])
-        ##         channel_routing <- readRDS( rq[2] )
-        ##     }
-
-        ##     ## create a distance matrix, initialise with channel elements 0
-        ##     fl <- ch; fl[fl>0] <- 0
-
-        ##     ## distances and contour lengths
-        ##     ## distance between cell centres
-        ##     rs <- terra::res( private$brk )
-        ##     dxy <- rep(sqrt(sum(rs^2)),8)
-        ##     dxy[c(2,7)] <- rs[1]; dxy[c(4,5)] <- rs[2]
-        ##     #dcl <- c(0.35,0.5,0.35,0.5,0.5,0.35,0.5,0.35)*mean(rs)
-        ##     nr <- nrow(fl); delta <- c(-nr-1,-nr,-nr+1,-1,1,nr-1,nr,nr+1)
-
-        ##     n_to_eval <- nrow(flow_routing)
-
-        ##     it <- 1
-        ##     if(verbose){
-        ##         print_step <- round(n_to_eval/20)
-        ##         next_print <- print_step
-        ##     }else{
-        ##         next_print <- Inf
-        ##     }
-
-        ##     w <- rep(0,8)
-        ##     tmp <- rep(NA,8)
-        ##     for(rw in 1:nrow(flow_routing)){
-        ##         ii <- flow_routing[rw,1]
-        ##         w[] <- flow_routing[rw,4:11]
-        ##         jj <- (ii + delta)
-        ##         tmp[] <- (fl[jj] + dxy)
-
-        ##         if(type=="shortest_flow_length"){
-        ##             fl[ii] <- min( tmp[w>0] )
-        ##         }
-        ##         if(type=="dominant_flow_length"){
-        ##             fl[ii] <- tmp[ which.max(w) ]
-        ##         }
-        ##         if(type=="expected_flow_length"){
-        ##             fl[ii] <- sum( tmp[w>0] * w[w>0] )
-        ##         }
-
-        ##         ## verbose output here
-        ##         if(it >= next_print){
-        ##             cat(round(100*it / n_to_eval,1),
-        ##                 "% complete","\n")
-        ##             next_print <- next_print+print_step
-        ##         }
-
-        ##         it <- it+1
-        ##     }
-
-
-        ##     out <- terra::rast( private$brk[["dem"]], names=type, vals=fl )
-        ##     rstFile <- file.path(private$projectFolder,paste0(type,".tif"))
-        ##     terra::writeRaster(out, rstFile);
-        ##     private$brk <- c( private$brk, terra::rast(rstFile))
-        ## },
         ## split_to_class
         apply_classify = function(base_layer,cuts,layer_name){
 
@@ -1179,65 +889,6 @@ dynatopGIS <- R6::R6Class(
             z[idx] <- ux[xstr[idx]]
 
             return( terra::rast( private$brk[["dem"]], names=layer_name, vals=z ) )
-
-
-            ## ## work out new pairings by cantor method then renumber
-            ## init <- TRUE
-            ## for(ii in pairs){
-            ##     x <-  terra::mask( private$brk[[ii]], private$brk[["channel"]], inverse=TRUE)
-            ##     if(init){
-            ##         cp <- x
-            ##         init <- FALSE
-            ##     }else{
-            ##         cp <- 0.5*(cp+x)*(cp+x+1)+x
-            ##         uq <- sort(terra::unique(cp)[[1]])
-            ##         cp <- terra::classify(cp, c(-Inf,(uq[-1]+uq[-length(uq)])/2,Inf),include.lowest=TRUE)
-            ##     }
-            ## }
-
-            ## ## put all the burns into a single raster
-            ## brn <- cp; brn[] <- NA
-            ## for(ii in burns){
-            ##     x <-  terra::mask( private$brk[[ii]], private$brk[["channel"]], inverse=TRUE)
-            ##     brn <- terra::cover(x,brn)
-            ## }
-            ## ## add burns to pairs
-            ## cp <- terra::cover(brn,cp)
-            ## uq <- sort(terra::unique(cp)[[1]])
-            ## cts <- c(-Inf,(uq[-1]+uq[-length(uq)])/2,Inf)
-            ## cp <- terra::classify(cp,cts) + 1 ## classify returns numeric values starting at 0
-            ## if(length(burns)>0){ brn <- terra::classify(brn,cts) +1 }
-
-
-            ## ## TODO - replace with zone taking modal value
-            ## ## make table of layer values - should be able to combine with above??
-            ## cpv <- terra::as.matrix(cp, wide=TRUE) ## quicker when a vector
-            ## uq <- sort(terra::unique(cp)[[1]]) ## unique values
-            ## uqb <- terra::unique(brn)[[1]] ## unique burn values
-
-            ## cuq <- rep(NA,length(uq)) ##index of unique values
-            ## for(ii in which(is.finite(cpv))){
-            ##     jj <- cpv[ii]
-            ##     if(is.na(cuq[jj])){ cuq[jj] <- ii }
-            ## }
-
-            ## if(!all(is.finite(cuq))){
-            ##     stop("Error in computing combinations")
-            ## }
-
-            ## ## create data frame
-            ## df <- data.frame(uq); names(df) <- layer_name
-            ## for(ii in pairs){
-            ##     df[[ii]] <- terra::as.matrix(private$brk[[ii]],wide=TRUE)[cuq] ## read in raster
-            ## }
-            ## df$burns <- df[[layer_name]] %in% uqb
-
-            ## outFile <- file.path(private$projectFolder,paste0(layer_name,".tif"))
-            ## private$brk <- c( private$brk, terra::writeRaster( cp, outFile, names=layer_name))
-
-            ## out <- list(groups=df)
-            ## writeLines( jsonlite::toJSON(out), file.path(private$projectFolder,paste0(layer_name,".json")) )
-
         },
 
         ## create a model
@@ -1334,119 +985,124 @@ dynatopGIS <- R6::R6Class(
             cnt <- n_channel
             for(ii in idx){
                 chn_frc <- hru_data[ii,"channel_fraction"]
-                if( chn_frc > 0 ){
-                    ## process channel part of the cell to get rainfall & pet inputs
-                    jj <- hru_data[ii,"channel"]
+                if( chn_frc == 1 ){ next } ## totally handled in the channel part
 
-                    kk <- cell_precip[ii]
-                    if(!(kk%in%names( hru[[jj]]$precip))){ hru[[jj]]$precip[kk] <- 0 }
-                    hru[[jj]]$precip[kk] <- hru[[jj]]$precip[kk] + chn_frc*cell_area
+                ## process the hillslope part of the cell
+                cnt <- cnt + 1 ## get new id
+                id[ii] <- cnt
 
-                    kk <- cell_pet[ii]
-                    if(!(kk%in%names( hru[[jj]]$pet))){ hru[[jj]]$pet[kk] <- 0 }
-                    hru[[jj]]$pet[kk] <- hru[[jj]]$pet[kk] + chn_frc*cell_area
-                }
+                ##populate the uid
+                hru[[cnt]]$uid["id"] <- as.integer(cnt)
+                hru[[cnt]]$uid["band"] <- as.integer(hru_data[ii,"band"])
+                hru[[cnt]]$uid["cell"] <- as.integer(ii)
+                ## add class data
+                hru[[cnt]]$class <- as.list(hru_class[ii,])
 
-                if(chn_frc < 1){
-                    ## process the hillslope part of the cell
-                    cnt <- cnt + 1 ## get new id
-                    id[ii] <- cnt
-                    ##populate the uid
-                    hru[[cnt]]$uid["id"] <- as.integer(cnt)
-                    hru[[cnt]]$uid["band"] <- as.integer(hru_data[ii,"band"])
-                    hru[[cnt]]$uid["cell"] <- as.integer(ii)
-                    ## add class data
-                    hru[[cnt]]$class <- as.list(hru_class[ii,])
-                    ## work out flow direction
-                    jdx <- ii+delta
-                    grd <- (hru_data[ii,"filled_dem"]-hru_data[jdx,"filled_dem"])/dxy
-                    gcl <- grd*dcl
-                    area <- cell_area * (1-chn_frc)
-                    if(chn_frc>0){
-                        ## flow goes to the channel
-                        hru[[cnt]]$sf_flow_direction = list(id = as.integer(hru_data[ii,"channel"]),fraction=1)
-                        ## work out gradient from upslope area
-                        is_higher <- is.finite(gcl) & gcl<0 #& is.finite(cjdx) & cjdx==ctch[ii]
+                ## work out flow direction and associated properties
+                jdx <- ii+delta
+                grd <- (hru_data[ii,"filled_dem"]-hru_data[jdx,"filled_dem"])/dxy
+                gcl <- grd*dcl
+                area <- cell_area * (1-chn_frc)
+                if( is.finite(hru_data[ii,"channel"]) ){ ## cell is part channel - part hillslope
+                    ## work out gradient from cells flowing in
+                    is_higher <- is.finite(gcl) & gcl<0 #& is.finite(cjdx) & cjdx==ctch[ii]
+                    if( any(is_higher) ){
                         sum_gcl <- sum( gcl[is_higher] )
                         sum_dcl <- sum( dcl[is_higher] )
-                        ## set proerties
-                        hru[[cnt]]$properties[c("area","Dx","gradient")] <-
-                            as.numeric(c(cell_area * (1-chn_frc),
-                                         cell_area * (1-chn_frc)/ mean(rs),
-                                         max(-sum_gcl / sum_dcl,min_grad)))
-                    }else{
-                        ## flow goes to lower hillslopes
-                        is_lower <- is.finite(gcl) & gcl>0
-                        kk <- jdx[is_lower]
-                        stopifnot(
-                            "All hillslope cells must flow to those with lower id's" = all( cnt>id[kk] ),
-                            "All hillslope cells must flow to those with bands" =
-                                all( hru_data[ii,"band"] > hru_data[kk,"band"] ),
-                            "Hillslopes must drain down" = length(kk)>0
-                        )
-                        sum_gcl <- sum( gcl[is_lower] )
-                        sum_dcl <- sum( dcl[is_lower] )
-                        ## set flow directions
-                        hru[[cnt]]$sf_flow_direction = list(id = as.integer(id[kk]),
-                                                            fraction = gcl[is_lower]/sum(gcl[is_lower]))
-                        ## set proerties
-                        hru[[cnt]]$properties[c("area","Dx","gradient")] <-
-                            as.numeric(c(cell_area,
-                                         cell_area/sum_dcl,
-                                         max(sum_gcl / sum_dcl,min_grad)))
+                        gr <- max(-sum_gcl / sum_dcl,min_grad)
+                    }else{ ## nothing flows into the cell
+                        gr <- min_grad
                     }
-
+                    sum_dcl <- mean(rs) ## to get correct width
+                    hru[[cnt]]$sf_flow_direction = list(id = as.integer(hru_data[ii,"channel"]),
+                                                        fraction=1)
+                    wdth <- mean(rs)
+                }else{
+                    ## flow goes to lower hillslopes
+                    is_lower <- is.finite(gcl) & gcl>0
+                    kk <- jdx[is_lower]
+                    stopifnot(
+                        "All hillslope cells must flow to those with lower id's" =
+                            all( cnt>id[kk] | hru_data[kk,"channel_fraction"]==1 ),
+                        "All hillslope cells must flow to those with bands" =
+                            all( hru_data[ii,"band"] > hru_data[kk,"band"] ),
+                        "Hillslopes must drain down" = length(kk)>0
+                    )
+                    sum_gcl <- sum( gcl[is_lower] )
+                    sum_dcl <- sum( dcl[is_lower] )
+                    gr <- max(sum_gcl / sum_dcl,min_grad)
+                    ## set flow directions
+                    hru[[cnt]]$sf_flow_direction = list(id = as.integer(id[kk]),
+                                                        fraction = gcl[is_lower]/sum(gcl[is_lower]))
+                    wdth <- sum_dcl
                 }
+                ## set proerties
+                hru[[cnt]]$properties[c("area","Dx","gradient")] <-
+                    as.numeric(c(area, area/wdth, gr))
+
+                ## work out precipitation and pet
+                kk <- cell_precip[ii]
+                hru[[cnt]]$precip[kk] <- 1
+                kk <- cell_pet[ii]
+                hru[[cnt]]$pet[kk] <- 1
+
+
+                if( length(hru[[cnt]]$sf_flow_direction)==0 ){ stop("Hillslope HRU with no outflow") }
+                if( hru[[cnt]]$properties["area"]==0 ){ stop("Hillslope HRU with no area") }
+
             }
 
-            ## second pass to sort out variables and copy in the channel data
+            if( verbose ){ cat("Processing channel inputs","\n") }
+            input_tbl <- terra::extract(private$brk[[c(rain_lyr,pet_lyr)]],private$chn) ## slow ish
+
+            if( verbose ){ cat("Processing channel HRUs","\n") }
             shp <- as.data.frame(private$chn) ## copy channel data since quicker
             chn_class_names <- setdiff(names(shp), c("id","band","length","slope","area")) ## channel class info to copy
             outlets <- list() ## initialise list of outlets
 
-            if( verbose ){ cat("Passing over HRUs to finalise","\n") }
-            for(ii in 1:length(hru)){
-                if( ii <= n_channel){
-                    ## it is a channel HRU
-                    hru[[ii]]$uid["id"] <- as.integer( shp$id[ii] )
-                    hru[[ii]]$uid["band"] <- as.integer( shp$band[ii] )
-                    hru[[ii]]$properties["Dx"] <- as.numeric( shp$length[ii] )
-                    hru[[ii]]$properties["gradient"] <- as.numeric( shp$slope[ii] )
-                    hru[[ii]]$properties["area"] <- as.numeric( shp$area[ii] )
-                    hru[[ii]]$class <- as.list( shp[ii,chn_class_names] )
+            for(ii in 1:n_channel){
+                ## it is a channel HRU
+                hru[[ii]]$uid["id"] <- as.integer( shp$id[ii] )
+                hru[[ii]]$uid["band"] <- as.integer( shp$band[ii] )
+                hru[[ii]]$properties["Dx"] <- as.numeric( shp$length[ii] )
+                hru[[ii]]$properties["gradient"] <- as.numeric( shp$slope[ii] )
+                hru[[ii]]$properties["area"] <- as.numeric( shp$area[ii] )
+                hru[[ii]]$class <- as.list( shp[ii,chn_class_names] )
 
-                    hru[[ii]]$precip <- hru[[ii]]$precip / sum( hru[[ii]]$precip )
-                    hru[[ii]]$pet <- hru[[ii]]$pet / sum( hru[[ii]]$pet )
-                    ## do downstream routing
-                    kk <- shp$id[ shp$startNode == shp$endNode[ii] ]
-                    if(length(kk)>0){
-                        ## has downstream
-                        hru[[ii]]$sf_flow_direction <- list(id = as.integer(kk), fraction = rep(1/length(kk),length(kk)))
-                    }else{
-                        ## is an outlet
-                        outlets[[length(outlets)+1]] <- data.frame(name = paste0("q_sf_",ii),
-                                                                   id = as.integer( ii ),
-                                                                   flux = "q_sf", scale = 1.0)
-                    }
+                tbl <- table(input_tbl[input_tbl$ID==ii,2])
+                hru[[ii]]$precip <- setNames(tbl/sum(tbl), paste0(rainfall_label,names(tbl)))
+                tbl <- table(input_tbl[input_tbl$ID==ii,3])
+                hru[[ii]]$pet <- setNames(tbl/sum(tbl), paste0(pet_label,names(tbl)))
+
+                ## do downstream routing
+                kk <- shp$id[ shp$startNode == shp$endNode[ii] ]
+                if(length(kk)>0){
+                    ## has downstream
+                    hru[[ii]]$sf_flow_direction <- list(id = as.integer(kk), fraction = rep(1/length(kk),length(kk)))
                 }else{
-                    ## hillslope HRU
-                    if( length(hru[[ii]]$sf_flow_direction)==0 ){ stop("Hillslope HRU with no outflow") }
-                    if( hru[[ii]]$properties["area"]==0 ){ stop("Hillslope HRU with no area") }
+                    ## is an outlet
+                    outlets[[length(outlets)+1]] <- data.frame(name = paste0("q_sf_",ii),
+                                                               id = as.integer( ii ),
+                                                               flux = "q_sf", scale = 1.0)
                 }
+            }
 
+            if( verbose ){ cat("Passing through HRUs to sort indexing","\n") }
+            for(ii in 1:nhru){
                 ## for both - sort out so 0 indexed
                 hru[[ii]]$uid["id"] <- as.integer(hru[[ii]]$uid["id"] - 1) ## since 0 indexed in dynatop
                 hru[[ii]]$sf_flow_direction$id <- hru[[ii]]$sf_flow_direction$id - 1L
                 hru[[ii]]$sz_flow_direction <- hru[[ii]]$sf_flow_direction
             }
+
             ## tidy up outlets
             outlets <- do.call(rbind,outlets)
             outlets$id <- as.integer( outlets$id - 1 )
             outlets$name <- paste0("q_sf_",outlets$id)
 
             ## correct maps etc to 0 index
+            id[hru_data[,"channel_fraction"]==1] <- NA
             id <- id - 1
-
 
             ## make output
             if(verbose){ cat("Making output","\n") }
@@ -1457,6 +1113,8 @@ dynatopGIS <- R6::R6Class(
             terra::writeRaster(rst,model$map,overwrite=TRUE)
             saveRDS(model,paste0(layer_name,".rds"))
         }
+
     )
-)
+    )
+
 
