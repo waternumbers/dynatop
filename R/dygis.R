@@ -466,8 +466,11 @@ dynatopGIS <- R6::R6Class(
 
             chn <- chn[ order(chn$id),]
 
-            ## create a raster of channel id numbers
             ## TODO - possibly sort on length to try to identify bigger channels??
+            ## create a raster of channel id numbers
+            chn_rst <- terra::rasterize(chn,private$brk[["catchment"]],field = "id",touches=TRUE)
+            chn_rst <- terra::mask(chn_rst,private$brk[["catchment"]])
+
             chn_frac <- terra::rasterize(chn,private$brk[["catchment"]],background=0,cover=TRUE) ## fraction of cell covered by channel
             chn_frac <- terra::mask(chn_frac,private$brk[["catchment"]])
             terra::values(chn_frac) <- round(terra::values(chn_frac),2)## else get horrible rounding errors close to 1
@@ -476,6 +479,7 @@ dynatopGIS <- R6::R6Class(
             ##chn_rst[chn_frac==0] <- NA - since can have channel with less then 0.01 of area
             chn_rst <- terra::mask(chn_rst,private$brk[["catchment"]])
             names(chn_rst) <- "channel"
+
             ## save output
             private$brk <- c(private$brk,chn_rst,chn_frac)
             private$chn <- chn
