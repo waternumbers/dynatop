@@ -470,15 +470,36 @@ dynatopGIS <- R6::R6Class(
             ## create a raster of channel id numbers
             chn_rst <- terra::rasterize(chn,private$brk[["catchment"]],field = "id",touches=TRUE)
             chn_rst <- terra::mask(chn_rst,private$brk[["catchment"]])
+            names(chn_rst) <- "channel"
 
+            ## create a raster of channel coverage fractions
             chn_frac <- terra::rasterize(chn,private$brk[["catchment"]],background=0,cover=TRUE) ## fraction of cell covered by channel
             chn_frac <- terra::mask(chn_frac,private$brk[["catchment"]])
-            terra::values(chn_frac) <- round(terra::values(chn_frac),2)## else get horrible rounding errors close to 1
             names(chn_frac) <- "channel_fraction"
-            chn_rst <- terra::rasterize(chn,private$brk[["catchment"]],field = "id",touches=TRUE)
-            ##chn_rst[chn_frac==0] <- NA - since can have channel with less then 0.01 of area
-            chn_rst <- terra::mask(chn_rst,private$brk[["catchment"]])
-            names(chn_rst) <- "channel"
+            terra::values(chn_frac) <- round(terra::values(chn_frac),2)## else get horrible rounding errors close to 1
+            ## add a fraction to those cells with an ID but no fractions
+            chn_frac[chn_frac==0 & !is.na(chn_rst)] <- 0.005
+
+            ## rescale channel fractions which are <1 to match channel area
+            cell_area <- prod(terra::res(chn_frac))
+            chn_area <- sum(chn$area)
+            tmp <- terra::values(chn_frac)
+            idx <- is.finite(tmp) & tmp<1
+            da <-  chn_area -  sum(tmp,na.rm=TRUE)*cell_area
+            it <- 0
+            while( abs(da) > 1e-6 & it<100){
+                sc <- 1 + da / (sum( tmp[idx] )*cell_area)
+                tmp[idx] <- pmin(1, tmp[idx]*sc)
+                da <-  chn_area -  sum(tmp,na.rm=TRUE)*cell_area
+                it <- it + 1
+            }
+            terra::values(chn_frac) <- tmp
+
+            ## ## work out which cells each channel touches
+            ## tmp <- terra::cells(private$brk[["catchment"]],chn)
+            ## tmp <- split(tmp[,2],tmp[,1])
+            ## tmp <- sapply(tmp,paste,collapse=",")
+            ## chn$input_cells <- tmp
 
             ## save output
             private$brk <- c(private$brk,chn_rst,chn_frac)
@@ -665,7 +686,7 @@ dynatopGIS <- R6::R6Class(
             dz <- rep(NA,8)
             for(ii in idx){
 
-                if( is.finite(ch[ii]) ){ ## then cell is a channel
+                if( is.finite(chn[ii]) ){ ## then cell is a channel
                     if(chn_frc[ii]<1){
                         ## since it is mixed cell - partly landuse , partly channel
                         bnd[ii] <- bnd[ii] + 1
@@ -737,12 +758,11 @@ dynatopGIS <- R6::R6Class(
             ## loop downslope
             w <- rep(0,8)
             for(ii in idx){
-
                 if( is.finite(ch[ii]) ){
+                    ## pass on upslope area to channel
+                    uA[ ch[ii] ] <- uA[ ch[ii] ] + upa[ii]
                     if( ch_frc[ii] < 1 ){
-                        ## channel cells
-                        ## pass on upslope area to channel
-                        uA[ ch[ii] ] <- uA[ ch[ii] ] + upa[ii]
+                        ## mixed cells
                         ## work out gradient from cells flowing in
                         jdx <- ii+delta
                         grd <- (d[ii]-d[jdx])/dxy
@@ -756,7 +776,7 @@ dynatopGIS <- R6::R6Class(
                             gr[ii] <- min_grad
                         }
                         atb[ii] <- log(upa[ii]/gr[ii])
-                    }else{
+                    }else{ ## pure water cell
                         upa[ii] <- NA
                         gr[ii] <- NA
                         atb[ii] <- NA
@@ -1072,6 +1092,7 @@ dynatopGIS <- R6::R6Class(
                 hru[[ii]]$properties["gradient"] <- as.numeric( shp$slope[ii] )
                 hru[[ii]]$properties["area"] <- as.numeric( shp$area[ii] )
                 hru[[ii]]$class <- as.list( shp[ii,chn_class_names] )
+
 
                 tbl <- table(input_tbl[input_tbl$ID==ii,2])
                 hru[[ii]]$precip <- setNames(tbl/sum(tbl), paste0(rainfall_label,names(tbl)))

@@ -321,7 +321,7 @@ dynatop <- R6Class(
 
             ## check precip and pet
             for(ii in c("precip","pet")){
-                if( length(h[[ii]]) == 0 ){ next }
+                ##if( length(h[[ii]]) == 0 ){ next }
                 if( !is.numeric(h[[ii]]) ){
                     etxt <- c(etxt, paste0(id, ": ", ii, " should be a numeric vector"))
                     next
