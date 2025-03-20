@@ -5,6 +5,7 @@
 #include <thread>
 #include "hru.h"
 #include "helpers.h"
+// [[Rcpp::depends(RcppParallel)]]
 #include <RcppParallel.h>
 
 // ///////////////////////////////////////

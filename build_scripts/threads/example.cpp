@@ -38,24 +38,22 @@ std::vector<int> test_function(unsigned int nt) {
 
 #if RCPP_PARALLEL_USE_TBB
   #include <tbb/global_control.h>
+  Rcpp::Rcout << "using parallel" << std::endl;
   auto policy = std::execution::par;
   tbb::global_control c(tbb::global_control::max_allowed_parallelism, nt);
 #else
+  Rcpp::Rcout << "using sequential" << std::endl;
   auto policy = std::execution::seq;
 #endif
 
   // Example vector to sort
   std::vector<int> Numbers = {5, 3, 8, 1, 9, 2, 7, 4, 6};
 
-  int addMe = 23;
+  //int addMe = 23;
   
   std::for_each(policy,
-		4,9, //Numbers.rbegin(), Numbers.rend(),
-		Log); //[](int &i, int &addMe){Rcpp::Rcout << "Number: " << i+addMe << std::endl;});
-  std::for_each(policy,
-		0,4, //Numbers.rbegin(), Numbers.rend(),
-		Log); //[](int &i, int &addMe){Rcpp::Rcout << "Number: " << i+addMe << std::endl;});
-  
+		Numbers.rbegin(), Numbers.rend(),
+		Log);
   return( Numbers );
 }
 
