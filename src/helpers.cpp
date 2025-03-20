@@ -1,19 +1,20 @@
 #include "helpers.h"
 
-std::vector< std::vector<hru> > makeHRUs(Rcpp::List mdl,
-					 std::vector<double> &q_sf_in,
-					 std::vector<double> &q_sz_in,
-					 const double &vtol,
-					 const double &etol,
-					 const int &max_it,
-					 const double &Dt){
+std::vector<hru> makeHRUs(Rcpp::List mdl,
+			  std::vector<double> &q_sf_in,
+			  std::vector<double> &q_sz_in,
+			  const double &vtol,
+			  const double &etol,
+			  const int &max_it,
+			  const double &Dt){
   int nhru = mdl.size(); // number of HRUs
   // work out the number of bands
-  Rcpp::List m = mdl[nhru-1];
-  Rcpp::IntegerVector uid = m["uid"];
-  int nbnd = uid["band"];
+  //Rcpp::List m = mdl[nhru-1];
+  //Rcpp::IntegerVector uid = m["uid"];
+  //int nbnd = uid["band"];
   
-  std::vector< std::vector<hru> > hrus(nbnd);
+  //std::vector< std::vector<hru> > hrus(nbnd);
+  std::vector<hru> hrus;
 
   // make hrus in order they need evaluating
   for(int ii=0; ii<nhru; ++ii){
@@ -33,11 +34,11 @@ std::vector< std::vector<hru> > makeHRUs(Rcpp::List mdl,
     Rcpp::NumericVector ivec = m["initialisation"];
     Rcpp::IntegerVector uid = m["uid"];
 
-    int b = Rcpp::as<int>(uid["band"]-1);
+    //int b = Rcpp::as<int>(uid["band"]-1);
     //svec = svec * pvec["area"];
 
     // all passed explicity, not by reference
-    hrus[b].push_back( hru( Rcpp::as<int>(uid["id"]), // id passed explicitly
+    hrus.push_back( hru( Rcpp::as<int>(uid["id"]), // id passed explicitly
 			 Rcpp::as<std::vector<double>>(svec), // states
 			 Rcpp::as<std::vector<double>>(pvec), // properties
 			 Rcpp::as<int>(sf_list["type"]), Rcpp::as<std::vector<double>>(sf_list["parameters"]), // surface type and parameters

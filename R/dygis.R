@@ -922,7 +922,7 @@ dynatopGIS <- R6::R6Class(
                                       layer_name,verbose,
                                       sf_opt,
                                       sz_opt,min_grad){
-
+            
 
             ## check layers
             rq <- c("filled_dem","channel","channel_fraction",
@@ -1005,6 +1005,7 @@ dynatopGIS <- R6::R6Class(
             hru <- rep(list(tmplate), nhru )
 
             if( verbose ){ cat("Processing channel inputs","\n") }
+            browser()
             input_tbl <- terra::extract(private$brk[[c(rain_lyr,pet_lyr)]],private$chn) ## slow ish
 
             if( verbose ){ cat("Processing channel HRUs","\n") }

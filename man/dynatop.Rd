@@ -115,7 +115,8 @@ Initialises a dynatop object in the simplest way possible.
 \if{html}{\out{<div class="r">}}\preformatted{dynatop$initialise(
   vtol = sqrt(.Machine$double.eps),
   ftol = sqrt(.Machine$double.eps),
-  max_it = 1000
+  max_it = 1000,
+  n_thread = 1
 )}\if{html}{\out{</div>}}
 }
 
@@ -127,6 +128,8 @@ Initialises a dynatop object in the simplest way possible.
 \item{\code{ftol}}{tolerance for the solution of the saturated zone storage (as difference of function from 0)}
 
 \item{\code{max_it}}{maximum number of iterations to use in the solution of the saturated zone}
+
+\item{\code{n_thread}}{maximum number of parallel threads to use}
 }
 \if{html}{\out{</div>}}
 }
@@ -146,7 +149,8 @@ Simulate the hillslope and channel components of a dynatop object
   sub_step = NULL,
   vtol = 0.001,
   ftol = sqrt(.Machine$double.eps),
-  max_it = 10
+  max_it = 10,
+  n_thread = 1
 )}\if{html}{\out{</div>}}
 }
 
@@ -164,6 +168,8 @@ Simulate the hillslope and channel components of a dynatop object
 \item{\code{ftol}}{- not currently used}
 
 \item{\code{max_it}}{maximum number of iterations to use in the solution of the saturated zone}
+
+\item{\code{n_thread}}{maximum number of parallel threads to use}
 }
 \if{html}{\out{</div>}}
 }

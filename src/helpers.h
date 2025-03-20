@@ -7,7 +7,7 @@
 #include "hru.h"
 #include "Rcpp.h" // this is included since data types are used
 
-std::vector< std::vector<hru> > makeHRUs(Rcpp::List,
+std::vector<hru> makeHRUs(Rcpp::List,
 					 std::vector<double>&,
 					 std::vector<double>&,
 					 double const&,
