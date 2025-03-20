@@ -57,9 +57,10 @@ dynatop <- R6Class(
         #' @param vtol tolerance for the solution for the saturated zone storage (as volume)
         #' @param ftol tolerance for the solution of the saturated zone storage (as difference of function from 0)
         #' @param max_it maximum number of iterations to use in the solution of the saturated zone
+        #' @param n_thread maximum number of parallel threads to use
         #'
         #' @return invisible(self) suitable for chaining
-        initialise = function(vtol = sqrt(.Machine$double.eps), ftol = sqrt(.Machine$double.eps), max_it = 1000){
+        initialise = function(vtol = sqrt(.Machine$double.eps), ftol = sqrt(.Machine$double.eps), max_it = 1000, n_thread=1){
             ## check the solver options
             vtol <- as.double(vtol); ftol <- as.double(ftol)
             if(any( c(vtol,ftol) < .Machine$double.eps)){
@@ -68,7 +69,7 @@ dynatop <- R6Class(
             max_it <- as.integer(max_it)
             if(max_it < 10){stop("Please use at least 10 iterations")}
 
-            private$init(vtol,ftol,max_it)
+            private$init(vtol,ftol,max_it,n_thread)
             invisible(self)
         },
         #' @description Simulate the hillslope and channel components of a dynatop object
@@ -78,12 +79,13 @@ dynatop <- R6Class(
         #' @param vtol tolerance on width of bounds in the numeric search for surface and saturated zone solutions (as volume)
         #' @param ftol - not currently used
         #' @param max_it maximum number of iterations to use in the solution of the saturated zone
+        #' @param n_thread maximum number of parallel threads to use
         #'
         #' @details Saving the states at every timestep and keeping the mass balance can generate very large data sets!!
         #'
         #' @return invisible(self) for chaining
         sim = function(output_defn,keep_states=NULL,sub_step=NULL,
-                       vtol=0.001,ftol=sqrt(.Machine$double.eps), max_it=10){
+                       vtol=0.001,ftol=sqrt(.Machine$double.eps), max_it=10, n_thread=1){
 
             ## check the solver options
             vtol <- as.double(vtol); ftol <- as.double(ftol)
@@ -120,7 +122,7 @@ dynatop <- R6Class(
             keep_states <- keep_states[keep_states %in% private$time_series$index]
 
             #browser()
-            private$sim_dyna(keep_states,sub_step,vtol,ftol,max_it)
+            private$sim_dyna(keep_states,sub_step,vtol,ftol,max_it,n_thread)
             invisible(self)
         },
         ## ############
@@ -289,12 +291,8 @@ dynatop <- R6Class(
                 pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
                               "sf_kin" = c("n","s_raf","t_raf"),
                               "sf_cnst" = c("v_sf","s_raf","t_raf"),
-                              "sf_power_law" = c("pwr_raf","sc_raf","s_raf","pwr","sc"),
+                              ##"sf_power_law" = c("pwr_raf","sc_raf","s_raf","pwr","sc"),
                               "sf_comp" = c("v_sf_1","s_1","v_sf_2"),
-                              ## "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
-                              ## "sf_kin" = c("n","s_raf","t_raf"),
-
-                              ## "sf_kin_tank" = c("n","s_raf","t_raf"),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
                               "sz_exp" = c("t_0","m"),
@@ -498,14 +496,14 @@ dynatop <- R6Class(
         },
         ## ###########################################
         ## Initialise the states
-        init = function(vtol,etol,max_it){
+        init = function(vtol,etol,max_it,n_thread){
             dt_init(private$model,
-                    vtol,etol,max_it)
+                    vtol,etol,max_it, as.integer(n_thread))
 
         },
         ## ###############################
         ## function to perform simulations
-        sim_dyna= function(keep_states,sub_step,vtol,etol,max_it){
+        sim_dyna= function(keep_states,sub_step,vtol,etol,max_it,n_thread){
 
             ## compute time substep
             if(length(sub_step)>1){ sub_step <- sub_step[1] }
@@ -536,7 +534,8 @@ dynatop <- R6Class(
                    ts$n_sub_step,
                    as.double(vtol),
                    as.double(etol),
-                   as.integer(max_it))
+                   as.integer(max_it),
+                   as.integer(n_thread))
 
         }
 

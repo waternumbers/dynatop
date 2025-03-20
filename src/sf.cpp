@@ -72,7 +72,7 @@ void sfc::iter_update(double &s, double &q, double const &qin, double const &vin
 // constant celerity, diffusivity with raf
 sfc_cnst::sfc_cnst(std::vector<double> const &param, std::vector<double> const &properties){
   // lower path is linear tank
-  kappa_1 = 1.0/param[2]; // param[3] is t_raf
+  kappa_1 = 1.0/param[2]; // param[2] is t_raf
   s_1 = param[1]; // param[2] is raf storage
   kappa_2 = param[0]/ properties[1]; // celerity divided by length to get q from storage
 }

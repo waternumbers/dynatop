@@ -32,6 +32,13 @@ class hru {
   std::vector<double> const sf_lnk_frc;
   std::vector<int> const sz_lnk_id;
   std::vector<double> const sz_lnk_frc;
+
+  std::vector<double> const initial_values;
+  
+  std::vector<double> &vec_q_sf_in, &vec_q_sz_in;
+  double const &vtol, &etol;
+  int const &max_it;
+  double const &Dt;
   
   double fsz(double&, double&, double&, double&, double const&);
   double fsf(double&, double&, double&, double&, double const&);
@@ -58,13 +65,19 @@ public:
       std::vector<int> const, std::vector<double> const,
       std::vector<int> const, std::vector<double> const,
       std::vector<int> const, std::vector<double> const,
-      std::vector<int> const, std::vector<double> const
+      std::vector<int> const, std::vector<double> const,
+      std::vector<double> const,
+      std::vector<double>&,std::vector<double>&,
+      double const&,
+      double const&,
+      int const&,
+      double const&
       );
 
-  void init(std::vector<double>&, std::vector<double>&, double, double, double const&, double const&, int const&);
+  void init(); //std::vector<double>&, std::vector<double>&, double, double, double const&, double const&, int const&);
   void update_met(std::vector<double>&);
-  void  lateral_redistribution(std::vector<double>&, std::vector<double>&);
-  void step(std::vector<double>&, std::vector<double>&, double const&, double const&, int const&, double const&);
+  void  lateral_redistribution(); //std::vector<double>&, std::vector<double>&);
+  void step(); //std::vector<double>&, std::vector<double>&, double const&, double const&, int const&, double const&);
 };
 
 #endif

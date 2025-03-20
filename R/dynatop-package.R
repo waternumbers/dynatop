@@ -9,5 +9,6 @@
 #' @importFrom utils setTxtProgressBar txtProgressBar
 #' @importFrom stats start end aggregate setNames
 #' @importFrom Rcpp evalCpp
+#' @importFrom RcppParallel RcppParallelLibs
 #' @useDynLib dynatop, .registration=TRUE
 NULL

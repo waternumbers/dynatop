@@ -1,7 +1,11 @@
 #include "Rcpp.h"
 #include <vector>
+#include <algorithm>
+#include <execution>
+#include <thread>
 #include "hru.h"
 #include "helpers.h"
+#include <RcppParallel.h>
 
 // ///////////////////////////////////////
 // Initialisation
@@ -10,33 +14,57 @@
 void dt_init(Rcpp::List mdl, // hru data frame
 	     double const vtol,
 	     double const etol,
-	     int const max_it
+	     int const max_it,
+	     unsigned int const n_thread
 	    ){
-
+#if RCPP_PARALLEL_USE_TBB
+  #include <tbb/global_control.h>
+  unsigned int nt = std::min(n_thread, std::thread::hardware_concurrency()-1);
+  Rcpp::Rcout << "Number fo threads " << nt << std::endl;
+  tbb::global_control c(tbb::global_control::max_allowed_parallelism, nt);
+  auto policy = std::execution::par;
+#else
+  auto policy = std::execution::seq;
+#endif
+  
+  // set execution policy
+  //auto policy = std::execution::seq;
+  
   // dimensions and constants
   int nhru = mdl.size(); // number of HRUs
 
   // storage for inflow fluxes
   std::vector<double> q_sf_in(nhru,0.0);// vector to surface inflow inflow volumes
   std::vector<double> q_sz_in(nhru,0.0);// vector to saturated zone inflow volumes
+
+  // set a time step
+  double const Dt(0.0);
   
   // make HRUs
-  std::vector<hru> hrus = makeHRUs(mdl);
+  Rcpp::Rcout << "making HRUs" << std::endl;
+  std::vector<hru> hrus = makeHRUs(mdl,q_sf_in,q_sz_in,vtol,etol,max_it,Dt);
 
+  Rcpp::Rcout << "hru size is " << nhru << " " << hrus.size() << std::endl;
+  
   // start loop of hrus
-  for(int ii=nhru-1; ii>=0; --ii){
-    //Rcpp::Rcout << "hru number " << ii << std::endl;
-    Rcpp::List L = mdl[ii];
-    Rcpp::NumericVector ivec = L["initialisation"];
+  
+  std::for_each( policy, hrus.rbegin(),hrus.rend(),
+		 []( hru &h ){ h.init(); } );
+		 
+  // for(int ii=nhru-1; ii>=0; --ii){
+  //   // Rcpp::Rcout << "hru number " << ii << std::endl;
+  //   // Rcpp::List L = mdl[ii];
+  //   //Rcpp::NumericVector ivec = L["initialisation"];
     
-    hrus[ii].init(q_sf_in,q_sz_in,ivec["s_rz_0"], ivec["r_uz_sz_0"], vtol, etol, max_it); // initialise
-    //hrus[ii].lateral_redistribution(q_sf_in,q_sz_in); // spread flow downslope
-  }
+  //   //hrus[ii].init(q_sf_in,q_sz_in,ivec["s_rz_0"], ivec["r_uz_sz_0"], vtol, etol, max_it); // initialise
+  //   //hrus[ii].lateral_redistribution(q_sf_in,q_sz_in); // spread flow downslope
+  //   hrus[ii].init();
+  // }
 
-  // Rcpp::Rcout << "copying back states" << std::endl;
+  Rcpp::Rcout << "copying back states" << std::endl;
   // copy back states
   for(int ii=0; ii<nhru; ++ii){
-    //Rcpp::Rcout << "copy hru " << ii << std::endl;
+    // Rcpp::Rcout << "copy hru " << ii << std::endl;
     Rcpp::List tmp = mdl[ii];
     Rcpp::NumericVector svec = tmp["states"];
     svec["s_sf"] = hrus[ii].s_sf / hrus[ii].area;
@@ -44,7 +72,7 @@ void dt_init(Rcpp::List mdl, // hru data frame
     svec["s_uz"] = hrus[ii].s_uz / hrus[ii].area;
     svec["s_sz"] = hrus[ii].s_sz / hrus[ii].area;
   };
-
+  Rcpp::Rcout << "reacched end" << std::endl;
   //end of dt_init
 }
 // ////////////////////////////////////////
@@ -63,9 +91,14 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
 	    int const n_sub_step,
 	    double const vtol,
 	    double const etol,
-	    int const max_it
+	    int const max_it,
+	    int n_threads
 	    ){
   // Rcpp::Rcout << "Entered function" << std::endl;
+
+  // set execution policy
+  auto policy = std::execution::seq;
+  
   // dimensions
   int nhru = mdl.size(); // number of HRUs
 
@@ -84,7 +117,7 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   std::vector<double> q_sz_in(nhru,0.0);// vector to saturated zone inflow fluxes
   
   // make HRUs
-  std::vector<hru> hrus = makeHRUs(mdl);
+  std::vector<hru> hrus = makeHRUs(mdl,q_sf_in,q_sz_in,vtol,etol,max_it,Dt);
   //Rcpp::Rcout << "Made HRUs" << std::endl;
   
   // create output flux object
@@ -132,9 +165,13 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
       //Rcpp::Rcout << "cleared flux" << std::endl;
   
       // start loop of hrus
+
+      std::for_each( policy, hrus.rbegin(),hrus.rend(),
+      	     []( hru &h ){ h.step(); } );
+      
       for(int ii= nhru-1; ii >= 0; --ii){
   	///Rcpp::Rcout << "hru " << ii << " at timestep " << tt << std::endl;
-  	hrus[ii].step(q_sf_in,q_sz_in,vtol,etol,max_it,Dt);
+  	//hrus[ii].step(); //q_sf_in,q_sz_in,vtol,etol,max_it,Dt);
 
 	// mass balance components
 	if( hrus[ii].area > 0.0){

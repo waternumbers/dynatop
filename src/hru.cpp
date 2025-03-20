@@ -11,7 +11,14 @@ hru::hru(int const id_,
 	 std::vector<int> const precip_lnk_id_, std::vector<double> const precip_lnk_frc_,
 	 std::vector<int> const pet_lnk_id_, std::vector<double> const pet_lnk_frc_,
 	 std::vector<int> const sf_lnk_id_, std::vector<double> const sf_lnk_frc_,
-	 std::vector<int> const sz_lnk_id_, std::vector<double> const sz_lnk_frc_
+	 std::vector<int> const sz_lnk_id_, std::vector<double> const sz_lnk_frc_,
+	 std::vector<double> const initial_values_,
+	 std::vector<double> &vec_q_sf_in_,
+	 std::vector<double> &vec_q_sz_in_,
+	 double const &vtol_,
+	 double const &etol_,
+	 int const &max_it_,
+	 double const &Dt_
 	 ):
   //states(states_),
   //properties(properties_),
@@ -23,6 +30,10 @@ hru::hru(int const id_,
   pet_lnk_id(pet_lnk_id_), pet_lnk_frc(pet_lnk_frc_),
   sf_lnk_id(sf_lnk_id_), sf_lnk_frc(sf_lnk_frc_),
   sz_lnk_id(sz_lnk_id_), sz_lnk_frc(sz_lnk_frc_),
+  initial_values(initial_values_),
+  vec_q_sf_in(vec_q_sf_in_), vec_q_sz_in(vec_q_sz_in_),
+  vtol(vtol_), etol(etol_), max_it(max_it_),
+  Dt(Dt_),
   id(id_),
   s_sf(states_[0]), s_rz(states_[1]), s_uz(states_[2]), s_sz(states_[3])
   {
@@ -75,8 +86,9 @@ hru::hru(int const id_,
   }
 };
 
-void hru::lateral_redistribution(std::vector<double> &vec_q_sf_in,
-				 std::vector<double> &vec_q_sz_in){
+void hru::lateral_redistribution(){
+  // std::vector<double> &vec_q_sf_in,
+  // 				 std::vector<double> &vec_q_sz_in){
   for(long unsigned int ii=0; ii<sf_lnk_id.size(); ++ii){
     const int &i = sf_lnk_id[ii];
     const double &f = sf_lnk_frc[ii];
@@ -104,12 +116,16 @@ void hru::update_met(std::vector<double> &obs){
   }
 }
 
-void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in,
-	       double s_rz_0, double r_uz_sz_0,
-	       double const &vtol, double const &etol, int const &max_it){
+void hru::init(){
+  // std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in,
+  // 	       double s_rz_0, double r_uz_sz_0,
+  // 	       double const &vtol, double const &etol, int const &max_it){
 
   double const &s_rzmax = rz_param[0];
   double const &t_d = uz_param[0];
+
+  double const &s_rz_0 = initial_values[0];
+  double const &r_uz_sz_0 = initial_values[1];
   
   q_sz_in = vec_q_sz_in[id];
   q_sf_in = vec_q_sf_in[id];
@@ -171,7 +187,7 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
     Rcpp::Rcout << s_sf << " " << sf->fq(s_sf) << std::endl; //,q_sf_in,r_sf_rz) << std::endl;
   }
   // redistributed the flows
-  lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
+  lateral_redistribution(); //vec_q_sf_in,vec_q_sz_in);
 
   // debug printing
   double tmp = q_sz_in + q_sf_in + r_inj - q_sz - q_sf;
@@ -185,9 +201,10 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
 }
 
 
-void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in,
-	       double const &vtol, double const &etol, int const &max_it, double const &Dt)
-{
+void hru::step(){
+  // std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in,
+  // 	       double const &vtol, double const &etol, int const &max_it, double const &Dt)
+  // {
 
   double const &s_rzmax = rz_param[0];
   double const &t_d = uz_param[0];
@@ -283,7 +300,7 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   //sf->iter_update(s_sf, q_sf, q_sf_in, v_sf_rz, Dt, vtol, max_it);
      
   // redistributed the flows
-  lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
+  lateral_redistribution(); //vec_q_sf_in,vec_q_sz_in);
     
   // single HRU mass balance for development
   mass_ballance[0] += Dt*(q_sf_in - q_sf) - v_sf_rz - s_sf; // surface

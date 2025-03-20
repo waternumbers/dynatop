@@ -958,14 +958,14 @@ dynatopGIS <- R6::R6Class(
             }
 
             ## work out the number of HRUs
-            id <- rep(NA,nrow(hru_data))
+            ## id <- rep(NA,nrow(hru_data))
             idx <- order(hru_data[,"filled_dem"],na.last=NA) ## search order
             nhru <- n_channel + sum( hru_data[idx,"channel_fraction"]!=1 ) ## number of hrus is num of channels + number of cells with hillslopes
 
             ## construct template for HRU
             tmplate <- list(uid = c(id = NA_integer_, band = NA_integer_, cell = NA_integer_),
-                            states = setNames(as.numeric(rep(NA,4)), c("s_sf","s_rz","s_uz","s_sz")),
-                            properties = setNames(rep(0,3), c("area","Dx","gradient")),
+                            states = setNames(rep(NA_real_,4), c("s_sf","s_rz","s_uz","s_sz")),
+                            properties = setNames(rep(NA_real_,3), c("area","Dx","gradient")),
                             sf = list(),
                             rz = list(type="orig", parameters = c("s_rzmax" = 0.1)),
                             uz = list(type="orig", parameters = c("t_d" = 8*60*60)),
@@ -997,12 +997,48 @@ dynatopGIS <- R6::R6Class(
                                  ##               parameters = c( "v_sz" = 0.1, "h_sz_max" = 5 )),
                                  stop("Unrecognised saturated zone option")
                                  )
-            if(is.null(rain_lyr)){ tmplate$precip <- c("precip"=1) }#list(name="precip", fraction = 1) }
-            if(is.null(pet_lyr)){ tmplate$pet <- c("pet"=1) }#list(name = "pet", fraction = 1) }
+##            if(is.null(rain_lyr)){ tmplate$precip <- c("precip"=1) }#list(name="precip", fraction = 1) }
+##            if(is.null(pet_lyr)){ tmplate$pet <- c("pet"=1) }#list(name = "pet", fraction = 1) }
 
             ## initalise the hrus
             if(verbose){ cat("Initialise the HRUs","\n") }
             hru <- rep(list(tmplate), nhru )
+
+            if( verbose ){ cat("Processing channel inputs","\n") }
+            input_tbl <- terra::extract(private$brk[[c(rain_lyr,pet_lyr)]],private$chn) ## slow ish
+
+            if( verbose ){ cat("Processing channel HRUs","\n") }
+            id <- hru_data[,"channel"] ## initialise hru map with channel numbers
+            shp <- as.data.frame(private$chn) ## copy channel data since quicker
+            chn_class_names <- setdiff(names(shp), c("id","band","length","slope","area")) ## channel class info to copy
+            outlets <- list() ## initialise list of outlets
+
+            for(ii in 1:n_channel){
+                ## it is a channel HRU
+                hru[[ii]]$uid["id"] <- as.integer( shp$id[ii] )
+                hru[[ii]]$uid["band"] <- as.integer( shp$band[ii] )
+                hru[[ii]]$properties["Dx"] <- as.numeric( shp$length[ii] )
+                hru[[ii]]$properties["gradient"] <- as.numeric( shp$slope[ii] )
+                hru[[ii]]$properties["area"] <- as.numeric( shp$area[ii] )
+                hru[[ii]]$class <- as.list( shp[ii,chn_class_names] )
+
+                tbl <- table(input_tbl[input_tbl$ID==ii,2])
+                hru[[ii]]$precip <- setNames(tbl/sum(tbl), paste0(rainfall_label,names(tbl)))
+                tbl <- table(input_tbl[input_tbl$ID==ii,3])
+                hru[[ii]]$pet <- setNames(tbl/sum(tbl), paste0(pet_label,names(tbl)))
+
+                ## do downstream routing
+                kk <- shp$id[ shp$startNode == shp$endNode[ii] ]
+                if(length(kk)>0){
+                    ## has downstream
+                    hru[[ii]]$sf_flow_direction <- list(id = as.integer(kk), fraction = rep(1/length(kk),length(kk)))
+                }else{
+                    ## is an outlet
+                    outlets[[length(outlets)+1]] <- data.frame(name = paste0("q_sf_",ii),
+                                                               id = as.integer( ii ),
+                                                               flux = "q_sf", scale = 1.0)
+                }
+            }
 
             ## pass through all the cells...
             if( verbose ){ cat("Passing over cells","\n") }
@@ -1010,7 +1046,7 @@ dynatopGIS <- R6::R6Class(
             for(ii in idx){
                 chn_frc <- hru_data[ii,"channel_fraction"]
                 if( chn_frc == 1 ){ next } ## totally handled in the channel part
-
+                              
                 ## process the hillslope part of the cell
                 cnt <- cnt + 1 ## get new id
                 id[ii] <- cnt
@@ -1074,42 +1110,6 @@ dynatopGIS <- R6::R6Class(
                 if( length(hru[[cnt]]$sf_flow_direction)==0 ){ stop("Hillslope HRU with no outflow") }
                 if( hru[[cnt]]$properties["area"]==0 ){ stop("Hillslope HRU with no area") }
 
-            }
-
-            if( verbose ){ cat("Processing channel inputs","\n") }
-            input_tbl <- terra::extract(private$brk[[c(rain_lyr,pet_lyr)]],private$chn) ## slow ish
-
-            if( verbose ){ cat("Processing channel HRUs","\n") }
-            shp <- as.data.frame(private$chn) ## copy channel data since quicker
-            chn_class_names <- setdiff(names(shp), c("id","band","length","slope","area")) ## channel class info to copy
-            outlets <- list() ## initialise list of outlets
-
-            for(ii in 1:n_channel){
-                ## it is a channel HRU
-                hru[[ii]]$uid["id"] <- as.integer( shp$id[ii] )
-                hru[[ii]]$uid["band"] <- as.integer( shp$band[ii] )
-                hru[[ii]]$properties["Dx"] <- as.numeric( shp$length[ii] )
-                hru[[ii]]$properties["gradient"] <- as.numeric( shp$slope[ii] )
-                hru[[ii]]$properties["area"] <- as.numeric( shp$area[ii] )
-                hru[[ii]]$class <- as.list( shp[ii,chn_class_names] )
-
-
-                tbl <- table(input_tbl[input_tbl$ID==ii,2])
-                hru[[ii]]$precip <- setNames(tbl/sum(tbl), paste0(rainfall_label,names(tbl)))
-                tbl <- table(input_tbl[input_tbl$ID==ii,3])
-                hru[[ii]]$pet <- setNames(tbl/sum(tbl), paste0(pet_label,names(tbl)))
-
-                ## do downstream routing
-                kk <- shp$id[ shp$startNode == shp$endNode[ii] ]
-                if(length(kk)>0){
-                    ## has downstream
-                    hru[[ii]]$sf_flow_direction <- list(id = as.integer(kk), fraction = rep(1/length(kk),length(kk)))
-                }else{
-                    ## is an outlet
-                    outlets[[length(outlets)+1]] <- data.frame(name = paste0("q_sf_",ii),
-                                                               id = as.integer( ii ),
-                                                               flux = "q_sf", scale = 1.0)
-                }
             }
 
             if( verbose ){ cat("Passing through HRUs to sort indexing","\n") }

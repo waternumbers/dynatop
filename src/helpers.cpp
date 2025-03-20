@@ -1,9 +1,21 @@
 #include "helpers.h"
 
-std::vector<hru> makeHRUs(Rcpp::List mdl){
+std::vector< std::vector<hru> > makeHRUs(Rcpp::List mdl,
+					 std::vector<double> &q_sf_in,
+					 std::vector<double> &q_sz_in,
+					 const double &vtol,
+					 const double &etol,
+					 const int &max_it,
+					 const double &Dt){
   int nhru = mdl.size(); // number of HRUs
-  std::vector<hru> hrus;
+  // work out the number of bands
+  Rcpp::List m = mdl[nhru-1];
+  Rcpp::IntegerVector uid = m["uid"];
+  int nbnd = uid["band"];
   
+  std::vector< std::vector<hru> > hrus(nbnd);
+
+  // make hrus in order they need evaluating
   for(int ii=0; ii<nhru; ++ii){
     Rcpp::List m = mdl[ii];
     Rcpp::NumericVector svec = m["states"];
@@ -18,12 +30,14 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
     Rcpp::IntegerVector pet_idx = m["pet_idx"];
     Rcpp::List q_sf_list = m["sf_flow_direction"];
     Rcpp::List q_sz_list = m["sz_flow_direction"];
+    Rcpp::NumericVector ivec = m["initialisation"];
     Rcpp::IntegerVector uid = m["uid"];
 
+    int b = Rcpp::as<int>(uid["band"]-1);
     //svec = svec * pvec["area"];
 
     // all passed explicity, not by reference
-    hrus.push_back( hru( Rcpp::as<int>(uid["id"]), // id passed explicitly
+    hrus[b].push_back( hru( Rcpp::as<int>(uid["id"]), // id passed explicitly
 			 Rcpp::as<std::vector<double>>(svec), // states
 			 Rcpp::as<std::vector<double>>(pvec), // properties
 			 Rcpp::as<int>(sf_list["type"]), Rcpp::as<std::vector<double>>(sf_list["parameters"]), // surface type and parameters
@@ -33,7 +47,14 @@ std::vector<hru> makeHRUs(Rcpp::List mdl){
 			 Rcpp::as<std::vector<int>>(pcp_idx), Rcpp::as<std::vector<double>>(pcp_frc), // precipiataion inputs
 			 Rcpp::as<std::vector<int>>(pet_idx), Rcpp::as<std::vector<double>>(pet_frc), // pet inputs
 			 Rcpp::as<std::vector<int>>(q_sf_list["id"]), Rcpp::as<std::vector<double>>(q_sf_list["fraction"]), // surface zone redistribution
-			 Rcpp::as<std::vector<int>>(q_sz_list["id"]), Rcpp::as<std::vector<double>>(q_sz_list["fraction"]) // saturated zone redistribution
+			 Rcpp::as<std::vector<int>>(q_sz_list["id"]), Rcpp::as<std::vector<double>>(q_sz_list["fraction"]), // saturated zone redistribution
+			 Rcpp::as<std::vector<double>>(ivec), // initialisation values
+			 q_sf_in,
+			 q_sz_in,
+			 vtol,
+			 etol,
+			 max_it,
+			 Dt
 			 )
 		    );
     

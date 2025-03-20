@@ -11,6 +11,7 @@
 void Log(int &Number){
   using namespace std::chrono_literals;
   std::this_thread::sleep_for(1s);
+  Rcpp::Rcout << Number << std::endl;
   //Number = std::this_thread::get_id();
   //  return( std::this_thread::get_id() );
 }
@@ -46,9 +47,14 @@ std::vector<int> test_function(unsigned int nt) {
   // Example vector to sort
   std::vector<int> Numbers = {5, 3, 8, 1, 9, 2, 7, 4, 6};
 
+  int addMe = 23;
+  
   std::for_each(policy,
-		Numbers.begin(), Numbers.end(),
-		Log);
+		4,9, //Numbers.rbegin(), Numbers.rend(),
+		Log); //[](int &i, int &addMe){Rcpp::Rcout << "Number: " << i+addMe << std::endl;});
+  std::for_each(policy,
+		0,4, //Numbers.rbegin(), Numbers.rend(),
+		Log); //[](int &i, int &addMe){Rcpp::Rcout << "Number: " << i+addMe << std::endl;});
   
   return( Numbers );
 }

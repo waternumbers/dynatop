@@ -244,7 +244,7 @@ print(system.time({sim2 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=300)
 st[["sim2"]] <- ctch_mdl$get_mass_errors()
 
 ctch_mdl$initialise()
-print(system.time({ sim3 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=10)$get_output() }))
+print(system.time({ sim3 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=300,n_thread=10)$get_output() }))
 st[["sim3"]] <- ctch_mdl$get_mass_errors()
 
 out <- Reduce(merge,list(swindale_obs,sim1,sim2,sim3))

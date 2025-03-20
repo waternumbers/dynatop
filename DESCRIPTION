@@ -19,9 +19,11 @@ Imports:
 	zoo,
 	xts,
 	Rcpp,
-	terra
+	terra,
+	RcppParallel
 LinkingTo:
-	Rcpp
+	Rcpp,
+	RcppParallel
 Depends:
 	R (>= 4.0.0)
 BugReports: https://github.com/waternumbers/dynatop/issues
@@ -34,3 +36,4 @@ Suggests:
     tinytest
 VignetteBuilder: knitr
 Language: en-GB
+SystemRequirements: GNU make
