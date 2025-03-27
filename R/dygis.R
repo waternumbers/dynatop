@@ -922,7 +922,7 @@ dynatopGIS <- R6::R6Class(
                                       layer_name,verbose,
                                       sf_opt,
                                       sz_opt,min_grad){
-            
+
 
             ## check layers
             rq <- c("filled_dem","channel","channel_fraction",
@@ -1005,7 +1005,7 @@ dynatopGIS <- R6::R6Class(
             hru <- rep(list(tmplate), nhru )
 
             if( verbose ){ cat("Processing channel inputs","\n") }
-            browser()
+            ##browser()
             input_tbl <- terra::extract(private$brk[[c(rain_lyr,pet_lyr)]],private$chn) ## slow ish
 
             if( verbose ){ cat("Processing channel HRUs","\n") }
@@ -1047,7 +1047,7 @@ dynatopGIS <- R6::R6Class(
             for(ii in idx){
                 chn_frc <- hru_data[ii,"channel_fraction"]
                 if( chn_frc == 1 ){ next } ## totally handled in the channel part
-                              
+
                 ## process the hillslope part of the cell
                 cnt <- cnt + 1 ## get new id
                 id[ii] <- cnt

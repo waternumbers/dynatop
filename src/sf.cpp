@@ -113,3 +113,45 @@ sfc_comp::sfc_comp(std::vector<double> const &param, std::vector<double> const &
   s_1 = param[1]; // max stoage in lower part of channel
   kappa_2 = param[2]/Dx; // velocity divided by length to get q from storage for upper part of channel
 }
+
+// arbitary area, discharge relationship
+sfc_arb::sfc_arb(std::vector<double> const &param, std::vector<double> const &properties){
+  double const& Dx(properties[1]);
+  unsigned int n = param.size()/2;
+  // Rcpp::Rcout << "param is length " << param.size() << std::endl;
+  // Rcpp::Rcout << "n is" << n << std::endl;
+  for(unsigned int ii = 0; ii<n; ++ii){
+    // Rcpp::Rcout << "ii is " << ii << std::endl;
+    // Rcpp::Rcout << "storage is " << param[ii]*Dx << std::endl;
+    // Rcpp::Rcout << "Flow is " << param[ii+n] << std::endl;
+    s_val.push_back( param[ii]*Dx );
+    q_val.push_back( param[ii+n] );
+  }
+}
+// fq compute the outflow given the other variables
+double sfc_arb::fq(double const &s){ //, double const &qin, double const &r){
+  unsigned int n = s_val.size();
+  unsigned int ii = 1;
+  while( (s_val[ii] < s) & (ii < (n-1)) ){ ii += 1; };
+  double qq = q_val[ii-1] + ( (q_val[ii] - q_val[ii-1])/(s_val[ii]-s_val[ii-1]) )* (s - s_val[ii-1]);
+  return( qq );
+}
+// fs computes  steady state storage given the inflows
+double sfc_arb::fs(double const &q){ //in, double const &r){
+  if( q<= 0.0 ){ return(0.0); } // handle case of no outflow
+  unsigned int n = s_val.size();
+  Rcpp::Rcout << "n size " << n << std::endl;
+  unsigned int ii = 1;
+  Rcpp::Rcout << "q is " << q << std::endl;
+  Rcpp::Rcout << "ii is " << ii << std::endl;
+  Rcpp::Rcout << "q_val[ii-1] is " << q_val[ii-1] << std::endl;
+  Rcpp::Rcout << "q_val[ii] is " << q_val[ii] << std::endl;
+  while( (q_val[ii] < q) & (ii < (n-1)) ){
+    ii += 1;
+    Rcpp::Rcout << "ii is " << ii << std::endl;
+    Rcpp::Rcout << "q_val[ii] is " << q_val[ii] << std::endl;
+  };
+  Rcpp::Rcout << "ii is " << ii << std::endl;
+  double s = s_val[ii-1] + ( (s_val[ii] - s_val[ii-1])/(q_val[ii]-q_val[ii-1]) )* (q - q_val[ii-1]);
+  return( s );
+}

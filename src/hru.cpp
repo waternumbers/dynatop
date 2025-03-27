@@ -63,6 +63,10 @@ hru::hru(int const id_,
     // manning with raf solved as tank
     sf = std::make_unique<sfc_kin>( sf_param_, properties_ );
     break;
+  case 5:
+    // arbitary area flow relationship
+    sf = std::make_unique<sfc_arb>( sf_param_, properties_ );
+    break;
   }
 
   // initialise the saturated flux object

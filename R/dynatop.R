@@ -217,7 +217,7 @@ dynatop <- R6Class(
         map  = NULL, # storage for map object
         output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
-        info = list(sf = setNames(as.integer(1:4),c("cnst","kin","comp","kin_tank")),
+        info = list(sf = setNames(as.integer(1:5),c("cnst","kin","comp","kin_tank","arb")),
                     rz = setNames(as.integer(1),c("orig")),
                     uz = setNames(as.integer(1),c("orig")),
                     sz = setNames(as.integer(1:4),c("exp","bexp","dexp","cnst")),
@@ -293,6 +293,8 @@ dynatop <- R6Class(
                               "sf_cnst" = c("v_sf","s_raf","t_raf"),
                               ##"sf_power_law" = c("pwr_raf","sc_raf","s_raf","pwr","sc"),
                               "sf_comp" = c("v_sf_1","s_1","v_sf_2"),
+                              "sf_arb" = c(paste0("area_",1:max(2,ceiling(length(h[[ii]]$parameters)/2))),
+                                           paste0("flow_",1:max(2,ceiling(length(h[[ii]]$parameters)/2)))),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
                               "sz_exp" = c("t_0","m"),
@@ -314,7 +316,7 @@ dynatop <- R6Class(
                     next
                 }
                 h[[ii]]$parameters <- h[[ii]]$parameters[ c(pnm,setdiff(names(h[[ii]]$parameters),pnm)) ] ## make sure parameters are in correct order
-                ## TODO check omega in sz_bdexp
+
             }
 
             ## check precip and pet

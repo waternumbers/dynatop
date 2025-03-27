@@ -49,4 +49,13 @@ public:
   double fs(double const&); //, double const&);
 };
 
+// arbitary area flow relationship
+class sfc_arb: public sfc {
+  std::vector<double> s_val, q_val;
+public:
+  sfc_arb(std::vector<double> const&, std::vector<double> const&); //, std::vector<double> const&);
+  double fq(double const&); //, double const&, double const&);
+  double fs(double const&); //, double const&);
+};
+
 #endif
