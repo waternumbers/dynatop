@@ -8,10 +8,9 @@ chn <- R6Class(
         B0 = NA,
         ca = NA, ## cot a
         sa = NA, ## sin angle
-        Cs = NA,
-        Ds = NA,
         Dx = NA,
         n = NA,
+        qPerS = NA,
         initialize = function(S0,B0,grd,Dx,n){
             self$S0 <- S0
             self$B0 <- B0
@@ -34,11 +33,8 @@ chn <- R6Class(
             betay <- function(y){ (5/3)*( 1 - ( (4*Ay(y))/(5*By(y)*Py(y)*self$sa) ) ) }
             fy <- function(y,q){q - Qy(y)}
             y <- uniroot(fy,c(0,100),q=Q)$root
-            #print(y)
-            beta <- betay(y)
-            cel <- cy(y)
-            self$Cs <- cel/(beta*self$Dx) ## removed Dt compared to paper
-            self$Ds <- ifelse(Q==0,0,Q/(beta*By(y)*self$S0*cel*Dx))
+            a <- Ay(y)
+            self$qPerS <- Q/(a*self$Dx)
         }
     )
 )
@@ -50,8 +46,7 @@ hru <- R6::R6Class(
                    q_sf_in = NA,
                    q_sf = NA,
                    s_sf = NA,
-                   Cs_sf = NA,
-                   Ds_sf = NA,
+                   qPerS = NA,
                    chn = NA,
                    e_sf = NA,
                    ## initialisation
@@ -60,13 +55,9 @@ hru <- R6::R6Class(
                        self$q_sf_in <- qin
                        self$chn <- chn
                        self$chn$update( qin )
-                       self$Cs_sf <- chn$Cs
-                       self$Ds_sf <- chn$Ds
-                       if(self$Cs_sf==0){
-                           self$s_sf <- 0
-                       }else{
-                           self$s_sf <- (1/(2*self$Cs_sf))*( (1-self$Ds_sf)*self$q_sf_in + (1+self$Ds_sf)*self$q_sf )
-                       }
+                       self$qPerS <- self$chn$qPerS
+                       self$s_sf <- qin/self$chn$qPerS
+
                    },
                    ## evolve
                    evolve = function(q_in,Dt){
@@ -76,32 +67,15 @@ hru <- R6::R6Class(
                            #browser()
                            Qref <- (q_sf_hat + q_in)/2
                            self$chn$update(Qref)
-                           Cs <- self$chn$Cs
-                           Ds <- self$chn$Ds
-
-                           ## (1/(2*Cs)) * ((1-Ds)*q_in + (1+Ds)*qhat) = shat - Dt*qhat
-                           ## ((1-Ds)*q_in + (1+Ds)*qhat) = 2*Cs*shat - 2*Cs*Dt*qhat
-                           ## (1+Ds)*qhat = 2*Cs*shat - 2*Cs*Dt*qhat - (1-Ds)*q_in
-                           ## (1+Ds+2*Cs*Dt)*qhat = 2*Cs*shat - (1-Ds)*q_in
-                           ## qhat = (2*Cs*shat - (1-Ds)*q_in) / (1+Ds+2*Cs*Dt)
-
-                           q_sf_hat <- (2*Cs*shat - (1-Ds)*q_in) / (1+Ds+2*Cs*Dt)
-
-                           ## shat <-
-                           ## K <- c(
-                           ##     -1+(Dt*Cs)+Ds ,
-                           ##     (1+(Dt*self$Cs_sf)-self$Ds_sf)*(Cs/self$Cs_sf),
-                           ##     (1-(Dt*self$Cs_sf)+self$Ds_sf)*(Cs/self$Cs_sf)
-                           ## ) / (1 + (Dt*Cs) + Ds)
-                           ## q_sf_hat <- K[1]*q_in + K[2]*self$q_sf_in + K[3]*self$q_sf
+                           r <- self$chn$qPerS
+                           q_sf_hat <- r*shat/(1+(r*Dt))
                        }
-                       stmp <- (1/(2*Cs))*( (1-Ds)*q_in + (1+Ds)*q_sf_hat )
+                       stmp <- shat/(1+(r*Dt))
                        self$e_sf <- self$s_sf + Dt*q_in - Dt*q_sf_hat - stmp
                        self$q_sf <- q_sf_hat
                        self$q_sf_in <- q_in
                        self$s_sf <- stmp
-                       self$Cs_sf <- Cs
-                       self$Ds_sf <- Ds
+                       self$qPerS <- self$chn$qPerS
                    }
                )
            )
@@ -112,7 +86,7 @@ sim_time <- 96*60*60
 sim_length <- 100*1000
 ## function to generate forcing
 Qinflow <- function(tt){
-    Qbase <- 0
+    Qbase <- 100
     Qpeak <- 900
     beta <- 16
     Tp <- 24*60*60
@@ -120,7 +94,7 @@ Qinflow <- function(tt){
 }
 
 ## model steps
-Dt <- 900
+Dt <- 300
 Dx <- 1000
 
 ## generate time steps
@@ -158,4 +132,4 @@ for(tt in 2:length(ts)){
 #x11()
 #plot(ts/3600,Qinflow(ts),type="l")
 #lines(ts/3600,Qrec,col="red")
-lines(ts/3600,Qrec,col="orange")
+lines(ts/3600,Qrec,col="green")
