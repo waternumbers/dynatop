@@ -14,8 +14,8 @@ public:
    // initialisation
   sfc();
   virtual double fq(double const&); // outflow given storage
-  virtual double fs(double const&); // storage given outflow
-  virtual void update(double&, double&,
+  virtual double fs(double const&, double const&); // storage given outflow and inflow
+  virtual void update(double&, double&, double const&, double const&,
 		      double const&, double const&, int const&);
 };
 
@@ -30,7 +30,7 @@ class sfc_kin: public sfc {
 public:
   sfc_kin(std::vector<double> const&, std::vector<double> const&);
   double fq(double const&);
-  double fs(double const&);
+  double fs(double const&, double const&);
 };
 
 // power law with raf
@@ -38,6 +38,18 @@ class sfc_power_law: public sfc {
 public:
   sfc_power_law(std::vector<double> const&, std::vector<double> const&);
   double fq(double const&);
-  double fs(double const&);
+  double fs(double const&, double const&);
+};
+// MCT
+class sfc_mct: public sfc {
+  double Cs, Ds;
+  double grd, n, Dx, ca, sa, B0;
+public:
+  sfc_mct(std::vector<double> const&, std::vector<double> const&);
+  double fq(double const&);
+  double fs(double const&, double const&);
+  void update(double&, double&, double const&, double const&,
+    double const&, double const&, int const&);
+  void internal_update(double const&);
 };
 #endif

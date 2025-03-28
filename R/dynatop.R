@@ -201,7 +201,7 @@ dynatop <- R6Class(
         map  = NULL, # storage for map object
         output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
-        info = list(sf = setNames(as.integer(1:3),c("cnst","kin","power_law")),
+        info = list(sf = setNames(as.integer(1:4),c("cnst","kin","power_law","mct")),
                     ##setNames(as.integer(1:5),c("cnst","kin","comp","kin_tank","power_law")),
                     rz = setNames(as.integer(1),c("orig")),
                     uz = setNames(as.integer(1),c("orig")),
@@ -278,6 +278,7 @@ dynatop <- R6Class(
                               ## "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
                               "sf_kin" = c("n","s_raf","t_raf"),
                               "sf_cnst" = c("v_sf_1","s_1","v_sf_2"),
+                              "sf_mct" = c("n","slope","B0"),
                               ## "sf_kin_tank" = c("n","s_raf","t_raf"),
                               "sf_power_law" = c("pwr_raf","sc_raf","s_raf","pwr","sc"),
                               "rz_orig" = c("s_rzmax"),

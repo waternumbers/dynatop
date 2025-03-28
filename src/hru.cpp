@@ -47,16 +47,12 @@ hru::hru(int const id_,
     sf = std::make_unique<sfc_kin>( sf_param_, properties );
     break;
   case 3:
-  //   // compound channel
-  //   sf = std::make_unique<sfc_cnst>( sf_param_, properties );
-  //   break;
-  // case 4:
-  //   // manning with raf solved as tank
-  //   sf = std::make_unique<sfc_kin>( sf_param_, properties );
-  //   break;
-  // case 5:
     // power law on storage
     sf = std::make_unique<sfc_power_law>( sf_param_, properties );
+    break;
+  case 4:
+    // MCT
+    sf = std::make_unique<sfc_mct>( sf_param_, properties );
     break;
   }
 
@@ -163,7 +159,7 @@ void hru::init(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   // solve surface
   q_sf = q_sf_in - r_sf_rz;
   
-  s_sf = sf->fs(q_sf);
+  s_sf = sf->fs(q_sf, q_sf_in);
   if( std::abs( sf->fq(s_sf) - q_sf ) > 1e-10 ){
     Rcpp::Rcout << id << " surface" << std::endl;
     Rcpp::Rcout << q_sf_in << " " << q_sf << std::endl;
@@ -275,8 +271,8 @@ void hru::step(std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_i
   aet = pet * s_rz / (area*s_rzmax);
   
   // surface
-  s_sf += Dt*q_sf_in - v_sf_rz;
-  sf->update(s_sf, q_sf, Dt, vtol, max_it);
+  //s_sf += Dt*q_sf_in - v_sf_rz;
+  sf->update(s_sf, q_sf, q_sf_in, v_sf_rz, Dt, vtol, max_it);
 
   // redistributed the flows
   lateral_redistribution(vec_q_sf_in,vec_q_sz_in);
