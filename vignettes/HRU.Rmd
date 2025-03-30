@@ -260,27 +260,24 @@ outlined for the surface zone a
 kinematic model can be represented using a Muskingum-Cunge
 formulation.
 Storage in the saturated zone is given in
-terms of the storage deficit $s_{sz}$ from the maximum storage
-$s_{sz}^{max}$; evolving as
+terms of the storage deficit $s_{sz}$; evolving as
 
 \[
-\frac{d}{dt}\left(s_{sz}^{max} - s_{sz}\right) = q_{sz}^{-} + r_{uz \rightarrow sz} - q_{sz}^{+}
+\frac{d}{dt}s_{sz} = q_{sz}^{+} - r_{uz \rightarrow sz} - q_{sz}^{-}
 \]
 
 The
 flow across a given cross section is a function of the
 depth to the saturated layer $h_{sz}$ with the functional form
 $\mathcal{G}\left(h_{sz}, \Theta_{sz}\right)$ taking its maximum value $q_{sz}^{max}$
-when $h_{sz}=0$ and zero when $h_{sz}=D$. The velocity over the cross
-section is computed as
+when $h_{sz}=0$. In Appendix A we show that the Muskingham-Cunge storage
+equation can be expressed using a representative flow $q_{sz}$ and
+corresponding depth $h_{sf}$ as
 
 \[
-v_{sz} = \frac{\mathcal{G}\left(h_{sz},\Theta_{sz}\right)}{
-w\left(D-h_{sz}\right) }
+s_{sf} = \frac{\Delta x}{v_{sf}}\left( q_{sz}^{max} - q_{sz} \right)
+= w h_{sz} \Delta x = A h_{sz}
 \]
-
-Assuming zero deficit when $q_{sz}^{-} = q_{sz}^{+} = q_{sz}^{max}$
-the maximum storage is given by $s_{sz}^{max}=\Delta x w D$.
 
 Table \@ref(tab:hs-transmissivity) gives
 $\mathcal{G}\left(h_{sz},\Theta_{sz}\right)$ for various the transmissivity
@@ -318,9 +315,10 @@ Table: (\#tab:hs-transmissivity-param) Additional parameters used in the transmi
 # Numerical Solution
 
 No analytical solution yet exists for simultaneous integration of the system of
-ODEs outlined above. In the following an semi-implicit scheme, where fluxes
-between stores are considered constant over the time step and velocities are
-evaluated at the initial state, is presented.
+ODEs outlined above. In the following an semi-implicit scheme, fluxes
+between stores are considered constant over the time step and an ordering of
+     the HRUs exists which allows a solution to be derived based on the premis that
+     the inflows can be determined before evolving the HRU states.
 
 The basis of the solution is twofold:
 
@@ -329,24 +327,46 @@ the downward flow of water within each timestep of size $\Delta t$. Hence on
 the first downward pass through the stores the maximum downward volumes of the vertical
 fluxes $\hat{v}_{* \rightarrow *} = \Delta t \hat{r}_{* \rightarrow *}$ are determined. These then moderated by the
 solution of the saturated zone, with an upward pass giving the final states.
-  2. The an ordering of
-     the HRUs exists which allows a solution to be derived based on the premis that
-     the inflows can be determined before evolving the HRU states.
+  2. The upstream inflow to the saturated zone is capped at the receving HRU's
+     $q_{sz}^{max}$ allowing for the generation of "run on" surface flow.
+	 
+## Rebalance Inflows
+
+Limit the inflow to the saturated zone to the maximum lateral saturated zone
+flow giving
+
+\[
+q_{sz}^{-} = \min\left( q_{sz}^{max}, \left. q_{sz}^{-} \right\rvert_{t+\Delta
+t} \right)
+\]
+\[
+q_{sf}^{-} = \left. q_{sf}^{-} \right\rvert_{t+\Delta t} + 
+\left. q_{sz}^{-} \right\rvert_{t+\Delta t} - 
+q_{sz}^{-}
+\]
 
 ## Downward Pass
 
 ### Surface excess
 
-The maximum downward flux $\hat{v}_{sf \rightarrow rz}$ is acheived when
-$q_{sf}^{+}=0$ and is given by
+<!-- The maximum downward flux $\hat{v}_{sf \rightarrow rz}$ is acheived when -->
+<!-- $q_{sf}^{+}=0$ and is given by -->
+<!-- \[ -->
+<!-- \hat{v}_{sf \rightarrow rz} = \left.s_{sf}\right\rvert_{t} + \Delta t -->
+<!-- \left.q_{sf}^{-}\right\rvert_{t+\Delta t} - s^{*} -->
+<!-- \] -->
+<!-- where by noting that the representative flow is $q_{sf} = \frac{1}{2}\left. q_{sf}^{-} -->
+<!-- \right\rvert_{t+\Delta t}$ the value of $s^{*}$ can be readily computed as -->
+<!-- \[ -->
+<!-- s^{*} = \kappa_{sf} \eta_{sf} q_{sf} -->
+<!-- \] -->
+
+The maximum downward flux $\hat{v}_{sf \rightarrow rz}$ is acheived by
+draining the surface store giving 
+
 \[
 \hat{v}_{sf \rightarrow rz} = \left.s_{sf}\right\rvert_{t} + \Delta t
-\left.q_{sf}^{-}\right\rvert_{t+\Delta t} - s^{*}
-\]
-where by noting that the representative flow is $q_{sf} = \frac{1}{2}\left. q_{sf}^{-}
-\right\rvert_{t+\Delta t}$ the value of $s^{*}$ can be readily computed as
-\[
-s^{*} = \kappa_{sf} \eta_{sf} q_{sf}
+q_{sf}^{-}\
 \]
 
 ### Root Zone
@@ -406,33 +426,60 @@ The solution of the saturated zone is complicated by the formulation of the
 unsaturated zone solution. The iterative numerical scheme, based on a
 semi-implicit step can be formulated to provide a solution
 
-1. Take an initial outflow estimate $q^* = \left. q_{sz}^{-}\right\rvert_{t+\Delta t}$
+1. Take an initial outflow estimate $q^* = q_{sz}^{-}$
 
 2. For a number of iterations:
 
-   a. Compute $q_{sz} = \frac{1}{2}\left(q^* + \left.q_{sz}^{-}\right\rvert_{t+\Delta t}\right)$
+   a. Compute $q_{sz} = \frac{1}{2}\left(q^* + q_{sz}^{-}\right)$
    
-   b. Solve for $h_{sz}$, $\kappa_{sz}$ and $\eta_{sf}$ based on $q_{sz}$.
+   b. Solve for $h_{sz}$ based on $q_{sz}$.
    
    c. Approximate the saturated storage deficit by $Ah_{sf}$ to give 
-   \[ v_{uz \rightarrow sz}^{*} = \Delta t \min\left(
-\frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
-{T_{d}h_{sz} + \Delta t}, \frac{A}{T_{d}} \right)
+   \[ v_{uz \rightarrow sz}^{*} = \Delta t \min\left( 
+   \frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow
+   uz}\right)}
+   {T_{d}h_{sz} + \Delta t}, \frac{A}{T_{d}} \right)
 	\]
 
    d. Take
-   \[q^{*} = \min \left( \mathcal{G}\left(0,\Theta_{sz}\right), \max\left(0, \frac{
-   s_{sz}^{max} - \left.s_{sz}\right\rvert_{t} + v_{uz \rightarrow sz}^{*} + 
-   \left( \Delta t - \kappa_{sz}\eta_{sz}\right)
-   \left.q_{sz}^{-}\right\rvert_{t+\Delta t} }{
-   \Delta t + \kappa_{sz}\left(1-\eta_{sz}\right) } \right)\right)
+   \[q^{*} = \min \left( q_{sz}^{max}, \max\left(0, 
+   \frac{ Ah_{sz} - \left.s_{sz}\right\rvert_{t} + v_{uz \rightarrow sz}^{*} + 
+   \Delta t q_{sz}^{-} }{ \Delta t } \right) \right)
    \]
    
 3. Set $\left.q_{sz}^{+}\right\rvert_{t+\Delta t} = q^{*}$ and
    compute
    \[\left.s_{sz}\right\rvert_{t+\Delta t} = \max\left( 0,\left.s_{sz}\right\rvert_{t} +
-   \Delta t \left(\left.q_{sz}^{+}\right\rvert_{t+\Delta t} - \left.q_{sz}^{-}\right\rvert_{t+\Delta t}
+   \Delta t \left(\left.q_{sz}^{+}\right\rvert_{t+\Delta t} - q_{sz}^{-}
    \right) - v_{uz \rightarrow sz}^{*}\right)\]
+
+<!-- 1. Take an initial outflow estimate $q^* = \left. q_{sz}^{-}\right\rvert_{t+\Delta t}$ -->
+
+<!-- 2. For a number of iterations: -->
+
+<!--    a. Compute $q_{sz} = \frac{1}{2}\left(q^* + \left.q_{sz}^{-}\right\rvert_{t+\Delta t}\right)$ -->
+   
+<!--    b. Solve for $h_{sz}$, $\kappa_{sz}$ and $\eta_{sf}$ based on $q_{sz}$. -->
+   
+<!--    c. Approximate the saturated storage deficit by $Ah_{sf}$ to give  -->
+<!--    \[ v_{uz \rightarrow sz}^{*} = \Delta t \min\left( -->
+<!-- \frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)} -->
+<!-- {T_{d}h_{sz} + \Delta t}, \frac{A}{T_{d}} \right) -->
+<!-- 	\] -->
+
+<!--    d. Take -->
+<!--    \[q^{*} = \min \left( \mathcal{G}\left(0,\Theta_{sz}\right), \max\left(0, \frac{ -->
+<!--    s_{sz}^{max} - \left.s_{sz}\right\rvert_{t} + v_{uz \rightarrow sz}^{*} +  -->
+<!--    \left( \Delta t - \kappa_{sz}\eta_{sz}\right) -->
+<!--    \left.q_{sz}^{-}\right\rvert_{t+\Delta t} }{ -->
+<!--    \Delta t + \kappa_{sz}\left(1-\eta_{sz}\right) } \right)\right) -->
+<!--    \] -->
+   
+<!-- 3. Set $\left.q_{sz}^{+}\right\rvert_{t+\Delta t} = q^{*}$ and -->
+<!--    compute -->
+<!--    \[\left.s_{sz}\right\rvert_{t+\Delta t} = \max\left( 0,\left.s_{sz}\right\rvert_{t} + -->
+<!--    \Delta t \left(\left.q_{sz}^{+}\right\rvert_{t+\Delta t} - \left.q_{sz}^{-}\right\rvert_{t+\Delta t} -->
+<!--    \right) - v_{uz \rightarrow sz}^{*}\right)\] -->
 
 ## Upward Pass
 
@@ -468,13 +515,21 @@ This leaves the solution of the surface zone
 
 ### Surface Zone
 
-Proceeding in a similar fashion to the saturated zone 
+Surface flow can only occur if there is water in the saturated zone, therfor
+if
+\[
+\left.s_{sf}\right\rvert_{t} + \Delta t q_{sf}^{-} - v_{sf \rightarrow rz} = 0
+\]
+then $\left.s_{sf}\right\rvert_{t + \Delta t} =
+\left.q_{sf}^{+}\right\rvert_{t + \Delta t} = 0$.
 
-1. Take an initial outflow estimate $q^* = \left.q_{sf}^{-}\right\rvert_{t+\Delta t}$
+Otherwise proceeding in a similar fashion to the saturated zone 
+
+1. Take an initial outflow estimate $q^* = q_{sf}^{-}$
 
 2. For a number of iterations:
 
-   a. Compute $q_{sf} = \frac{1}{2}\left(\left.\tilde{q}_{sf}^{-}\right\rvert_{t+\Delta t} + q^{*} \right)$
+   a. Compute $q_{sf} = \frac{1}{2}\left(q_{sf}^{-} + q^{*} \right)$
    
    b. Solve for $\kappa_{sf}$ and $\eta_{sf}$ based on $q_{sf}$.
    
@@ -482,18 +537,41 @@ Proceeding in a similar fashion to the saturated zone
    \[q^{*} = \max\left(0, \frac{
    \left.s_{sf}\right\rvert_{t} - v_{sf \rightarrow rz}^{*} + 
    \left( \Delta t - \kappa_{sf}\eta_{sf}\right)
-   \left.\tilde{q}_{sf}^{-}\right\rvert_{t+\Delta t} }{
+   q_{sf}^{-} }{
    \Delta t + \kappa_{sf}\left(1-\eta_{sf}\right) } \right)
    \]
    
 3. Set $\left.q_{sz}^{+}\right\rvert_{t+\Delta t} = q^{*}$ and
    compute $\left.s_{sf}\right\rvert_{t+\Delta t} =
    \left.s_{sf}\right\rvert_{t} +
-   \Delta t \left(\left.q_{sf}^{-}\right\rvert_{t+\Delta t} -
+   \Delta t \left(q_{sf}^{-} -
    \left.q_{sf}^{+}\right\rvert_{t+\Delta t}\right) - v_{sf
    \rightarrow rz}$ 
 
+<!-- proceeding in a similar fashion to the saturated zone  -->
 
+<!-- 1. Take an initial outflow estimate $q^* = \left.q_{sf}^{-}\right\rvert_{t+\Delta t}$ -->
+
+<!-- 2. For a number of iterations: -->
+
+<!--    a. Compute $q_{sf} = \frac{1}{2}\left(\left.\tilde{q}_{sf}^{-}\right\rvert_{t+\Delta t} + q^{*} \right)$ -->
+   
+<!--    b. Solve for $\kappa_{sf}$ and $\eta_{sf}$ based on $q_{sf}$. -->
+   
+<!--    c. Take -->
+<!--    \[q^{*} = \max\left(0, \frac{ -->
+<!--    \left.s_{sf}\right\rvert_{t} - v_{sf \rightarrow rz}^{*} +  -->
+<!--    \left( \Delta t - \kappa_{sf}\eta_{sf}\right) -->
+<!--    \left.\tilde{q}_{sf}^{-}\right\rvert_{t+\Delta t} }{ -->
+<!--    \Delta t + \kappa_{sf}\left(1-\eta_{sf}\right) } \right) -->
+<!--    \] -->
+   
+<!-- 3. Set $\left.q_{sz}^{+}\right\rvert_{t+\Delta t} = q^{*}$ and -->
+<!--    compute $\left.s_{sf}\right\rvert_{t+\Delta t} = -->
+<!--    \left.s_{sf}\right\rvert_{t} + -->
+<!--    \Delta t \left(\left.q_{sf}^{-}\right\rvert_{t+\Delta t} - -->
+<!--    \left.q_{sf}^{+}\right\rvert_{t+\Delta t}\right) - v_{sf -->
+<!--    \rightarrow rz}$  -->
 
 
 # Surface Zone Representations
