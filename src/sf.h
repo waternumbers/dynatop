@@ -9,16 +9,12 @@
 // generic class
 class sfc {
 protected:
-  double kappa_1, eta_1, s_1, kappa_2, eta_2;
+  double kappa_1, eta_1, q_1, kappa_2, eta_2;
 public:
+  double kappa, eta; // these are used
    // initialisation
   sfc();
-  virtual double fq(double const&); //, double const&, double const&); // outflow given storage and inflow
-  virtual double fs(double const&); //, double const&); // storage given outflow and inflow
-  virtual void update(double&, double&, double const&, double const&,
-		      double const&, double const&, int const&);
-  virtual void iter_update(double&, double&, double const&, double const&,
-			   double const&, double const&, int const&);
+  virtual void update(double const&);
 };
 
 // constant celerity & diffusivity with RAF
@@ -31,8 +27,7 @@ public:
 class sfc_kin: public sfc {
 public:
   sfc_kin(std::vector<double> const&, std::vector<double> const&);
-  double fq(double const&); //, double const&, double const&);
-  double fs(double const&); //, double const&);
+  void update(double const&);
 };
 
 // compound channel with RAF
@@ -41,21 +36,12 @@ public:
   sfc_comp(std::vector<double> const&, std::vector<double> const&);
 };
 
-// kinematic with RAF solved as a tank
-class sfc_kin_tank: public sfc {
-public:
-  sfc_kin_tank(std::vector<double> const&, std::vector<double> const&);
-  double fq(double const&); //, double const&, double const&);
-  double fs(double const&); //, double const&);
-};
-
 // arbitary area flow relationship
-class sfc_arb: public sfc {
+class sfc_arb_kin: public sfc {
   std::vector<double> s_val, q_val;
 public:
-  sfc_arb(std::vector<double> const&, std::vector<double> const&); //, std::vector<double> const&);
-  double fq(double const&); //, double const&, double const&);
-  double fs(double const&); //, double const&);
+  sfc_arb_kin(std::vector<double> const&, std::vector<double> const&); //, std::vector<double> const&);
+  void update(double const&);
 };
 
 #endif
