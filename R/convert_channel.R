@@ -1,5 +1,3 @@
-## to fix
-## warningnote when gm[] <- NULL
 ## documentation
 ## crop channels when merging in waterbodies - check same number  of inputs and outputs (unless wb added at top)
 ## <TODO> cropped area but not altered length - implies we need to add waterbodies prior to buffering channels?
@@ -33,8 +31,8 @@
 #'   - if `drop=TRUE` all columns except those required are dropped
 #'
 #' @examples
-#' channel_file <- system.file("extdata", "SwindaleRiverNetwork.shp",
-#' package="dynatopGIS", mustWork = TRUE)
+#' channel_file <- system.file("extdata/gis", "SwindaleRiverNetwork.shp",
+#' package="dynatop", mustWork = TRUE)
 #' vect_lines <- terra::vect(channel_file)
 #' property_names <- c(name="identifier",endNode="endNode",startNode="startNode",length="length")
 #' chn <- convert_channel(vect_lines,property_names)

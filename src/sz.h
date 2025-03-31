@@ -16,7 +16,6 @@ public:
   szc(); 
   virtual double fs(double const&); // compute storage given representative flow
   virtual double fq(double const&); // compute representative flow given storage
-  //  virtual void update(double&, double&, double const&, double const&, double const&, int const&); // update
 };
 
 // exponential
@@ -35,7 +34,7 @@ class szc_bexp: public szc {
  public:
   szc_bexp(std::vector<double> const&, std::vector<double> const&);
   double fs(double const&);
-  //  double ftq(double const&);
+  double fq(double const&);
 };
 
 // constant velocity
@@ -45,6 +44,7 @@ protected:
 public:
   szc_cnst(std::vector<double> const&, std::vector<double> const&);
   double fs(double const&);
+  double fq(double const&);
 };
 
 // double exponential
@@ -54,6 +54,7 @@ protected:
 public:
   szc_dexp(std::vector<double> const&, std::vector<double> const&);
   double fs(double const&);
+  double fq(double const&);
 };
 
 

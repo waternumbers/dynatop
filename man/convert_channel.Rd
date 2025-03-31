@@ -48,8 +48,8 @@ The processing follows the follwoing sequence:
   - if `drop=TRUE` all columns except those required are dropped
 }
 \examples{
-channel_file <- system.file("extdata", "SwindaleRiverNetwork.shp",
-package="dynatopGIS", mustWork = TRUE)
+channel_file <- system.file("extdata/gis", "SwindaleRiverNetwork.shp",
+package="dynatop", mustWork = TRUE)
 vect_lines <- terra::vect(channel_file)
 property_names <- c(name="identifier",endNode="endNode",startNode="startNode",length="length")
 chn <- convert_channel(vect_lines,property_names)

@@ -10,7 +10,7 @@
 #' ctch <- dynatopGIS$new(file.path(demo_dir,"test.tif"))
 #'
 #' ## add a catchment outline based on the digital elevation model
-#' dem_file <- system.file("extdata", "SwindaleDTM40m.tif", package="dynatopGIS", mustWork = TRUE)
+#' dem_file <- system.file("extdata/gis", "SwindaleDTM40m.tif", package="dynatop", mustWork = TRUE)
 #' dem <- terra::rast(dem_file)
 #' dem <- terra::extend(dem,1)
 #' catchment_outline <- terra::ifel(is.finite(dem),1,NA)
@@ -18,8 +18,8 @@
 #'
 #' ## add digital elevation and channel data
 #' ctch$add_dem(dem)
-#' channel_file <- system.file("extdata", "SwindaleRiverNetwork.shp",
-#' package="dynatopGIS", mustWork = TRUE)
+#' channel_file <- system.file("extdata/gis", "SwindaleRiverNetwork.shp",
+#' package="dynatop", mustWork = TRUE)
 #' sp_lines <- terra::vect(channel_file)
 #' property_names <- c(name="identifier",endNode="endNode",startNode="startNode",length="length")
 #' chn <- convert_channel(sp_lines,property_names)

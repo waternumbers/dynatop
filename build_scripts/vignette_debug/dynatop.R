@@ -214,7 +214,7 @@ for(ii in 1:length(hru)){
         ## saturated zone parameters
         hru[[ii]]$sz$parameters["t_0"] <- 0.000
         ## root zone parameters
-        hru[[ii]]$rz$parameters["s_rzmax"] <- 0.001
+        hru[[ii]]$rz$parameters["s_rzmax"] <- 0.1
         ## surface parameters
         hru[[ii]]$sf$parameters["v_sf"] <- 0.8
     }
@@ -227,6 +227,7 @@ ctch_mdl <- dynatop$new(hru) #,map=swindale_model$map)
 ## ----add_data-----------------------------------------------------------------
 #data("Swindale")
 swindale_obs <- Swindale$obs
+#swindale_obs <- swindale_obs["2009-11-16::2009-11-19"]
 #swindale_obs$precip <- 0
 ctch_mdl$add_data(swindale_obs)
 ## ----initialise---------------------------------------------------------------
@@ -234,28 +235,30 @@ ctch_mdl$initialise()
 st <- list(initial=ctch_mdl$get_states())
 ##ctch_mdl$plot_state("s_sz")
 
-id <- 9915
+id <- 0# 9915
 flx <- c("q_sf","q_sf_in","s_sf","v_sf_rz","s_rz","v_rz_uz","s_uz","v_uz_sz","s_sz","q_sz_in","q_sz")
 out <- data.frame(name = paste(flx,id,sep="_"),
                   id = id,
                   flux = flx,
                   scale=1)
-sim1 <- ctch_mdl$sim(out)$get_output()
+#sim1 <- ctch_mdl$sim(out)$get_output()
 ## ----sim1---------------------------------------------------------------------
+start_pr
 print( system.time({sim1 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()}) )
-st[["sim1"]] <- ctch_mdl$get_states()
+st[["sim1"]] <- ctch_mdl$get_mass_errors() ##get_states()
 
 ctch_mdl$initialise()
 print(system.time({sim2 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=300)$get_output()}))
 st[["sim2"]] <- ctch_mdl$get_mass_errors()
 
 ctch_mdl$initialise()
-print(system.time({ sim3 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=300,n_thread=10)$get_output() }))
+print(system.time({ sim3 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=60)$get_output() }))
 st[["sim3"]] <- ctch_mdl$get_mass_errors()
 
 out <- Reduce(merge,list(swindale_obs,sim1,sim2,sim3))
 names(out) <- c(names(swindale_obs),'sim_1','sim_2',"sim_3")
 plot(out[,c('flow','sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
+plot(out[,c('sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
 
 
 ## ----mass_check---------------------------------------------------------------

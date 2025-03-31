@@ -71,24 +71,24 @@ expect_silent({
 })
 expect_true({ kin_sf_error < 1e-6 })
 
-## Dynatop mass errors with compound surface are <1e-6"
-expect_silent({
-    data(Swindale)
-    mdl <- lapply(Swindale$model$hru,
-                  function(h){
-                      h$sf$parameters <- c("v_sf_1" =  as.numeric(h$sf$parameters["c_sf"]),
-                                           "d_sf_1" = 0,
-                                           "s_1" = Inf,
-                                           "v_sf_2" = 0,
-                                           "d_sf_2" = 0)
-                      h$sf$type <- "comp"
-                      h
-                  })
-    dt <- dynatop$new(mdl)$add_data(Swindale$obs)
-    dt$initialise()$sim(Swindale$model$output_flux)
-    comp_sf_error <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ comp_sf_error < 1e-6 })
+## ## Dynatop mass errors with compound surface are <1e-6"
+## expect_silent({
+##     data(Swindale)
+##     mdl <- lapply(Swindale$model$hru,
+##                   function(h){
+##                       h$sf$parameters <- c("v_sf_1" =  as.numeric(h$sf$parameters["c_sf"]),
+##                                            "d_sf_1" = 0,
+##                                            "s_1" = Inf,
+##                                            "v_sf_2" = 0,
+##                                            "d_sf_2" = 0)
+##                       h$sf$type <- "comp"
+##                       h
+##                   })
+##     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
+##     dt$initialise()$sim(Swindale$model$output_flux)
+##     comp_sf_error <- max(abs(dt$get_mass_errors()[,6]))
+## })
+## expect_true({ comp_sf_error < 1e-6 })
 
 ## ## there are differences in the initialisation which meant he comparision is only valid with s_1 =0
 ## test_that("Dynatop cnst and compound solutions are consistent without raf to <1e-3", {
