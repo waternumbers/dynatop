@@ -291,10 +291,12 @@ dynatop <- R6Class(
                 pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
                               "sf_kin" = c("n","s_raf","t_raf"),
                               "sf_cnst" = c("v_sf","s_raf","t_raf"),
-                              ##"sf_power_law" = c("pwr_raf","sc_raf","s_raf","pwr","sc"),
+                              "sf_power_law" = c("sc","pwr","s_raf","t_raf"),
                               "sf_comp" = c("v_sf_1","s_1","v_sf_2"),
-                              "sf_arb" = c(paste0("area_",1:max(2,ceiling(length(h[[ii]]$parameters)/2))),
-                                           paste0("flow_",1:max(2,ceiling(length(h[[ii]]$parameters)/2)))),
+                              "sf_arb_kin" = c(
+                                  paste0("area_",1:max(2,ceiling(length(h[[ii]]$parameters)/2))),
+                                  paste0("flow_",1:max(2,ceiling(length(h[[ii]]$parameters)/2)))),
+                              "sf_mct" = c("n","bank_slope","bed_width"),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
                               "sz_exp" = c("t_0","m"),

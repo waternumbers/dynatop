@@ -44,4 +44,22 @@ public:
   void update(double const&);
 };
 
+// raf with power law
+class sfc_power_law: public sfc {
+private:
+  double Dx;
+public:
+  sfc_power_law(std::vector<double> const&, std::vector<double> const&); //, std::vector<double> const&);
+  void update(double const&);
+};
+
+// MCT
+class sfc_mct: public sfc {
+private:
+  double grd, Dx, n, ca, sa, B0;
+public:
+  sfc_mct(std::vector<double> const&, std::vector<double> const&); //, std::vector<double> const&);
+  void update(double const&);
+};
+
 #endif

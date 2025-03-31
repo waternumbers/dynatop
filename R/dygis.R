@@ -980,25 +980,29 @@ dynatopGIS <- R6::R6Class(
 
             tmplate$sf <- switch(sf_opt,
                                  "cnst" = list(type = "cnst",
-                                               parameters = c("v_sf" = 0.3,"s_raf" = 0.0, "t_raf" = 999.9)),
+                                               parameters = c("v_sf"=0.3,"s_raf"=0.0,"t_raf"=999.9)),
                                  "kin" = list(type = "kin",
                                               parameters = c("n" = 0.03,"s_raf" = 0.0, "t_raf" = 999.9)),
+                                 "power_law" = list(type = "power_law",
+                                                    parameters = c("sc"=1.0,"pwr"=1.0,"s_raf"=0.0,"t_raf"=999.9)),
+                                 "comp" = list(type = "comp",
+                                               parameters = c("v_sf_1"= 0.7,"s_1"=0.0,"v_sf_2"=0.3)),
+                                 "mct" = list(type = "mct",
+                                              parameters = c("n"=0.03,"bank_slope"=1,"bed_width"=1.0)),
                                  stop("Unrecognised surface option")
                                  )
 
             tmplate$sz <- switch(sz_opt,
                                  "exp" = list(type = "exp",
                                               parameters = c( "t_0" = 0.135, "m" = 0.04 )),
-                                 ## "bexp" = list(type = "bexp",
-                                 ##               parameters = c( "t_0" = 0.135, "m" = 0.04 , "h_sz_max" = 5)),
+                                 "bexp" = list(type = "bexp",
+                                               parameters = c( "t_0" = 0.135, "m" = 0.04 , "h_szmax" = 5)),
                                  "dexp" = list(type = "dexp",
                                                parameters = c( "t_0" = 0.135, "m" = 0.04, "m2" = 0.1, "omega"=0.5)),
-                                 ## "cnst" = list(type = "cnst",
-                                 ##               parameters = c( "v_sz" = 0.1, "h_sz_max" = 5 )),
+                                 "cnst" = list(type = "cnst",
+                                               parameters = c( "v_sz" = 0.1, "h_szmax" = 5 )),
                                  stop("Unrecognised saturated zone option")
                                  )
-##            if(is.null(rain_lyr)){ tmplate$precip <- c("precip"=1) }#list(name="precip", fraction = 1) }
-##            if(is.null(pet_lyr)){ tmplate$pet <- c("pet"=1) }#list(name = "pet", fraction = 1) }
 
             ## initalise the hrus
             if(verbose){ cat("Initialise the HRUs","\n") }

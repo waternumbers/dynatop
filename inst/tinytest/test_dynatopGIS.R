@@ -7,6 +7,12 @@ demo_dir <- tempfile("dygis")
 on.exit( unlink(demo_dir) )
 dir.create(demo_dir)
 
+## load the comparative output
+expect_silent({
+    brk <- terra::rast("./test_output/example.tif")
+    chn <- terra::vect("./test_output/example.geojson")
+})
+
 ## test creation
 expect_silent({
     ctch <- dynatopGIS$new(file.path(demo_dir,"demo.tif"))
@@ -26,7 +32,7 @@ expect_silent({
     ctch$add_dem(dem)
 })
 
-expect_true( terra::identical(ctch$get_layer("dem"), terra::rast("./test_output/demo/dem.tif")) )
+expect_true( terra::identical(ctch$get_layer("dem"), brk[["dem"]]) )
 
 ## test adding channel
 expect_silent({
@@ -39,7 +45,7 @@ expect_silent({
     ctch$add_channel(chn)
 })
 
-##expect_true( terra::identical(ctch$get_layer("channel"), terra::rast("./test_output/demo/channel.tif")) )
+expect_true( terra::identical(ctch$get_layer("channel"), brk[["channel"]]) )
 
 ## terra identical and compareGeom don't appear to work for SpatVector objects
 ## expect_silent({
@@ -52,65 +58,45 @@ expect_silent({
 
 ## test dem filling
 expect_silent({ ctch$sink_fill() })
-## fails but change small
-## expect_true( terra::identical(ctch$get_layer("filled_dem"), terra::rast("./test_output/demo/filled_dem.tif")) )
+expect_true( terra::identical(ctch$get_layer("filled_dem"), brk[["filled_dem"]]) )
 
-expect_true({ terra::identical(ctch$get_layer("band"), terra::rast("./test_output/demo/band.tif")) })
+
 
 ## Check compute properties
 expect_silent({ ctch$compute_properties() })
-expect_true({ terra::identical(ctch$get_layer("band"), terra::rast("./test_output/demo/band.tif")) })
-expect_true( terra::identical(ctch$get_layer("gradient"),
-                              terra::mask(terra::rast("./test_output/demo/gradient.tif"),tmp,inverse=TRUE)) )
-expect_true( terra::identical(ctch$get_layer("atb"),
-                              terra::mask(terra::rast("./test_output/demo/atb.tif"),tmp,inverse=TRUE)) )
+expect_true( terra::identical(ctch$get_layer("band"), brk[["band"]]) )
+expect_true( terra::identical(ctch$get_layer("gradient"), brk[["gradient"]]) )
+expect_true( terra::identical(ctch$get_layer("atb"), brk[["atb"]]) )
+expect_true( terra::identical(ctch$get_layer("upslope_area"), brk[["upslope_area"]]) )
 
 
 ## test adding a layer
 expect_silent({ 
     tmp <- ctch$get_layer("filled_dem")
-    tmp <- terra::ifel(tmp<=500,NA,-999)
+    tmp <- terra::ifel(tmp<=500,0,1)
+    names(tmp) <- "greater_500"
     ctch$add_layer(tmp, "greater_500")
 })
-
-## add this so test on classification etc pass
-expect_silent({ ctch$add_layer( terra::rast("./test_output/demo/atb.tif"), "atb_old") })
+expect_true( terra::identical(ctch$get_layer("greater_500"), tmp) )
 
 ## test a classification
-expect_silent({ ctch$classify("atb_20","atb_old",cuts=20) })
-expect_true( terra::identical(ctch$get_layer("atb_20"), terra::rast("./test_output/demo/atb_20.tif")) )
+expect_silent({ ctch$add_layer( ctch$classify("atb_20","atb",cuts=20) )})
+expect_true( terra::identical(ctch$get_layer("atb_20"), brk[["atb_20"]]) )
 
 ## test combining classes (simple)
-expect_silent({ ctch$combine_classes("atb_20_band",c("atb_20","band")) })
-expect_true( terra::identical(ctch$get_layer("atb_20_band"), terra::rast("./test_output/demo/atb_20_band.tif")) )
+expect_silent({ ctch$add_layer( ctch$combine_classes("atb_20_band",c("atb_20","band")) ) })
+expect_true( terra::identical(ctch$get_layer("atb_20_band"), brk[["atb_20_band"]]) )
 
 ## test combining classes (complex)
-expect_silent({ ctch$combine_classes("atb_20_band_500",pairs=c("atb_20","band"),burns="greater_500") })
-expect_true( terra::identical(ctch$get_layer("atb_20_band_500"), terra::rast("./test_output/demo/atb_20_band_500.tif")) )
+expect_silent({ ctch$add_layer( ctch$combine_classes("atb_20_band_500",pairs=c("atb_20","band"),burns="greater_500") ) })
+## TODO - generate expect_true( terra::identical(ctch$get_layer("atb_20_band_500"), terra::rast("./test_output/demo/atb_20_band_500.tif")) )
 
-## compare get method retreival
-expect_silent({
-    tmp <- ctch$get_method("atb_20_band_500")
-    ttmp <- jsonlite::fromJSON( "./test_output/demo/atb_20_band_500.json" )
-})
-## changed JSON format - check what we can
-expect_identical( tmp$groups,ttmp$groups, info="Comparision of method retreival" )
-
-expect_silent({ ctch$create_model(file.path(demo_dir,"new_model"),"atb_20_band") })
+expect_silent({ ctch$create_model(file.path(demo_dir,"new_model"),"atb_20") })
 expect_silent({
     tmp <- readRDS( file.path(demo_dir,"new_model.rds") )
     ttmp <- readRDS( "./test_output/new_model.rds")
-    tmp$output_flux$scale <- NULL ## remove this since not in original
+    tmp$map <- ttmp$map <- "no mapfor testing"
 })
-## TODO test model
-## expect_true( terra::identical(terra::rast( file.path(demo_dir,"new_model.tif") ),
-##                               terra::rast("./test_output/new_model.tif")) )
-expect_identical(tmp$output_flux,ttmp$output_flux)
-
-##file.copy( file.path(demo_dir,"new_model.rds"), file.path("/home/smithpj1/Documents/Software/dynatopGIS/debug_model.rds") )
-## models chould be identical except for class variables
-## expect_silent({
-##     th <- lapply(tmp$hru,function(x){x$class <- NULL;x})
-##     tth <- lapply(ttmp$hru,function(x){x$class <- NULL;x})
-## })
-## expect_identical(th,tth)
+expect_true( terra::identical(terra::rast( file.path(demo_dir,"new_model.tif") ),
+                              terra::rast("./test_output/new_model.tif")) )
+expect_identical(tmp, ttmp)
