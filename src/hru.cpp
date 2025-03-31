@@ -131,9 +131,10 @@ void hru::init(){
   double const &s_rz_0 = initial_values[0];
   double const &r_uz_sz_0 = initial_values[1];
   
-  q_sz_in = vec_q_sz_in[id];
-  q_sf_in = vec_q_sf_in[id];
-
+  q_sf_in = vec_q_sf_in[id] + vec_q_sz_in[id];
+  q_sz_in = std::min( sz->q_szmax, vec_q_sz_in[id]);
+  q_sf_in -= q_sz_in;
+  
   // only water at surface if inflow can't be absorbed so max downward flux is
   double r_sf_rz = q_sf_in;
   
@@ -147,9 +148,10 @@ void hru::init(){
   double r_uz_sz = std::min( r_rz_uz + r_inj, area/t_d ); // ensure downward flux is possible
 
   // make initial estimate of outflow
-  q_sz = std::max( sz->q_szmax, r_uz_sz + q_sz_in );
+  q_sz = std::min( sz->q_szmax, r_uz_sz + q_sz_in );
   s_sz = sz->fs( (q_sz+q_sz_in)/2.0 );
 
+  r_uz_sz = q_sz - q_sz_in;
   //if( std::abs( sz->fq(s_sz,q_sz_in) - q_sz ) > 1e-10 ){
   // if( std::abs( sz->fq(s_sz) - q_sz ) > 1e-10 ){
   //   Rcpp::Rcout << id << " saturated" << std::endl;
@@ -193,7 +195,7 @@ void hru::init(){
   // debug printing
   double tmp = q_sz_in + q_sf_in + r_inj - q_sz - q_sf;
   if( std::abs(tmp) > 1e-10 ){
-    Rcpp::Rcout << id << std::endl;
+    Rcpp::Rcout << "Intiailisation Error: " << id << std::endl;
     Rcpp::Rcout << q_sf_in << " " << q_sf << std::endl;
     Rcpp::Rcout << q_sz_in << " " << q_sz << " " << r_inj << std::endl;
     Rcpp::Rcout << tmp << std::endl;
@@ -226,14 +228,38 @@ void hru::step(){
 		     s_rz - (area*s_rzmax)  + Dt*(precip - pet) + v_sf_rz);
 
   // update the saturated zone
+  std::pair<double,double> ubnd(0, 9999.9); // wettest saturated zone
+  double z = ubnd.first;
+  double Qref = sz->fq( z ); // reference flow
+  q_sz = std::min(sz->q_szmax, std::max(0.0,2.0*Qref - q_sz_in)); ///2.0;
+  v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
+  ubnd.second = s_sz + Dt*(q_sz - q_sz_in) - v_uz_sz - z; // should be neg
+
+  std::pair<double,double> lbnd(s_sz + Dt*sz->q_szmax, 9999.9); // driest saturated zone
+  z = ubnd.first;
+  Qref = sz->fq( z ); // reference flow
+  q_sz = std::min(sz->q_szmax, std::max(0.0,2.0*Qref - q_sz_in)); ///2.0;
+  v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
+  lbnd.second = s_sz + Dt*(q_sz - q_sz_in) - v_uz_sz - z; // should be positive
+
   for(int it=0; it<max_it; ++it){
-    double Qref = (q_sz + q_sz_in)/2.0;
-    double Sref = sz->fs( Qref );
-    v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*Sref + area*Dt), 1/t_d );
-    q_sz = std::min(sz->q_szmax, std::max(0.0, (Sref - s_sz + v_uz_sz +Dt*q_sz_in)/Dt ));
+    z = (ubnd.first + lbnd.first)/ 2.0;
+    Qref = sz->fq( z );
+    q_sz = std::min(sz->q_szmax, std::max(0.0,2.0*Qref - q_sz_in));
+    v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
+    double e = s_sz + Dt*(q_sz - q_sz_in) - v_uz_sz - z;
+    if( e <= 0.0 ){
+      ubnd.first = z;
+      ubnd.second = e;
+    }else{
+      lbnd.first = z;
+      lbnd.second = e;
+    }
   }
-  double z = std::max(0.0, s_sz + Dt*(q_sz - q_sz_in) - v_uz_sz);
-				  
+  z = ubnd.first;
+  q_sz = std::min(sz->q_szmax, std::max(0.0,2.0*Qref - q_sz_in)); ///2.0;
+  v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
+  				  
   // upward pass
   v_uz_sz = s_sz + Dt*(q_sz-q_sz_in) - z;
   s_sz = z;
@@ -252,13 +278,57 @@ void hru::step(){
     s_sf = 0;
     q_sf = 0.0;
   }else{
+    std::pair<double,double> ubnd(z/Dt, 9999.9); // wettest surface
+    q_sf= ubnd.first;
+    Qref = (q_sf+q_sf_in)/2.0;
+    sf->update( Qref );
+    ubnd.second = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) ); // negative
+    
+    std::pair<double,double> lbnd(0, 9999.9); // driest surface
+    q_sf = lbnd.first;
+    Qref = (q_sf+q_sf_in)/2.0;
+    sf->update( Qref );
+    lbnd.second = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
+
+    // Rcpp::Rcout << "id is " << id << std::endl;
+    // Rcpp::Rcout << "upper bound " << ubnd.first << " " << ubnd.second << std::endl;
+    // Rcpp::Rcout << "lower bound " << lbnd.first << " " << lbnd.second << std::endl;
+
     for(int it=0; it<max_it; ++it){
-      double Qref = (q_sf + q_sf_in)/2.0;
+      q_sf = (ubnd.first + lbnd.first)/ 2.0;
+      Qref = (q_sf+q_sf_in)/2.0;
       sf->update( Qref );
-      q_sf = std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
-      //q_sf = std::max(0.0, (2*sf->Cs*s0 - (1-sf->Ds)*qin) / (1+sf->Ds+2*sf->Cs*Dt) );
+      double e = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
+      if( e <= 0.0 ){
+	lbnd.first = q_sf;
+	lbnd.second = e;
+      }else{
+	ubnd.first = q_sf;
+	ubnd.second = e;
+      }
     }
-    s_sf -= Dt*q_sf;
+    q_sf = lbnd.first;
+    // for(int it=0; it<max_it; ++it){
+    //   double Qref = (q_sf + q_sf_in)/2.0;
+    //   sf->update( Qref );
+    //   if( id == 0 ){
+    // 	Rcpp::Rcout << it << " " << Qref << " " << sf->kappa << " " << sf->eta << std::endl;
+    //   }
+    //   q_sf = std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
+    //   //q_sf = std::max(0.0, (2*sf->Cs*s0 - (1-sf->Ds)*qin) / (1+sf->Ds+2*sf->Cs*Dt) );
+    // }
+    s_sf = z - Dt*q_sf;
+    z = std::max(0.0, sf->kappa*(sf->eta*q_sf_in + (1.0-sf->eta)*q_sf) );
+    if( std::abs(s_sf - z) > 1e-6 ){
+      Rcpp::Rcout << "At end of s_sf update" << id << std::endl;
+      Rcpp::Rcout << "     s_sf:  " << s_sf << std::endl;
+      Rcpp::Rcout << "     s_sf alt:  " << z << std::endl;
+      Rcpp::Rcout << "     kappa:  " << sf->kappa << std::endl;
+      Rcpp::Rcout << "     eta:  " << sf->eta << std::endl;
+      Rcpp::Rcout << "     q_sf_in:  " << q_sf_in << std::endl;
+      Rcpp::Rcout << "     q_sf:  " << q_sf << std::endl;
+      Rcpp::Rcout << "     v_sf_rz:  " << v_sf_rz << std::endl;
+    }
   }
      
   // redistributed the flows

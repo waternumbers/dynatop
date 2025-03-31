@@ -923,7 +923,7 @@ dynatopGIS <- R6::R6Class(
                                       sf_opt,
                                       sz_opt,min_grad){
 
-
+            ##browser()
             ## check layers
             rq <- c("filled_dem","channel","channel_fraction",
                     "band","gradient",class_lyr,
@@ -1004,10 +1004,7 @@ dynatopGIS <- R6::R6Class(
             if(verbose){ cat("Initialise the HRUs","\n") }
             hru <- rep(list(tmplate), nhru )
 
-            if( verbose ){ cat("Processing channel inputs","\n") }
-            ##browser()
-            input_tbl <- terra::extract(private$brk[[c(rain_lyr,pet_lyr)]],private$chn) ## slow ish
-
+         
             if( verbose ){ cat("Processing channel HRUs","\n") }
             id <- hru_data[,"channel"] ## initialise hru map with channel numbers
             shp <- as.data.frame(private$chn) ## copy channel data since quicker
@@ -1023,10 +1020,10 @@ dynatopGIS <- R6::R6Class(
                 hru[[ii]]$properties["area"] <- as.numeric( shp$area[ii] )
                 hru[[ii]]$class <- as.list( shp[ii,chn_class_names] )
 
-                tbl <- table(input_tbl[input_tbl$ID==ii,2])
-                hru[[ii]]$precip <- setNames(tbl/sum(tbl), paste0(rainfall_label,names(tbl)))
-                tbl <- table(input_tbl[input_tbl$ID==ii,3])
-                hru[[ii]]$pet <- setNames(tbl/sum(tbl), paste0(pet_label,names(tbl)))
+                tbl <- table( cell_precip[hru_data[,"channel"]==ii] )
+                hru[[ii]]$precip <- setNames(tbl/sum(tbl), names(tbl))
+                tbl <- table( cell_pet[hru_data[,"channel"]==ii] )
+                hru[[ii]]$pet <- setNames(tbl/sum(tbl), names(tbl))
 
                 ## do downstream routing
                 kk <- shp$id[ shp$startNode == shp$endNode[ii] ]

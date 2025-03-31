@@ -389,6 +389,7 @@ dynatop <- R6Class(
         digest_model = function(model, use_states, delta=1e-13){
             m <- lapply( model, private$digest_hru, use_states = use_states, delta = delta)
             ## check ids
+            ##browser()
             id <- sapply(m, function(x){x$uid["id"]})
             idx <- order(id)
             id <- id[idx]

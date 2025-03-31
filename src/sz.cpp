@@ -2,6 +2,8 @@
 
 szc::szc(){}
 double szc::fs(double const &q){ return(9999.9); }// compute storage deficit for a given flow
+double szc::fq(double const &s){ return(9999.9); }
+
 // double szc::update(double &s, double &q, double const &qin, double const &vin,
 // 		   double const &Dt, int const &max_it){
 
@@ -30,11 +32,17 @@ szc_exp::szc_exp(std::vector<double> const &param, std::vector<double> const &pr
 }
 double szc_exp::fs(double const &q){ // get storage from flow
   if( q_szmax<=0.0 ){ return(0.0); } // since there can be no flow or storage
+  if (q == 0.0){ return( 1e+66 ); }
+  //  double s = std::max(0.0,q); // temp covert to computing q
+  //s = q_szmax * std::exp(-psi*s);
   double qq = std::min(q,q_szmax);
   double s = -std::log( qq/q_szmax ) / psi;
   return( s );
 }
-
+double szc_exp::fq(double const &s){ // get storage from flow
+  if( q_szmax<=0.0 ){ return(0.0); } // since there can be no flow or storage
+  return( q_szmax * std::exp(-psi*std::max(0.0,s)) );
+}
   
 // bounded exponential
 szc_bexp::szc_bexp(std::vector<double> const &param, std::vector<double> const &prop){
