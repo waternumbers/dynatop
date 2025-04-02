@@ -114,8 +114,7 @@ double szc_dexp::fs(double const &q){ // get storage from flow
     double qq; //z, qq;
     while( (it <= max_it) and ( (upr-lwr)>1e-10 ) ){
       z = (lwr+upr)/2.0;
-      Rcpp::Rcout << "TO FIX in dexp" << std::endl;
-      qq = 0.0; //ftq(z);
+      qq = q_szmax * ( omega*std::exp(-psi*z) + (1.0-omega)*std::exp(-kappa*z) );
       if( qq <= q ){ upr = z; } else { lwr = z; }
       it += 1;
     }

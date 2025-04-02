@@ -61,11 +61,15 @@ hru::hru(int const id_,
     break;
   case 4:
     // manning with raf solved as tank
-    sf = std::make_unique<sfc_kin>( sf_param_, properties_ );
+    sf = std::make_unique<sfc_power_law>( sf_param_, properties_ );
     break;
   case 5:
     // arbitary area flow relationship
     sf = std::make_unique<sfc_arb_kin>( sf_param_, properties_ );
+    break;
+  case 6:
+    // Muskingham-Cunge-Todini
+    sf = std::make_unique<sfc_mct>( sf_param_, properties_ );
     break;
   }
 

@@ -84,8 +84,8 @@ void sfc_power_law::update(double const &q ){
 
 // Muskingham Cunge after Todini
 sfc_mct::sfc_mct(std::vector<double> const &param, std::vector<double> const &properties){
-  Dx = properties[2];
-  grd = properties[3];
+  Dx = properties[1];
+  grd = properties[2];
   n = param[0];
   ca = param[1];
   sa = std::sin( std::atan(param[1]) );
@@ -111,13 +111,19 @@ void sfc_mct::update(double const&Q){
   // pick a high value - this flow should be greater then Q
   std::pair<double,double> ubnd(1000.0, 999.9);
   ubnd.second = Qy(ubnd.first);
-  if( ubnd.second < Q ){ Rcpp::Rcout <<"need adaptive mC range" << std::endl; }
+  if( ubnd.second < Q ){
+    Rcpp::Rcout <<"need adaptive mC range" << std::endl;
+    Rcpp::Rcout << grd << " " << B0 << " " << ca << " " << sa << " " << n << " " << Dx << std::endl;
+    Rcpp::Rcout << Ay(ubnd.first) << " " << Py(ubnd.first) << std::endl;
+    Rcpp::Rcout <<"Lower bound:" << lbnd.first << " " << lbnd.second << std::endl;
+    Rcpp::Rcout <<"Upper bound:" << ubnd.first << " " << ubnd.second << std::endl;
+  }
   int it = 0;
   double y(0.0);
   while( (it <= 1000) and ( ubnd.second - lbnd.second > 1e-3 ) ){
-    double iW = (Q - lbnd.second) / (ubnd.second-lbnd.second);
-    iW = std::max(0.001,std::min(iW,0.999));
-    y = (iW*ubnd.first) + (1.0-iW)*lbnd.first;
+    //double iW = (Q - lbnd.second) / (ubnd.second-lbnd.second);
+    //iW = std::max(0.001,std::min(iW,0.999));
+    y = (ubnd.first + lbnd.first)/2.0; //(iW*ubnd.first) + (1.0-iW)*lbnd.first;
     double qq = Qy(y);
     if( qq <= Q ){ //bnd.second= z; } else { bnd.first=z; }
       lbnd.first = y;
@@ -130,7 +136,8 @@ void sfc_mct::update(double const&Q){
   }
   if( (lbnd.second > Q ) or (ubnd.second < Q) ){
     Rcpp::Rcout << "error in solving for height" << std::endl;
-    Rcpp::Rcout << lbnd.second << " " << Q << ubnd.second << std::endl;
+    Rcpp::Rcout << lbnd.second << " " << Q << " " << ubnd.second << std::endl;
+    Rcpp::Rcout << lbnd.first << " " << ubnd.first << std::endl;
   }
 
   double vel = vy(y);
