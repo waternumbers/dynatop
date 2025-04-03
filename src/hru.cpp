@@ -248,7 +248,7 @@ void hru::step(){
     v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d );
     lbnd.second = z - s_sz + Dt*(q_sz_in - q_sz) + v_uz_sz; // should be +ve
 
-    while( lbnd.second > 1e-6  ){
+    while( lbnd.second > 1e-3  ){
       //    for(int it=0; it<max_it; ++it){
       z = (ubnd.first + lbnd.first)/ 2.0;
       // double iW = lbnd.second / (lbnd.second - ubnd.second); //Hzu - Hzl);
