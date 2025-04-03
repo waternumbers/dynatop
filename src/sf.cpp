@@ -175,9 +175,10 @@ void sfc_mct::internal_update(double const&Q){
   int it = 0;
   double y(0.0);
   while( (it <= 1000) and ( ubnd.second - lbnd.second > 1e-3 ) ){
-    double iW = (Q - lbnd.second) / (ubnd.second-lbnd.second);
-    iW = std::max(0.001,std::min(iW,0.999));
-    y = (iW*ubnd.first) + (1.0-iW)*lbnd.first;
+    //double iW = (Q - lbnd.second) / (ubnd.second-lbnd.second);
+    //iW = std::max(0.001,std::min(iW,0.999));
+    //y = (iW*ubnd.first) + (1.0-iW)*lbnd.first;
+    y = (ubnd.first + lbnd.first)/2.0;
     double qq = Qy(y);
     if( qq <= Q ){ //bnd.second= z; } else { bnd.first=z; }
       lbnd.first = y;
@@ -225,6 +226,70 @@ void sfc_mct::update(double &s, double &q, double const &qin, double const &vout
     return;
   }
 
+  double q_hat = qin;
+  for(int it=0; it<3; ++it){
+    double Qref = (q_hat + qin)/2.0;
+    internal_update(Qref);
+    q_hat = std::max(0.0, (2*Cs*s0 - (1-Ds)*qin) / (1+Ds+2*Cs*Dt) );
+  }
+  q = q_hat;
+  s = s0 - Dt*q;
+
+};
+
+
+// Arbitary X-sec MCT
+// Muskingham Cunge after Todini
+sfc_arb_mct::sfc_arb_mct(std::vector<double> const &param, std::vector<double> const &properties){
+  Dx = properties[2];
+  grd = properties[3];  
+  unsigned int n = param.size()/4;
+  for(unsigned int ii = 0; ii<n; ++ii){
+    a_val.push_back( param[ii] );
+    q_val.push_back( param[ii+n] );
+    B_val.push_back( param[ii+ (2*n)] ); // top width
+    c_val.push_back( param[ii+ (3*n)] ); // celerity
+  }
+}
+// internal update
+void sfc_arb_mct::internal_update(double const&q){
+  if( q<= 0.0 ){
+    Cs = 0.0; Ds = 0.0;
+    return;
+  }
+  
+  unsigned int n = a_val.size();
+  unsigned int ii = 1;
+  while( (q_val[ii] < q) & (ii < (n-1)) ){
+    ii += 1;
+  };
+  double a = a_val[ii-1] + ( (a_val[ii] - a_val[ii-1])/(q_val[ii]-q_val[ii-1]) )* (q - q_val[ii-1]);
+  double B = B_val[ii-1] + ( (B_val[ii] - B_val[ii-1])/(q_val[ii]-q_val[ii-1]) )* (q - q_val[ii-1]);
+  double cel = c_val[ii-1] + ( (c_val[ii] - c_val[ii-1])/(q_val[ii]-q_val[ii-1]) )* (q - q_val[ii-1]);
+  double vel = q/a;
+  
+  Cs = vel/Dx;
+  Ds = q*vel / B*grd*cel*Dx; 
+};
+double sfc_arb_mct::fq(double const &s){ return(-999.9); }
+double sfc_arb_mct::fs(double const &q, double const &qin ){
+  if( qin < 0.0 ){ return( std::nan("") ); } // flag negative inflows
+  if( q < 0.0 ){ return( std::nan("") ); } // handl case of no outflow
+  double Qref = (q+qin)/2;
+  if( Qref<= 0.0 ){ return(0.0); }
+  internal_update(Qref);
+  return( (1/(2*Cs))*( (1-Ds)*qin + (1+Ds)*q ) ); // can be simplified
+}
+void sfc_arb_mct::update(double &s, double &q, double const &qin, double const &vout,
+			 double const &Dt, double const &vtol, int const &max_it){
+  
+  double s0 = s + Dt*qin - vout;
+  if( s0 == 0.0 ){ // no stroage so no outflow
+    s = s0;
+    q = 0.0;
+    return;
+  }
+  
   double q_hat = qin;
   for(int it=0; it<3; ++it){
     double Qref = (q_hat + qin)/2.0;

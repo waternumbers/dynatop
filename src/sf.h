@@ -52,4 +52,17 @@ public:
     double const&, double const&, int const&);
   void internal_update(double const&);
 };
+// MCT
+class sfc_arb_mct: public sfc {
+  double Cs, Ds;
+  double Dx, grd;
+  std::vector<double> a_val,q_val,B_val,c_val;
+public:
+  sfc_arb_mct(std::vector<double> const&, std::vector<double> const&);
+  double fq(double const&);
+  double fs(double const&, double const&);
+  void update(double&, double&, double const&, double const&,
+    double const&, double const&, int const&);
+  void internal_update(double const&);
+};
 #endif

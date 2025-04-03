@@ -54,6 +54,10 @@ hru::hru(int const id_,
     // MCT
     sf = std::make_unique<sfc_mct>( sf_param_, properties );
     break;
+  case 5:
+    // arbitary X-sec MCT
+    sf = std::make_unique<sfc_arb_mct>( sf_param_, properties );
+    break;
   }
 
   // initialise the saturated flux object
