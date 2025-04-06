@@ -201,8 +201,8 @@ for(ii in 1:length(hru)){
     if(!("endNode" %in% names(hru[[ii]]$class))){
         ## then HRU is not a channel
         ## saturated zone parameters
-        hru[[ii]]$sz$parameters["m"] <- 0.0063
-        hru[[ii]]$sz$parameters["t_0"] <- exp(7.46)
+        hru[[ii]]$sz$parameters["m"] <- 0.04 #0.0063
+        hru[[ii]]$sz$parameters["t_0"] <- 0.135 #exp(-1) #5) #)
         ## unsaturated zone parameters
         hru[[ii]]$uz$parameters["t_d"] <- 8*60*60
         ## root zone parameters
@@ -235,17 +235,17 @@ ctch_mdl$initialise()
 st <- list(initial=ctch_mdl$get_states())
 ##ctch_mdl$plot_state("s_sz")
 
-id <- 0# 9915
-flx <- c("q_sf","q_sf_in","s_sf","v_sf_rz","s_rz","v_rz_uz","s_uz","v_uz_sz","s_sz","q_sz_in","q_sz")
-out <- data.frame(name = paste(flx,id,sep="_"),
-                  id = id,
-                  flux = flx,
-                  scale=1)
+## id <- 0# 9915
+## flx <- c("q_sf","q_sf_in","s_sf","v_sf_rz","s_rz","v_rz_uz","s_uz","v_uz_sz","s_sz","q_sz_in","q_sz")
+## out <- data.frame(name = paste(flx,id,sep="_"),
+##                   id = id,
+##                   flux = flx,
+##                   scale=1)
 #sim1 <- ctch_mdl$sim(out)$get_output()
 ## ----sim1---------------------------------------------------------------------
-start_pr
+##start_pr
 print( system.time({sim1 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()}) )
-st[["sim1"]] <- ctch_mdl$get_mass_errors() ##get_states()
+st[["sim1"]] <- ctch_mdl$get_states() #mass_errors() ##get_states()
 
 ctch_mdl$initialise()
 print(system.time({sim2 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=300)$get_output()}))
@@ -253,14 +253,14 @@ st[["sim2"]] <- ctch_mdl$get_mass_errors()
 
 ctch_mdl$initialise()
 print(system.time({ sim3 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=60)$get_output() }))
-st[["sim3"]] <- ctch_mdl$get_mass_errors()
+st[["sim3"]] <- ctch_mdl$get_states() #mass_errors()
 
 out <- Reduce(merge,list(swindale_obs,sim1,sim2,sim3))
 names(out) <- c(names(swindale_obs),'sim_1','sim_2',"sim_3")
 plot(out[,c('flow','sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
-plot(out[,c('sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
+##plot(out[,c('sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
 
-
+lapply(st,function(s){sapply(s,range)})
 ## ----mass_check---------------------------------------------------------------
 mb <- ctch_mdl$get_mass_errors()
 plot( mb[,6] , main="Mass Error", ylab="[m^3]")

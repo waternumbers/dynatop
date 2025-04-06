@@ -39,6 +39,8 @@ class hru {
   double const &vtol, &etol;
   int const &max_it;
   double const &Dt;
+
+  double Dx;
   
   double fsz(double&, double&, double&, double&, double const&);
   double fsf(double&, double&, double&, double&, double const&);
