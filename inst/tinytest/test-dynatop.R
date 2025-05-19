@@ -5,8 +5,16 @@ expect_silent({
     data(Swindale)
     dt <- dynatop$new(Swindale$model$hru)$add_data(Swindale$obs)
     dt$initialise()
-    dt$sim(Swindale$model$output_flux)
+    dt$sim(Swindale$model$output_flux,n_thread=1)
     error_exp <- max(abs(dt$get_mass_errors()[,6]))
+
+    data(Swindale)
+    dt <- dynatop$new(Swindale$model$hru)$add_data(Swindale$obs)
+    dt$initialise()
+    dt$sim(Swindale$model$output_flux,n_thread=10)
+    error_exp10 <- max(abs(dt$get_mass_errors()[,6]))
+
+
 })
 expect_true({ error_exp < 1e-6 })
 

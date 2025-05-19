@@ -1008,7 +1008,7 @@ dynatopGIS <- R6::R6Class(
             if(verbose){ cat("Initialise the HRUs","\n") }
             hru <- rep(list(tmplate), nhru )
 
-         
+
             if( verbose ){ cat("Processing channel HRUs","\n") }
             id <- hru_data[,"channel"] ## initialise hru map with channel numbers
             shp <- as.data.frame(private$chn) ## copy channel data since quicker
@@ -1086,7 +1086,7 @@ dynatopGIS <- R6::R6Class(
                     stopifnot(
                         "All hillslope cells must flow to those with lower id's" =
                             all( cnt>id[kk] | hru_data[kk,"channel_fraction"]==1 ),
-                        "All hillslope cells must flow to those with bands" =
+                        "All hillslope cells must flow to those with lower bands" =
                             all( hru_data[ii,"band"] > hru_data[kk,"band"] ),
                         "Hillslopes must drain down" = length(kk)>0
                     )

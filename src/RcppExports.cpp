@@ -25,8 +25,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // dt_sim
-void dt_sim(Rcpp::List mdl, Rcpp::DataFrame out_dfn, std::vector<bool> keep_states, Rcpp::NumericMatrix obs_matrix, Rcpp::NumericMatrix mass_balance, Rcpp::NumericMatrix out_matrix, Rcpp::List state_rec, double const timestep, int const n_sub_step, double const vtol, double const etol, int const max_it, int n_threads);
-RcppExport SEXP _dynatop_dt_sim(SEXP mdlSEXP, SEXP out_dfnSEXP, SEXP keep_statesSEXP, SEXP obs_matrixSEXP, SEXP mass_balanceSEXP, SEXP out_matrixSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP, SEXP vtolSEXP, SEXP etolSEXP, SEXP max_itSEXP, SEXP n_threadsSEXP) {
+void dt_sim(Rcpp::List mdl, Rcpp::DataFrame out_dfn, std::vector<bool> keep_states, Rcpp::NumericMatrix obs_matrix, Rcpp::NumericMatrix mass_balance, Rcpp::NumericMatrix out_matrix, Rcpp::List state_rec, double const timestep, int const n_sub_step, double const vtol, double const etol, int const max_it, unsigned int const n_thread);
+RcppExport SEXP _dynatop_dt_sim(SEXP mdlSEXP, SEXP out_dfnSEXP, SEXP keep_statesSEXP, SEXP obs_matrixSEXP, SEXP mass_balanceSEXP, SEXP out_matrixSEXP, SEXP state_recSEXP, SEXP timestepSEXP, SEXP n_sub_stepSEXP, SEXP vtolSEXP, SEXP etolSEXP, SEXP max_itSEXP, SEXP n_threadSEXP) {
 BEGIN_RCPP
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< Rcpp::List >::type mdl(mdlSEXP);
@@ -41,38 +41,15 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double const >::type vtol(vtolSEXP);
     Rcpp::traits::input_parameter< double const >::type etol(etolSEXP);
     Rcpp::traits::input_parameter< int const >::type max_it(max_itSEXP);
-    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    dt_sim(mdl, out_dfn, keep_states, obs_matrix, mass_balance, out_matrix, state_rec, timestep, n_sub_step, vtol, etol, max_it, n_threads);
+    Rcpp::traits::input_parameter< unsigned int const >::type n_thread(n_threadSEXP);
+    dt_sim(mdl, out_dfn, keep_states, obs_matrix, mass_balance, out_matrix, state_rec, timestep, n_sub_step, vtol, etol, max_it, n_thread);
     return R_NilValue;
-END_RCPP
-}
-// start_profiler
-SEXP start_profiler(SEXP str);
-RcppExport SEXP _dynatop_start_profiler(SEXP strSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< SEXP >::type str(strSEXP);
-    rcpp_result_gen = Rcpp::wrap(start_profiler(str));
-    return rcpp_result_gen;
-END_RCPP
-}
-// stop_profiler
-SEXP stop_profiler();
-RcppExport SEXP _dynatop_stop_profiler() {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    rcpp_result_gen = Rcpp::wrap(stop_profiler());
-    return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_dynatop_dt_init", (DL_FUNC) &_dynatop_dt_init, 5},
     {"_dynatop_dt_sim", (DL_FUNC) &_dynatop_dt_sim, 13},
-    {"_dynatop_start_profiler", (DL_FUNC) &_dynatop_start_profiler, 1},
-    {"_dynatop_stop_profiler", (DL_FUNC) &_dynatop_stop_profiler, 0},
     {NULL, NULL, 0}
 };
 

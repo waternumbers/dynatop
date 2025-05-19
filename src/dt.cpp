@@ -21,7 +21,7 @@ void dt_init(Rcpp::List mdl, // hru data frame
 #if RCPP_PARALLEL_USE_TBB
   #include <tbb/global_control.h>
   unsigned int nt = std::min(n_thread, std::thread::hardware_concurrency()-1);
-  Rcpp::Rcout << "Number fo threads " << nt << std::endl;
+  Rcpp::Rcout << "Number of threads " << nt << std::endl;
   tbb::global_control c(tbb::global_control::max_allowed_parallelism, nt);
   auto policy = std::execution::par;
 #else
@@ -42,27 +42,29 @@ void dt_init(Rcpp::List mdl, // hru data frame
   double const Dt(0.0);
   
   // make HRUs
-  Rcpp::Rcout << "making HRUs" << std::endl;
+  // Rcpp::Rcout << "making HRUs" << std::endl;
   std::vector<hru> hrus = makeHRUs(mdl,q_sf_in,q_sz_in,vtol,etol,max_it,Dt);
+  // Rcpp::Rcout << "hru size is " << nhru << " " << hrus.size() << std::endl;
 
-  Rcpp::Rcout << "hru size is " << nhru << " " << hrus.size() << std::endl;
+  // make vector of break points between the bands
+  std::vector<int> band_edge{0};
+  for(int ii = 1; ii < nhru; ii++){
+    if( hrus[ii].band != hrus[ii-1].band ){
+      band_edge.push_back( ii );
+    }
+  }
+  band_edge.push_back(hrus.size());
   
   // start loop of hrus
-  
-  std::for_each( policy, hrus.rbegin(),hrus.rend(),
-		 []( hru &h ){ h.init(); } );
+  for(int ii=band_edge.size()-1; ii >0; ii--){ // loop bands
+    std::for_each(policy,hrus.begin() + band_edge[ii-1],
+		  hrus.begin() + band_edge[ii],
+		  []( hru &h ){ h.step(); } );
+  }
+  // std::for_each( policy, hrus.rbegin(),hrus.rend(),
+  // 		 []( hru &h ){ h.init(); } );
 		 
-  // for(int ii=nhru-1; ii>=0; --ii){
-  //   // Rcpp::Rcout << "hru number " << ii << std::endl;
-  //   // Rcpp::List L = mdl[ii];
-  //   //Rcpp::NumericVector ivec = L["initialisation"];
-    
-  //   //hrus[ii].init(q_sf_in,q_sz_in,ivec["s_rz_0"], ivec["r_uz_sz_0"], vtol, etol, max_it); // initialise
-  //   //hrus[ii].lateral_redistribution(q_sf_in,q_sz_in); // spread flow downslope
-  //   hrus[ii].init();
-  // }
 
-  Rcpp::Rcout << "copying back states" << std::endl;
   // copy back states
   for(int ii=0; ii<nhru; ++ii){
     // Rcpp::Rcout << "copy hru " << ii << std::endl;
@@ -73,7 +75,7 @@ void dt_init(Rcpp::List mdl, // hru data frame
     svec["s_uz"] = hrus[ii].s_uz / hrus[ii].area;
     svec["s_sz"] = hrus[ii].s_sz / hrus[ii].area;
   };
-  Rcpp::Rcout << "reacched end" << std::endl;
+  //  Rcpp::Rcout << "reacched end" << std::endl;
   //end of dt_init
 }
 // ////////////////////////////////////////
@@ -93,12 +95,20 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
 	    double const vtol,
 	    double const etol,
 	    int const max_it,
-	    int n_threads
+	    unsigned int const n_thread
 	    ){
   // Rcpp::Rcout << "Entered function" << std::endl;
-
-  // set execution policy
+#if RCPP_PARALLEL_USE_TBB
+  #include <tbb/global_control.h>
+  unsigned int nt = std::min(n_thread, std::thread::hardware_concurrency()-1);
+  Rcpp::Rcout << "Number of threads " << nt << std::endl;
+  tbb::global_control c(tbb::global_control::max_allowed_parallelism, nt);
+  auto policy = std::execution::par;
+#else
   auto policy = std::execution::seq;
+#endif
+  // set execution policy
+  //auto policy = std::execution::seq;
   
   // dimensions
   int nhru = mdl.size(); // number of HRUs
@@ -120,10 +130,21 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   // make HRUs
   std::vector<hru> hrus = makeHRUs(mdl,q_sf_in,q_sz_in,vtol,etol,max_it,Dt);
   //Rcpp::Rcout << "Made HRUs" << std::endl;
+
+
   
   // create output flux object
-  outFlux out_flux(out_dfn["name_idx"], out_dfn["id"], out_dfn["flux_int"], out_dfn["scale"], dbl_n_sub_step);
+  outFlux out_flux(out_dfn["name_idx"], out_dfn["id_idx"], out_dfn["flux_int"], out_dfn["scale"], dbl_n_sub_step);
   //Rcpp::Rcout << "Made outFlux" << std::endl;
+
+  // make vector of break points between the bands
+  std::vector<int> band_edge{0};
+  for(int ii = 1; ii < nhru; ii++){
+    if( hrus[ii].band != hrus[ii-1].band ){
+      band_edge.push_back( ii );
+    }
+  }
+  band_edge.push_back(hrus.size());
   
   // start loop of time steps
   for(int tt = 0; tt < obs_matrix.nrow(); ++tt) {
@@ -166,19 +187,20 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
       //Rcpp::Rcout << "cleared flux" << std::endl;
   
       // start loop of hrus
-
-      std::for_each( policy, hrus.rbegin(),hrus.rend(),
-      	     []( hru &h ){ h.step(); } );
+      for(int ii=band_edge.size()-1; ii >0; ii--){ // loop bands
+	std::for_each(policy,hrus.begin() + band_edge[ii-1],
+		      hrus.begin() + band_edge[ii],
+		      []( hru &h ){ h.step(); } );
+      }
+      // std::for_each( policy, hrus.rbegin(),hrus.rend(),
+      // 	     []( hru &h ){ h.step(); } );
       
       for(int ii= nhru-1; ii >= 0; --ii){
-  	///Rcpp::Rcout << "hru " << ii << " at timestep " << tt << std::endl;
-  	//hrus[ii].step(); //q_sf_in,q_sz_in,vtol,etol,max_it,Dt);
-
 	// mass balance components
-	if( hrus[ii].area > 0.0){
+	//	if( hrus[ii].area > 0.0){
 	  mbv[2] += hrus[ii].aet * Dt ; // actual evapotranspiration
 	  mbv[3] += Dt * (hrus[ii].q_sf + hrus[ii].q_sz - hrus[ii].q_sf_in - hrus[ii].q_sz_in) ; // net lateral flux
-	}
+	  //	}
       }
       
 
@@ -186,16 +208,15 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
       
       // end loop of substeps
     }
-
     //Rcpp::Rcout << hrus[0].s_sf << " " << hrus[0].s_rz << " " << hrus[0].s_uz << " " << hrus[0].s_sz << std::endl;
     //Rcpp::Rcout << hrus[0].r_sf_rz << " " << hrus[0].r_rz_uz << " " << hrus[0].r_uz_sz << std::endl;
     //Rcpp::Rcout << hrus[0].q_sf_in << " " << hrus[0].q_sf << " " << hrus[0].q_sz_in << " " << hrus[0].q_sz << std::endl;
     
     // finish off mass balance at end of step
     for(int ii=0; ii<nhru; ++ii){
-      if( hrus[ii].area > 0.0){
-	mbv[4] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz); // final state volume
-      }
+      //      if( hrus[ii].area > 0.0){
+      mbv[4] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz); // final state volume
+	//}
     }
     mbv[5] = mbv[0] + mbv[1] - mbv[2] - mbv[3] - mbv[4];
     for(unsigned int ii=0;  ii<6; ++ii){

@@ -396,6 +396,9 @@ dynatop <- R6Class(
             idx <- order(id)
             id <- id[idx]
             if( !all( id == 0:(length(id)-1) ) ){ stop("ids are not in sequence") }
+            ## order by band
+            bnd <- sapply(m, function(x){x$uid["band"]})
+            idx <- order(bnd)
             private$model <- m[idx]
         },
         ## function to digest maps
@@ -479,6 +482,8 @@ dynatop <- R6Class(
             unm <- unique(defn$name)
             defn$name_idx <- setNames(0:(length(unm)-1),unm)[ defn$name ]
             defn$flux_int <- private$info$output[ defn$flux ]
+            id <- sapply(private$model,function(x){x$uid["id"]})
+            defn$id_idx <- match(defn$id,id)
             private$output_defn <- defn
             private$time_series$output <- matrix(as.numeric(NA), length(private$time_series$index), length(unm))
             colnames( private$time_series$output ) <- unm
@@ -486,7 +491,7 @@ dynatop <- R6Class(
         ## reform the output definition if required
         reform_output_defn = function(){
             defn <- private$output_defn
-            defn$flux_int <- defn$name_idx <- NULL
+            defn$flux_int <- defn$name_idx <- defn$id_idx <- NULL
             return( defn )
         },
         ## compute the simulation timestep

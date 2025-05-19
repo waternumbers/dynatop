@@ -39,6 +39,7 @@ std::vector<hru> makeHRUs(Rcpp::List mdl,
 
     // all passed explicity, not by reference
     hrus.push_back( hru( Rcpp::as<int>(uid["id"]), // id passed explicitly
+			 Rcpp::as<int>(uid["band"]), // band passed explicitly
 			 Rcpp::as<std::vector<double>>(svec), // states
 			 Rcpp::as<std::vector<double>>(pvec), // properties
 			 Rcpp::as<int>(sf_list["type"]), Rcpp::as<std::vector<double>>(sf_list["parameters"]), // surface type and parameters

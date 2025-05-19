@@ -1,7 +1,7 @@
 #include "hru.h"
 
 
-hru::hru(int const id_,
+hru::hru(int const id_, int const band_,
 	 std::vector<double> states_,
 	 std::vector<double> const properties_,
 	 int const sf_type_, std::vector<double> const sf_param_,
@@ -35,6 +35,7 @@ hru::hru(int const id_,
   vtol(vtol_), etol(etol_), max_it(max_it_),
   Dt(Dt_),
   id(id_),
+  band(band_),
   s_sf(states_[0]), s_rz(states_[1]), s_uz(states_[2]), s_sz(states_[3])
   {
     // change depths to volues for storage limits - use hru area not map area

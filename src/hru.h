@@ -47,7 +47,7 @@ class hru {
   
 public:
   // variables initialised
-  int const id;
+  int const id, band;
   double s_sf, s_rz, s_uz, s_sz, q_sf, q_sz;
   double area; // area if the area of the HRU width*Dx, map_area is area on the map (used for inputs)
   
@@ -58,6 +58,7 @@ public:
   
   // initialisation
   hru(int const,
+      int const,
       std::vector<double>,
       std::vector<double> const,
       int const, std::vector<double> const,
