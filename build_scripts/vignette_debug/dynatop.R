@@ -201,8 +201,8 @@ for(ii in 1:length(hru)){
     if(!("endNode" %in% names(hru[[ii]]$class))){
         ## then HRU is not a channel
         ## saturated zone parameters
-        hru[[ii]]$sz$parameters["m"] <- 0.04 #0.0063
-        hru[[ii]]$sz$parameters["t_0"] <- 0.135 #exp(-1) #5) #)
+        hru[[ii]]$sz$parameters["m"] <- 0.04# 0.0063
+        hru[[ii]]$sz$parameters["t_0"] <- 0.135 #exp(7.46) ##0.135 #exp(-1) #5) #)
         ## unsaturated zone parameters
         hru[[ii]]$uz$parameters["t_d"] <- 8*60*60
         ## root zone parameters
@@ -245,14 +245,14 @@ st <- list(initial=ctch_mdl$get_states())
 ## ----sim1---------------------------------------------------------------------
 ##start_pr
 print( system.time({sim1 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()}) )
-st[["sim1"]] <- ctch_mdl$get_states() #mass_errors() ##get_states()
+st[["sim1"]] <- ctch_mdl$get_mass_errors() ##get_states()
 
 ctch_mdl$initialise()
 print(system.time({sim2 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=300)$get_output()}))
 st[["sim2"]] <- ctch_mdl$get_mass_errors()
 
 ctch_mdl$initialise()
-print(system.time({ sim3 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=60)$get_output() }))
+print(system.time({ sim3 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=60,n_thread=10)$get_output() }))
 st[["sim3"]] <- ctch_mdl$get_states() #mass_errors()
 
 out <- Reduce(merge,list(swindale_obs,sim1,sim2,sim3))

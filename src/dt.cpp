@@ -59,7 +59,7 @@ void dt_init(Rcpp::List mdl, // hru data frame
   for(int ii=band_edge.size()-1; ii >0; ii--){ // loop bands
     std::for_each(policy,hrus.begin() + band_edge[ii-1],
 		  hrus.begin() + band_edge[ii],
-		  []( hru &h ){ h.step(); } );
+		  []( hru &h ){ h.init(); } );
   }
   // std::for_each( policy, hrus.rbegin(),hrus.rend(),
   // 		 []( hru &h ){ h.init(); } );
