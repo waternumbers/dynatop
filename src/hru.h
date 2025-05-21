@@ -6,7 +6,7 @@
 #include <cmath>
 #include <memory>
 #include <limits>
-#include "Rcpp.h" // this is included just to get warning messages out!
+//#include "Rcpp.h" // this is included just to get warning messages out!
 #include "sf.h"
 #include "sz.h"
 
@@ -79,7 +79,7 @@ public:
 
   void init(); //std::vector<double>&, std::vector<double>&, double, double, double const&, double const&, int const&);
   void update_met(std::vector<double>&);
-  void  lateral_redistribution(); //std::vector<double>&, std::vector<double>&);
+  void lateral_redistribution(); //std::vector<double>&, std::vector<double>&);
   void step(); //std::vector<double>&, std::vector<double>&, double const&, double const&, int const&, double const&);
 };
 

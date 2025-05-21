@@ -166,12 +166,12 @@ void hru::init(){
   // }
   
   s_uz = t_d * r_uz_sz * s_sz / area; // compute unsaturated zone storage
-  if( s_uz > s_sz ){
-    Rcpp::Rcout << id << " unsaturated" << std::endl;
-    Rcpp::Rcout << s_sz << " " << s_uz << " " << r_uz_sz << std::endl;
-    //Rcpp::Rcout << q_sz << " " << q_sz_in << " " << sz->fq(0.0) << std::endl; //,q_sz_in) << std::endl;
-    Rcpp::Rcout << s_uz - s_sz << std::endl;
-  }
+  // if( s_uz > s_sz ){
+  //   Rcpp::Rcout << id << " unsaturated" << std::endl;
+  //   Rcpp::Rcout << s_sz << " " << s_uz << " " << r_uz_sz << std::endl;
+  //   //Rcpp::Rcout << q_sz << " " << q_sz_in << " " << sz->fq(0.0) << std::endl; //,q_sz_in) << std::endl;
+  //   Rcpp::Rcout << s_uz - s_sz << std::endl;
+  // }
   
 
   
@@ -196,16 +196,16 @@ void hru::init(){
   //   Rcpp::Rcout << s_sf << " " << sf->fq(s_sf) << std::endl; //,q_sf_in,r_sf_rz) << std::endl;
   // }
   // redistributed the flows
-  lateral_redistribution(); //vec_q_sf_in,vec_q_sz_in);
+  //lateral_redistribution(); //vec_q_sf_in,vec_q_sz_in);
 
   // debug printing
   double tmp = q_sz_in + q_sf_in + r_inj - q_sz - q_sf;
-  if( std::abs(tmp) > 1e-10 ){
-    Rcpp::Rcout << "Intiailisation Error: " << id << std::endl;
-    Rcpp::Rcout << q_sf_in << " " << q_sf << std::endl;
-    Rcpp::Rcout << q_sz_in << " " << q_sz << " " << r_inj << std::endl;
-    Rcpp::Rcout << tmp << std::endl;
-  }
+  // if( std::abs(tmp) > 1e-10 ){
+  //   Rcpp::Rcout << "Intiailisation Error: " << id << std::endl;
+  //   Rcpp::Rcout << q_sf_in << " " << q_sf << std::endl;
+  //   Rcpp::Rcout << q_sz_in << " " << q_sz << " " << r_inj << std::endl;
+  //   Rcpp::Rcout << tmp << std::endl;
+  // }
   
 }
 
@@ -367,7 +367,7 @@ void hru::step(){
   }
      
   // redistributed the flows
-  lateral_redistribution(); //vec_q_sf_in,vec_q_sz_in);
+  //lateral_redistribution(); //vec_q_sf_in,vec_q_sz_in);
     
   // single HRU mass balance for development
   mass_ballance[0] += Dt*(q_sf_in - q_sf) - v_sf_rz - s_sf; // surface
@@ -378,11 +378,11 @@ void hru::step(){
   for(int ii=0; ii<4; ii++){
     z = std::max( z, std::abs(mass_ballance[ii]));
   }
-  if( z > 1e-10){
-      Rcpp::Rcout << "At end of " << id << std::endl; //": " << mass_ballance << " : " << std::endl;
-      Rcpp::Rcout << "     s_sf:  " << mass_ballance[0] << std::endl;
-      Rcpp::Rcout << "     s_rz:  " << mass_ballance[1] << std::endl;
-      Rcpp::Rcout << "     s_uz:  " << mass_ballance[2] << std::endl;
-      Rcpp::Rcout << "     s_sz:  " << mass_ballance[3] << std::endl;
-  }
+  // if( z > 1e-10){
+  //     Rcpp::Rcout << "At end of " << id << std::endl; //": " << mass_ballance << " : " << std::endl;
+  //     Rcpp::Rcout << "     s_sf:  " << mass_ballance[0] << std::endl;
+  //     Rcpp::Rcout << "     s_rz:  " << mass_ballance[1] << std::endl;
+  //     Rcpp::Rcout << "     s_uz:  " << mass_ballance[2] << std::endl;
+  //     Rcpp::Rcout << "     s_sz:  " << mass_ballance[3] << std::endl;
+  // }
 }

@@ -484,7 +484,7 @@ dynatop <- R6Class(
             defn$flux_int <- private$info$output[ defn$flux ]
             id <- sapply(private$model,function(x){x$uid["id"]})
             defn$id_idx <- match(defn$id,id) - 1
-            print(defn$id_idx)
+            ##print(defn$id_idx)
             private$output_defn <- defn
             private$time_series$output <- matrix(as.numeric(NA), length(private$time_series$index), length(unm))
             colnames( private$time_series$output ) <- unm

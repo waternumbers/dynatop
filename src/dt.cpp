@@ -23,11 +23,12 @@ void dt_init(Rcpp::List mdl, // hru data frame
   unsigned int nt = std::min(n_thread, std::thread::hardware_concurrency()-1);
   Rcpp::Rcout << "Number of threads " << nt << std::endl;
   tbb::global_control c(tbb::global_control::max_allowed_parallelism, nt);
-  auto policy = std::execution::par;
+  auto policy = std::execution::seq; //par_unseq;
 #else
   auto policy = std::execution::seq;
 #endif
-  
+
+
   // set execution policy
   //auto policy = std::execution::seq;
   
@@ -59,7 +60,13 @@ void dt_init(Rcpp::List mdl, // hru data frame
   for(int ii=band_edge.size()-1; ii >0; ii--){ // loop bands
     std::for_each(policy,hrus.begin() + band_edge[ii-1],
 		  hrus.begin() + band_edge[ii],
-		  []( hru &h ){ h.init(); } );
+		  []( hru &h ){ h.init(); }
+		  );
+    // TODO loop to add to downstream
+    std::for_each(std::execution::seq,hrus.begin() + band_edge[ii-1],
+		  hrus.begin() + band_edge[ii],
+		  []( hru &h ){ h.lateral_redistribution(); }
+		  );
   }
   // std::for_each( policy, hrus.rbegin(),hrus.rend(),
   // 		 []( hru &h ){ h.init(); } );
@@ -168,10 +175,10 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     
     // compute the mass balance initial storage
     for(int ii=0; ii<nhru; ++ii){
-      if( hrus[ii].area > 0.0){
+      //      if( hrus[ii].area > 0.0){
 	mbv[0] += (hrus[ii].s_sf + hrus[ii].s_rz + hrus[ii].s_uz - hrus[ii].s_sz); // initial state volume
 	mbv[1] += hrus[ii].precip; // precip volume
-      }
+	//}
     }
     mbv[1] = mbv[1] * timestep;
     
@@ -191,6 +198,11 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
 	std::for_each(policy,hrus.begin() + band_edge[ii-1],
 		      hrus.begin() + band_edge[ii],
 		      []( hru &h ){ h.step(); } );
+	// loop to add to downstream
+	std::for_each(std::execution::seq,hrus.begin() + band_edge[ii-1],
+		      hrus.begin() + band_edge[ii],
+		      []( hru &h ){ h.lateral_redistribution(); }
+		      );
       }
       // std::for_each( policy, hrus.rbegin(),hrus.rend(),
       // 	     []( hru &h ){ h.step(); } );

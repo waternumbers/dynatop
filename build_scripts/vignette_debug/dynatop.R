@@ -223,33 +223,91 @@ for(ii in 1:length(hru)){
     hru[[ii]]$initialisation["r_uz_sz_0"] <- 1.755582e-07 ## initial outflow divided by catchment area
 }
 
-ctch_mdl <- dynatop$new(hru) #,map=swindale_model$map)
-## ----add_data-----------------------------------------------------------------
-#data("Swindale")
+## ctch_mdl <- dynatop$new(hru) #,map=swindale_model$map)
+## ## ----add_data-----------------------------------------------------------------
+## #data("Swindale")
 swindale_obs <- Swindale$obs
-#swindale_obs <- swindale_obs["2009-11-16::2009-11-19"]
-#swindale_obs$precip <- 0
+## #swindale_obs <- swindale_obs["2009-11-16::2009-11-19"]
+## #swindale_obs$precip <- 0
+## ctch_mdl$add_data(swindale_obs)
+## ## ----initialise---------------------------------------------------------------
+## ctch_mdl$initialise()
+## st <- list(initial=ctch_mdl$get_states())
+## #
+
+                                        #ctch_mdl$plot_state("s_sz")
+outID <- 0:9915 #c(9740,9744,9755,9761,9767,9774)
+outDefn <- data.frame( name = c(paste0(outID,"_q_sf"),
+                                 paste0(outID,"_q_sf_in"),
+                                 paste0(outID,"_q_sz"),
+                                 paste0(outID,"_q_sz_in"),
+                                 paste0(outID,"_precip"),
+                                 paste0(outID,"_pet")),
+                      id = rep(outID,6),
+                      flux = c(rep("q_sf",length(outID)),
+                               rep("q_sf_in",length(outID)),
+                               rep("q_sz",length(outID)),
+                               rep("q_sz_in",length(outID)),
+                               rep("precip",length(outID)),
+                               rep("pet",length(outID))),
+                      scale=1 )
+
+outDefn <- swindale_model$output_flux
+tdx <- 1:nrow(swindale_obs) # 1:10
+
+ctch_mdl <- dynatop$new(hru)
+ctch_mdl$add_data(swindale_obs[tdx,])
+system.time({ ctch_mdl$initialise() })
+s1 <- ctch_mdl$get_states()
+system.time({ ctch_mdl$sim(outDefn) })
+o1 <- ctch_mdl$get_states()
+y1 <- ctch_mdl$get_output()
+
+n_thread <- 3
+ctch_mdl <- dynatop$new(hru)
+ctch_mdl$add_data(swindale_obs[tdx,])
+system.time({ ctch_mdl$initialise(n_thread=n_thread) })
+s3 <- ctch_mdl$get_states()
+system.time({ ctch_mdl$sim(outDefn, n_thread=n_thread) })
+o3 <- ctch_mdl$get_states() #output()
+y3 <- ctch_mdl$get_output()
+
+all(s1==s3)
+all(o1==o3)
+all(y1==y3)
+
+plot(y1);points(y3)
+
+any(abs(o1-o3)>1e-6)
+which(colSums(abs(o1-o3)>1e-6)>1)
+
+
+
+
 ctch_mdl$add_data(swindale_obs)
 ## ----initialise---------------------------------------------------------------
 ctch_mdl$initialise()
 st <- list(initial=ctch_mdl$get_states())
-##ctch_mdl$plot_state("s_sz")
+9740 9744 9755 9761 9767 9774
 
-## id <- 0# 9915
-## flx <- c("q_sf","q_sf_in","s_sf","v_sf_rz","s_rz","v_rz_uz","s_uz","v_uz_sz","s_sz","q_sz_in","q_sz")
-## out <- data.frame(name = paste(flx,id,sep="_"),
-##                   id = id,
-##                   flux = flx,
-##                   scale=1)
-#sim1 <- ctch_mdl$sim(out)$get_output()
-## ----sim1---------------------------------------------------------------------
-##start_pr
-print( system.time({sim1 <- ctch_mdl$sim(swindale_model$output_flux)$get_output()}) )
-st[["sim1"]] <- ctch_mdl$get_mass_errors() ##get_states()
+print( system.time({sim1 <- ctch_mdl$sim(swindale_model$output_flux, keep_states= index(swindale_obs)[1:3])$get_output()}) )
+st[["sim1"]] <- ctch_mdl$get_states(rec=TRUE)
 
 ctch_mdl$initialise()
-print(system.time({sim2 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=300)$get_output()}))
-st[["sim2"]] <- ctch_mdl$get_mass_errors()
+print(system.time({sim2 <- ctch_mdl$sim(swindale_model$output_flux, keep_states= index(swindale_obs)[1:3],n_thread=3)$get_output()}))
+st[["sim2"]] <- ctch_mdl$get_states(rec=TRUE) #mass_errors()
+
+theSame <- rep(NA,length(st[["sim1"]]))
+hasSurface <- rep(NA,length(st[["sim1"]]))
+tp <- 1
+for(ii in 1:length(st[["sim1"]])){
+    theSame[ii] <- ( st[["sim1"]][[tp]][[ii]]$id == st[["sim2"]][[tp]][[ii]]$id ) &
+        all( st[["sim1"]][[tp]][[ii]]$states == st[["sim2"]][[tp]][[ii]]$states )
+    hasSurface[ii] <- (st[["sim1"]][[tp]][[ii]]$states["s_sf"]>0) +
+        2*(st[["sim2"]][[tp]][[ii]]$states["s_sf"]>0)
+}
+
+
 
 ctch_mdl$initialise()
 print(system.time({ sim3 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=60,n_thread=10)$get_output() }))
