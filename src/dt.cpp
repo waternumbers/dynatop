@@ -23,7 +23,7 @@ void dt_init(Rcpp::List mdl, // hru data frame
   unsigned int nt = std::min(n_thread, std::thread::hardware_concurrency()-1);
   Rcpp::Rcout << "Number of threads " << nt << std::endl;
   tbb::global_control c(tbb::global_control::max_allowed_parallelism, nt);
-  auto policy = std::execution::seq; //par_unseq;
+  auto policy = std::execution::par;
 #else
   auto policy = std::execution::seq;
 #endif
