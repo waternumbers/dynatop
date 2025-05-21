@@ -110,10 +110,14 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
   unsigned int nt = std::min(n_thread, std::thread::hardware_concurrency()-1);
   Rcpp::Rcout << "Number of threads " << nt << std::endl;
   tbb::global_control c(tbb::global_control::max_allowed_parallelism, nt);
-  auto policy = std::execution::par;
+  //auto policy = std::execution::par;
 #else
-  auto policy = std::execution::seq;
+  unsigned int nt{1}
 #endif
+
+  bool isSeq = true;
+  if( nt>1 ){ isSeq = false; }
+  
   // set execution policy
   //auto policy = std::execution::seq;
   
@@ -185,27 +189,46 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     //Rcpp::Rcout << "mbv after initialised of time step inputs " << mbv[0] << std::endl;
     //Rcpp::Rcout << "summed Precip: " << std::accumulate(precip.begin(), precip.end(), 0.0) << std::endl;
     //Rcpp::Rcout << "summed pet: " << std::accumulate(pet.begin(), pet.end(), 0.0) << std::endl;
+
+    
+ 
     
     // start loop of substeps
     for(int nn = 0; nn < n_sub_step; ++nn){
+
 
       std::fill( q_sf_in.begin(), q_sf_in.end(), 0.0) ;
       std::fill( q_sz_in.begin(), q_sz_in.end(), 0.0) ;
       //Rcpp::Rcout << "cleared flux" << std::endl;
   
       // start loop of hrus
-      for(int ii=band_edge.size()-1; ii >0; ii--){ // loop bands
-	std::for_each(policy,hrus.begin() + band_edge[ii-1],
-		      hrus.begin() + band_edge[ii],
-		      []( hru &h ){ h.step(); } );
-	// loop to add to downstream
-	std::for_each(std::execution::seq,hrus.begin() + band_edge[ii-1],
-		      hrus.begin() + band_edge[ii],
-		      []( hru &h ){ h.lateral_redistribution(); }
-		      );
+      if( isSeq ){
+	for(int ii=band_edge.size()-1; ii >0; ii--){ // loop bands
+	  std::for_each(std::execution::seq,hrus.begin() + band_edge[ii-1],
+			hrus.begin() + band_edge[ii],
+			[]( hru &h ){ h.step(); } );
+	  // loop to add to downstream
+	  std::for_each(std::execution::seq,hrus.begin() + band_edge[ii-1],
+			hrus.begin() + band_edge[ii],
+			[]( hru &h ){ h.lateral_redistribution(); }
+			);
+	}
+	// this is quicker but not quite binary compatable
+	// std::for_each(std::execution::seq,hrus.rbegin(),hrus.rend(),
+	// 	      []( hru &h ){ h.step(); h.lateral_redistribution(); }
+	// 	      );
+      }else{
+	for(int ii=band_edge.size()-1; ii >0; ii--){ // loop bands
+	  std::for_each(std::execution::par,hrus.begin() + band_edge[ii-1],
+			hrus.begin() + band_edge[ii],
+			[]( hru &h ){ h.step(); } );
+	  // loop to add to downstream
+	  std::for_each(std::execution::seq,hrus.begin() + band_edge[ii-1],
+			hrus.begin() + band_edge[ii],
+			[]( hru &h ){ h.lateral_redistribution(); }
+			);
+	}
       }
-      // std::for_each( policy, hrus.rbegin(),hrus.rend(),
-      // 	     []( hru &h ){ h.step(); } );
       
       for(int ii= nhru-1; ii >= 0; --ii){
 	// mass balance components

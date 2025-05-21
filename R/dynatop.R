@@ -249,7 +249,7 @@ dynatop <- R6Class(
                     if( !all( h$properties[prpnm] >0 ) ){
                         etxt <- c( etxt, paste0(id, ": all properties should be greater then 0") )
                     }
-                    h$properties <- h$properties[ c( prpnm, setdiff(names(h$properties),prpnm)) ]
+                    h$properties <- h$properties[prpnm] # c( prpnm, setdiff(names(h$properties),prpnm)) ]
                 }else{
                     etxt <- c(etxt, paste0(id, ": properties is missing named values") )
                 }
@@ -264,7 +264,7 @@ dynatop <- R6Class(
                 if( !all(snm %in% names(h$states)) ){
                     etxt <- c(etxt, paste0(id, ": states is missing named values"))
                 }
-                h$states <- h$states[ c(snm, setdiff(names(h$states),snm)) ] ## make sure states are in correct order
+                h$states <- h$states[snm] # c(snm, setdiff(names(h$states),snm)) ] ## make sure states are in correct order
             }else{
                 etxt <- c(etxt,paste0(id, ": states is missing") )
             }
@@ -317,7 +317,7 @@ dynatop <- R6Class(
                     etxt <- c(etxt, paste0(id, ": some ", ii, " parameters are negatve"))
                     next
                 }
-                h[[ii]]$parameters <- h[[ii]]$parameters[ c(pnm,setdiff(names(h[[ii]]$parameters),pnm)) ] ## make sure parameters are in correct order
+                h[[ii]]$parameters <- h[[ii]]$parameters[pnm] # c(pnm,setdiff(names(h[[ii]]$parameters),pnm)) ] ## make sure parameters are in correct order
 
             }
 

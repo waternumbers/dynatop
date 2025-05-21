@@ -255,6 +255,7 @@ outDefn <- data.frame( name = c(paste0(outID,"_q_sf"),
 outDefn <- swindale_model$output_flux
 tdx <- 1:nrow(swindale_obs) # 1:10
 
+gc()
 ctch_mdl <- dynatop$new(hru)
 ctch_mdl$add_data(swindale_obs[tdx,])
 system.time({ ctch_mdl$initialise() })
@@ -263,6 +264,7 @@ system.time({ ctch_mdl$sim(outDefn) })
 o1 <- ctch_mdl$get_states()
 y1 <- ctch_mdl$get_output()
 
+gc()
 n_thread <- 3
 ctch_mdl <- dynatop$new(hru)
 ctch_mdl$add_data(swindale_obs[tdx,])
