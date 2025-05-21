@@ -1025,9 +1025,9 @@ dynatopGIS <- R6::R6Class(
                 hru[[ii]]$class <- as.list( shp[ii,chn_class_names] )
 
                 tbl <- table( cell_precip[hru_data[,"channel"]==ii] )
-                hru[[ii]]$precip <- setNames(tbl/sum(tbl), names(tbl))
+                hru[[ii]]$precip <- setNames(as.numeric(tbl/sum(tbl)), names(tbl))
                 tbl <- table( cell_pet[hru_data[,"channel"]==ii] )
-                hru[[ii]]$pet <- setNames(tbl/sum(tbl), names(tbl))
+                hru[[ii]]$pet <- setNames(as.numeric(tbl/sum(tbl)), names(tbl))
 
                 ## do downstream routing
                 kk <- shp$id[ shp$startNode == shp$endNode[ii] ]
