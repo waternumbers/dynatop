@@ -209,6 +209,8 @@ for(ii in 1:length(hru)){
         hru[[ii]]$rz$parameters["s_rzmax"] <- 0.1
         ## surface parameters
         hru[[ii]]$sf$parameters["v_sf"] <- 0.4
+        ## test of raf
+        ##hru[[ii]]$sf$parameters["s_raf"] <- 9000
     }else{
         ## then HRU is a channel - set so no subsurface response
         ## saturated zone parameters
@@ -325,4 +327,7 @@ lapply(st,function(s){sapply(s,range)})
 mb <- ctch_mdl$get_mass_errors()
 plot( mb[,6] , main="Mass Error", ylab="[m^3]")
 
+
+## converting to a strin for alternative usage
+str <- supressMessages({jsonlite::toJSON(hsc,pretty=TRUE,keep_vec_names = TRUE)})
 

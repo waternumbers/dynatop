@@ -268,13 +268,18 @@ Return states
 \subsection{Method \code{plot_state()}}{
 Plot a current state of the system
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_state(state = c("s_sf", "s_rz", "s_uz", "s_sz"))}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{dynatop$plot_state(
+  state = c("s_sf", "s_rz", "s_uz", "s_sz"),
+  recordTime = NULL
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{state}}{the name of the state to be plotted}
+
+\item{\code{recordTime}}{time in state record to plot as string in format e.g. 1970-01-01 00:00:00}
 }
 \if{html}{\out{</div>}}
 }

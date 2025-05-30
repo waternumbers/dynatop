@@ -181,24 +181,31 @@ dynatop <- R6Class(
         get_states = function(record=FALSE){
 
             if( record ){
-                return( setNames(private$time_series$state_record,
-                                 private$time_series$index) )
+                return( private$time_series$state_record ) ##setNames(private$time_series$state_record,
+                ## format(private$time_series$index,"%Y-%m-%d %H:%M:%S")) )
             }else{
-                tmp <- do.call(rbind, lapply(private$model, function(x){ c(id=x$uid["id"], x$states) }))
+                tmp <- do.call(rbind, lapply(private$model, function(x){ c(x$uid["id"], x$states) }))
                 return( as.data.frame(tmp) )
             }
        },
        #' @description Plot a current state of the system
        #' @param state the name of the state to be plotted
+       #' @param recordTime time in state record to plot as string in format e.g. 1970-01-01 00:00:00
        # #' @param add_channel Logical indicating if the channel should be added to the plot
-       plot_state = function(state=c("s_sf","s_rz","s_uz","s_sz")){ #,add_channel=TRUE){
+       plot_state = function(state=c("s_sf","s_rz","s_uz","s_sz"), recordTime=NULL){ #,add_channel=TRUE){
            state <- match.arg(state)
 
            if( is.null(private$map) | ( length(private$map)==0) ){
                stop("The model contains no map of HRU locations")
            }
-
-           x <- self$get_states()
+           if(is.null(recordTime)){
+               x <- self$get_states()
+           }else{
+               if( !(recordTime %in% names(private$time_series$state_record)) ){
+                   stop("recordTime is not available")
+               }
+               x <- private$time_series$state_record[[recordTime]]
+           }
            rst <- terra::subst(private$map[["hru"]], x$id, x[[state]])
 
            terra::plot(rst)
@@ -548,7 +555,15 @@ dynatop <- R6Class(
                    as.integer(max_it),
                    as.integer(n_thread))
 
+            ## tidy up state record if required
+            if(any(keep_states)){
+                names(private$time_series$state_record) <- format(private$time_series$index,"%Y-%m-%d %H:%M:%S")
+                private$time_series$state_record <- private$time_series$state_record[keep_states]
+            }
+
         }
+
+        ## tidt
 
     )
 

@@ -270,7 +270,8 @@ void dt_sim(Rcpp::List mdl, // list of HRUs
     //Rcpp::Rcout << "keep states" << std::endl;
     
     if( keep_states[tt] ){
-      state_rec(tt) = makeStateList(hrus);
+      //state_rec(tt) = makeStateList(hrus);
+      state_rec(tt) = makeStateDataFrame(hrus);
     }
     
     // check user interupt

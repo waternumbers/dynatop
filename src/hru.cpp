@@ -293,7 +293,7 @@ void hru::step(){
   v_uz_sz = s_sz + Dt*(q_sz-q_sz_in) - z;
   s_sz = z;
   
-  z = std::min(s_sz, s_uz+v_rz_uz-v_uz_sz);
+  z = std::max(0.0,std::min(s_sz, s_uz+v_rz_uz-v_uz_sz)); // to stop negative values appearing
   v_rz_uz = z + v_uz_sz - s_uz;
   s_uz = z;
 

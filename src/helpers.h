@@ -15,7 +15,8 @@ std::vector<hru> makeHRUs(Rcpp::List,
 			  int const&,
 			  double const&);
 
-Rcpp::List makeStateList(std::vector<hru>&);
+//Rcpp::List makeStateList(std::vector<hru>&);
+Rcpp::DataFrame makeStateDataFrame(std::vector<hru>&);
 
 class outFlux {
  protected: 

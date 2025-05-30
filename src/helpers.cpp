@@ -65,21 +65,40 @@ std::vector<hru> makeHRUs(Rcpp::List mdl,
   return(hrus);
 }
 
-Rcpp::List makeStateList(std::vector<hru> &hrus){
+// Rcpp::List makeStateList(std::vector<hru> &hrus){
+//   int nhru = hrus.size(); // number of HRUs
+//   Rcpp::List state_list;
+//   for(int ii=0; ii<nhru; ++ii){
+//     Rcpp::NumericVector s = Rcpp::NumericVector::create(
+// 							Rcpp::Named("s_sf", hrus[ii].s_sf / hrus[ii].area),
+// 							Rcpp::Named("s_rz", hrus[ii].s_rz / hrus[ii].area),
+// 							Rcpp::Named("s_uz", hrus[ii].s_uz / hrus[ii].area),
+// 							Rcpp::Named("s_sz", hrus[ii].s_sz / hrus[ii].area));//,
+// 							//Rcpp::Named("q_sf", hrus[ii].q_sf / hrus[ii].area),
+// 							//Rcpp::Named("q_sz", hrus[ii].q_sz / hrus[ii].area));
+//     Rcpp::List L = Rcpp::List::create(Rcpp::Named("id") = hrus[ii].id , Rcpp::Named("states") = s);
+//     state_list.push_back(L);
+//   }
+//   return( state_list );
+// }
+
+Rcpp::DataFrame makeStateDataFrame(std::vector<hru> &hrus){
   int nhru = hrus.size(); // number of HRUs
-  Rcpp::List state_list;
+  Rcpp::IntegerVector id(nhru);
+  Rcpp::NumericVector s_sf(nhru), s_rz(nhru), s_uz(nhru), s_sz(nhru);
   for(int ii=0; ii<nhru; ++ii){
-    Rcpp::NumericVector s = Rcpp::NumericVector::create(
-							Rcpp::Named("s_sf", hrus[ii].s_sf / hrus[ii].area),
-							Rcpp::Named("s_rz", hrus[ii].s_rz / hrus[ii].area),
-							Rcpp::Named("s_uz", hrus[ii].s_uz / hrus[ii].area),
-							Rcpp::Named("s_sz", hrus[ii].s_sz / hrus[ii].area));//,
-							//Rcpp::Named("q_sf", hrus[ii].q_sf / hrus[ii].area),
-							//Rcpp::Named("q_sz", hrus[ii].q_sz / hrus[ii].area));
-    Rcpp::List L = Rcpp::List::create(Rcpp::Named("id") = hrus[ii].id , Rcpp::Named("states") = s);
-    state_list.push_back(L);
+    id[ii] = hrus[ii].id;
+    s_sf[ii] = hrus[ii].s_sf / hrus[ii].area;
+    s_rz[ii] = hrus[ii].s_rz / hrus[ii].area;
+    s_uz[ii] = hrus[ii].s_uz / hrus[ii].area;
+    s_sz[ii] = hrus[ii].s_sz / hrus[ii].area;
   }
-  return( state_list );
+  Rcpp::DataFrame df = Rcpp::DataFrame::create( Rcpp::Named("id") = Rcpp::clone(id),
+						Rcpp::Named("s_sf") = Rcpp::clone(s_sf),
+						Rcpp::Named("s_rz") = Rcpp::clone(s_rz),
+						Rcpp::Named("s_uz") = Rcpp::clone(s_uz),
+						Rcpp::Named("s_sz") = Rcpp::clone(s_sz) );
+  return( df );
 }
 
 
