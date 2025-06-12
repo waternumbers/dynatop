@@ -95,7 +95,7 @@ expect_silent({ ctch$create_model(file.path(demo_dir,"new_model"),"atb_20") })
 expect_silent({
     tmp <- readRDS( file.path(demo_dir,"new_model.rds") )
     ttmp <- readRDS( "./test_output/new_model.rds")
-    tmp$map <- ttmp$map <- "no mapfor testing"
+    tmp$map <- ttmp$map <- "no map for testing"
 })
 expect_true( terra::identical(terra::rast( file.path(demo_dir,"new_model.tif") ),
                               terra::rast("./test_output/new_model.tif")) )

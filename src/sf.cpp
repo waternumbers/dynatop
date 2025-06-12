@@ -157,54 +157,68 @@ void sfc_mct::update(double const&Q){
   // }
   
 };
-// double sfc_mct::fq(double const &s){ return(-999.9); }
-// //   double q = eta_1*std::min(s_1,s);
-// //   q += eta_2 * std::pow( std::max(0.0,(s-s_1)), kappa_2 );
-// //   return( q );
-// // }
-// double sfc_mct::fs(double const &q, double const &qin ){
-//   if( qin < 0.0 ){ return( std::nan("") ); } // flag negative inflows
-//   if( q < 0.0 ){ return( std::nan("") ); } // handl case of no outflow
-//   double Qref = (q+qin)/2;
-//   if( Qref<= 0.0 ){ return(0.0); }
-//   internal_update(Qref);
-//   return( (1/(2*Cs))*( (1-Ds)*qin + (1+Ds)*q ) ); // can be simplified
-// }
-// void sfc_mct::update(double &s, double &q, double const &qin, double const &vout,
-//   double const &Dt, double const &vtol, int const &max_it){
-    
-//   double s0 = s + Dt*qin - vout;
-//   if( s0 == 0.0 ){ // no stroage so no outflow
-//     s = s0;
-//     q = 0.0;
-//     return;
-//   }
-
-//   double q_hat = qin;
-//   for(int it=0; it<3; ++it){
-//     double Qref = (q_hat + qin)/2.0;
-//     internal_update(Qref);
-//     q_hat = std::max(0.0, (2*Cs*s0 - (1-Ds)*qin) / (1+Ds+2*Cs*Dt) );
-//   }
-//   q = q_hat;
-//   s = s0 - Dt*q;
-
-// };
 
 
+// //////////////////////////
+// Muskingham Cunge after Todini with two level rectangular channel
+sfc_mct_rect::sfc_mct_rect(std::vector<double> const &param, std::vector<double> const &properties){
+  // store inputs
+  Dx = properties[1];
+  grd = properties[2];
+  double const &n_lower = param[0];
+  b_lower = param[1];
+  double const &n_upper = param[2];
+  b_upper = param[3];
+  q_crit = param[4]; // threshold flow
+  // computed values
+  beta_lower = std::sqrt(grd) * std::pow(b_lower, 2.0/3.0) / n_lower; // Q =beta * y^{5/3)
+  beta_upper = std::sqrt(grd) * std::pow(b_lower-b_lower, 2.0/3.0) / n_upper;
+  y_crit = std::pow( q_crit / beta_lower , 3.0/5.0 ); // level eqivilent to q_crit
+}
+// internal update
+void sfc_mct_rect::update(double const&Q){
+  double y(0.0), tw(0.0), y_tilde(0.0);
+  
+  // solve for y
+  if( Q <= q_crit ){
+    y = std::pow( Q / beta_lower , 3.0/5.0 );
+    tw = b_lower;
+  }else{
+    // bisection
+    // lower bound of search - start at 0.0 - this flow should be less then Q
+    std::pair<double,double> lbnd(y_crit, q_crit); // lower bound is y_crit
+    std::pair<double,double> ubnd(std::pow( Q / beta_lower , 3.0/5.0 ), Q); // upper bound is when no flow is second rectangle
+    int it = 0;
+    while( (it <= 1000) and ( ubnd.second - lbnd.second > 1e-3 ) ){
+      y = (ubnd.first + lbnd.first)/2.0; //(iW*ubnd.first) + (1.0-iW)*lbnd.first;
+      double qq = beta_lower*std::pow( y, 5.0/3.0 ) + beta_upper*std::pow(y - y_crit, 5.0/3.0);
+      if( qq <= Q ){ 
+	lbnd.first = y;
+	lbnd.second = qq;
+      }else{
+	ubnd.first = y;
+	ubnd.second = qq;
+      }
+      it += 1;
+    }
+    if( (lbnd.second > Q ) or (ubnd.second < Q) ){
+      Rcpp::Rcout << "error in solving for height" << std::endl;
+      Rcpp::Rcout << lbnd.second << " " << Q << " " << ubnd.second << std::endl;
+      Rcpp::Rcout << lbnd.first << " " << ubnd.first << std::endl;
+    }
+    y_tilde = std::max(0.0,y-y_crit);    
+    tw = b_upper;
+  }
+  double area = (b_lower * y) + ( (b_upper - b_lower) * y_tilde );
+  if( area == 0.0 ){
+    kappa = -999.0;
+    eta = 0.5;
+  }else{
+    double vel = Q/area;
+    double cel = (5.0/3.0) * ( (beta_lower*std::pow(y,2.0/3.0)) + (beta_upper*std::pow(y_tilde,2.0/3.0)) ) * tw;
+    double D = Q / (2*tw*grd);
+    kappa = Dx / vel;
+    eta = 0.5*( 1.0 -  ((2*D*vel)/(Dx*cel*cel)) );
+  }
+};
 
-// double rectangule
-
-// B0 - bed width of smaller channel
-// B1 - bed width of larger channel
-// h0, q0 - height and flow at which switch to upper channel
-
-// auto Ay = [&](double y){ return( B0*std::min(y,h0) + B1*std::max(0.0,y-h0) ) }
-// auto By = [&](double y){ return( if(y>=h0){ B1 }else{B0} )}
-// auto Py = [&](double y){ return( P = B0 + 2*y; if(y>h0){P += B1-B0}) }
-// auto Qy = [&](double y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y),(5/3)) / std::pow(Py(y),(2/3)) ); };
-//  auto cy = [&](double y){ return( 
-//				   (5/3)* (std::sqrt(grd)/n) * std::pow(Ay(y),(2/3)) / std::pow(Py(y),(2/3)) *
-//				   ( 1 - ( (4*Ay(y))/(5*By(y)*Py(y)*sa) ) ) );
-//  };
-//  auto vy = [&](double y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y)/Py(y), 2/3) ); };

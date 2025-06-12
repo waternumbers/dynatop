@@ -224,7 +224,8 @@ dynatop <- R6Class(
         map  = NULL, # storage for map object
         output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
-        info = list(sf = setNames(as.integer(1:6),c("cnst","kin","comp","power_law","arb_kin","mct")),
+        info = list(sf = setNames(as.integer(1:7),c("cnst","kin","comp","power_law",
+                                                    "arb_kin","mct","mct_rect")),
                     rz = setNames(as.integer(1),c("orig")),
                     uz = setNames(as.integer(1),c("orig")),
                     sz = setNames(as.integer(1:4),c("exp","bexp","dexp","cnst")),
@@ -304,6 +305,7 @@ dynatop <- R6Class(
                                   paste0("area_",1:max(2,ceiling(length(h[[ii]]$parameters)/2))),
                                   paste0("flow_",1:max(2,ceiling(length(h[[ii]]$parameters)/2)))),
                               "sf_mct" = c("n","bank_slope","bed_width"),
+                              "sf_mct_rect" = c("n_lower","b_lower","n_upper","b_upper","q_crit"),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
                               "sz_exp" = c("t_0","m"),

@@ -73,6 +73,9 @@ hru::hru(int const id_, int const band_,
     // Muskingham-Cunge-Todini
     sf = std::make_unique<sfc_mct>( sf_param_, properties_ );
     break;
+  case 7:
+    sf = std::make_unique<sfc_mct_rect>( sf_param_, properties_ );
+    break;
   }
 
   // initialise the saturated flux object

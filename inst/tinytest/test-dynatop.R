@@ -1,6 +1,7 @@
 library(tinytest)
 library(dynatop)
 
+## testing number of threads works - maybe remove for CRAN
 expect_silent({
     data(Swindale)
     dt <- dynatop$new(Swindale$model$hru)$add_data(Swindale$obs)
@@ -18,6 +19,7 @@ expect_silent({
 })
 expect_true({ error_exp < 1e-6 })
 
+## check sub stepping
 expect_silent({
     data(Swindale)
     dt <- dynatop$new(Swindale$model$hru)$add_data(Swindale$obs)
@@ -26,7 +28,8 @@ expect_silent({
 })
 expect_true({ error_exp_substep < 1e-6 })
 
-
+## ###############################################
+## check saturated zone types
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
@@ -58,6 +61,8 @@ expect_silent({
 })
 expect_true({ dexp_error < 1e-6 })
 
+## #################################################
+## check surface types adn rafs
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
@@ -68,7 +73,6 @@ expect_silent({
 })
 expect_true({ raf_error <1e-6 })
 
-## Dynatop mass errors with kinematic surface are <1e-6", {
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
@@ -79,54 +83,87 @@ expect_silent({
 })
 expect_true({ kin_sf_error < 1e-6 })
 
-## ## Dynatop mass errors with compound surface are <1e-6"
-## expect_silent({
-##     data(Swindale)
-##     mdl <- lapply(Swindale$model$hru,
-##                   function(h){
-##                       h$sf$parameters <- c("v_sf_1" =  as.numeric(h$sf$parameters["c_sf"]),
-##                                            "d_sf_1" = 0,
-##                                            "s_1" = Inf,
-##                                            "v_sf_2" = 0,
-##                                            "d_sf_2" = 0)
-##                       h$sf$type <- "comp"
-##                       h
-##                   })
-##     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
-##     dt$initialise()$sim(Swindale$model$output_flux)
-##     comp_sf_error <- max(abs(dt$get_mass_errors()[,6]))
-## })
-## expect_true({ comp_sf_error < 1e-6 })
+expect_silent({
+    data(Swindale)
+    mdl <- lapply(Swindale$model$hru,
+                  function(h){
+                      h$sf$parameters <- c("v_sf_1" =  as.numeric(h$sf$parameters["v_sf"]),
+                                           "s_1" = Inf,
+                                           "v_sf_2" = 1e-100)
+                      h$sf$type <- "comp"
+                      h
+                  })
+    dt <- dynatop$new(mdl)$add_data(Swindale$obs)
+    dt$initialise()$sim(Swindale$model$output_flux)
+    comp_sf_error <- max(abs(dt$get_mass_errors()[,6]))
+})
+expect_true({ comp_sf_error < 1e-6 })
 
-## ## there are differences in the initialisation which meant he comparision is only valid with s_1 =0
-## test_that("Dynatop cnst and compound solutions are consistent without raf to <1e-3", {
-##     data(Swindale)
-##     mdl_raf <- Swindale$model$hru
-##     mdl_cmp <- Swindale$model$hru
-##     for(ii in 1:length(mdl_cmp)){
-##         mdl_cmp[[ii]]$sf$parameters <- c("v_sf_1" = 999,
-##                                          "d_sf_1" = 0,
-##                                          "s_1" = 0,
-##                                          "v_sf_2" = as.numeric(mdl_cmp[[ii]]$sf$parameters["c_sf"]), ## needs to be positive else get NaN from C++
-##                                          "d_sf_2" = 0)
-##         mdl_cmp[[ii]]$sf$type <- "comp"
-##     }
-##     dt_raf <- dynatop$new(mdl_raf)$add_data(Swindale$obs)
-##     dt_raf$initialise()
-##     dt_cmp <- dynatop$new(mdl_cmp)$add_data(Swindale$obs)
-##     dt_cmp$initialise()
+expect_silent({
+    data(Swindale)
+    mdl <- lapply(Swindale$model$hru,
+                  function(h){
+                      h$sf$parameters <- setNames(c(seq(0,1000,length=10),
+                                                    seq(0,100,length=10)),
+                                                  c(paste0("area_",1:10),
+                                                    paste0("flow_",1:10)))
+                      h$sf$type <- "arb_kin"
+                      h
+                  })
+    dt <- dynatop$new(mdl)$add_data(Swindale$obs)
+    dt$initialise()$sim(Swindale$model$output_flux)
+    arb_kin_sf_error <- max(abs(dt$get_mass_errors()[,6]))
+})
+expect_true({ arb_kin_sf_error < 1e-6 })
 
-##     s_raf <- dt_raf$get_states()
-##     s_cmp <- dt_cmp$get_states()
-##     e <- s_cmp - s_raf
-##     testthat::expect_lt( max(abs(e)), 1e-8 )
+expect_silent({
+    data(Swindale)
+    mdl <- lapply(Swindale$model$hru,
+                  function(h){
+                      h$sf$parameters <- c("sc" = 10,
+                                           "pwr" = 1.5,
+                                           "s_raf" = 0,
+                                           "t_raf" = 999)
+                      h$sf$type <- "power_law"
+                      h
+                  })
+    dt <- dynatop$new(mdl)$add_data(Swindale$obs)
+    dt$initialise()$sim(Swindale$model$output_flux)
+    power_law_sf_error <- max(abs(dt$get_mass_errors()[,6]))
+})
+expect_true({ power_law_sf_error < 1e-6 })
 
-##     dt_raf$sim(Swindale$model$output_flux,vtol=1e-8)
-##     dt_cmp$sim(Swindale$model$output_flux,vtol=1e-8)
+expect_silent({
+    data(Swindale)
+    mdl <- lapply(Swindale$model$hru,
+                  function(h){
+                      h$sf$parameters <- c("n" = 0.03,
+                                           "bank_slope" = 1,
+                                           "bed_width" = 5)
+                      h$sf$type <- "mct"
+                      h
+                  })
+    dt <- dynatop$new(mdl)$add_data(Swindale$obs)
+    dt$initialise()$sim(Swindale$model$output_flux)
+    mct_sf_error <- max(abs(dt$get_mass_errors()[,6]))
+})
+expect_true({ mct_sf_error < 1e-6 })
 
-##     tmp <- max(abs(dt_cmp$get_output() - dt_raf$get_output()))
-##     testthat::expect_lt( tmp, 1e-8 )
-## })
-
-
+expect_silent({
+    data(Swindale)
+    mdl <- lapply(Swindale$model$hru,
+                  function(h){
+                      h$sf$parameters <- c("n_lower" = 0.03,
+                                           "b_lower" = 5,
+                                           "n_upper" = 0.1,
+                                           "b_upper" = 30,
+                                           "q_crit" = 20)
+                      h$sf$type <- "mct_rect"
+                      h
+                  })
+    dt <- dynatop$new(mdl)$add_data(Swindale$obs)
+    dt$initialise()$sim(Swindale$model$output_flux)
+    mct_rect_sf_error <- max(abs(dt$get_mass_errors()[,6]))
+})
+expect_true({ mct_rect_sf_error < 1e-6 })
 
