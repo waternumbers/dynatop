@@ -87,13 +87,13 @@ sfc_mct::sfc_mct(std::vector<double> const &param, std::vector<double> const &pr
   Dx = properties[1];
   grd = properties[2];
   n = param[0];
-  ca = param[1];
+  ca = 1.0 / param[1] ; // grad = tan(theta) = sin(theta)/cos(theta) was originally param[1]
   sa = std::sin( std::atan(param[1]) );
   B0 = param[2];
 }
 // internal update
 void sfc_mct::update(double const&Q){
-  auto Ay = [&](double y){ return( (B0 + y*ca)*y ); };
+  auto Ay = [&](double y){ return( (B0 + y*ca)*y ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
   auto By = [&](double y){ return( B0 + 2*y*ca ); };
   auto Py = [&](double y){ return( B0 + 2*(y/sa) ); };
   auto Qy = [&](double y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y),(5/3)) / std::pow(Py(y),(2/3)) ); };
@@ -190,3 +190,21 @@ void sfc_mct::update(double const&Q){
 //   s = s0 - Dt*q;
 
 // };
+
+
+
+// double rectangule
+
+// B0 - bed width of smaller channel
+// B1 - bed width of larger channel
+// h0, q0 - height and flow at which switch to upper channel
+
+// auto Ay = [&](double y){ return( B0*std::min(y,h0) + B1*std::max(0.0,y-h0) ) }
+// auto By = [&](double y){ return( if(y>=h0){ B1 }else{B0} )}
+// auto Py = [&](double y){ return( P = B0 + 2*y; if(y>h0){P += B1-B0}) }
+// auto Qy = [&](double y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y),(5/3)) / std::pow(Py(y),(2/3)) ); };
+//  auto cy = [&](double y){ return( 
+//				   (5/3)* (std::sqrt(grd)/n) * std::pow(Ay(y),(2/3)) / std::pow(Py(y),(2/3)) *
+//				   ( 1 - ( (4*Ay(y))/(5*By(y)*Py(y)*sa) ) ) );
+//  };
+//  auto vy = [&](double y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y)/Py(y), 2/3) ); };
