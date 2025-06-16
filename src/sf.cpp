@@ -171,8 +171,10 @@ sfc_mct_rect::sfc_mct_rect(std::vector<double> const &param, std::vector<double>
   b_upper = param[3];
   q_crit = param[4]; // threshold flow
   // computed values
-  beta_lower = std::sqrt(grd) * std::pow(b_lower, 2.0/3.0) / n_lower; // Q =beta * y^{5/3)
-  beta_upper = std::sqrt(grd) * std::pow(b_lower-b_lower, 2.0/3.0) / n_upper;
+  beta_lower = std::sqrt(grd) * b_lower / n_lower; // Q =beta * y^{5/3)
+  beta_upper = std::sqrt(grd) * (b_upper-b_lower) / n_upper;
+  //beta_lower = std::sqrt(grd) * std::pow(b_lower, 2.0/3.0) / n_lower; // Q =beta * y^{5/3)
+  //beta_upper = std::sqrt(grd) * std::pow(b_upper-b_lower, 2.0/3.0) / n_upper;
   y_crit = std::pow( q_crit / beta_lower , 3.0/5.0 ); // level eqivilent to q_crit
 }
 // internal update
@@ -187,11 +189,14 @@ void sfc_mct_rect::update(double const&Q){
     // bisection
     // lower bound of search - start at 0.0 - this flow should be less then Q
     std::pair<double,double> lbnd(y_crit, q_crit); // lower bound is y_crit
-    std::pair<double,double> ubnd(std::pow( Q / beta_lower , 3.0/5.0 ), Q); // upper bound is when no flow is second rectangle
+    y = std::pow( Q / beta_lower , 3.0/5.0 );
+    double qq = beta_lower*std::pow( y, 5.0/3.0 ) + beta_upper*std::pow(y - y_crit, 5.0/3.0);
+    std::pair<double,double> ubnd(y, qq); // upper bound is when no flow is second rectangle
+    
     int it = 0;
-    while( (it <= 1000) and ( ubnd.second - lbnd.second > 1e-3 ) ){
+    while( (it <= 100) and ( ubnd.second - lbnd.second > 1e-3 ) ){
       y = (ubnd.first + lbnd.first)/2.0; //(iW*ubnd.first) + (1.0-iW)*lbnd.first;
-      double qq = beta_lower*std::pow( y, 5.0/3.0 ) + beta_upper*std::pow(y - y_crit, 5.0/3.0);
+      qq = beta_lower*std::pow( y, 5.0/3.0 ) + beta_upper*std::pow(y - y_crit, 5.0/3.0);
       if( qq <= Q ){ 
 	lbnd.first = y;
 	lbnd.second = qq;
@@ -201,8 +206,14 @@ void sfc_mct_rect::update(double const&Q){
       }
       it += 1;
     }
+    y = (ubnd.first + lbnd.first)/2.0;
     if( (lbnd.second > Q ) or (ubnd.second < Q) ){
       Rcpp::Rcout << "error in solving for height" << std::endl;
+      Rcpp::Rcout << lbnd.second << " " << Q << " " << ubnd.second << std::endl;
+      Rcpp::Rcout << lbnd.first << " " << ubnd.first << std::endl;
+    }
+    if( it > 100 ){
+      Rcpp::Rcout << "max iterations" << std::endl;
       Rcpp::Rcout << lbnd.second << " " << Q << " " << ubnd.second << std::endl;
       Rcpp::Rcout << lbnd.first << " " << ubnd.first << std::endl;
     }
@@ -219,6 +230,8 @@ void sfc_mct_rect::update(double const&Q){
     double D = Q / (2*tw*grd);
     kappa = Dx / vel;
     eta = 0.5*( 1.0 -  ((2*D*vel)/(Dx*cel*cel)) );
+    eta = std::max(eta,0.0);
+    // if( kappa < 0 | eta < 0 | vel > 10 ){ Rcpp::Rcout << "kappa " << kappa << " eta " << eta << "vel " << vel << std::endl; }
   }
 };
 
