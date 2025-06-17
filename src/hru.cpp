@@ -310,63 +310,63 @@ void hru::step(){
     s_sf = 0;
     q_sf = 0.0;
   }else{
+    // Qref = (q_sf+q_sf_in)/2.0;
+    // sf->update( Qref );
+    // q_sf = std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)));
+    // s_sf = z - Dt*q_sf;
+    std::pair<double,double> ubnd(z/Dt, 9999.9); // wettest surface
+    q_sf= ubnd.first;
     Qref = (q_sf+q_sf_in)/2.0;
     sf->update( Qref );
-    q_sf = std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)));
-    s_sf = z - Dt*q_sf;
-    // std::pair<double,double> ubnd(z/Dt, 9999.9); // wettest surface
-    // q_sf= ubnd.first;
-    // Qref = (q_sf+q_sf_in)/2.0;
-    // sf->update( Qref );
-    // ubnd.second = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) ); // negative
+    ubnd.second = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) ); // negative
     
-    // std::pair<double,double> lbnd(0, 9999.9); // driest surface
-    // q_sf = lbnd.first;
-    // Qref = (q_sf+q_sf_in)/2.0;
-    // sf->update( Qref );
-    // lbnd.second = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
+    std::pair<double,double> lbnd(0, 9999.9); // driest surface
+    q_sf = lbnd.first;
+    Qref = (q_sf+q_sf_in)/2.0;
+    sf->update( Qref );
+    lbnd.second = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
 
-    // // Rcpp::Rcout << "id is " << id << std::endl;
-    // // Rcpp::Rcout << "upper bound " << ubnd.first << " " << ubnd.second << std::endl;
-    // // Rcpp::Rcout << "lower bound " << lbnd.first << " " << lbnd.second << std::endl;
-    // while( ubnd.second > 1e-6 ){
-    //   //for(int it=0; it<max_it; ++it){
-    //   q_sf = (ubnd.first + lbnd.first)/ 2.0;
-    //   Qref = (q_sf+q_sf_in)/2.0;
+    // Rcpp::Rcout << "id is " << id << std::endl;
+    // Rcpp::Rcout << "upper bound " << ubnd.first << " " << ubnd.second << std::endl;
+    // Rcpp::Rcout << "lower bound " << lbnd.first << " " << lbnd.second << std::endl;
+    while( ubnd.second > 1e-6 ){
+      //for(int it=0; it<max_it; ++it){
+      q_sf = (ubnd.first + lbnd.first)/ 2.0;
+      Qref = (q_sf+q_sf_in)/2.0;
+      sf->update( Qref );
+      double e = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
+      if( e <= 0.0 ){
+	lbnd.first = q_sf;
+	lbnd.second = e;
+      }else{
+	ubnd.first = q_sf;
+	ubnd.second = e;
+      }
+    }
+    q_sf = lbnd.first;
+    Qref = (q_sf+q_sf_in)/2.0;
+    sf->update( Qref );
+    // for(int it=0; it<max_it; ++it){
+    //   double Qref = (q_sf + q_sf_in)/2.0;
     //   sf->update( Qref );
-    //   double e = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
-    //   if( e <= 0.0 ){
-    // 	lbnd.first = q_sf;
-    // 	lbnd.second = e;
-    //   }else{
-    // 	ubnd.first = q_sf;
-    // 	ubnd.second = e;
+    //   if( id == 0 ){
+    // 	Rcpp::Rcout << it << " " << Qref << " " << sf->kappa << " " << sf->eta << std::endl;
     //   }
+    //   q_sf = std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
+    //   //q_sf = std::max(0.0, (2*sf->Cs*s0 - (1-sf->Ds)*qin) / (1+sf->Ds+2*sf->Cs*Dt) );
     // }
-    // q_sf = lbnd.first;
-    // Qref = (q_sf+q_sf_in)/2.0;
-    // sf->update( Qref );
-    // // for(int it=0; it<max_it; ++it){
-    // //   double Qref = (q_sf + q_sf_in)/2.0;
-    // //   sf->update( Qref );
-    // //   if( id == 0 ){
-    // // 	Rcpp::Rcout << it << " " << Qref << " " << sf->kappa << " " << sf->eta << std::endl;
-    // //   }
-    // //   q_sf = std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
-    // //   //q_sf = std::max(0.0, (2*sf->Cs*s0 - (1-sf->Ds)*qin) / (1+sf->Ds+2*sf->Cs*Dt) );
-    // // }
-    // s_sf = z - Dt*q_sf;
-    // z = std::max(0.0, sf->kappa*(sf->eta*q_sf_in + (1.0-sf->eta)*q_sf) );
-    // // if( std::abs(s_sf - z) > 1e-6 ){
-    // //   Rcpp::Rcout << "At end of s_sf update" << id << std::endl;
-    // //   Rcpp::Rcout << "     s_sf:  " << s_sf << std::endl;
-    // //   Rcpp::Rcout << "     s_sf alt:  " << z << std::endl;
-    // //   Rcpp::Rcout << "     kappa:  " << sf->kappa << std::endl;
-    // //   Rcpp::Rcout << "     eta:  " << sf->eta << std::endl;
-    // //   Rcpp::Rcout << "     q_sf_in:  " << q_sf_in << std::endl;
-    // //   Rcpp::Rcout << "     q_sf:  " << q_sf << std::endl;
-    // //   Rcpp::Rcout << "     v_sf_rz:  " << v_sf_rz << std::endl;
-    // // }
+    s_sf = z - Dt*q_sf;
+    z = std::max(0.0, sf->kappa*(sf->eta*q_sf_in + (1.0-sf->eta)*q_sf) );
+    // if( std::abs(s_sf - z) > 1e-6 ){
+    //   Rcpp::Rcout << "At end of s_sf update" << id << std::endl;
+    //   Rcpp::Rcout << "     s_sf:  " << s_sf << std::endl;
+    //   Rcpp::Rcout << "     s_sf alt:  " << z << std::endl;
+    //   Rcpp::Rcout << "     kappa:  " << sf->kappa << std::endl;
+    //   Rcpp::Rcout << "     eta:  " << sf->eta << std::endl;
+    //   Rcpp::Rcout << "     q_sf_in:  " << q_sf_in << std::endl;
+    //   Rcpp::Rcout << "     q_sf:  " << q_sf << std::endl;
+    //   Rcpp::Rcout << "     v_sf_rz:  " << v_sf_rz << std::endl;
+    // }
   }
      
   // redistributed the flows

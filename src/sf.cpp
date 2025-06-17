@@ -186,15 +186,16 @@ void sfc_mct_rect::update(double const&Q){
     y = std::pow( Q / beta_lower , 3.0/5.0 );
     tw = b_lower;
   }else{
+    //Rcpp::Rcout << "Sould not get here" << std::endl;
     // bisection
     // lower bound of search - start at 0.0 - this flow should be less then Q
     std::pair<double,double> lbnd(y_crit, q_crit); // lower bound is y_crit
-    y = std::pow( Q / beta_lower , 3.0/5.0 );
+    y = std::pow( Q / beta_lower , 3.0/5.0 ); // upper bound is when no flow is second rectangle
     double qq = beta_lower*std::pow( y, 5.0/3.0 ) + beta_upper*std::pow(y - y_crit, 5.0/3.0);
-    std::pair<double,double> ubnd(y, qq); // upper bound is when no flow is second rectangle
+    std::pair<double,double> ubnd(y, qq); 
     
     int it = 0;
-    while( (it <= 100) and ( ubnd.second - lbnd.second > 1e-3 ) ){
+    while( (it <= 100) and ( ubnd.second - lbnd.second > 1e-6 ) ){
       y = (ubnd.first + lbnd.first)/2.0; //(iW*ubnd.first) + (1.0-iW)*lbnd.first;
       qq = beta_lower*std::pow( y, 5.0/3.0 ) + beta_upper*std::pow(y - y_crit, 5.0/3.0);
       if( qq <= Q ){ 
@@ -226,11 +227,12 @@ void sfc_mct_rect::update(double const&Q){
     eta = 0.5;
   }else{
     double vel = Q/area;
-    double cel = (5.0/3.0) * ( (beta_lower*std::pow(y,2.0/3.0)) + (beta_upper*std::pow(y_tilde,2.0/3.0)) ) * tw;
+    double cel = (5.0/3.0) * ( ( b_lower*beta_lower*std::pow(y,2.0/3.0)) + ((b_upper-b_lower)*beta_upper*std::pow(y_tilde,2.0/3.0)) );
     double D = Q / (2*tw*grd);
     kappa = Dx / vel;
     eta = 0.5*( 1.0 -  ((2*D*vel)/(Dx*cel*cel)) );
     eta = std::max(eta,0.0);
+    //eta = 0; //.5; //PJS test
     // if( kappa < 0 | eta < 0 | vel > 10 ){ Rcpp::Rcout << "kappa " << kappa << " eta " << eta << "vel " << vel << std::endl; }
   }
 };
