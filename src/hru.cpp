@@ -329,7 +329,8 @@ void hru::step(){
     // Rcpp::Rcout << "id is " << id << std::endl;
     // Rcpp::Rcout << "upper bound " << ubnd.first << " " << ubnd.second << std::endl;
     // Rcpp::Rcout << "lower bound " << lbnd.first << " " << lbnd.second << std::endl;
-    while( ubnd.second > 1e-6 ){
+    int it = 0;
+    while( (lbnd.second < -1e-6) & (it < 100) ){
       //for(int it=0; it<max_it; ++it){
       q_sf = (ubnd.first + lbnd.first)/ 2.0;
       Qref = (q_sf+q_sf_in)/2.0;
@@ -342,6 +343,7 @@ void hru::step(){
 	ubnd.first = q_sf;
 	ubnd.second = e;
       }
+      it +=1;
     }
     q_sf = lbnd.first;
     Qref = (q_sf+q_sf_in)/2.0;

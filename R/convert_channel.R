@@ -11,6 +11,7 @@
 #' @param defaults default values used to replace missing widths, slopes and depths
 #' @param min_slope minimum slope of the channel bed
 #' @param drop logical, should non-required proerties be dropped
+#' @param erase logical, should overlaps of buffered channel be erased
 #'
 #' @return A SpatVect containing polygons of the channel network, with at least the following properties: name, length, area, width, slope, startNode, endNode and channelVol.
 #'
@@ -29,6 +30,7 @@
 #'      - Missing `area` values are computed from the polygons
 #'   - Missing `channelVol` values are populated by the `area` multiplied by the default depth.
 #'   - if `drop=TRUE` all columns except those required are dropped
+#'   - if `erase=TRUE` overlapping regions between the polygons are removed. This is more accurate but slower an can crash.
 #'
 #' @examples
 #' channel_file <- system.file("extdata/gis", "SwindaleRiverNetwork.shp",
@@ -46,7 +48,8 @@ convert_channel <- function(chn,
                                              slope = "slope"),
                             defaults = c("width"=2,"slope"=0.001),
                             min_slope = 1e-6,
-                            drop = TRUE){
+                            drop = TRUE,
+                            erase=FALSE){
 
     ## read in the chn sp object is a character sting
     if(is.character(chn)){
@@ -113,12 +116,14 @@ convert_channel <- function(chn,
         warning("Buffering channel with specified widths")
         chn <- terra::buffer(chn, width=chn$width/2)
     }
+    chn$area <- terra::expanse(chn)
 
     ## remove overlapping channel sections - start with largest...
-    chn$area <- terra::expanse(chn)
-    chn <- chn[order(chn$area,decreasing=TRUE),]
-    chn <- terra::erase(chn, sequential=TRUE)
-    chn$area <- terra::expanse(chn)
+    if(erase){
+        chn <- chn[order(chn$area,decreasing=TRUE),]
+        chn <- terra::erase(chn, sequential=TRUE)
+        chn$area <- terra::expanse(chn)
+    }
 
     ## drop
     if(drop){
@@ -253,19 +258,26 @@ merge_channels <- function(x,y,outlets=NULL,verbose=FALSE){
 
     x$endNode <- x_en
     x$startNode <- x_sn
-#    y$endNode <- y_en
-#    y$startNode <- y_sn
 
-    x <- rbind(x[keep_x,],y[keep_y,])
-
-    ## trim overlaps according to area
-    chn <- chn[order(chn$area,decreasing=TRUE),]
-    chn <- terra::erase(chn, sequential=TRUE)
+    x <- x[keep_x,]
+    y <- y[keep_y,]
+    x <- terra::erase(x,y)
+    chn <- rbind(x,y)
     chn$area <- terra::expanse(chn)
+    chn <- chn[order(chn$area,decreasing=TRUE),]
 
-    check_channel(x,outlets)
 
-    return(x)
+    ## older method but slow when erase not called on x first
+    ## x <- rbind(x[keep_x,],y[keep_y,])
+
+    ## ## trim overlaps according to area
+    ## chn <- chn[order(chn$area,decreasing=TRUE),]
+    ## chn <- terra::erase(chn, sequential=TRUE)
+    ## chn$area <- terra::expanse(chn)
+
+    check_channel(chn,outlets)
+
+    return(chn)
 }
 
 
@@ -334,12 +346,15 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
                 setTxtProgressBar(pb, cnt, title = NULL, label = NULL)
                 next
             }
-
+            ## matching startNode
             in_hn <-  which( chn$endNode == chn$startNode[ii] )
             out_hn <-  which( chn$startNode == chn$startNode[ii] )
+            # matching endNode
             in_en <- which( chn$endNode == chn$endNode[ii] )
             out_en <- which( chn$startNode == chn$endNode[ii] )
+            ## work out which to merge with
             jj <- NA
+            ##1/ merge down stream
             if( length(in_en)==1 &&
                 length(out_en)==1 &&
                 not_wb[out_en] ){
@@ -347,6 +362,7 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
                 jj <- out_en
                 chn$startNode[jj] <- chn$startNode[ii]
             }
+            ## 2/ merge upstream
             if( length(in_hn)==1 &&
                 not_wb[in_hn] &&
                 length(out_hn)==1 &&
@@ -355,6 +371,7 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
                 jj <- in_hn
                 chn$endNode[jj] <- chn$endNode[ii]
             }
+            ## 3/ remove entirely if not strict routing
             if( length(out_hn)==1 &&
                 is.na(jj) &&
                 !strict_routing ){
@@ -385,13 +402,13 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
 
             if(!is.na(jj)){ ## can simplify
 
-                ##print(paste(cnt,ii,jj))
+                #print(paste(cnt,ii,jj))
 
                 ## merge properties (default to those for jj)
                 chn$length[jj] <- chn$length[jj] + chn$length[ii]
                 chn$area[jj] <- chn$area[jj] + chn$area[ii]
-                chn$width[jj] <- chn$area[jj] / chn$length[jj]
-                chn$channelVol[jj] <- chn$channelVol[jj] + chn$channelVol[ii]
+                ##chn$width[jj] <- chn$area[jj] / chn$length[jj]
+                ##chn$channelVol[jj] <- chn$channelVol[jj] + chn$channelVol[ii]
                 chn$endNode[ii] <- chn$startNode[ii] <- NA # to stop matching on deleted segments
 
                 ## merge geom
