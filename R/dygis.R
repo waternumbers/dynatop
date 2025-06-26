@@ -1019,14 +1019,14 @@ dynatopGIS <- R6::R6Class(
                                     list(id=hru_data[,"channel"],name=cell_precip),sum)
             chn_pet <- aggregate(hru_data[,"channel_fraction"],
                                     list(id=hru_data[,"channel"],name=cell_pet),sum)
-            
+
             for(ii in 1:n_channel){
                 ## it is a channel HRU
                 hru[[ii]]$uid["id"] <- as.integer( shp$id[ii] )
                 hru[[ii]]$uid["band"] <- as.integer( shp$band[ii] )
                 hru[[ii]]$properties["Dx"] <- as.numeric( shp$length[ii] )
                 hru[[ii]]$properties["gradient"] <- as.numeric( shp$slope[ii] )
-                hru[[ii]]$properties["area"] <- as.numeric( shp$area[ii] )
+                hru[[ii]]$properties["area"] <- 0 #as.numeric( shp$area[ii] )
                 hru[[ii]]$class <- as.list( shp[ii,chn_class_names] )
 
                 kdx <- chn_precip$id == ii
@@ -1056,6 +1056,11 @@ dynatopGIS <- R6::R6Class(
             cnt <- n_channel
             for(ii in idx){
                 chn_frc <- hru_data[ii,"channel_fraction"]
+
+                if( chn_frc > 0 ){
+                    hru[[ hru_data[ii,"channel"] ]]$properties["area"] <- hru[[ hru_data[ii,"channel"] ]]$properties["area"] + cell_area * chn_frc
+                }
+
                 if( chn_frc == 1 ){ next } ## totally handled in the channel part
 
                 ## process the hillslope part of the cell
@@ -1125,6 +1130,11 @@ dynatopGIS <- R6::R6Class(
 
             if( verbose ){ cat("Passing through HRUs to sort indexing","\n") }
             for(ii in 1:nhru){
+                ## set precip and pet for area of 0
+                if(hru[[ii]]$properties["area"] == 0){
+                    hru[[ii]]$precip <- setNames(1,cell_precip[1])
+                    hru[[ii]]$pet <- setNames(1,cell_pet[1])
+                }
                 ## for both - sort out so 0 indexed
                 hru[[ii]]$uid["id"] <- as.integer(hru[[ii]]$uid["id"] - 1) ## since 0 indexed in dynatop
                 hru[[ii]]$sf_flow_direction$id <- hru[[ii]]$sf_flow_direction$id - 1L

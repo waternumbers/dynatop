@@ -71,7 +71,7 @@ expect_true( terra::identical(ctch$get_layer("upslope_area"), brk[["upslope_area
 
 
 ## test adding a layer
-expect_silent({ 
+expect_silent({
     tmp <- ctch$get_layer("filled_dem")
     tmp <- terra::ifel(tmp<=500,0,1)
     names(tmp) <- "greater_500"
