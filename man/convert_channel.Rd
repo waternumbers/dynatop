@@ -10,7 +10,8 @@ convert_channel(
     "endNode", width = "width", slope = "slope"),
   defaults = c(width = 2, slope = 0.001),
   min_slope = 1e-06,
-  drop = TRUE
+  drop = TRUE,
+  erase = FALSE
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ convert_channel(
 \item{min_slope}{minimum slope of the channel bed}
 
 \item{drop}{logical, should non-required proerties be dropped}
+
+\item{erase}{logical, should overlaps of buffered channel be erased}
 }
 \value{
 A SpatVect containing polygons of the channel network, with at least the following properties: name, length, area, width, slope, startNode, endNode and channelVol.
@@ -46,6 +49,7 @@ The processing follows the follwoing sequence:
      - Missing `area` values are computed from the polygons
   - Missing `channelVol` values are populated by the `area` multiplied by the default depth.
   - if `drop=TRUE` all columns except those required are dropped
+  - if `erase=TRUE` overlapping regions between the polygons are removed. This is more accurate but slower an can crash.
 }
 \examples{
 channel_file <- system.file("extdata/gis", "SwindaleRiverNetwork.shp",

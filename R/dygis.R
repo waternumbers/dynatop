@@ -1015,6 +1015,11 @@ dynatopGIS <- R6::R6Class(
             chn_class_names <- setdiff(names(shp), c("id","band","length","slope","area")) ## channel class info to copy
             outlets <- list() ## initialise list of outlets
 
+            chn_precip <- aggregate(hru_data[,"channel_fraction"],
+                                    list(id=hru_data[,"channel"],name=cell_precip),sum)
+            chn_pet <- aggregate(hru_data[,"channel_fraction"],
+                                    list(id=hru_data[,"channel"],name=cell_pet),sum)
+            
             for(ii in 1:n_channel){
                 ## it is a channel HRU
                 hru[[ii]]$uid["id"] <- as.integer( shp$id[ii] )
@@ -1024,10 +1029,14 @@ dynatopGIS <- R6::R6Class(
                 hru[[ii]]$properties["area"] <- as.numeric( shp$area[ii] )
                 hru[[ii]]$class <- as.list( shp[ii,chn_class_names] )
 
-                tbl <- table( cell_precip[hru_data[,"channel"]==ii] )
-                hru[[ii]]$precip <- setNames(as.numeric(tbl/sum(tbl)), names(tbl))
-                tbl <- table( cell_pet[hru_data[,"channel"]==ii] )
-                hru[[ii]]$pet <- setNames(as.numeric(tbl/sum(tbl)), names(tbl))
+                kdx <- chn_precip$id == ii
+                hru[[ii]]$precip <- setNames(
+                    as.numeric( chn_precip$x[kdx] / sum(chn_precip$x[kdx]) ),
+                    chn_precip$name[kdx])
+                kdx <- chn_precip$id == ii
+                hru[[ii]]$pet <- setNames(
+                    as.numeric( chn_pet$x[kdx] / sum(chn_pet$x[kdx]) ),
+                    chn_pet$name[kdx])
 
                 ## do downstream routing
                 kk <- shp$id[ shp$startNode == shp$endNode[ii] ]
