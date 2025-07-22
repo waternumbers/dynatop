@@ -66,6 +66,7 @@ public:
 class sfc_mct_rect: public sfc {
 private:
   double grd, Dx, b_lower, b_upper, beta_lower, beta_upper, q_crit, y_crit;
+  double solve_depth(double const&);
 public:
   sfc_mct_rect(std::vector<double> const&, std::vector<double> const&); //, std::vector<double> const&);
   void update(double const&);
