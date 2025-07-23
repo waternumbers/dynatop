@@ -182,19 +182,26 @@ sfc_mct_rect::sfc_mct_rect(std::vector<double> const &param, std::vector<double>
 }
 // solve depth for the flow
 double sfc_mct_rect::solve_depth(double const&Q){
-  // find search range
+  // find search range - this should be < Q but sometimes approximation in calc fails
   double y = std::pow( (Q/beta_lower) , 3.0/5.0 );
   double qq = beta_lower*y*std::pow( (b_lower*y)/(b_lower + 2.0*std::min(y,y_crit)), 2.0/3.0 ) +
     beta_upper*y*std::pow( (b_upper*std::max(0.0,y-y_crit))/(b_lower + std::max(0.0,y-y_crit)), 2.0/3.0 );
-  std::pair<double,double> lbnd(y,qq); // lower bound
-  int it = 0;
-  while( (it <=100) and qq < Q ){
-    y += y + 0.01;
-    qq = beta_lower*y*std::pow( (b_lower*y)/(b_lower + 2.0*std::min(y,y_crit)), 2.0/3.0 ) +
-      beta_upper*y*std::pow( (b_upper*std::max(0.0,y-y_crit))/(b_lower + std::max(0.0,y-y_crit)), 2.0/3.0 );
-    it += 1;
-  }
+  std::pair<double,double> lbnd(y,qq); // upper bound
   std::pair<double,double> ubnd(y,qq); // upper bound
+  int it = 0;  
+  if( qq > Q ){
+    lbnd.first = 0.0;
+    lbnd.second = 0.0;
+  }else{
+    while( (it <=100) and qq < Q ){
+      y += y + 0.01;
+      qq = beta_lower*y*std::pow( (b_lower*y)/(b_lower + 2.0*std::min(y,y_crit)), 2.0/3.0 ) +
+	beta_upper*y*std::pow( (b_upper*std::max(0.0,y-y_crit))/(b_lower + std::max(0.0,y-y_crit)), 2.0/3.0 );
+      it += 1;
+    }
+    ubnd.first = y;
+    ubnd.second = qq;
+  }
   if( (lbnd.second > Q ) or (ubnd.second < Q) ){
     Rcpp::Rcout << "number of iterations is " << it << std::endl;
     Rcpp::Rcout << "error in solving for height at start" << std::endl;
@@ -219,6 +226,7 @@ double sfc_mct_rect::solve_depth(double const&Q){
   y = (ubnd.first + lbnd.first)/2.0;
   if( (lbnd.second > Q ) or (ubnd.second < Q) ){
     Rcpp::Rcout << "error in solving for height" << std::endl;
+    Rcpp::Rcout << it << std::endl;
     Rcpp::Rcout << lbnd.second << " " << Q << " " << ubnd.second << std::endl;
     Rcpp::Rcout << lbnd.second-Q  << " " << Q-ubnd.second << std::endl;
     Rcpp::Rcout << lbnd.first << " " << ubnd.first << std::endl;
