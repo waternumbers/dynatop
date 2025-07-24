@@ -144,20 +144,6 @@ dynatop <- R6Class(
         plot_output = function(name=colnames(private$time_series$output)){
             x <- self$get_output(name)
             plot(x)
-
-
-            ## if(seperate){
-            ##     oldpar <- par(no.readonly = TRUE)
-            ##     on.exit(par(oldpar))
-            ##     nc <- floor(sqrt(length(name)))
-            ##     nr <- ceiling( length(name)/nc )
-            ##     par(mfrow=c(nr,nc))
-            ##     for(ii in name){
-            ##         plot(x[,ii])
-            ##     }
-            ## }else{
-            ##     plot(x)
-            ## }
         },
         #' @description Get the observed data
         get_obs_data = function(){
@@ -219,7 +205,7 @@ dynatop <- R6Class(
     ),
     private = list(
         ## stores of data
-        version = "0.3.0",
+        version = "0.5.0",
         model = list(), # storage for model object
         map  = NULL, # storage for map object
         output_defn = list(), ## definition of output
@@ -235,180 +221,132 @@ dynatop <- R6Class(
                                               "s_sf","s_rz","s_uz","s_sz",
                                               "v_sf_rz","v_rz_uz","v_uz_sz"))
                     ),
-        digest_hru = function(h, use_states, delta){ ## check HRU returns a text string of errors
-            etxt = character(0)
+        digest_hru = function(h, use_states, delta){
+            state_names <- c("s_sf","s_rz","s_uz","s_sz") ## state names
+            propery_names <- c("area","Dx") ## property names
+            ## surface types and parameters
+            sf_types <- list("kin" = c("n","s_raf","t_raf"),
+                             "cnst" = c("v_sf","s_raf","t_raf"),
+                             "power_law" = c("sc","pwr","s_raf","t_raf"),
+                             "comp" = c("v_sf_1","s_1","v_sf_2"),
+                             "arb_kin" = NA, ## need to evalute when presencse of parameters known
+                             "mct" = c("n","bank_slope","bed_width"),
+                             "mct_rect" = c("n_lower","b_lower","n_upper","b_upper","q_crit")
+                             )
+            ## root zone types and parameters
+            rz_types <- list("orig" = c("s_rzmax"))
+            ## un sat zone parameters
+            uz_types <- list("orig" = c("t_d"))
+            ## sat zone types
+            sz_types <- list("exp" = c("t_0","m"),
+                             "bexp" = c("t_0","m","h_szmax"),
+                             "cnst" = c("v_sz","h_szmax"),
+                             "dexp" = c("t_0","m","m2","omega"))
+            ## ugly to get h$id printed
+            stopifnot( "No id specified" = "id" %in% names(h) )
 
-            stopifnot("No uids specified" = "uid" %in% names(h),
-                      "No id in uid" = "id" %in% names(h$uid))
-            id <- h$uid["id"]
-
-            ## check uids
-            nm <- c("id","band","cell")
-            if( !all(nm %in% names(h$uid)) ){
-                etxt <- c(etxt, paste0(id, ": uid is missing named values") )
-            }
-            if( !is.integer(h$uid) ){ etxt <- c( etxt, paste0(id, ": uid should be an integer vector") ) }
-
-            ## check properties
-            if("properties" %in% names(h)){
-                prpnm <- c("area", "Dx", "gradient")
-                if( !is.numeric(h$properties) ){ etxt <- c( etxt, paste0(id, ": properties should be a numeric vector") ) }
-                if( all(prpnm %in% names(h$properties)) ){
-                    if( !all( h$properties[prpnm] >0 ) ){
-                        etxt <- c( etxt, paste0(id, ": all properties should be greater then 0") )
-                    }
-                    h$properties <- h$properties[prpnm] # c( prpnm, setdiff(names(h$properties),prpnm)) ]
-                }else{
-                    etxt <- c(etxt, paste0(id, ": properties is missing named values") )
-                }
-            }else{
-                etxt <- c(etxt,paste0(id, ": properties is missing") )
-            }
-
-            ## check states
-            snm <- c("s_sf","s_rz","s_uz","s_sz")
-            if("states" %in% names(h)){
-                if( !is.numeric(h$states) ){ etxt <- paste(etxt, paste0(id, ": states should be a numeric vector"), sep="\n") }
-                if( !all(snm %in% names(h$states)) ){
-                    etxt <- c(etxt, paste0(id, ": states is missing named values"))
-                }
-                h$states <- h$states[snm] # c(snm, setdiff(names(h$states),snm)) ] ## make sure states are in correct order
-            }else{
-                etxt <- c(etxt,paste0(id, ": states is missing") )
-            }
-
-            ## check sf, rz, uz, sz
-            for(ii in c("sf","rz","uz","sz")){
-                if(!(ii %in% names(h))){
-                    etxt <- c(etxt,paste0(id, ": ",ii," definition is not present"))
-                    next
-                }
-                if( !all(c("type","parameters") %in% names(h[[ii]])) ){
-                    etxt <- c(etxt,paste0(id, ": ",ii, " definition is missing type and.or parameters"))
-                    next
-                }
-                if( length( h[[ii]]$type ) >1 ){
-                    etxt <- c(etxt, paste0(id[1], ": ", ii, " type should be of length 1"))
-                    next
-                }
-
-                if( !( h[[ii]]$type %in% names(private$info[[ii]])) ){
-                    etxt <- c(etxt, paste0(id[1], ": ", ii, " type is not valid"))
-                    next
-                }
-                pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
-                              "sf_kin" = c("n","s_raf","t_raf"),
-                              "sf_cnst" = c("v_sf","s_raf","t_raf"),
-                              "sf_power_law" = c("sc","pwr","s_raf","t_raf"),
-                              "sf_comp" = c("v_sf_1","s_1","v_sf_2"),
-                              "sf_arb_kin" = c(
-                                  paste0("area_",1:max(2,ceiling(length(h[[ii]]$parameters)/2))),
-                                  paste0("flow_",1:max(2,ceiling(length(h[[ii]]$parameters)/2)))),
-                              "sf_mct" = c("n","bank_slope","bed_width"),
-                              "sf_mct_rect" = c("n_lower","b_lower","n_upper","b_upper","q_crit"),
-                              "rz_orig" = c("s_rzmax"),
-                              "uz_orig" = c("t_d"),
-                              "sz_exp" = c("t_0","m"),
-                              "sz_bexp" = c("t_0","m","h_szmax"),
-                              "sz_cnst" = c("v_sz","h_szmax"),
-                              "sz_dexp" = c("t_0","m","m2","omega"),
-                              stop("Invalid options for pname")
-                              )
-                if( !is.numeric( h[[ii]]$parameters )){
-                    etxt <- c(etxt, paste0(id[1], ": ", ii, " parameters should be a numeric vector"))
-                    next
-                }
-                if( !all( pnm %in% names(h[[ii]]$parameters)) ){
-                    etxt <- c(etxt,paste0(id, ": ",ii, " is missing parameters"))
-                    next
-                }
-                if( !all( h[[ii]]$parameters[ pnm ] >=0 ) ){
-                    etxt <- c(etxt, paste0(id, ": some ", ii, " parameters are negatve"))
-                    next
-                }
-                h[[ii]]$parameters <- h[[ii]]$parameters[pnm] # c(pnm,setdiff(names(h[[ii]]$parameters),pnm)) ] ## make sure parameters are in correct order
-
-            }
-
-            ## check precip and pet
-            for(ii in c("precip","pet")){
-                ##if( length(h[[ii]]) == 0 ){ next }
-                if( !is.numeric(h[[ii]]) ){
-                    etxt <- c(etxt, paste0(id, ": ", ii, " should be a numeric vector"))
-                    next
-                }
-                if( !all(h[[ii]]>0) ){
-                    etxt <- c(etxt, paste0(id, ": ", ii, " should be positive"))
-                    next
-                }
-                if( sum(h[[ii]]) != 1 ){
-                    etxt <- c(etxt, paste0(id, ": ", ii, " should sum to one"))
-                    next
-                }
-                if( !all( nchar(names(h[[ii]]))>0 ) ){
-                    etxt <- c(etxt, paste0(id, ": ", ii, " all names should have characters"))
-                    next
+            tryCatch(
+                stopifnot(": id should be an integer" = is.integer(h$id) & length(h$id)==1,
+                          ": band should be an integer" = is.integer(h$band) & length(h$band)==1,
+                          ": cell should be an integer" = is.integer(h$cell) & length(h$cell)==1,
+                          ## proerties
+                          ": has no properties" = "properties" %in% names(h),
+                          ": properties should be posistive numeric values" = is.numeric(h$properties) & all(h$properties>0),
+                          ": is missing a property" = all(pnm %in% names(h$properties)),
+                          ## states
+                          ": has no states" = "states" %in% names(h),
+                          ": states should be non-negative numeric values" = is.numeric(h$properties) & all(h$states>=0),
+                          ": is missing a state" = all(snm %in% names(h$states)),
+                          ## sf
+                          ": has no sf" = "sf" %in% names(h),
+                          ": sf has no type" = "type" %in% names(h$sf),
+                          ": sf has invalid type" = h$sf$type %in% names(sf_types),
+                          ": sf has no parameters" = "parameters" %in% names(h$sf),
+                          ": sf has invalid parameters" = h$sf$type != "arb_kin" & all(sf_types[[h$sf$type]] %in% names(h$sf$parameters)) & all(h$sf$parameters>=0),
+                          ## rz
+                          ": has no rz" = "rz" %in% names(h),
+                          ": rz has no type" = "type" %in% names(h$rz),
+                          ": rz has invalid type" = h$rz$type %in% names(rz_types),
+                          ": rz has no parameters" = "parameters" %in% names(h$rz),
+                          ": rz has invalid parameters" = all(rz_types[[h$rz$type]] %in% names(h$rz$parameters)) & all(h$rz$parameters>=0),
+                          ## uz
+                          ": has no uz" = "uz" %in% names(h),
+                          ": uz has no type" = "type" %in% names(h$uz),
+                          ": uz has invalid type" = h$uz$type %in% names(uz_types),
+                          ": uz has no parameters" = "parameters" %in% names(h$uz),
+                          ": rz has invalid parameters" = all(uz_types[[h$uz$type]] %in% names(h$uz$parameters)) & all(h$uz$parameters>=0),
+                          ## sz
+                          ": has no sz" = "sz" %in% names(h),
+                          ": sz has no type" = "type" %in% names(h$sz),
+                          ": sz has invalid type" = h$sz$type %in% names(sz_types),
+                          ": sz has no parameters" = "parameters" %in% names(h$sz),
+                          ": sz has invalid parameters" = all(sz_types[[h$sz$type]] %in% names(h$rz$parameters)) & all(h$sz$parameters>=0),
+                          ## widths
+                          ": has no widths" = "width" %in% names(h),
+                          ": width is not valid" = is.numeric(h$width) & length(h$width)==8 & all(h$width>=0),
+                          ## gradients
+                          ": has no gradients" = "gradient" %in% names(h),
+                          ": gradient is not valid" = is.numeric(h$gradient) & length(h$gradient)==8 & all(h$width>=0),
+                          ": gradient must be positive for non-zero widths" = all(h$gradient[h$width>0] > 0),
+                          ## upslope cells
+                          ": has no neighbours" = "neighbours" %in% names(h),
+                          ": neighbours is not valid" = is.integer(h$neighbours) & length(h$neighbours)==8 & all( is.na(h$neighbours) | h4neighbours>=0 ),
+                          ## precip
+                          ": has no precip" = "precip" %in% names(h),
+                          ": precip is not valid" = is.character(h$precip) & length(h$precip)==1,
+                          ## pet
+                          ": has no pet" = "pet" %in% names(h),
+                          ": pet is not valid" = is.character(h$pet) & length(h$pet)==1
+                          ),
+                error = function(e){ stop( paste0("HRU ", h$id, e$message) ) }
+            )
+            ## update the sf parameters for arb kin
+            if( h$sf$type == "arb_kin" ){
+                sf$arb_kin <- c(paste0("area_",1:max(2,ceiling(length(h[[ii]]$parameters)/2))),
+                                paste0("flow_",1:max(2,ceiling(length(h[[ii]]$parameters)/2)))
+                                )
+                if( !( all(sf_types[[h$sf$type]] %in% names(h$sf$parameters)) & all(h$sf$parameters>=0) ) ){
+                    stop( paste0("HRU ", h$id, ": sf has invalid parameters") )
                 }
             }
 
-            ## check lateral flow
-            for(ii in c("sf_flow_direction","sz_flow_direction")){
-                if( !all(c("id","fraction") %in% names(h[[ii]])) ){
-                    etxt <- c(etxt, paste0(id, ": ", ii, " should contain id and fraction"))
-                    next
-                }
-                if( !is.integer(h[[ii]]$id) ){
-                    etxt <- c(etxt, paste0(id, ": ", ii, " id should be an integer vector"))
-                    next
-                }
-                if( !is.numeric(h[[ii]]$fraction) ){
-                    etxt <- c(etxt, paste0(id, ": ", ii, " widths should be a numeric vector"))
-                    next
-                }
-                if( length( h[[ii]]$id) != length(h[[ii]]$fraction) ){
-                    etxt <- c(etxt, paste0(id, ": ", ii, " id and fraction should be the same length"))
-                    next
-                }
-                if( any(h[[ii]]$id >= id) ){
-                    etxt <- c(etxt, paste0(id, ": ", ii, " id value be less then current id"))
-                    next
-                }
-            }
+            ## arrange variables into correct order
+            h$properties <- h$properties[pnm]
+            h$states <- h$states[snm]
+            h$sf$parameters <- h$sf$parameters[ sf[[h$sf$type]] ]
+            h$rz$parameters <- h$rz$parameters[ rz[[h$rz$type]] ]
+            h$uz$parameters <- h$uz$parameters[ uz[[h$uz$type]] ]
+            h$sz$parameters <- h$sz$parameters[ sz[[h$sz$type]] ]
 
-            ## fail if errors
-            if( length( etxt ) >0 ){
-                stop( paste(etxt,collapse = "\n") )
-            }
-
-            ## convert for C++
-            for(ii in c("sf","rz","uz","sz")){ ## convert type to integer
-                h[[ii]]$type <- private$info[[ii]][ h[[ii]]$type ]
-            }
+            ## ## convert for C++
+            ## for(ii in c("sf","rz","uz","sz")){ ## convert type to integer
+            ##     h[[ii]]$type <- private$info[[ii]][ h[[ii]]$type ]
+            ## }
 
             if( !use_states ){ h$states[] <- NA }
-            return(h)
 
+            return(h)
         },
         regurge_hru = function(h){
-            ## convert for C++
-            for(ii in c("sf","rz","uz","sz")){ ## convert type from integer
-                h[[ii]]$type <- private$info[[ii]][ h[[ii]]$type ]
-            }
+            ## ## convert for C++
+            ## for(ii in c("sf","rz","uz","sz")){ ## convert type from integer
+            ##     h[[ii]]$type <- private$info[[ii]][ h[[ii]]$type ]
+            ## }
             return(h)
         },
         ## this code checks and digests the model
         digest_model = function(model, use_states, delta=1e-13){
             m <- lapply( model, private$digest_hru, use_states = use_states, delta = delta)
-            ## check ids
-            ##browser()
-            id <- sapply(m, function(x){x$uid["id"]})
-            idx <- order(id)
-            id <- id[idx]
-            if( !all( id == 0:(length(id)-1) ) ){ stop("ids are not in sequence") }
-            ## order by band
-            bnd <- sapply(m, function(x){x$uid["band"]})
-            idx <- order(bnd)
-            private$model <- m[idx]
+            ## ## check ids
+            ## ##browser()
+            ## id <- sapply(m, function(x){x$uid["id"]})
+            ## idx <- order(id)
+            ## id <- id[idx]
+            ## if( !all( id == 0:(length(id)-1) ) ){ stop("ids are not in sequence") }
+            ## ## order by band
+            ## bnd <- sapply(m, function(x){x$uid["band"]})
+            ## idx <- order(bnd)
+            private$model <- m ##[idx]
         },
         ## function to digest maps
         digest_map = function(mapFile){
@@ -428,37 +366,23 @@ dynatop <- R6Class(
         },
         ## check and add observations
         digest_obs = function(obs){
-
-            ## check types
-            if(!is.xts(obs)){ stop("observations should be an xts object") }
-
-            ## check constant time step
-            tmp <- diff(as.numeric(index(obs)))
-            if( !all( tmp == tmp[1] ) ){
-                stop("Time steps in data are not unique")
-            }
-
             ## get all the observed series names
             nm <- lapply(private$model,
-                         function(h){unique(c(names(h$precip),names(h$pet)))})
+                         function(h){c(h$precip,h$pet)})
             nm <- unique(do.call(c,nm))
-
-            ## check names
-            idx <- nm %in% names(obs)
-            if( !all(idx) ){
-                stop(paste(c("Missing series:",nm[!idx]),collaspe=" "))
-            }
-
-            ## check all required values are finite
-            if( !all(is.finite(obs[,nm])) ){
-                stop("There are non finite values in the required time series")
-            }
-
+            
+            stopifnot(
+                "observations should be an xts object" = is.xts(obs),
+                "Time steps in data are not unique" = {tmp <- diff(as.numeric(index(obs))); all(tmp==tmp[1])},
+                "Miising series" = all(nm %in% names(obs)),
+                "There are non finite values in the required time series" = all(is.finite(obs[,nm]))
+            )
+            
             nm = setNames(0:(ncol(obs)-1),colnames(obs))
-
+            
             faddobs <- function(h,nm){
-                h$precip_idx <- nm[ names(h$precip) ]
-                h$pet_idx <- nm[ names(h$pet) ]
+                h$precip_idx <- nm[ h$precip ]
+                h$pet_idx <- nm[ h$pet ]
                 h
             }
 
@@ -469,31 +393,19 @@ dynatop <- R6Class(
         },
         ## digest the output definition
         digest_output_defn = function(defn){
-            ## check table
-            if( !is.data.frame(defn) ){ stop("Output definition should be a data frame") }
-            if( !all(c("name","id","flux") %in% names(defn) ) ){ stop("Output definition must have variables name, id and flux") }
-            if( !all(defn$id %in% (0:(length(private$model)-1))) ){
-                stop(paste("id should be between 0 and",length(private$model)-1))
-            }
 
-            if( !("scale" %in% names(defn) ) ){
-                warning("Output definition does not have scale - adding a vector of 1's")
-                defn$scale <- 1
-            }
+            stopifnot(
+                "Output definition should be a data frame" = is.data.frame(defn),
+                "Output definition must have variables name, id, flux and scale" = all(c("name","id","flux","scale") %in% names(defn)),
+                "Invalid id in output definition" = is.integer(defn$id) & all(defn$id >=0) & defn$id<length(private$model),
+                "scale should be numeric" = is.numeric(defn$scale),
+                "name should be a character" = is.character(defn$name),
+                "flux is not valid" = all(defn$flux %in% names(private$info$output))
+            )      
 
-            defn$name <- as.character(defn$name)
-            defn$id <- as.integer(defn$id)
-            defn$flux <- as.character(defn$flux)
-            if( !all( defn$flux %in% names(private$info$output) ) ){
-                stop("At least one flux type not recognised")
-            }
-            defn$scale <- as.numeric(defn$scale)
             unm <- unique(defn$name)
-            defn$name_idx <- setNames(0:(length(unm)-1),unm)[ defn$name ]
+            defn$name_int <- setNames(0:(length(unm)-1),unm)[ defn$name ]
             defn$flux_int <- private$info$output[ defn$flux ]
-            id <- sapply(private$model,function(x){x$uid["id"]})
-            defn$id_idx <- match(defn$id,id) - 1
-            ##print(defn$id_idx)
             private$output_defn <- defn
             private$time_series$output <- matrix(as.numeric(NA), length(private$time_series$index), length(unm))
             colnames( private$time_series$output ) <- unm
@@ -501,7 +413,7 @@ dynatop <- R6Class(
         ## reform the output definition if required
         reform_output_defn = function(){
             defn <- private$output_defn
-            defn$flux_int <- defn$name_idx <- defn$id_idx <- NULL
+            defn$flux_int <- defn$name_int <- NULL
             return( defn )
         },
         ## compute the simulation timestep
