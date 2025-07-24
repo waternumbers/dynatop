@@ -453,7 +453,7 @@ dynatopGIS <- R6::R6Class(
             }
             chn$id <- id
             chn$band <- bnd
-            
+
             stopifnot(
                 "Error ingesting channel: check connectivity" = all(chn$id >= 0),
                 "Error ingesting channel: problem with bands" = all(chn$band >= 0),
@@ -477,7 +477,7 @@ dynatopGIS <- R6::R6Class(
             end_msk <- rast(end_rst,vals=NA)
             end_msk[end_cell$cell] <- 1
             end_rst <- terra::mask(end_rst,end_msk)
-            
+
 
             ## save output
             private$brk <- c(private$brk,chn_rst,end_rst)
@@ -518,7 +518,7 @@ dynatopGIS <- R6::R6Class(
         apply_sink_fill = function(min_grad,max_it,verbose,flow_type){
             stopifnot("filled_dem already exists" = !("filled_dem" %in% names(private$brk))
                       )
-            
+
             ## recall the catchments is padded with NA values
             rq <- c("dem","channel","end_cells","catchment")
 
@@ -634,7 +634,7 @@ dynatopGIS <- R6::R6Class(
             return(fd)
         },
 
-        
+
         ## function to do property calculations on an upwards pass (low to high DEM values)
         ## if we go up in height order then we are working from near the channel to the heighest point
         ## could add back in flow distances here
@@ -901,6 +901,9 @@ dynatopGIS <- R6::R6Class(
         },
 
         ## create a model
+        ## #####################
+        ## TODO: TODO: MAKE SURE ids ARE IN BAND ORDER!!!!!
+        ## #####################
         apply_create_model = function(class_lyr,
                                       rainfall_lyr,rainfall_label,
                                       pet_lyr,pet_label,
@@ -913,7 +916,7 @@ dynatopGIS <- R6::R6Class(
             stopifnot(
                 "Missing layers" = all(rq %in% names(private$brk))
             )
-            
+
             ## work out some properties of the brick and channel
             rs <- terra::res( private$brk )
             dxy <- rep(sqrt(sum(rs^2)),8)
@@ -932,7 +935,7 @@ dynatopGIS <- R6::R6Class(
                 hru_class <- terra::as.data.frame(private$brk[[class_lyr]],
                                                   na.rm=FALSE)
             }
-            
+
             if(is.null(rainfall_lyr)){
                 hru_data$precip <- rainfall_label
             }else{
@@ -940,7 +943,7 @@ dynatopGIS <- R6::R6Class(
                 hru_data[[rain_lyr]] <- NULL
             }
             if(is.null(pet_lyr)){
-                hru_data$precip <- pet_label
+                hru_data$pet <- pet_label
             }else{
                 hru_data$pet <- paste0(pet_label,hru_data[[pet_lyr]])
                 hru_data[[pet_lyr]] <- NULL
@@ -952,7 +955,7 @@ dynatopGIS <- R6::R6Class(
             hru_data$id[idx] <- seq(0,length(idx)-1)
             ## initialise the band
             hru_data$band <- NA
-            
+
             ## work out the number of HRUs and make template
             nhru <- length(idx)
             ## construct template for HRU
@@ -973,7 +976,7 @@ dynatopGIS <- R6::R6Class(
                             pet = NA_character_,
                             class = list()
                             )
-            
+
             tmplate$sf <- switch(sf_opt,
                                  "cnst" = list(type = "cnst",
                                                parameters = c("v_sf"=0.3,"s_raf"=0.0,"t_raf"=999.9)),
@@ -1010,22 +1013,22 @@ dynatopGIS <- R6::R6Class(
 
                 ## work out direction stuff
                 jj <- ii + delta
-                
+
                 if(!is.na(hru_data$end_cells[ii])){
                     hru_data$band[ii] <- 0
                     wdth <- c(mean(rs),0,0,0,0,0,0,0)
                     grd <- c(max(hru_data$end_cell[ii],min_grad),0,0,0,0,0,0,0)
-                    
+
                 }else{
                     hru_data$band[ii] <- max( hru_data$band[jj],na.rm=T) + 1L
                     grd <- (hru_data$filled_dem[ii] - hru_data$filled_dem[jj]) / dxy ## positive is downslope
                     grd <- sign(grd) * pmax(abs(grd),min_grad)
-                    wdth <- dcl*(is.finite(grd) & grd>0)                    
+                    wdth <- dcl*(is.finite(grd) & grd>0)
                 }
                 ngh <- hru_data$id[jj] ## by defn
                 ## - not in same band so can't be evaluated at teh same time
                 ## - width is 0 if higher so no flow
-    
+
                 hru[[kk]]$id <- as.integer( hru_data$id[ii] )
                 hru[[kk]]$cell <- as.integer( hru_data$cell[ii] )
                 hru[[kk]]$band <- as.integer( hru_data$band[ii] )
@@ -1035,17 +1038,18 @@ dynatopGIS <- R6::R6Class(
                 hru[[kk]]$precip <- hru_data$precip[ii]
                 hru[[kk]]$pet <- hru_data$pet[ii]
                 if( !is.null(class_lyr) ){
-                    hru[[kk]]$class <- as.list(hru_class[ii,])
+                    hru[[kk]]$class <- as.list(hru_class[ii,,drop=FALSE])
                 }
 
             }
 
             ## ################################
             if( verbose ){ cat("Processing summary data","\n") }
-            
-            hru_data$upslope_area <- is.finite(hru_data$id)*cell_area
+
+
+            hru_data$upslope_area <- (hru_data$id>=0)*cell_area
             hru_data$gradient <- NA
-            
+
             for(kk in length(idx):1){
                 ii <- idx[kk] ## location in vector
 
@@ -1054,8 +1058,7 @@ dynatopGIS <- R6::R6Class(
                 if(!is.na(hru_data$end_cells[ii])){
                     hru_data$gradient[ii] <- max(hru_data$end_cell[ii],min_grad)
                 }else{
-                    
-                    grd <- (hru_data$filled_dem[jj] - hru_data$filled_dem[ii]) / dxy ## negative is downslope
+                    grd <- (hru_data$filled_dem[ii] - hru_data$filled_dem[jj]) / dxy ## negative is downslope
                     grd <- sign(grd) * pmax(abs(grd),min_grad)
                     grd[is.na(grd)] <- -999999.99
                     wdth <- dcl*(grd>0)
@@ -1067,12 +1070,15 @@ dynatopGIS <- R6::R6Class(
             hru_data$atb <- log(hru_data$upslope_area / hru_data$gradient)
 
             ## write out extra bits
-            private$brk <- c(private$brk,
-                             terra::rast( private$brk[["dem"]], names="atb", vals=hru_data$atb),
-                             terra::rast( private$brk[["dem"]], names="upslope_area",
-                                         vals=hru_data$upslope_area),
-                             terra::rast( private$brk[["dem"]], names="gradient", vals=hru_data$gradient)
-                             )
+            for(ii in c("upslope_area","gradient","band","atb")){
+                if(ii %in% names(private$brk)){
+                    terra::values(private$brk[[ii]]) <- hru_data[[ii]]
+                }else{
+                    private$brk <- c(private$brk,
+                                     terra::rast( private$brk[["dem"]], names=ii, vals=hru_data[[ii]])
+                                     )
+                }
+            }
             private$save_project()
 
             ## sort out outlets

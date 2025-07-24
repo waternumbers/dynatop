@@ -252,11 +252,11 @@ dynatop <- R6Class(
                           ## proerties
                           ": has no properties" = "properties" %in% names(h),
                           ": properties should be posistive numeric values" = is.numeric(h$properties) & all(h$properties>0),
-                          ": is missing a property" = all(pnm %in% names(h$properties)),
+                          ": is missing a property" = all(propery_names %in% names(h$properties)),
                           ## states
                           ": has no states" = "states" %in% names(h),
-                          ": states should be non-negative numeric values" = is.numeric(h$properties) & all(h$states>=0),
-                          ": is missing a state" = all(snm %in% names(h$states)),
+                          ": states should be non-negative numeric values" = is.numeric(h$properties) & (all(h$states>=0) | all(is.na(h$states))),
+                          ": is missing a state" = all(state_names %in% names(h$states)),
                           ## sf
                           ": has no sf" = "sf" %in% names(h),
                           ": sf has no type" = "type" %in% names(h$sf),
@@ -280,7 +280,7 @@ dynatop <- R6Class(
                           ": sz has no type" = "type" %in% names(h$sz),
                           ": sz has invalid type" = h$sz$type %in% names(sz_types),
                           ": sz has no parameters" = "parameters" %in% names(h$sz),
-                          ": sz has invalid parameters" = all(sz_types[[h$sz$type]] %in% names(h$rz$parameters)) & all(h$sz$parameters>=0),
+                          ": sz has invalid parameters" = all(sz_types[[h$sz$type]] %in% names(h$sz$parameters)) & all(h$sz$parameters>=0),
                           ## widths
                           ": has no widths" = "width" %in% names(h),
                           ": width is not valid" = is.numeric(h$width) & length(h$width)==8 & all(h$width>=0),
@@ -290,7 +290,7 @@ dynatop <- R6Class(
                           ": gradient must be positive for non-zero widths" = all(h$gradient[h$width>0] > 0),
                           ## upslope cells
                           ": has no neighbours" = "neighbours" %in% names(h),
-                          ": neighbours is not valid" = is.integer(h$neighbours) & length(h$neighbours)==8 & all( is.na(h$neighbours) | h4neighbours>=0 ),
+                          ": neighbours is not valid" = is.integer(h$neighbours) & length(h$neighbours)==8 & all( is.na(h$neighbours) | h$neighbours>=0 ),
                           ## precip
                           ": has no precip" = "precip" %in% names(h),
                           ": precip is not valid" = is.character(h$precip) & length(h$precip)==1,
@@ -298,7 +298,7 @@ dynatop <- R6Class(
                           ": has no pet" = "pet" %in% names(h),
                           ": pet is not valid" = is.character(h$pet) & length(h$pet)==1
                           ),
-                error = function(e){ stop( paste0("HRU ", h$id, e$message) ) }
+                error = function(e){ stop( paste("HRU", h$id, e$message) ) }
             )
             ## update the sf parameters for arb kin
             if( h$sf$type == "arb_kin" ){
@@ -311,12 +311,12 @@ dynatop <- R6Class(
             }
 
             ## arrange variables into correct order
-            h$properties <- h$properties[pnm]
-            h$states <- h$states[snm]
-            h$sf$parameters <- h$sf$parameters[ sf[[h$sf$type]] ]
-            h$rz$parameters <- h$rz$parameters[ rz[[h$rz$type]] ]
-            h$uz$parameters <- h$uz$parameters[ uz[[h$uz$type]] ]
-            h$sz$parameters <- h$sz$parameters[ sz[[h$sz$type]] ]
+            h$properties <- h$properties[property_names]
+            h$states <- h$states[state_names]
+            h$sf$parameters <- h$sf$parameters[ sf_types[[h$sf$type]] ]
+            h$rz$parameters <- h$rz$parameters[ rz_types[[h$rz$type]] ]
+            h$uz$parameters <- h$uz$parameters[ uz_types[[h$uz$type]] ]
+            h$sz$parameters <- h$sz$parameters[ sz_types[[h$sz$type]] ]
 
             ## ## convert for C++
             ## for(ii in c("sf","rz","uz","sz")){ ## convert type to integer
@@ -370,16 +370,16 @@ dynatop <- R6Class(
             nm <- lapply(private$model,
                          function(h){c(h$precip,h$pet)})
             nm <- unique(do.call(c,nm))
-            
+
             stopifnot(
                 "observations should be an xts object" = is.xts(obs),
                 "Time steps in data are not unique" = {tmp <- diff(as.numeric(index(obs))); all(tmp==tmp[1])},
                 "Miising series" = all(nm %in% names(obs)),
                 "There are non finite values in the required time series" = all(is.finite(obs[,nm]))
             )
-            
+
             nm = setNames(0:(ncol(obs)-1),colnames(obs))
-            
+
             faddobs <- function(h,nm){
                 h$precip_idx <- nm[ h$precip ]
                 h$pet_idx <- nm[ h$pet ]
@@ -401,7 +401,7 @@ dynatop <- R6Class(
                 "scale should be numeric" = is.numeric(defn$scale),
                 "name should be a character" = is.character(defn$name),
                 "flux is not valid" = all(defn$flux %in% names(private$info$output))
-            )      
+            )
 
             unm <- unique(defn$name)
             defn$name_int <- setNames(0:(length(unm)-1),unm)[ defn$name ]

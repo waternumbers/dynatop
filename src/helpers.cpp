@@ -1,38 +1,39 @@
 #include "helpers.h"
 
 std::vector<hru> makeHRUs(Rcpp::List mdl,
-			  std::vector<double> &q_sf_in,
-			  std::vector<double> &q_sz_in,
 			  const double &vtol,
 			  const double &etol,
 			  const int &max_it,
 			  const double &Dt){
   int nhru = mdl.size(); // number of HRUs
-  // work out the number of bands
-  //Rcpp::List m = mdl[nhru-1];
-  //Rcpp::IntegerVector uid = m["uid"];
-  //int nbnd = uid["band"];
   
-  //std::vector< std::vector<hru> > hrus(nbnd);
-  std::vector<hru> hrus;
+  std::vector<hru> hrus(nhru);
 
   // make hrus in order they need evaluating
   for(int ii=0; ii<nhru; ++ii){
     Rcpp::List m = mdl[ii];
-    Rcpp::NumericVector svec = m["states"];
-    Rcpp::NumericVector pvec = m["properties"];
     Rcpp::List sf_list = m["sf"];
     Rcpp::List rz_list = m["rz"];
     Rcpp::List uz_list = m["uz"];
     Rcpp::List sz_list = m["sz"];
-    Rcpp::NumericVector pcp_frc = m["precip"];
-    Rcpp::IntegerVector pcp_idx = m["precip_idx"];
-    Rcpp::NumericVector pet_frc = m["pet"];
-    Rcpp::IntegerVector pet_idx = m["pet_idx"];
-    Rcpp::List q_sf_list = m["sf_flow_direction"];
-    Rcpp::List q_sz_list = m["sz_flow_direction"];
-    Rcpp::NumericVector ivec = m["initialisation"];
-    Rcpp::IntegerVector uid = m["uid"];
+    
+    int id = Rcpp::as<int>(m["id"]);
+    
+    hrus(id) = hru(id,
+		   Rcpp::as<int>(m["band"]),
+		   Rcpp::as<std::vector<double>>(m["states"]), // states
+		   Rcpp::as<std::vector<double>>(m["properties"]), // properties
+		   Rcpp::as<std::string>(sf_list["type"]), Rcpp::as<std::vector<double>>(sf_list["parameters"]), // surface type and parameters
+		   Rcpp::as<std::string>(rz_list["type"]), Rcpp::as<std::vector<double>>(rz_list["parameters"]), // root zone type and parameters
+		   Rcpp::as<std::string>(uz_list["type"]), Rcpp::as<std::vector<double>>(uz_list["parameters"]), // unsaturated zone type and parameters
+		   Rcpp::as<std::string>(sz_list["type"]), Rcpp::as<std::vector<double>>(sz_list["parameters"]), // saturated zone type and parameters
+		   Rcpp::as<int>(m["pcp_idx"]), // precipiataion inputs
+		   Rcpp::as<int>(m["pet_idx"]), // pet inputs
+		   Rcpp::as<std::vector<double>>(m["width"]), // contour length
+		   Rcpp::as<std::vector<double>>(m["gradient"]), // gradient
+		   Rcpp::as<std::vector<int>>(m["neighbours"]), // neighbour cell ids
+		   );
+    
 
     //int b = Rcpp::as<int>(uid["band"]-1);
     //svec = svec * pvec["area"];

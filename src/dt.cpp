@@ -35,16 +35,12 @@ void dt_init(Rcpp::List mdl, // hru data frame
   // dimensions and constants
   int nhru = mdl.size(); // number of HRUs
 
-  // storage for inflow fluxes
-  std::vector<double> q_sf_in(nhru,0.0);// vector to surface inflow inflow volumes
-  std::vector<double> q_sz_in(nhru,0.0);// vector to saturated zone inflow volumes
-
   // set a time step
   double const Dt(0.0);
   
   // make HRUs
   // Rcpp::Rcout << "making HRUs" << std::endl;
-  std::vector<hru> hrus = makeHRUs(mdl,q_sf_in,q_sz_in,vtol,etol,max_it,Dt);
+  std::vector<hru> hrus = makeHRUs(mdl,vtol,etol,max_it,Dt);
   // Rcpp::Rcout << "hru size is " << nhru << " " << hrus.size() << std::endl;
 
   // make vector of break points between the bands
