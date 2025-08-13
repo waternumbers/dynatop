@@ -153,16 +153,16 @@ expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
                   function(h){
-                      h$sf$parameters <- c("n_lower" = 0.03,
+                      h$sf$parameters <- c("n" = 0.03,
                                            "b_lower" = 5,
-                                           "n_upper" = 0.1,
-                                           "b_upper" = 30,
+                                           "tan_alpha" = 0.01,
                                            "q_crit" = 20)
                       h$sf$type <- "mct_rect"
                       h
                   })
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
-    dt$initialise()$sim(Swindale$model$output_flux)
+    dt$initialise()
+    dt$sim(Swindale$model$output_flux)
     mct_rect_sf_error <- max(abs(dt$get_mass_errors()[,6]))
 })
 expect_true({ mct_rect_sf_error < 1e-6 })

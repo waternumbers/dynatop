@@ -310,44 +310,49 @@ void hru::step(){
     s_sf = 0;
     q_sf = 0.0;
   }else{
+    // semi-explicit solution
+    Qref = (q_sf+q_sf_in)/2.0;
+    sf->update( Qref );
+    q_sf = std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)));
+    s_sf = z - Dt*q_sf;
+
+    // Full numerical search solution
+    // std::pair<double,double> ubnd(z/Dt, 9999.9); // wettest surface
+    // q_sf= ubnd.first;
     // Qref = (q_sf+q_sf_in)/2.0;
     // sf->update( Qref );
-    // q_sf = std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)));
-    // s_sf = z - Dt*q_sf;
-    std::pair<double,double> ubnd(z/Dt, 9999.9); // wettest surface
-    q_sf= ubnd.first;
-    Qref = (q_sf+q_sf_in)/2.0;
-    sf->update( Qref );
-    ubnd.second = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) ); // negative
+    // ubnd.second = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) ); // negative
     
-    std::pair<double,double> lbnd(0, 9999.9); // driest surface
-    q_sf = lbnd.first;
-    Qref = (q_sf+q_sf_in)/2.0;
-    sf->update( Qref );
-    lbnd.second = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
+    // std::pair<double,double> lbnd(0, 9999.9); // driest surface
+    // q_sf = lbnd.first;
+    // Qref = (q_sf+q_sf_in)/2.0;
+    // sf->update( Qref );
+    // lbnd.second = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
 
-    // Rcpp::Rcout << "id is " << id << std::endl;
-    // Rcpp::Rcout << "upper bound " << ubnd.first << " " << ubnd.second << std::endl;
-    // Rcpp::Rcout << "lower bound " << lbnd.first << " " << lbnd.second << std::endl;
-    int it = 0;
-    while( (lbnd.second < -1e-6) & (it < 100) ){
-      //for(int it=0; it<max_it; ++it){
-      q_sf = (ubnd.first + lbnd.first)/ 2.0;
-      Qref = (q_sf+q_sf_in)/2.0;
-      sf->update( Qref );
-      double e = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
-      if( e <= 0.0 ){
-	lbnd.first = q_sf;
-	lbnd.second = e;
-      }else{
-	ubnd.first = q_sf;
-	ubnd.second = e;
-      }
-      it +=1;
-    }
-    q_sf = lbnd.first;
-    Qref = (q_sf+q_sf_in)/2.0;
-    sf->update( Qref );
+    // // Rcpp::Rcout << "id is " << id << std::endl;
+    // // Rcpp::Rcout << "upper bound " << ubnd.first << " " << ubnd.second << std::endl;
+    // // Rcpp::Rcout << "lower bound " << lbnd.first << " " << lbnd.second << std::endl;
+    // int it = 0;
+    // while( (lbnd.second < -1e-6) & (it < 100) ){
+    //   //for(int it=0; it<max_it; ++it){
+    //   q_sf = (ubnd.first + lbnd.first)/ 2.0;
+    //   Qref = (q_sf+q_sf_in)/2.0;
+    //   sf->update( Qref );
+    //   double e = q_sf - std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
+    //   if( e <= 0.0 ){
+    // 	lbnd.first = q_sf;
+    // 	lbnd.second = e;
+    //   }else{
+    // 	ubnd.first = q_sf;
+    // 	ubnd.second = e;
+    //   }
+    //   it +=1;
+    // }
+    // q_sf = lbnd.first;
+    // Qref = (q_sf+q_sf_in)/2.0;
+    // sf->update( Qref );
+    
+    // Iterative solution a la Todini paper
     // for(int it=0; it<max_it; ++it){
     //   double Qref = (q_sf + q_sf_in)/2.0;
     //   sf->update( Qref );

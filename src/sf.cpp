@@ -158,114 +158,227 @@ void sfc_mct::update(double const&Q){
   
 };
 
-
 // //////////////////////////
 // Muskingham Cunge after Todini with two level rectangular channel
 sfc_mct_rect::sfc_mct_rect(std::vector<double> const &param, std::vector<double> const &properties){
   // store inputs
   Dx = properties[1];
   grd = properties[2];
-  double const &n_lower = param[0];
+  // parameters
+  double const& n = param[0];
   b_lower = param[1];
-  double const &n_upper = param[2];
-  b_upper = (param[3]-b_lower)/2.0; // width of flood plain on either side of main channel
-  q_crit = param[4]; // threshold flow
+  tan_alpha = param[2];
+  q_crit = param[3]; // threshold flow
   // computed values
-  beta_lower = std::sqrt(grd) * b_lower / n_lower;
-  beta_upper = 2*std::sqrt(grd) * b_upper / n_upper;
+  sin_alpha = std::sin( std::atan(tan_alpha) );
+  beta = std::sqrt(grd) / n;
   y_crit = 1e300; // set very large to start with
   y_crit = solve_depth(q_crit);
-  // with R = y approximation
-  //beta_lower = std::sqrt(grd) * std::pow(b_lower, 2.0/3.0) / n_lower; // Q =beta * y^{5/3)
-  //beta_upper = std::sqrt(grd) * std::pow(b_upper-b_lower, 2.0/3.0) / n_upper;
-  //y_crit = std::pow( q_crit / beta_lower , 3.0/5.0 ); // level eqivilent to q_crit
 }
+
+// q = A*sqrt(s)*(R^2/3)/n;
+// y<yc
+// A=b_lower*y;
+// wp = b_lower+ 2*y;
+// y>yc
+// alpha = atan(b_upper);
+// A = b_lower*y + (y-yc)*(y-yc)/b_upper;
+// wp = b_lower + 2*yc + (y-yc)/sin(alpha);
+// celerity
+// beta = sqrt(s)/n;
+// celerity dq/dA = beta*(R^2/3) + A*beta*(2/3)*(R^-1/3)/wp
+// dq/dy = dq/dA dA/dy
+// dA/dy = b_lower + 2(y-yc)/b_upper
+ 
 // solve depth for the flow
 double sfc_mct_rect::solve_depth(double const&Q){
-  // find search range - this should be < Q but sometimes approximation in calc fails
-  double y = std::pow( (Q/beta_lower) , 3.0/5.0 );
-  double qq = beta_lower*y*std::pow( (b_lower*y)/(b_lower + 2.0*std::min(y,y_crit)), 2.0/3.0 ) +
-    beta_upper*y*std::pow( (b_upper*std::max(0.0,y-y_crit))/(b_lower + std::max(0.0,y-y_crit)), 2.0/3.0 );
-  std::pair<double,double> lbnd(y,qq); // upper bound
-  std::pair<double,double> ubnd(y,qq); // upper bound
-  int it = 0;  
-  if( qq > Q ){
-    lbnd.first = 0.0;
-    lbnd.second = 0.0;
-  }else{
-    while( (it <=100) and qq < Q ){
-      y += y + 0.01;
-      qq = beta_lower*y*std::pow( (b_lower*y)/(b_lower + 2.0*std::min(y,y_crit)), 2.0/3.0 ) +
-	beta_upper*y*std::pow( (b_upper*std::max(0.0,y-y_crit))/(b_lower + std::max(0.0,y-y_crit)), 2.0/3.0 );
-      it += 1;
-    }
-    ubnd.first = y;
-    ubnd.second = qq;
+  if(Q==0){
+    return(0.0);
   }
-  if( (lbnd.second > Q ) or (ubnd.second < Q) ){
-    Rcpp::Rcout << "number of iterations is " << it << std::endl;
-    Rcpp::Rcout << "error in solving for height at start" << std::endl;
-    Rcpp::Rcout << lbnd.second << " " << Q << " " << ubnd.second << std::endl;
-    Rcpp::Rcout << lbnd.first << " " << ubnd.first << std::endl;
-    Rcpp::Rcout << y_crit << " " << beta_lower << " " << b_lower << std::endl;
-  }
-  it = 0;
-  while( (it <= 100) and ( ubnd.second - lbnd.second > 1e-6 ) ){
-    y = (ubnd.first + lbnd.first)/2.0; //(iW*ubnd.first) + (1.0-iW)*lbnd.first;
-    qq = beta_lower*y*std::pow( (b_lower*y)/(b_lower + 2.0*std::min(y,y_crit)), 2.0/3.0 ) +
-      beta_upper*y*std::pow( (b_upper*std::max(0.0,y-y_crit))/(b_lower + std::max(0.0,y-y_crit)), 2.0/3.0 );
-    if( qq <= Q ){ 
-      lbnd.first = y;
-      lbnd.second = qq;
-    }else{
-      ubnd.first = y;
-      ubnd.second = qq;
+  double y = 1.0; //y_crit;
+  // compute diff and change
+  double ytilde = std::max(y-y_crit,0.0);
+  double A = b_lower*y + ytilde*ytilde/tan_alpha;
+  double Wp =  b_lower + 2*std::min(y_crit,y) + 2*( ytilde/sin_alpha );
+  double R = A/Wp;
+  double q = beta * A * std::pow(R,(2.0/3.0));
+  double cel = (beta*std::pow(R,2.0/3.0)) + ( A*(beta*(2/3))*(std::pow(R,-1.0/3.0))/Wp );
+  double dq_dy = cel * (b_lower + 2*ytilde/tan_alpha);
+  double chng = 10000;
+  double e = Q - q;
+  int it = 0;
+  // if( Q < 1e-10 ){
+  //   Rcpp::Rcout << "Initial - Q " << Q << " y " << y << " q " << q << " cel " << cel << " e "<< e<< std::endl;
+  // } 
+  while( (it<100) and (std::abs(chng) > 1e-6) and (std::abs(e)>1e-6) ){
+    chng = y;
+    y = std::max(y + (Q-q)/dq_dy , 0.0);
+    if(y == 0 ){
+      return(0); //break;
     }
+    ytilde = std::max(y-y_crit,0.0);
+    A = b_lower*y + ytilde*ytilde/tan_alpha;
+    Wp =  b_lower + 2*std::min(y_crit,y) + 2*( ytilde/sin_alpha );
+    R = A/Wp;
+    q = beta * A * std::pow(R,(2.0/3.0));
+    cel = (beta*std::pow(R,2.0/3.0)) + ( A*(beta*(2/3))*(std::pow(R,-1.0/3.0))/Wp );
+    dq_dy = cel * (b_lower + 2*ytilde/tan_alpha);
+    chng =- y;
+    e = Q-q;
     it += 1;
+    // if( Q < 1e-10 ){
+    //   Rcpp::Rcout << " y " << y << " q " << q << " cel " << cel << " e "<< e<< std::endl;
+    // }
+    //    Rcpp::Rcout << " y " << y << " q " << q << " cel " << cel << " e "<< e<< std::endl;
   }
-  y = (ubnd.first + lbnd.first)/2.0;
-  if( (lbnd.second > Q ) or (ubnd.second < Q) ){
-    Rcpp::Rcout << "error in solving for height" << std::endl;
-    Rcpp::Rcout << it << std::endl;
-    Rcpp::Rcout << lbnd.second << " " << Q << " " << ubnd.second << std::endl;
-    Rcpp::Rcout << lbnd.second-Q  << " " << Q-ubnd.second << std::endl;
-    Rcpp::Rcout << lbnd.first << " " << ubnd.first << std::endl;
-  }
-  if( it > 100 ){
-    Rcpp::Rcout << "max iterations" << std::endl;
-    Rcpp::Rcout << lbnd.second << " " << Q << " " << ubnd.second << std::endl;
-    Rcpp::Rcout << lbnd.first << " " << ubnd.first << std::endl;
-  }
-  return(y);
+  //Rcpp::Rcout << " y " << y << " q " << q << " cel " << cel << " e "<< e<< std::endl;
+  return( y );
 }
+
 // internal update
 void sfc_mct_rect::update(double const&Q){
+  
   double y = solve_depth(Q);
-  double tw = b_lower;
-  if( y>y_crit ){
-    tw = b_upper;
-  }
-  double area = (b_lower * y) + (2 * b_upper * std::max(0.0,y-y_crit));
-  if( area == 0.0 ){
-    kappa = -999.0;
+  double ytilde = std::max(y-y_crit,0.0);
+  double tw = b_lower + ytilde*tan_alpha/sin_alpha;
+  double area =  b_lower*y + ytilde*ytilde/tan_alpha;
+  double Wp =  b_lower + 2*std::max(y-y_crit,0.0) + 2*( ytilde/sin_alpha );
+  if( area <= 1e-6 ){
+    kappa = 0.0; //-999.0;
     eta = 0.5;
   }else{
     double vel = Q/area;
+    double R = area/Wp;
     // compute celerity...
-    double R_lower = (b_lower*y)/(b_lower + 2.0*std::min(y,y_crit)); // lower hydraulic radius
-    double dq_dy = beta_lower*std::pow(R_lower,2.0/3.0)*( (5.0/3.0) - (4.0*R_lower)/(3*b_lower) );
-    if( y > y_crit ){ // flow in upper channel
-      double R_upper = (b_upper*(y-y_crit))/(b_lower + y - y_crit ); // upper half hydarulic radius
-      dq_dy += beta_lower*std::pow(R_lower,2.0/3.0)*(4.0*R_lower)/(3*b_lower);
-      dq_dy += beta_upper*std::pow(R_upper,2.0/3.0)*( (5.0/3.0) - (2.0*R_upper)/(3*b_upper) );
-    }
-    double cel = dq_dy / tw;
+    double cel = (beta*std::pow(R,2.0/3.0)) + ( area*(beta*(2/3))*(std::pow(R,-1.0/3.0))/Wp );
     double D = Q / (2*tw*grd);
     kappa = Dx / vel;
     eta = 0.5*( 1.0 -  ((2*D*vel)/(Dx*cel*cel)) );
     eta = std::max(eta,0.0);
-    //eta = 0; //.5; //PJS test
-    // if( kappa < 0 | eta < 0 | vel > 10 ){ Rcpp::Rcout << "kappa " << kappa << " eta " << eta << "vel " << vel << std::endl; }
   }
 };
+
+
+// // //////////////////////////
+// // Muskingham Cunge after Todini with two level rectangular channel
+// sfc_mct_rect::sfc_mct_rect(std::vector<double> const &param, std::vector<double> const &properties){
+//   // store inputs
+//   Dx = properties[1];
+//   grd = properties[2];
+//   // parameters
+//   double const& n = param[0];
+//   b_lower = param[1];
+//   tan_alpha = param[2];
+//   q_crit = param[3]; // threshold flow
+//   // computed values
+//   beta = std::sqrt(grd) / n;
+//   y_crit = 1e300; // set very large to start with
+//   y_crit = solve_depth(q_crit);
+//   sin_alpha = std::sin( std::atan(tan_alpha) );
+//   // with R = y approximation
+//   //beta_lower = std::sqrt(grd) * std::pow(b_lower, 2.0/3.0) / n_lower; // Q =beta * y^{5/3)
+//   //beta_upper = std::sqrt(grd) * std::pow(b_upper-b_lower, 2.0/3.0) / n_upper;
+//   //y_crit = std::pow( q_crit / beta_lower , 3.0/5.0 ); // level eqivilent to q_crit
+// }
+
+// // q = A*sqrt(s)*(R^2/3)/n;
+// // y<yc
+// // A=b_lower*y;
+// // wp = b_lower+ 2*y;
+// // y>yc
+// // alpha = atan(b_upper);
+// // A = b_lower*y + (y-yc)*(y-c)/b_upper;
+// // wp = b_lower + 2*yc + (y-yc)/sin(alpha);
+// // celerity
+// // beta = sqrt(s)/n;
+// // dq/dA = beta*(R^2/3) + A*beta*(2/3)*(R^-1/3)/wp
+  
+ 
+// // solve depth for the flow
+// double sfc_mct_rect::solve_depth(double const&Q){
+//   std::pair<double,double> lbnd, ubnd;
+//   double y, qq;
+//   if( Q > q_crit ){ // in trapezoid part
+//     lbnd.first = y_crit;
+//     lbnd.second = q_crit;
+//   }else{
+//     lbnd.first = 0.0;
+//     lbnd.second = 0.0;
+//   }
+//   int it(0);
+//   y = lbnd.first;
+//   qq = lbnd.second;
+//   while( (it <=100) and qq < Q ){
+//     y = 2*y + 0.1;
+//     double ytilde = std::max(y-y_crit,0.0);
+//     double A = b_lower*y + ytilde*ytilde/tan_alpha;
+//     double Wp =  b_lower + 2*std::min(y_crit,y) + 2*( ytilde/sin_alpha );
+//     qq = beta * A * std::pow((A/Wp),(2.0/3.0));
+//   }
+//   ubnd.first = y;
+//   ubnd.second = qq;
+  
+  
+//   if( (lbnd.second > Q ) or (ubnd.second < Q) ){
+//     Rcpp::Rcout << "error in solving for height at start" << std::endl;
+//     Rcpp::Rcout << lbnd.second << " " << Q << " " << ubnd.second << std::endl;
+//     Rcpp::Rcout << lbnd.first << " " << ubnd.first << std::endl;
+//     Rcpp::Rcout << y_crit << " " << beta << " " << b_lower << std::endl;
+//   }
+
+//   while( (it <= 100) and ( ubnd.second - lbnd.second > 1e-6 ) ){
+//     y = (ubnd.first + lbnd.first)/2.0;
+//     double ytilde = std::max(y-y_crit,0.0);
+//     double A = b_lower*y + ytilde*ytilde/tan_alpha;
+//     double Wp =  b_lower + 2*std::min(y_crit,y) + 2*( ytilde/sin_alpha );
+//     qq = beta * A * std::pow(A/Wp, 2.0/3.0);
+//     if( qq <= Q ){ 
+//       lbnd.first = y;
+//       lbnd.second = qq;
+//     }else{
+//       ubnd.first = y;
+//       ubnd.second = qq;
+//     }
+//     it += 1;
+//   }
+//   y = (ubnd.first + lbnd.first)/2.0;
+//   if( (lbnd.second > Q ) or (ubnd.second < Q) ){
+//     Rcpp::Rcout << "error in solving for height" << std::endl;
+//     Rcpp::Rcout << it << std::endl;
+//     Rcpp::Rcout << lbnd.second << " " << Q << " " << ubnd.second << std::endl;
+//     Rcpp::Rcout << lbnd.second-Q  << " " << Q-ubnd.second << std::endl;
+//     Rcpp::Rcout << lbnd.first << " " << ubnd.first << std::endl;
+//   }
+//   if( it > 100 ){
+//     Rcpp::Rcout << "max iterations" << std::endl;
+//     Rcpp::Rcout << lbnd.second << " " << Q << " " << ubnd.second << std::endl;
+//     Rcpp::Rcout << lbnd.first << " " << ubnd.first << std::endl;
+//   }
+//   return(y);
+// }
+// // internal update
+// void sfc_mct_rect::update(double const&Q){
+  
+//   double y = solve_depth(Q);
+//   ##
+//   double ytilde = std::max(y-y_crit,0.0);
+//   double tw = b_lower + ytilde*tan_alpha/sin_alpha;
+//   double area =  b_lower*y + ytilde*ytilde/tan_alpha;
+//   double Wp =  b_lower + 2*std::max(y-y_crit,0.0) + 2*( ytilde/sin_alpha );
+//   if( area <= 1e-6 ){
+//     kappa = 0.0; //-999.0;
+//     eta = 0.5;
+//   }else{
+//     double vel = Q/area;
+//     double R = area/Wp;
+//     // compute celerity...
+//     double cel = (beta*std::pow(R,2.0/3.0)) + ( area*(beta*(2/3))*(std::pow(R,-1.0/3.0))/Wp );
+//     double D = Q / (2*tw*grd);
+//     kappa = Dx / vel;
+//     eta = 0.5*( 1.0 -  ((2*D*vel)/(Dx*cel*cel)) );
+//     eta = std::max(eta,0.0);
+//     //eta = 0; //.5; //PJS test
+//     // if( kappa < 0 | eta < 0 | vel > 10 ){ Rcpp::Rcout << "kappa " << kappa << " eta " << eta << "vel " << vel << std::endl; }
+//   }
+// };
 
