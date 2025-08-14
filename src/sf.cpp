@@ -1,48 +1,56 @@
+// each function takes a storage and 
 #include "sf.h"
 
 
 // solve 
 sfc::sfc(){ }
-void sfc::update( double const &q ){ // set for two partions of constant velocity with storage
-  if( q<= 0.0 ){ kappa = 0.0; return; } // handle case of no outflow
-  kappa = ( (std::min(q,q_1))*kappa_1 + std::max(0.0,q-q_1)*kappa_2 )/ q;
+double sfc::fT( double const &s ){ // set for two partions with different time constants
+  if( s<= 0.0 ){ return(1e100); } // handle case of no outflow
+  return( s / ( std::min(s,S_1)/T_1 + std::max(0.0,s-S_1)/T_2 ) );
+}
+double sfc::fS( double const &q ){ // set for two partions with different time constants
+  if( q<= 0.0 ){ return(0.0); } // handle case of no outflow
+  return( std::min( q*T_1,S_1 ) + T_2*std::max(q - S_1/T_1, 0.0) );
 }
     
 
 // constant celerity, diffusivity with raf
 sfc_cnst::sfc_cnst(std::vector<double> const &param, std::vector<double> const &properties){
   // lower path is linear tank
-  kappa_1 = param[2]; // param[2] is t_raf
-  q_1 = param[1] / kappa_1; // param[1] is raf storage
-  kappa_2 = properties[1] / param[0]; // celerity divided by length to get q from storage
-  eta = 0.0;
+  T_1 = param[2]; // param[2] is t_raf
+  S_1 = param[1]; // param[1] is raf storage
+  T_2 = param[0] / properties[1]; // constant velocity divided by Dx
 }
 
-// Kinematic with raf
+// Mannings with raf - assume shallow water for hydraulic radius ~ S/area
+// so v = (S^(2/3) * sqrt(gradient) ) / (n * area^(2/3))
+// T_2 = v/Dx = eta * s^(2/3) where
+// eta = sqrt(gradient) / (Dx * n * area^(2/3))
 // Assumes shallow water so wetted perimeter ~ width
 sfc_kin::sfc_kin(std::vector<double> const &param, std::vector<double> const &properties){
   double const &Dx(properties[1]), &area(properties[0]), &grd(properties[2]);
-  // double const width = area/Dx;
   double const &n(param[0]);
-  kappa_1 = param[2]; // param[2] is raf time constant
-  q_1 = param[1] / kappa_1; // param[1] is raf storage
-  kappa_2 = area;
-  eta_1 = (area * std::sqrt(grd))/(Dx*n);
-  eta = 0.5;
+  T_1 = param[2]; // param[2] is raf time constant
+  S_1 = param[1]; // param[1] is raf storage
+  eta = std::sqrt(grd) / (Dx * n * std::pow(area, 2.0/3.0));
 }
-void sfc_kin::update(double const &q ){
-  if( q<= 0.0 ){ kappa = 0.0; return; } // handle case of no outflow
-  double h = std::pow( std::max(0.0,q - q_1)/eta_1, 2.0/5.0 );
-  kappa = ( std::min(q,q_1)*kappa_1 + kappa_2*h )/q;
+double sfc_kin::fT(double const &s ){
+  if( s<= 0.0 ){ return(1e100); } // handle case of no outflow
+  double q = (std::min(s,S_1)/T_1) + (std::pow(std::max(s-S_1,0.0), 1.0/3.0)*eta);
+  return( s/q );
 }
+double sfc_kin::fS(double const &q ){
+  if( q<= 0.0 ){ return(0.0); } // handle case of no outflow
+  return( std::min( q*T_1,S_1 ) + std::pow( std::max(q - S_1/T_1, 0.0) / eta, 3 ) );
+}
+
 
 // compound channel
 sfc_comp::sfc_comp(std::vector<double> const &param, std::vector<double> const &properties){
   double const& Dx(properties[1]);
-  kappa_1 = Dx / param[0]; // velocity divided by length to get q from storage for lower part of channel
-  q_1 = param[1] / kappa_1; // max flow from the lower store
-  kappa_2 = Dx /param[2]; // velocity divided by length to get q from storage for upper part of channel
-  eta = 0.0;
+  T_1 = param[0] / Dx; // velocity divided by length to get q from storage for lower part of channel
+  S_1 = param[1] ; // max value of lower store
+  T_2 = param[2] / Dx; // velocity divided by length to get q from storage for upper part of channel
 }
 
 // arbitary area, discharge relationship
@@ -53,127 +61,120 @@ sfc_arb_kin::sfc_arb_kin(std::vector<double> const &param, std::vector<double> c
     s_val.push_back( param[ii]*Dx );
     q_val.push_back( param[ii+n] );
   }
-  eta = 0.5;
 }
-void sfc_arb_kin::update(double const &q ){
-  if( q<= 0.0 ){ kappa = 0.0; return; } // handle case of no outflow
+double sfc_arb_kin::fT(double const &s ){
+  if( s<= 0.0 ){ return(1e300); } // handle case of no outflow
+  unsigned int n = s_val.size();
+  unsigned int ii = 1;
+  while( (s_val[ii] < s) & (ii < (n-1)) ){
+    ii += 1;
+  };
+  double q = q_val[ii-1] + ( (q_val[ii] - q_val[ii-1])/(s_val[ii]-s_val[ii-1]) )* (s - s_val[ii-1]);
+  return( q/s );
+}
+double sfc_arb_kin::fS(double const &q ){
+  if( q<= 0.0 ){ return( 0 ); } // handle case of no outflow
   unsigned int n = s_val.size();
   unsigned int ii = 1;
   while( (q_val[ii] < q) & (ii < (n-1)) ){
     ii += 1;
   };
   double s = s_val[ii-1] + ( (s_val[ii] - s_val[ii-1])/(q_val[ii]-q_val[ii-1]) )* (q - q_val[ii-1]);
-  kappa = s/q;
+  return(s);
 }
 
 // generic power law with constant parameters
 sfc_power_law::sfc_power_law(std::vector<double> const &param, std::vector<double> const &properties){
-  Dx = properties[1];
-  kappa_1 = param[3]; // param[3] is raf time constant
-  eta_1 = param[2] / kappa_1; // flow when raf is full param[2] is raf storage
-  kappa_2 = param[1]; // power
-  eta_2 = param[0]; // scale
-  eta = 0;
+  T_1 = param[3]; // param[3] is raf time constant
+  S_1 = param[2]; // param[2] is raf storage
+  kappa = param[1]; // power
+  eta = param[0]; // scale
 }
-void sfc_power_law::update(double const &q ){
-  if( q<= 0.0 ){ kappa = 0.0; return; } // handle case of no outflow
-  double s = ( kappa_1 * std::min(q,eta_1) ) + std::pow( std::max(0.0,q-eta_1)/eta_2 , 1.0/kappa_2 );
-  kappa = Dx*q/s;
+double sfc_power_law::fT(double const &s ){
+  if( s<= 0.0 ){ return(1e300); } // handle case of no outflow
+  double q = (std::min(s,S_1)/T_1) + (eta * std::pow(std::max(s-S_1,0.0), kappa));
+  return( s/q );
+}
+double sfc_power_law::fS(double const &q ){
+  if( q<= 0.0 ){ return(0); } // handle case of no outflow
+  return( std::min( q*T_1,S_1 ) + std::pow( std::max(q - S_1/T_1, 0.0) / eta, 1/kappa ) );
 }
 
-
-// Muskingham Cunge after Todini
+// Trapezoid channel with Mannings after Todini
 sfc_mct::sfc_mct(std::vector<double> const &param, std::vector<double> const &properties){
   Dx = properties[1];
   grd = properties[2];
   n = param[0];
-  ca = 1.0 / param[1] ; // grad = tan(theta) = sin(theta)/cos(theta) was originally param[1]
-  sa = std::sin( std::atan(param[1]) );
-  B0 = param[2];
+  ca = 1.0 / param[1] ; // cotangent (cot) of side slop angle
+  sa = std::sin( std::atan(param[1]) ); // sin of side slope angle
+  B0 = param[2]; // bed width
 }
 // internal update
-void sfc_mct::update(double const&Q){
+double sfc_mct::fT(double const&s){
+  if( s<= 0.0 ){ return(1e300); } // handle case of no outflow
+  
   auto Ay = [&](double y){ return( (B0 + y*ca)*y ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
-  auto By = [&](double y){ return( B0 + 2*y*ca ); };
   auto Py = [&](double y){ return( B0 + 2*(y/sa) ); };
   auto Qy = [&](double y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y),(5/3)) / std::pow(Py(y),(2/3)) ); };
-  auto cy = [&](double y){ return( 
-				   (5/3)* (std::sqrt(grd)/n) * std::pow(Ay(y),(2/3)) / std::pow(Py(y),(2/3)) *
-				   ( 1 - ( (4*Ay(y))/(5*By(y)*Py(y)*sa) ) ) );
-  };
-  auto vy = [&](double y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y)/Py(y), 2/3) ); };
-  //auto betay = [&](double y){ return( (5/3)*( 1 - ( (4*Ay(y))/(5*By(y)*Py(y)*sa) ) ) ); };
   
-  // solve for y
-  // lower bound of search - start at 0.0 - this flow should be less then Q
-  std::pair<double,double> lbnd(0.0, 999.9);
-  lbnd.second = Qy(lbnd.first);
-  // pick a high value - this flow should be greater then Q
-  std::pair<double,double> ubnd(1000.0, 999.9);
-  ubnd.second = Qy(ubnd.first);
-  if( ubnd.second < Q ){
-    Rcpp::Rcout <<"need adaptive mC range" << std::endl;
-    Rcpp::Rcout << grd << " " << B0 << " " << ca << " " << sa << " " << n << " " << Dx << std::endl;
-    Rcpp::Rcout << Ay(ubnd.first) << " " << Py(ubnd.first) << std::endl;
-    Rcpp::Rcout <<"Lower bound:" << lbnd.first << " " << lbnd.second << std::endl;
-    Rcpp::Rcout <<"Upper bound:" << ubnd.first << " " << ubnd.second << std::endl;
+  // solve for height given the cross sectional area
+  double A = s/Dx;
+  double h = -B0 + std::sqrt( std::pow(B0,2.0) + 4*A*ca ) / (2*ca) ;
+  if( h<0.0){
+    Rcpp::Rcout <<"Negative h " << h << std::endl;
+    h = 0.0;
   }
-  int it = 0;
-  double y(0.0);
-  while( (it <= 1000) and ( ubnd.second - lbnd.second > 1e-3 ) ){
-    //double iW = (Q - lbnd.second) / (ubnd.second-lbnd.second);
-    //iW = std::max(0.001,std::min(iW,0.999));
-    y = (ubnd.first + lbnd.first)/2.0; //(iW*ubnd.first) + (1.0-iW)*lbnd.first;
-    double qq = Qy(y);
-    if( qq <= Q ){ //bnd.second= z; } else { bnd.first=z; }
-      lbnd.first = y;
-      lbnd.second = qq;
-    }else{
-      ubnd.first = y;
-      ubnd.second = qq;
-    }
-    it += 1;
-  }
-  if( (lbnd.second > Q ) or (ubnd.second < Q) ){
-    Rcpp::Rcout << "error in solving for height" << std::endl;
-    Rcpp::Rcout << lbnd.second << " " << Q << " " << ubnd.second << std::endl;
-    Rcpp::Rcout << lbnd.first << " " << ubnd.first << std::endl;
-  }
-
-  double vel = vy(y);
-  double cel = cy(y);
-  double tw = By(y);
-  double D = Q / (2*tw*grd);
-  kappa = Dx / vy(y);
-  eta = 0.5*( 1.0 -  ((2*D*vel)/(Dx*cel*cel)) );
-  
-  // double beta = betay(y);
-  // double cel = cy(y);
-  // Cs = cel/(beta*Dx); // removed Dt compared to paper
-  // if(Q == 0){
-  //   Ds = 0.0;
-  // }else{
-  //   Ds = Q/(beta*By(y)*grd*cel*Dx);
-  // }
-  
+  // compute flow
+  double q = Qy(h);
+  return(s/q);
 };
+double sfc_mct::fS(double const&q){
+  if( q<= 0.0 ){ return(0); } // handle case of no outflow
+  // find area giving outflow
+  auto Ay = [&](double y){ return( (B0 + y*ca)*y ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
+  auto Py = [&](double y){ return( B0 + 2*(y/sa) ); };
+  auto Qy = [&](double y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y),(5/3)) / std::pow(Py(y),(2/3)) ); };
+  auto dQ_dy = [&](double y){ return( Qy(y)*( (5/3)*(B0+2*ca*y)/Ay(y) - (4/3)/(sa*Py(y)) ) ); };
+    
+  double y = 1.0; //initial estimate
+  double e = q - Qy(y);
+  double y_old = 100; // previous guess
+  int it = 0;
+  
+  while( (it<100) and (std::abs(y_old - y) > 1e-6) and (std::abs(e)>1e-6) ){
+    y_old = y;
+    y = std::max(y + (e/dQ_dy(y)) , 0.0);
+    if(y == 0 ){
+      return(0); //break;
+    }
+    e = q - Qy(y);
+    it +=1;
+  }
+  
+  Rcpp::Rcout << " y " << y << " q " << q << " e "<< e<< std::endl;
+  return( Dx*Ay(y) );
+
+}
+
+
 
 // //////////////////////////
 // Muskingham Cunge after Todini with two level rectangular channel
 sfc_mct_rect::sfc_mct_rect(std::vector<double> const &param, std::vector<double> const &properties){
   // store inputs
   Dx = properties[1];
-  grd = properties[2];
+  double const& grd(properties[2]);
   // parameters
   double const& n = param[0];
-  b_lower = param[1];
-  tan_alpha = param[2];
-  q_crit = param[3]; // threshold flow
+  B0 = param[1]; // bed width for rectangular segment
+  ca = 1.0 / param[2] ; // cotangent (cot) of side slop angle
+  sa = std::sin( std::atan(param[2]) ); // sin of side slope angle
+  double const& q_crit = param[3]; // threshold flow
   // computed values
-  sin_alpha = std::sin( std::atan(tan_alpha) );
   beta = std::sqrt(grd) / n;
-  y_crit = 1e300; // set very large to start with
+  y_crit = 1e300; // set large so next part stays within the rectangular channel part
   y_crit = solve_depth(q_crit);
+  A_crit = B0 * y_crit;
 }
 
 // q = A*sqrt(s)*(R^2/3)/n;
@@ -190,72 +191,67 @@ sfc_mct_rect::sfc_mct_rect(std::vector<double> const &param, std::vector<double>
 // dq/dy = dq/dA dA/dy
 // dA/dy = b_lower + 2(y-yc)/b_upper
  
-// solve depth for the flow
+// solve depth for a given outflow
 double sfc_mct_rect::solve_depth(double const&Q){
   if(Q==0){
     return(0.0);
   }
-  double y = 1.0; //y_crit;
-  // compute diff and change
-  double ytilde = std::max(y-y_crit,0.0);
-  double A = b_lower*y + ytilde*ytilde/tan_alpha;
-  double Wp =  b_lower + 2*std::min(y_crit,y) + 2*( ytilde/sin_alpha );
-  double R = A/Wp;
-  double q = beta * A * std::pow(R,(2.0/3.0));
-  double cel = (beta*std::pow(R,2.0/3.0)) + ( A*(beta*(2/3))*(std::pow(R,-1.0/3.0))/Wp );
-  double dq_dy = cel * (b_lower + 2*ytilde/tan_alpha);
-  double chng = 10000;
-  double e = Q - q;
+  auto Ay = [&](double y){ return( (B0*y) + std::max(0.0,y-y_crit)*ca*std::max(0.0,y-y_crit) ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
+  auto Py = [&](double y){ return( B0 + 2*std::min(y,y_crit) + 2*(std::max(0.0,y-y_crit)/sa) ); };
+  auto Qy = [&](double y){ return( (beta * std::pow(Ay(y),(5/3))) / std::pow(Py(y),(2/3)) ); };
+  auto dQ_dy = [&](double y){
+    double dP_dy = 2;
+    if( y> y_crit){ dP_dy = 2/sa; }
+    return( Qy(y)*( (5/3)*(B0+2*ca*std::max(0.0,y-y_crit))/Ay(y) - (2/3)*dP_dy/Py(y) ) );
+  };
+
+  double y = 1.0; //initial estimate
+  double e = Q - Qy(y);
+  double y_old = 100; // previous guess
   int it = 0;
-  // if( Q < 1e-10 ){
-  //   Rcpp::Rcout << "Initial - Q " << Q << " y " << y << " q " << q << " cel " << cel << " e "<< e<< std::endl;
-  // } 
-  while( (it<100) and (std::abs(chng) > 1e-6) and (std::abs(e)>1e-6) ){
-    chng = y;
-    y = std::max(y + (Q-q)/dq_dy , 0.0);
+  
+  while( (it<100) and (std::abs(y_old - y) > 1e-6) and (std::abs(e)>1e-6) ){
+    y_old = y;
+    y = std::max(y + (e/dQ_dy(y)) , 0.0);
     if(y == 0 ){
       return(0); //break;
     }
-    ytilde = std::max(y-y_crit,0.0);
-    A = b_lower*y + ytilde*ytilde/tan_alpha;
-    Wp =  b_lower + 2*std::min(y_crit,y) + 2*( ytilde/sin_alpha );
-    R = A/Wp;
-    q = beta * A * std::pow(R,(2.0/3.0));
-    cel = (beta*std::pow(R,2.0/3.0)) + ( A*(beta*(2/3))*(std::pow(R,-1.0/3.0))/Wp );
-    dq_dy = cel * (b_lower + 2*ytilde/tan_alpha);
-    chng =- y;
-    e = Q-q;
-    it += 1;
-    // if( Q < 1e-10 ){
-    //   Rcpp::Rcout << " y " << y << " q " << q << " cel " << cel << " e "<< e<< std::endl;
-    // }
-    //    Rcpp::Rcout << " y " << y << " q " << q << " cel " << cel << " e "<< e<< std::endl;
+    e = Q - Qy(y);
+
+    it +=1;
+    
   }
-  //Rcpp::Rcout << " y " << y << " q " << q << " cel " << cel << " e "<< e<< std::endl;
+  
+  Rcpp::Rcout << " y " << y << " q " << Qy(y) << " e "<< e<< std::endl;
   return( y );
 }
 
 // internal update
-void sfc_mct_rect::update(double const&Q){
+double sfc_mct_rect::fT(double const&s){
+  if( s<= 0.0 ){ return(1e300); } // handle case of no outflow
   
-  double y = solve_depth(Q);
-  double ytilde = std::max(y-y_crit,0.0);
-  double tw = b_lower + ytilde*tan_alpha/sin_alpha;
-  double area =  b_lower*y + ytilde*ytilde/tan_alpha;
-  double Wp =  b_lower + 2*std::max(y-y_crit,0.0) + 2*( ytilde/sin_alpha );
-  if( area <= 1e-6 ){
-    kappa = 0.0; //-999.0;
-    eta = 0.5;
+  // solve for height given the cross sectional area
+  double A = s/Dx;
+  double h_1(0), h_2(0);
+  if(A > A_crit){ // then some trapezoid part
+    h_1 = A_crit / B0;
+    h_2 = -B0 + std::sqrt( std::pow(B0,2.0) + 4*(A-A_crit)*ca ) / (2*ca) ;
   }else{
-    double vel = Q/area;
-    double R = area/Wp;
-    // compute celerity...
-    double cel = (beta*std::pow(R,2.0/3.0)) + ( area*(beta*(2/3))*(std::pow(R,-1.0/3.0))/Wp );
-    double D = Q / (2*tw*grd);
-    kappa = Dx / vel;
-    eta = 0.5*( 1.0 -  ((2*D*vel)/(Dx*cel*cel)) );
-    eta = std::max(eta,0.0);
+    h_1 = A/B0;
   }
+
+  // compute flow
+  double Wp = B0 + (2*h_1) + 2*h_2/sa;
+  double q = beta * std::pow(A, 5/3) / std::pow(Wp, 2/3);
+  return( s/q );
+};
+// internal update
+double sfc_mct_rect::fS(double const&q){
+  if( q<= 0.0 ){ return(0.0); }
+  auto Ay = [&](double y){ return( (B0*y) + std::max(0.0,y-y_crit)*ca*std::max(0.0,y-y_crit) ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
+  double y = solve_depth(q);
+
+  return( Ay(y)*Dx );
 };
 
 

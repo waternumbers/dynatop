@@ -14,10 +14,9 @@ expect_silent({
     dt$initialise()
     dt$sim(Swindale$model$output_flux,n_thread=10)
     error_exp10 <- max(abs(dt$get_mass_errors()[,6]))
-
-
 })
 expect_true({ error_exp < 1e-6 })
+expect_true({ error_exp10 < 1e-6 })
 
 ## check sub stepping
 expect_silent({

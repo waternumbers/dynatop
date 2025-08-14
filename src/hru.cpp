@@ -190,8 +190,7 @@ void hru::init(){
   
   // solve surface
   q_sf = q_sf_in - r_sf_rz;
-  sf->update( (q_sf+q_sf_in)/2.0 );
-  s_sf = sf->kappa*( sf->eta*q_sf_in + (1.0-sf->eta)*q_sf ); //fs( (q_sf+q_sf_in)/2.0 );
+  s_sf = sf->fS(q_sf);
   // s_sf = sf->fs(q_sf_in,r_sf_ );
   // if( std::abs( sf->fq(s_sf) - q_sf ) > 1e-10 ){ //,q_sf_in,r_sf_rz) - q_sf ) > 1e-10 ){
   //   Rcpp::Rcout << id << " surface" << std::endl;
@@ -311,11 +310,20 @@ void hru::step(){
     q_sf = 0.0;
   }else{
     // semi-explicit solution
-    Qref = (q_sf+q_sf_in)/2.0;
-    sf->update( Qref );
-    q_sf = std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)));
-    s_sf = z - Dt*q_sf;
-
+    double T_sf = sf->fT(z);
+    if( std::isnan(z) | std::isnan(T_sf) | (z<0) | (T_sf<0) ){
+      Rcpp::Rcout << "T_sf: " << T_sf << " s_sf: " << s_sf << " q_sf_in " << q_sf_in << " v_sf_rz: " << v_sf_rz << " z: " << z << std::endl;
+    }
+    s_sf = ( T_sf / (T_sf + Dt) ) * z;
+    q_sf = (z - s_sf)/Dt;
+    if( std::isnan(s_sf) | std::isnan(q_sf) | (s_sf<0) | (q_sf<0) ){
+      Rcpp::Rcout << "T_sf: " << T_sf << " s_sf: " << s_sf << " q_sf_in " << q_sf_in << " v_sf_rz: " << v_sf_rz << " z: " << z << std::endl;
+      Rcpp::Rcout << "s_sf: " << s_sf << " q_sf: " << q_sf << std::endl;
+    }
+    if( id == 0 ){
+       Rcpp::Rcout << "T_sf: " << T_sf << " s_sf: " << s_sf << " q_sf_in " << q_sf_in << " v_sf_rz: " << v_sf_rz << " z: " << z << std::endl;
+       Rcpp::Rcout << "s_sf: " << s_sf << " q_sf: " << q_sf << std::endl;
+    }
     // Full numerical search solution
     // std::pair<double,double> ubnd(z/Dt, 9999.9); // wettest surface
     // q_sf= ubnd.first;
@@ -362,8 +370,8 @@ void hru::step(){
     //   q_sf = std::max(0.0, (z - (sf->kappa*sf->eta)*q_sf_in) / (Dt + sf->kappa*(1.0 - sf->eta)) );
     //   //q_sf = std::max(0.0, (2*sf->Cs*s0 - (1-sf->Ds)*qin) / (1+sf->Ds+2*sf->Cs*Dt) );
     // }
-    s_sf = z - Dt*q_sf;
-    z = std::max(0.0, sf->kappa*(sf->eta*q_sf_in + (1.0-sf->eta)*q_sf) );
+    //s_sf = z - Dt*q_sf;
+    //z = std::max(0.0, sf->kappa*(sf->eta*q_sf_in + (1.0-sf->eta)*q_sf) );
     // if( std::abs(s_sf - z) > 1e-6 ){
     //   Rcpp::Rcout << "At end of s_sf update" << id << std::endl;
     //   Rcpp::Rcout << "     s_sf:  " << s_sf << std::endl;

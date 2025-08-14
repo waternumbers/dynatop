@@ -9,15 +9,15 @@
 // generic class
 class sfc {
 protected:
-  double kappa_1, eta_1, q_1, kappa_2, eta_2;
+  double T_1, T_2, S_1;
 public:
-  double kappa, eta; // these are used
    // initialisation
   sfc();
-  virtual void update(double const&);
+  virtual double fT(double const&);
+  virtual double fS(double const&);
 };
 
-// constant celerity & diffusivity with RAF
+// constant velocity with RAF
 class sfc_cnst: public sfc {
 public:
   sfc_cnst(std::vector<double> const&, std::vector<double> const&);
@@ -25,9 +25,11 @@ public:
 
 // kinematic with RAF
 class sfc_kin: public sfc {
+  double eta;
 public:
   sfc_kin(std::vector<double> const&, std::vector<double> const&);
-  void update(double const&);
+  double fT(double const&);
+  double fS(double const&);
 };
 
 // compound channel with RAF
@@ -41,16 +43,18 @@ class sfc_arb_kin: public sfc {
   std::vector<double> s_val, q_val;
 public:
   sfc_arb_kin(std::vector<double> const&, std::vector<double> const&); //, std::vector<double> const&);
-  void update(double const&);
+  double fT(double const&);
+  double fS(double const&);
 };
 
 // raf with power law
 class sfc_power_law: public sfc {
 private:
-  double Dx;
+  double kappa, eta;
 public:
   sfc_power_law(std::vector<double> const&, std::vector<double> const&); //, std::vector<double> const&);
-  void update(double const&);
+  double fT(double const&);
+  double fS(double const&);
 };
 
 // MCT
@@ -59,17 +63,19 @@ private:
   double grd, Dx, n, ca, sa, B0;
 public:
   sfc_mct(std::vector<double> const&, std::vector<double> const&); //, std::vector<double> const&);
-  void update(double const&);
+  double fT(double const&);
+  double fS(double const&);
 };
 
 // MCT with double rectangle channel
 class sfc_mct_rect: public sfc {
 private:
-  double grd, Dx, b_lower, n, beta, sin_alpha, tan_alpha, q_crit, y_crit;
+  double Dx, B0, n, ca, sa, A_crit, beta, y_crit;
   double solve_depth(double const&);
 public:
   sfc_mct_rect(std::vector<double> const&, std::vector<double> const&); //, std::vector<double> const&);
-  void update(double const&);
+  double fT(double const&);
+  double fS(double const&);
 };
 
 #endif
