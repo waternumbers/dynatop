@@ -7,3 +7,5 @@ $.git$
 ^build_scripts$
 ^prebuilt$
 ^\.github$
+^doc$
+^Meta$

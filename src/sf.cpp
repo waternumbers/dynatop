@@ -1,12 +1,14 @@
 // each function takes a storage and 
 #include "sf.h"
 
+// fT returns a such that q=aS => a = q/S
+// fS returns S such that q=aS
 
 // solve 
 sfc::sfc(){ }
 double sfc::fT( double const &s ){ // set for two partions with different time constants
-  if( s<= 0.0 ){ return(1e100); } // handle case of no outflow
-  return( s / ( std::min(s,S_1)/T_1 + std::max(0.0,s-S_1)/T_2 ) );
+  if( s<= 0.0 ){ return(0.0); } // handle case of no outflow
+  return( ( std::min(s,S_1)/T_1 + std::max(0.0,s-S_1)/T_2 ) / s );
 }
 double sfc::fS( double const &q ){ // set for two partions with different time constants
   if( q<= 0.0 ){ return(0.0); } // handle case of no outflow
@@ -23,8 +25,11 @@ sfc_cnst::sfc_cnst(std::vector<double> const &param, std::vector<double> const &
 }
 
 // Mannings with raf - assume shallow water for hydraulic radius ~ S/area
-// so v = (S^(2/3) * sqrt(gradient) ) / (n * area^(2/3))
-// T_2 = v/Dx = eta * s^(2/3) where
+// so outside of raf
+// v = (S^(2/3) * sqrt(gradient) ) / (n * area^(2/3))
+// q = (S^(5/3) * sqrt(gradient) ) / (Dx * n * area^(2/3))
+// q = eta * s^(5/3)
+// where
 // eta = sqrt(gradient) / (Dx * n * area^(2/3))
 // Assumes shallow water so wetted perimeter ~ width
 sfc_kin::sfc_kin(std::vector<double> const &param, std::vector<double> const &properties){
@@ -35,13 +40,13 @@ sfc_kin::sfc_kin(std::vector<double> const &param, std::vector<double> const &pr
   eta = std::sqrt(grd) / (Dx * n * std::pow(area, 2.0/3.0));
 }
 double sfc_kin::fT(double const &s ){
-  if( s<= 0.0 ){ return(1e100); } // handle case of no outflow
-  double q = (std::min(s,S_1)/T_1) + (std::pow(std::max(s-S_1,0.0), 1.0/3.0)*eta);
-  return( s/q );
+  if( s<= 0.0 ){ return(0.0); } // handle case of no outflow
+  double q = (std::min(s,S_1)/T_1) + (std::pow(std::max(s-S_1,0.0), 5.0/3.0)*eta);
+  return( q/s );
 }
 double sfc_kin::fS(double const &q ){
   if( q<= 0.0 ){ return(0.0); } // handle case of no outflow
-  return( std::min( q*T_1,S_1 ) + std::pow( std::max(q - S_1/T_1, 0.0) / eta, 3 ) );
+  return( std::min( q*T_1,S_1 ) + std::pow( std::max(q - S_1/T_1, 0.0) / eta, 3/5 ) );
 }
 
 
@@ -63,7 +68,7 @@ sfc_arb_kin::sfc_arb_kin(std::vector<double> const &param, std::vector<double> c
   }
 }
 double sfc_arb_kin::fT(double const &s ){
-  if( s<= 0.0 ){ return(1e300); } // handle case of no outflow
+  if( s<= 0.0 ){ return(0.0); } // handle case of no outflow
   unsigned int n = s_val.size();
   unsigned int ii = 1;
   while( (s_val[ii] < s) & (ii < (n-1)) ){
@@ -91,9 +96,9 @@ sfc_power_law::sfc_power_law(std::vector<double> const &param, std::vector<doubl
   eta = param[0]; // scale
 }
 double sfc_power_law::fT(double const &s ){
-  if( s<= 0.0 ){ return(1e300); } // handle case of no outflow
+  if( s<= 0.0 ){ return(0.0); } // handle case of no outflow
   double q = (std::min(s,S_1)/T_1) + (eta * std::pow(std::max(s-S_1,0.0), kappa));
-  return( s/q );
+  return( q/s );
 }
 double sfc_power_law::fS(double const &q ){
   if( q<= 0.0 ){ return(0); } // handle case of no outflow
@@ -111,7 +116,7 @@ sfc_mct::sfc_mct(std::vector<double> const &param, std::vector<double> const &pr
 }
 // internal update
 double sfc_mct::fT(double const&s){
-  if( s<= 0.0 ){ return(1e300); } // handle case of no outflow
+  if( s<= 0.0 ){ return(0.0); } // handle case of no outflow
   
   auto Ay = [&](double y){ return( (B0 + y*ca)*y ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
   auto Py = [&](double y){ return( B0 + 2*(y/sa) ); };
@@ -119,14 +124,14 @@ double sfc_mct::fT(double const&s){
   
   // solve for height given the cross sectional area
   double A = s/Dx;
-  double h = -B0 + std::sqrt( std::pow(B0,2.0) + 4*A*ca ) / (2*ca) ;
+  double h = ( -B0 + std::sqrt( std::pow(B0,2.0) + 4*A*ca ) ) / (2*ca) ;
   if( h<0.0){
     Rcpp::Rcout <<"Negative h " << h << std::endl;
     h = 0.0;
   }
   // compute flow
   double q = Qy(h);
-  return(s/q);
+  return( q/s );
 };
 double sfc_mct::fS(double const&q){
   if( q<= 0.0 ){ return(0); } // handle case of no outflow
@@ -151,7 +156,7 @@ double sfc_mct::fS(double const&q){
     it +=1;
   }
   
-  Rcpp::Rcout << " y " << y << " q " << q << " e "<< e<< std::endl;
+  // Rcpp::Rcout << " y " << y << " q " << q << " e "<< e<< std::endl;
   return( Dx*Ay(y) );
 
 }
@@ -222,13 +227,13 @@ double sfc_mct_rect::solve_depth(double const&Q){
     
   }
   
-  Rcpp::Rcout << " y " << y << " q " << Qy(y) << " e "<< e<< std::endl;
+  //Rcpp::Rcout << " y " << y << " q " << Qy(y) << " e "<< e<< std::endl;
   return( y );
 }
 
 // internal update
 double sfc_mct_rect::fT(double const&s){
-  if( s<= 0.0 ){ return(1e300); } // handle case of no outflow
+  if( s<= 0.0 ){ return(0.0); } // handle case of no outflow
   
   // solve for height given the cross sectional area
   double A = s/Dx;
@@ -243,7 +248,7 @@ double sfc_mct_rect::fT(double const&s){
   // compute flow
   double Wp = B0 + (2*h_1) + 2*h_2/sa;
   double q = beta * std::pow(A, 5/3) / std::pow(Wp, 2/3);
-  return( s/q );
+  return( q/s );
 };
 // internal update
 double sfc_mct_rect::fS(double const&q){

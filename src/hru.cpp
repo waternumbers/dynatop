@@ -310,20 +310,17 @@ void hru::step(){
     q_sf = 0.0;
   }else{
     // semi-explicit solution
-    double T_sf = sf->fT(z);
-    if( std::isnan(z) | std::isnan(T_sf) | (z<0) | (T_sf<0) ){
-      Rcpp::Rcout << "T_sf: " << T_sf << " s_sf: " << s_sf << " q_sf_in " << q_sf_in << " v_sf_rz: " << v_sf_rz << " z: " << z << std::endl;
-    }
-    s_sf = ( T_sf / (T_sf + Dt) ) * z;
+    double T_sf = sf->fT(z); // q_sf = T_sf * s_sf
+    s_sf = z / (1 + Dt*T_sf) ;
     q_sf = (z - s_sf)/Dt;
     if( std::isnan(s_sf) | std::isnan(q_sf) | (s_sf<0) | (q_sf<0) ){
-      Rcpp::Rcout << "T_sf: " << T_sf << " s_sf: " << s_sf << " q_sf_in " << q_sf_in << " v_sf_rz: " << v_sf_rz << " z: " << z << std::endl;
+      Rcpp::Rcout << "id: " << id << " T_sf: " << T_sf << " s_sf: " << s_sf << " q_sf_in " << q_sf_in << " v_sf_rz: " << v_sf_rz << " z: " << z << std::endl;
       Rcpp::Rcout << "s_sf: " << s_sf << " q_sf: " << q_sf << std::endl;
     }
-    if( id == 0 ){
-       Rcpp::Rcout << "T_sf: " << T_sf << " s_sf: " << s_sf << " q_sf_in " << q_sf_in << " v_sf_rz: " << v_sf_rz << " z: " << z << std::endl;
-       Rcpp::Rcout << "s_sf: " << s_sf << " q_sf: " << q_sf << std::endl;
-    }
+    // if( id == 0 ){
+    //    Rcpp::Rcout << "T_sf: " << T_sf << " s_sf: " << s_sf << " q_sf_in " << q_sf_in << " v_sf_rz: " << v_sf_rz << " z: " << z << std::endl;
+    //    Rcpp::Rcout << "s_sf: " << s_sf << " q_sf: " << q_sf << std::endl;
+    // }
     // Full numerical search solution
     // std::pair<double,double> ubnd(z/Dt, 9999.9); // wettest surface
     // q_sf= ubnd.first;
