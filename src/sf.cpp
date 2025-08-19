@@ -46,7 +46,7 @@ double sfc_kin::fT(double const &s ){
 }
 double sfc_kin::fS(double const &q ){
   if( q<= 0.0 ){ return(0.0); } // handle case of no outflow
-  return( std::min( q*T_1,S_1 ) + std::pow( std::max(q - S_1/T_1, 0.0) / eta, 3/5 ) );
+  return( std::min( q*T_1,S_1 ) + std::pow( std::max(q - S_1/T_1, 0.0) / eta, 3.0/5.0 ) );
 }
 
 
@@ -78,7 +78,7 @@ double sfc_arb_kin::fT(double const &s ){
   return( q/s );
 }
 double sfc_arb_kin::fS(double const &q ){
-  if( q<= 0.0 ){ return( 0 ); } // handle case of no outflow
+  if( q<= 0.0 ){ return( 0.0 ); } // handle case of no outflow
   unsigned int n = s_val.size();
   unsigned int ii = 1;
   while( (q_val[ii] < q) & (ii < (n-1)) ){
@@ -102,7 +102,7 @@ double sfc_power_law::fT(double const &s ){
 }
 double sfc_power_law::fS(double const &q ){
   if( q<= 0.0 ){ return(0); } // handle case of no outflow
-  return( std::min( q*T_1,S_1 ) + std::pow( std::max(q - S_1/T_1, 0.0) / eta, 1/kappa ) );
+  return( std::min( q*T_1,S_1 ) + std::pow( std::max(q - S_1/T_1, 0.0) / eta, 1.0/kappa ) );
 }
 
 // Trapezoid channel with Mannings after Todini
@@ -119,12 +119,12 @@ double sfc_mct::fT(double const&s){
   if( s<= 0.0 ){ return(0.0); } // handle case of no outflow
   
   auto Ay = [&](double y){ return( (B0 + y*ca)*y ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
-  auto Py = [&](double y){ return( B0 + 2*(y/sa) ); };
-  auto Qy = [&](double y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y),(5/3)) / std::pow(Py(y),(2/3)) ); };
+  auto Py = [&](double y){ return( B0 + 2.0*(y/sa) ); };
+  auto Qy = [&](double y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y),(5.0/3.0)) / std::pow(Py(y),(2.0/3.0)) ); };
   
   // solve for height given the cross sectional area
   double A = s/Dx;
-  double h = ( -B0 + std::sqrt( std::pow(B0,2.0) + 4*A*ca ) ) / (2*ca) ;
+  double h = ( -B0 + std::sqrt( std::pow(B0,2.0) + 4.0*A*ca ) ) / (2.0*ca) ;
   if( h<0.0){
     Rcpp::Rcout <<"Negative h " << h << std::endl;
     h = 0.0;
@@ -138,8 +138,8 @@ double sfc_mct::fS(double const&q){
   // find area giving outflow
   auto Ay = [&](double y){ return( (B0 + y*ca)*y ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
   auto Py = [&](double y){ return( B0 + 2*(y/sa) ); };
-  auto Qy = [&](double y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y),(5/3)) / std::pow(Py(y),(2/3)) ); };
-  auto dQ_dy = [&](double y){ return( Qy(y)*( (5/3)*(B0+2*ca*y)/Ay(y) - (4/3)/(sa*Py(y)) ) ); };
+  auto Qy = [&](double y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y),(5.0/3.0)) / std::pow(Py(y),(2.0/3.0)) ); };
+  auto dQ_dy = [&](double y){ return( Qy(y)*( (5.0/3.0)*(B0+2.0*ca*y)/Ay(y) - (4.0/3.0)/(sa*Py(y)) ) ); };
     
   double y = 1.0; //initial estimate
   double e = q - Qy(y);
@@ -166,6 +166,7 @@ double sfc_mct::fS(double const&q){
 // //////////////////////////
 // Muskingham Cunge after Todini with two level rectangular channel
 sfc_mct_rect::sfc_mct_rect(std::vector<double> const &param, std::vector<double> const &properties){
+  //Rcpp:Rcout << "in initialisation" << std::endl;
   // store inputs
   Dx = properties[1];
   double const& grd(properties[2]);
@@ -180,6 +181,8 @@ sfc_mct_rect::sfc_mct_rect(std::vector<double> const &param, std::vector<double>
   y_crit = 1e300; // set large so next part stays within the rectangular channel part
   y_crit = solve_depth(q_crit);
   A_crit = B0 * y_crit;
+  //Rcpp:Rcout << "A_crit: " << A_crit << "y_crit: " << y_crit << " Dx: " << Dx << std::endl;
+  //Rcpp::Rcout << "y_crit: " << y_crit << " A_crit: " << A_crit << " q_crit: " << q_crit << std::endl;
 }
 
 // q = A*sqrt(s)*(R^2/3)/n;
@@ -202,19 +205,19 @@ double sfc_mct_rect::solve_depth(double const&Q){
     return(0.0);
   }
   auto Ay = [&](double y){ return( (B0*y) + std::max(0.0,y-y_crit)*ca*std::max(0.0,y-y_crit) ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
-  auto Py = [&](double y){ return( B0 + 2*std::min(y,y_crit) + 2*(std::max(0.0,y-y_crit)/sa) ); };
-  auto Qy = [&](double y){ return( (beta * std::pow(Ay(y),(5/3))) / std::pow(Py(y),(2/3)) ); };
+  auto Py = [&](double y){ return( B0 + 2.0*std::min(y,y_crit) + 2.0*(std::max(0.0,y-y_crit)/sa) ); };
+  auto Qy = [&](double y){ return( (beta * std::pow(Ay(y),(5.0/3.0))) / std::pow(Py(y),(2.0/3.0)) ); };
   auto dQ_dy = [&](double y){
     double dP_dy = 2;
-    if( y> y_crit){ dP_dy = 2/sa; }
-    return( Qy(y)*( (5/3)*(B0+2*ca*std::max(0.0,y-y_crit))/Ay(y) - (2/3)*dP_dy/Py(y) ) );
+    if( y> y_crit){ dP_dy = 2.0/sa; }
+    return( Qy(y)*( (5.0/3.0)*(B0+2.0*ca*std::max(0.0,y-y_crit))/Ay(y) - (2.0/3.0)*dP_dy/Py(y) ) );
   };
 
   double y = 1.0; //initial estimate
   double e = Q - Qy(y);
   double y_old = 100; // previous guess
   int it = 0;
-  
+  //Rcpp:Rcout << "it: " << it << " y " << y << " q " << Qy(y) << " e "<< e << std::endl;
   while( (it<100) and (std::abs(y_old - y) > 1e-6) and (std::abs(e)>1e-6) ){
     y_old = y;
     y = std::max(y + (e/dQ_dy(y)) , 0.0);
@@ -222,12 +225,11 @@ double sfc_mct_rect::solve_depth(double const&Q){
       return(0); //break;
     }
     e = Q - Qy(y);
-
     it +=1;
-    
+    //Rcpp:Rcout << "it: " << it << " y " << y << " q " << Qy(y) << " e "<< e << std::endl;
   }
   
-  //Rcpp::Rcout << " y " << y << " q " << Qy(y) << " e "<< e<< std::endl;
+  //Rcpp:Rcout << " y " << y << " q " << Qy(y) << " e "<< e << std::endl;
   return( y );
 }
 
@@ -240,21 +242,32 @@ double sfc_mct_rect::fT(double const&s){
   double h_1(0), h_2(0);
   if(A > A_crit){ // then some trapezoid part
     h_1 = A_crit / B0;
-    h_2 = -B0 + std::sqrt( std::pow(B0,2.0) + 4*(A-A_crit)*ca ) / (2*ca) ;
+    h_2 = (-B0 + std::sqrt( std::pow(B0,2.0) + 4*(A-A_crit)*ca )) / (2.0*ca) ;
+    if( h_2<0.0){
+      Rcpp::Rcout <<"Negative h_2 " << h_2 << std::endl;
+      h_2 = 0.0;
+    }
   }else{
     h_1 = A/B0;
   }
 
   // compute flow
   double Wp = B0 + (2*h_1) + 2*h_2/sa;
-  double q = beta * std::pow(A, 5/3) / std::pow(Wp, 2/3);
-  return( q/s );
+  double q = beta * std::pow(A, 5.0/3.0) / std::pow(Wp, 2.0/3.0);
+  double T_sf = q/s;
+  //Rcpp:Rcout << "s: " << s << " T: " << T_sf << " q: " << q << " A: " << A << " Wp: " << Wp << " beta: " << beta << std::endl;
+  
+  return( T_sf );
 };
+
 // internal update
 double sfc_mct_rect::fS(double const&q){
+  //Rcpp:Rcout << "in fS" << std::endl;
   if( q<= 0.0 ){ return(0.0); }
   auto Ay = [&](double y){ return( (B0*y) + std::max(0.0,y-y_crit)*ca*std::max(0.0,y-y_crit) ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
   double y = solve_depth(q);
+  
+
 
   return( Ay(y)*Dx );
 };
