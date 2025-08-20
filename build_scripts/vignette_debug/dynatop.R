@@ -229,6 +229,16 @@ for(ii in 1:length(hru)){
 ## ## ----add_data-----------------------------------------------------------------
 ## #data("Swindale")
 swindale_obs <- Swindale$obs
+ctch_mdl <- dynatop$new(hru)
+ctch_mdl$add_data(swindale_obs)
+ctch_mdl$initialise()
+outDefn <- swindale_model$output_flux
+system.time({ ctch_mdl$sim(outDefn) })
+o1 <- ctch_mdl$get_states()
+y1 <- ctch_mdl$get_output()
+
+
+
 ## #swindale_obs <- swindale_obs["2009-11-16::2009-11-19"]
 ## #swindale_obs$precip <- 0
 ## ctch_mdl$add_data(swindale_obs)
@@ -254,80 +264,81 @@ outDefn <- data.frame( name = c(paste0(outID,"_q_sf"),
                                rep("pet",length(outID))),
                       scale=1 )
 
+devtools::load_all() ##library("dynatop")
 outDefn <- swindale_model$output_flux
-tdx <- 1:nrow(swindale_obs) # 1:10
-
 gc()
 ctch_mdl <- dynatop$new(hru)
-ctch_mdl$add_data(swindale_obs[tdx,])
+ctch_mdl$add_data(swindale_obs)
 system.time({ ctch_mdl$initialise() })
 s1 <- ctch_mdl$get_states()
-system.time({ ctch_mdl$sim(outDefn) })
+system.time({ ctch_mdl$sim(outDefn,sub_step=900) })
 o1 <- ctch_mdl$get_states()
 y1 <- ctch_mdl$get_output()
+print(max(abs(ctch_mdl$get_mass_errors()[,6])))
+x11();plot(y1); lines(Swindale$obs$flow)
 
-gc()
-n_thread <- 3
-ctch_mdl <- dynatop$new(hru)
-ctch_mdl$add_data(swindale_obs[tdx,])
-system.time({ ctch_mdl$initialise(n_thread=n_thread) })
-s3 <- ctch_mdl$get_states()
-system.time({ ctch_mdl$sim(outDefn, n_thread=n_thread) })
-o3 <- ctch_mdl$get_states() #output()
-y3 <- ctch_mdl$get_output()
+## gc()
+## n_thread <- 3
+## ctch_mdl <- dynatop$new(hru)
+## ctch_mdl$add_data(swindale_obs[tdx,])
+## system.time({ ctch_mdl$initialise(n_thread=n_thread) })
+## s3 <- ctch_mdl$get_states()
+## system.time({ ctch_mdl$sim(outDefn, n_thread=n_thread) })
+## o3 <- ctch_mdl$get_states() #output()
+## y3 <- ctch_mdl$get_output()
 
-all(s1==s3)
-all(o1==o3)
-all(y1==y3)
+## all(s1==s3)
+## all(o1==o3)
+## all(y1==y3)
 
-plot(y1);points(y3)
+## plot(y1);points(y3)
 
-any(abs(o1-o3)>1e-6)
-which(colSums(abs(o1-o3)>1e-6)>1)
-
-
-
-
-ctch_mdl$add_data(swindale_obs)
-## ----initialise---------------------------------------------------------------
-ctch_mdl$initialise()
-st <- list(initial=ctch_mdl$get_states())
-9740 9744 9755 9761 9767 9774
-
-print( system.time({sim1 <- ctch_mdl$sim(swindale_model$output_flux, keep_states= index(swindale_obs)[1:3])$get_output()}) )
-st[["sim1"]] <- ctch_mdl$get_states(rec=TRUE)
-
-ctch_mdl$initialise()
-print(system.time({sim2 <- ctch_mdl$sim(swindale_model$output_flux, keep_states= index(swindale_obs)[1:3],n_thread=3)$get_output()}))
-st[["sim2"]] <- ctch_mdl$get_states(rec=TRUE) #mass_errors()
-
-theSame <- rep(NA,length(st[["sim1"]]))
-hasSurface <- rep(NA,length(st[["sim1"]]))
-tp <- 1
-for(ii in 1:length(st[["sim1"]])){
-    theSame[ii] <- ( st[["sim1"]][[tp]][[ii]]$id == st[["sim2"]][[tp]][[ii]]$id ) &
-        all( st[["sim1"]][[tp]][[ii]]$states == st[["sim2"]][[tp]][[ii]]$states )
-    hasSurface[ii] <- (st[["sim1"]][[tp]][[ii]]$states["s_sf"]>0) +
-        2*(st[["sim2"]][[tp]][[ii]]$states["s_sf"]>0)
-}
+## any(abs(o1-o3)>1e-6)
+## which(colSums(abs(o1-o3)>1e-6)>1)
 
 
 
-ctch_mdl$initialise()
-print(system.time({ sim3 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=60,n_thread=10)$get_output() }))
-st[["sim3"]] <- ctch_mdl$get_states() #mass_errors()
 
-out <- Reduce(merge,list(swindale_obs,sim1,sim2,sim3))
-names(out) <- c(names(swindale_obs),'sim_1','sim_2',"sim_3")
-plot(out[,c('flow','sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
-##plot(out[,c('sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
+## ctch_mdl$add_data(swindale_obs)
+## ## ----initialise---------------------------------------------------------------
+## ctch_mdl$initialise()
+## st <- list(initial=ctch_mdl$get_states())
+## ##9740 9744 9755 9761 9767 9774
 
-lapply(st,function(s){sapply(s,range)})
-## ----mass_check---------------------------------------------------------------
-mb <- ctch_mdl$get_mass_errors()
-plot( mb[,6] , main="Mass Error", ylab="[m^3]")
+## print( system.time({sim1 <- ctch_mdl$sim(swindale_model$output_flux, keep_states= index(swindale_obs)[1:3])$get_output()}) )
+## st[["sim1"]] <- ctch_mdl$get_states(rec=TRUE)
+
+## ctch_mdl$initialise()
+## print(system.time({sim2 <- ctch_mdl$sim(swindale_model$output_flux, keep_states= index(swindale_obs)[1:3],n_thread=3)$get_output()}))
+## st[["sim2"]] <- ctch_mdl$get_states(rec=TRUE) #mass_errors()
+
+## theSame <- rep(NA,length(st[["sim1"]]))
+## hasSurface <- rep(NA,length(st[["sim1"]]))
+## tp <- 1
+## for(ii in 1:length(st[["sim1"]])){
+##     theSame[ii] <- ( st[["sim1"]][[tp]][[ii]]$id == st[["sim2"]][[tp]][[ii]]$id ) &
+##         all( st[["sim1"]][[tp]][[ii]]$states == st[["sim2"]][[tp]][[ii]]$states )
+##     hasSurface[ii] <- (st[["sim1"]][[tp]][[ii]]$states["s_sf"]>0) +
+##         2*(st[["sim2"]][[tp]][[ii]]$states["s_sf"]>0)
+## }
 
 
-## converting to a strin for alternative usage
-str <- supressMessages({jsonlite::toJSON(hsc,pretty=TRUE,keep_vec_names = TRUE)})
+
+## ctch_mdl$initialise()
+## print(system.time({ sim3 <- ctch_mdl$sim(swindale_model$output_flux,sub_step=60,n_thread=10)$get_output() }))
+## st[["sim3"]] <- ctch_mdl$get_states() #mass_errors()
+
+## out <- Reduce(merge,list(swindale_obs,sim1,sim2,sim3))
+## names(out) <- c(names(swindale_obs),'sim_1','sim_2',"sim_3")
+## plot(out[,c('flow','sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
+## ##plot(out[,c('sim_1','sim_2',"sim_3")], main="Discharge",ylab="m3/s",legend.loc="topright")
+
+## lapply(st,function(s){sapply(s,range)})
+## ## ----mass_check---------------------------------------------------------------
+## mb <- ctch_mdl$get_mass_errors()
+## plot( mb[,6] , main="Mass Error", ylab="[m^3]")
+
+
+## ## converting to a strin for alternative usage
+## str <- supressMessages({jsonlite::toJSON(hsc,pretty=TRUE,keep_vec_names = TRUE)})
 

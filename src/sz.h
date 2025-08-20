@@ -15,7 +15,7 @@ public:
   // initialisation
   szc(); 
   virtual double fs(double const&); // compute storage given representative flow
-  virtual double fq(double const&); // compute representative flow given storage
+  virtual std::pair<double,double> fq(double const&); // compute representative flow given storage
 };
 
 // exponential
@@ -24,7 +24,7 @@ class szc_exp: public szc {
  public:
   szc_exp(std::vector<double> const&, std::vector<double> const&);
   double fs(double const&);
-  double fq(double const&);
+  std::pair<double,double> fq(double const&);
 };
 
 // bounded exponential
@@ -34,7 +34,7 @@ class szc_bexp: public szc {
  public:
   szc_bexp(std::vector<double> const&, std::vector<double> const&);
   double fs(double const&);
-  double fq(double const&);
+  std::pair<double,double> fq(double const&);
 };
 
 // constant velocity
@@ -44,7 +44,7 @@ protected:
 public:
   szc_cnst(std::vector<double> const&, std::vector<double> const&);
   double fs(double const&);
-  double fq(double const&);
+  std::pair<double,double> fq(double const&);
 };
 
 // double exponential
@@ -54,7 +54,7 @@ protected:
 public:
   szc_dexp(std::vector<double> const&, std::vector<double> const&);
   double fs(double const&);
-  double fq(double const&);
+  std::pair<double,double> fq(double const&);
 };
 
 

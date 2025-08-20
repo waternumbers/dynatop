@@ -2,7 +2,10 @@
 
 szc::szc(){}
 double szc::fs(double const &q){ return(9999.9); }// compute storage deficit for a given flow
-double szc::fq(double const &s){ return(9999.9); }
+std::pair<double,double> szc::fq(double const &s){
+  std::pair<double,double> out(9999.9,9999.9);
+  return(out);
+}
 
 // exponential
 szc_exp::szc_exp(std::vector<double> const &param, std::vector<double> const &prop){
@@ -23,9 +26,14 @@ double szc_exp::fs(double const &q){ // get storage from flow
   double s = -std::log( q/q_szmax ) / psi;
   return( s );
 }
-double szc_exp::fq(double const &s){ // get storage from flow
-  if( q_szmax<=0.0 ){ return(0.0); } // since there can be no flow or storage
-  return( q_szmax * std::exp(-psi*std::max(0.0,s)) );
+std::pair<double,double> szc_exp::fq(double const &s){ // get storage from flow
+  std::pair<double,double> out(q_szmax,0.0);
+  // if( q_szmax<=0.0 ){ return(out); } // since there can be no flow or storage
+  if(s>=0){
+    out.first = q_szmax * std::exp(-psi*std::max(0.0,s));
+    out.second = -psi*out.first;
+  }
+  return(out) ; //q_szmax * std::exp(-psi*std::max(0.0,s)) );
 }
   
 // bounded exponential
@@ -46,9 +54,13 @@ double szc_bexp::fs(double const &q){ // get storage from flow
   if( q >= q_szmax ){ return(0.0); } // since saturated
   return( -std::log((q/omega)+kappa)/psi );
 };
-double szc_bexp::fq(double const &s){ // get flow from storage
-  double q = std::max(0.0, omega*( std::exp(-psi*s) - kappa ) );
-  return( q );
+std::pair<double,double> szc_bexp::fq(double const &s){ // get flow from storage
+  std::pair<double,double> out(q_szmax,0.0);
+  if(s>0){
+    out.first = std::max(0.0, omega*( std::exp(-psi*s) - kappa ) );
+    out.second = -psi*out.first;
+  }
+  return( out );
 }
 
 // constant celerity/velocity
@@ -69,8 +81,15 @@ double szc_cnst::fs(double const &q){
   double qq = std::min(q,q_szmax);
   return( -psi*((qq/omega)-kappa) );
 };
-double szc_cnst::fq(double const &s){
-  return( std::max(0.0, omega*(kappa - (s*psi))) );
+std::pair<double,double> szc_cnst::fq(double const &s){
+  std::pair<double,double> out(omega*kappa,0.0);
+  if( s>0 ){
+    out.first = std::max(0.0, omega*(kappa - (s*psi)));
+    if( out.first > 0 ){
+      out.second = -omega*psi;
+    }
+  }
+  return( out ) ;
 };
 
 
@@ -88,10 +107,16 @@ szc_dexp::szc_dexp(std::vector<double> const &param, std::vector<double> const &
   psi = std::cos(beta) / (m*area); // scaling to get crosssectional depth from storage
   kappa = std::cos(beta) / (m2*area); // scaling to get crosssectional depth from storage
 }
-double szc_dexp::fq(double const &s){ // get flow from storage
-  double q = q_szmax * ( omega*std::exp(-psi*s) + (1.0-omega)*std::exp(-kappa*s) );
-  return( q );
+
+std::pair<double,double> szc_dexp::fq(double const &s){ // get flow from storage
+  std::pair<double,double> out(q_szmax,0.0);
+  if( s>0 ){
+    out.first = q_szmax * ( omega*std::exp(-psi*s) + (1.0-omega)*std::exp(-kappa*s) );
+    out.second = -q_szmax * ( psi*omega*std::exp(-psi*s) + kappa*(1.0-omega)*std::exp(-kappa*s) );
+  }
+  return(out);
 }
+
 double szc_dexp::fs(double const &q){ // get storage from flow
   if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
   double z;
