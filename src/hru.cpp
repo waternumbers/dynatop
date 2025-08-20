@@ -85,15 +85,15 @@ hru::hru(int const id_, int const band_,
     break;
   case 2:
     // bounded exp
-    //sz = std::make_unique<szc_bexp>( sz_param_, properties_ ); // properites_[3] is sbar
+    sz = std::make_unique<szc_bexp>( sz_param_, properties_ ); // properites_[3] is sbar
     break;
   case 3:
     // double exp
-    //sz = std::make_unique<szc_dexp>( sz_param_, properties_ ); // properites_[3] is sbar
+    sz = std::make_unique<szc_dexp>( sz_param_, properties_ ); // properites_[3] is sbar
     break;
   case 4:
     // constant celerity
-    //sz = std::make_unique<szc_cnst>( sz_param_, properties_ ); // properites_[3] is sbar
+    sz = std::make_unique<szc_cnst>( sz_param_, properties_ ); // properites_[3] is sbar
     break;
   }
 };
@@ -131,8 +131,7 @@ void hru::update_met(std::vector<double> &obs){
 void hru::init(){
   // std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in,
   // 	       double s_rz_0, double r_uz_sz_0,
-  // 	       double const &vtol, double const &etol, int const &max_it){
-
+  // 	       double const &vtol, double const &etol, int const &max_it){  
   double const &s_rzmax = rz_param[0];
   double const &t_d = uz_param[0];
 
@@ -159,12 +158,6 @@ void hru::init(){
   q_sz = std::min( sz->q_szmax, r_uz_sz + q_sz_in );
   // muskingham cunge s_sz = sz->fs( (q_sz+q_sz_in)/2.0 );
   s_sz = sz->fs(q_sz);
-
-  if(id == 19){
-    Rcpp::Rcout << "q_sz: " << q_sz << " s_sz:" << s_sz << std::endl;
-    Rcpp::Rcout << "q_szmax: " << sz->q_szmax << " q_sz_in:" << q_sz_in << std::endl;
-  }
-
 
   r_uz_sz = q_sz - q_sz_in;
   //if( std::abs( sz->fq(s_sz,q_sz_in) - q_sz ) > 1e-10 ){
@@ -198,10 +191,6 @@ void hru::init(){
   q_sf = q_sf_in - r_sf_rz;
   s_sf = sf->fs(q_sf);
 
-  if(id == 0){
-    Rcpp::Rcout << "q_sf: " << q_sf << " s_sf:" << s_sf << std::endl;
-    Rcpp::Rcout << "q_sf_in:" << q_sf_in << std::endl;
-  }
   // s_sf = sf->fs(q_sf_in,r_sf_ );
   // if( std::abs( sf->fq(s_sf) - q_sf ) > 1e-10 ){ //,q_sf_in,r_sf_rz) - q_sf ) > 1e-10 ){
   //   Rcpp::Rcout << id << " surface" << std::endl;
@@ -224,10 +213,6 @@ void hru::init(){
 
 
 void hru::step(){
-  // std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in,
-  // 	       double const &vtol, double const &etol, int const &max_it, double const &Dt)
-  // {
-
   double const &s_rzmax = rz_param[0];
   double const &t_d = uz_param[0];
 
@@ -258,12 +243,12 @@ void hru::step(){
     z = z - ( (s_prime + Dt*qq.first - z) / (Dt*qq.second - 1.0) );
     z = std::max(z,0.0);
     if(id == 19){
-      Rcpp::Rcout << ii << " " << z <<std::endl;
+      // Rcpp::Rcout << ii << " " << z <<std::endl;
     }
   }
   q_sz = std::min(sz->q_szmax, (z-s_prime)/Dt);
   if(q_sz<0){
-    Rcpp::Rcout << id << q_sz << std::endl;
+    // Rcpp::Rcout << id << q_sz << std::endl;
   }
   				  
   // upward pass
@@ -291,15 +276,15 @@ void hru::step(){
       z = z - ( (s_prime + Dt*qq.first - z) / (-Dt*qq.second - 1.0) );
       z = std::max(z,0.0);
       if(id == 19){
-	Rcpp::Rcout << ii << " " << z <<std::endl;
+	// Rcpp::Rcout << ii << " " << z <<std::endl;
       }
     }
     s_sf = std::min(z,s_prime);
     q_sf = (s_prime - s_sf)/Dt;
   }
   if( std::isnan(s_sf) | std::isnan(q_sf) | (s_sf<0) | (q_sf<0) ){
-    Rcpp::Rcout << "id: " << id << " s_sf: " << s_sf << " q_sf_in " << q_sf_in << " v_sf_rz: " << v_sf_rz << " z: " << z << std::endl;
-    Rcpp::Rcout << "s_sf: " << s_sf << " q_sf: " << q_sf << std::endl;
+    // Rcpp::Rcout << "id: " << id << " s_sf: " << s_sf << " q_sf_in " << q_sf_in << " v_sf_rz: " << v_sf_rz << " z: " << z << std::endl;
+    // Rcpp::Rcout << "s_sf: " << s_sf << " q_sf: " << q_sf << std::endl;
   }
     
   // single HRU mass balance for development

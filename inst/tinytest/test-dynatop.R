@@ -34,17 +34,19 @@ expect_silent({
     mdl <- lapply(Swindale$model$hru,
                   function(h){h$sz$type <- "cnst"; h$sz$parameters <- c("h_szmax" = 0.1, "v_sz" = 0.1); h})
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
-    dt$initialise()$sim(Swindale$model$output_flux)
+    dt$initialise()
+    dt$sim(Swindale$model$output_flux)
     error_cnst <- max(abs(dt$get_mass_errors()[,6]))
 })
-expect_true({ error_cnst < 1e-6 })
+expect_true({ error_cnst < 1e-6 }) ## fails osscilation at end of period
 
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
                   function(h){h$sz$type <- "bexp"; h$sz$parameters["h_szmax"] <- 0.1; h})
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
-    dt$initialise()$sim(Swindale$model$output_flux)
+    dt$initialise()
+    dt$sim(Swindale$model$output_flux)
     error_bexp <- max(abs(dt$get_mass_errors()[,6]))
 })
 expect_true({ error_bexp < 1e-6 })
@@ -146,7 +148,7 @@ expect_silent({
     dt$initialise()$sim(Swindale$model$output_flux)
     mct_sf_error <- max(abs(dt$get_mass_errors()[,6]))
 })
-expect_true({ mct_sf_error < 1e-6 })
+expect_true({ mct_sf_error < 1e-6 }) ## fails with NaN in states
 
 expect_silent({
     data(Swindale)
