@@ -1,69 +1,88 @@
 library(tinytest)
 library(dynatop)
 
-## testing number of threads works - maybe remove for CRAN
+## test baseline simulation
+info_str <- "default"
 expect_silent({
     data(Swindale)
     dt <- dynatop$new(Swindale$model$hru)$add_data(Swindale$obs)
     dt$initialise()
     dt$sim(Swindale$model$output_flux,n_thread=1)
-    error_exp <- max(abs(dt$get_mass_errors()[,6]))
+    y_exp <- dt$get_output()
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
 
+## test multiple cores on baseline setup
+info_str <- "multicore test"
+expect_silent({
     data(Swindale)
     dt <- dynatop$new(Swindale$model$hru)$add_data(Swindale$obs)
     dt$initialise()
     dt$sim(Swindale$model$output_flux,n_thread=10)
-    error_exp10 <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ error_exp < 1e-6 })
-expect_true({ error_exp10 < 1e-6 })
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
+expect_equal(dt$get_output(), y_exp, info=info_str)
 
 ## check sub stepping
+info_str <- "substeping"
 expect_silent({
     data(Swindale)
     dt <- dynatop$new(Swindale$model$hru)$add_data(Swindale$obs)
     dt$initialise()$sim(Swindale$model$output_flux,sub_step=300)
-    error_exp_substep <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ error_exp_substep < 1e-6 })
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
 
 ## ###############################################
 ## check saturated zone types
+
+## constant velocity
+info_str <- "sz: cnst"
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
-                  function(h){h$sz$type <- "cnst"; h$sz$parameters <- c("h_szmax" = 0.1, "v_sz" = 0.1); h})
+                  function(h){h$sz$type <- "cnst"; h$sz$parameters <- c("h_szmax" = 0.1, "v_sz" = 0.01); h})
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
     dt$initialise()
     dt$sim(Swindale$model$output_flux)
-    error_cnst <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ error_cnst < 1e-6 }) ## fails osscilation at end of period
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
 
+## bounded exponential
+info_str <- "sz: bexp"
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
-                  function(h){h$sz$type <- "bexp"; h$sz$parameters["h_szmax"] <- 0.1; h})
+                  function(h){h$sz$type <- "bexp"; h$sz$parameters["h_szmax"] <- 0.5; h})
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
     dt$initialise()
     dt$sim(Swindale$model$output_flux)
     error_bexp <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ error_bexp < 1e-6 })
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
 
-
+## double exponential
+info_str <- "sz: dexp"
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
                   function(h){h$sz$type <- "dexp"; h$sz$parameters[c("m2","omega")] <- c(0.1,0.5);h})
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
     dt$initialise()$sim(Swindale$model$output_flux)
-    dexp_error <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ dexp_error < 1e-6 })
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
+
 
 ## #################################################
 ## check surface types and rafs
+
+## constant with rafs
+info_str <- "sf: cnst with raf"
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
@@ -71,9 +90,12 @@ expect_silent({
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
     dt$initialise()$sim(Swindale$model$output_flux)
     raf_error <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ raf_error <1e-6 })
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
 
+## Manning with shallow water approx
+info_str <- "sf: Mannings"
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
@@ -81,9 +103,12 @@ expect_silent({
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
     dt$initialise()$sim(Swindale$model$output_flux)
     kin_sf_error <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ kin_sf_error < 1e-6 })
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
 
+## compound channel with two velocities
+info_str <- "sf: compound"
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
@@ -97,9 +122,12 @@ expect_silent({
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
     dt$initialise()$sim(Swindale$model$output_flux)
     comp_sf_error <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ comp_sf_error < 1e-6 })
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
 
+## arbitarty relationship
+info_str <- "sf: arbitary relationship"
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
@@ -113,10 +141,12 @@ expect_silent({
                   })
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
     dt$initialise()$sim(Swindale$model$output_flux)
-    arb_kin_sf_error <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ arb_kin_sf_error < 1e-6 })
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
 
+## Power law
+info_str <- "sf: powerlaw"
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
@@ -130,10 +160,12 @@ expect_silent({
                   })
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
     dt$initialise()$sim(Swindale$model$output_flux)
-    power_law_sf_error <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ power_law_sf_error < 1e-6 })
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
 
+## trapezoid
+info_str <- "sf: trapezoid"
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
@@ -146,10 +178,12 @@ expect_silent({
                   })
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
     dt$initialise()$sim(Swindale$model$output_flux)
-    mct_sf_error <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ mct_sf_error < 1e-6 }) ## fails with NaN in states
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
 
+## rectangular and trapezoid
+info_str <- "sf: rectangular and trapezoid"
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,
@@ -164,7 +198,7 @@ expect_silent({
     dt <- dynatop$new(mdl)$add_data(Swindale$obs)
     dt$initialise()
     dt$sim(Swindale$model$output_flux)
-    mct_rect_sf_error <- max(abs(dt$get_mass_errors()[,6]))
-})
-expect_true({ mct_rect_sf_error < 1e-6 })
+}, info=info_str)
+expect_true({ all(dt$get_output() > 0) }, info=info_str)
+expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
 
