@@ -63,7 +63,7 @@ expect_silent({
 expect_true({ dexp_error < 1e-6 })
 
 ## #################################################
-## check surface types adn rafs
+## check surface types and rafs
 expect_silent({
     data(Swindale)
     mdl <- lapply(Swindale$model$hru,

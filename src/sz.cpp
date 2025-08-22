@@ -78,8 +78,7 @@ szc_cnst::szc_cnst(std::vector<double> const &param,  std::vector<double> const 
 };
 double szc_cnst::fs(double const &q){
   if( q_szmax==0.0 ){ return(0.0); } // since there can be no flow or storage
-  double qq = std::min(q,q_szmax);
-  return( -psi*((qq/omega)-kappa) );
+  return( std::max(0.0,-psi*((q/omega)-kappa)) );
 };
 std::pair<double,double> szc_cnst::fq(double const &s){
   std::pair<double,double> out(omega*kappa,0.0);
