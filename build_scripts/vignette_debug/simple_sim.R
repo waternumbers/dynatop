@@ -18,8 +18,12 @@ for(ii in 1:length(hru)){
         ## root zone parameters
         hru[[ii]]$rz$parameters["s_rzmax"] <- 0.1
         ## surface parameters
-        hru[[ii]]$sf$type <- "kin"
-        hru[[ii]]$sf$parameters <- c("n"=0.08,"t_raf" = 999.9, "s_raf" = 0)
+        hru[[ii]]$sf$type <- "mct_rect"
+        hru[[ii]]$sf$parameters <- c("n" = 0.03,
+                                     "b_lower" = 5,
+                                     "tan_alpha" = 0.01,
+                                     "q_crit" = 20)
+
         ##hru[[ii]]$sf$parameters["v_sf"] <- 0.4
         ## test of raf
         ##hru[[ii]]$sf$parameters["s_raf"] <- 9000

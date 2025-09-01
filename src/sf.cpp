@@ -200,8 +200,7 @@ sfc_mct_rect::sfc_mct_rect(std::vector<double> const &param, std::vector<double>
   y_crit = 1e300; // set large so next part stays within the rectangular channel part
   y_crit = solve_depth(q_crit);
   A_crit = B0 * y_crit;
-  //Rcpp:Rcout << "A_crit: " << A_crit << "y_crit: " << y_crit << " Dx: " << Dx << std::endl;
-  //Rcpp::Rcout << "y_crit: " << y_crit << " A_crit: " << A_crit << " q_crit: " << q_crit << std::endl;
+  // Rcpp::Rcout << "y_crit: " << y_crit << " A_crit: " << A_crit << " q_crit: " << q_crit << " qest: " << Qy(y_crit) << " beta: " << beta << " P(y): " << Py(y_crit) << " grd: " << grd << " n: " << n << std::endl;
 }
 // helper function
 double sfc_mct_rect::Ay(double const&y){ return( (B0*y) + std::max(0.0,y-y_crit)*ca*std::max(0.0,y-y_crit) ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
@@ -233,7 +232,7 @@ double sfc_mct_rect::solve_depth(double const&Q){
   }
   double y = 1.0; //initial estimate
   double e = Q - Qy(y);
-  double y_old = 100; // previous guess
+  double y_old = 100.2342; // previous guess
   int it = 0;
   //Rcpp:Rcout << "it: " << it << " y " << y << " q " << Qy(y) << " e "<< e << std::endl;
   while( (it<100) and (std::abs(y_old - y) > 1e-6) and (std::abs(e)>1e-6) ){
@@ -257,7 +256,7 @@ std::pair<double,double> sfc_mct_rect::fq(double const&s){
   if( s > 0 ){
     // solve for height given the cross sectional area
     double A = s/Dx;
-    double y(A/B0), dh_ds(1.0/B0*Dx);
+    double y(A/B0), dh_ds(1.0/(B0*Dx));
     if(A > A_crit){ // then some trapezoid part
       y = y_crit + ( (-B0 + std::sqrt( std::pow(B0,2.0) + 4*(A-A_crit)*ca )) / (2.0*ca) );
       if( y < y_crit){

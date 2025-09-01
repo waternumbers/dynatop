@@ -279,8 +279,8 @@ void hru::step(){
     while ( (ii<max_it) & (chng>vtol) ){
       chng = z;
       std::pair<double,double> qq = sf->fq(z);
-      if(  std::isnan(qq.first) |  std::isnan(qq.second) ){
-	Rcpp::Rcout << "z: " << z << " q: " << qq.first << " dqdz: " << qq.second << std::endl;
+      if( std::isnan(qq.first) |  std::isnan(qq.second) ){
+	Rcpp::Rcout << "s_prime: " << s_prime << " z: " << z << " q: " << qq.first << " dqdz: " << qq.second << std::endl;
       }
       z = z - ( (s_prime - Dt*qq.first - z) / (-Dt*qq.second - 1.0) );
       z = std::max(z,0.0);
