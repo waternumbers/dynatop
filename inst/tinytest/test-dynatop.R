@@ -201,4 +201,3 @@ expect_silent({
 }, info=info_str)
 expect_true({ all(dt$get_output() > 0) }, info=info_str)
 expect_true({ max(abs(dt$get_mass_errors()[,6])) < 1e-6 }, info=info_str)
-

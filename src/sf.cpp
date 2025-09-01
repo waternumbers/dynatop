@@ -140,7 +140,9 @@ sfc_mct::sfc_mct(std::vector<double> const &param, std::vector<double> const &pr
 double sfc_mct::Ay(double const&y){ return( (B0 + y*ca)*y ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
 double sfc_mct::Py(double const&y){ return( B0 + 2.0*(y/sa) ); };
 double sfc_mct::Qy(double const&y){ return( (std::sqrt(grd)/n) * std::pow(Ay(y),(5.0/3.0)) / std::pow(Py(y),(2.0/3.0)) ); };
-double sfc_mct::dQ_dy(double const&y){ return( Qy(y)*( (5.0/3.0)*(B0+2.0*ca*y)/Ay(y) - (4.0/3.0)/(sa*Py(y)) ) ); };
+double sfc_mct::dQ_dy(double const&y){
+  if( y == 0.0 ){ return(0.0); } // PJJS test
+  return( Qy(y)*( (5.0/3.0)*(B0+2.0*ca*y)/Ay(y) - (4.0/3.0)/(sa*Py(y)) ) ); };
 // internal update
 std::pair<double,double> sfc_mct::fq(double const&s){
   std::pair<double,double> out(0.0,0.0);

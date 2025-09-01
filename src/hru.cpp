@@ -269,7 +269,7 @@ void hru::step(){
   // surface
   s_prime = s_sf + (Dt*q_sf_in) - v_sf_rz; // max surface storage
   if( s_prime == 0.0 ){ // no stroage so no outflow
-    s_sf = 0;
+    s_sf = 0.0;
     q_sf = 0.0;
   }else{
     // newton iteration
@@ -277,23 +277,25 @@ void hru::step(){
     chng = 1e300;
     ii = 0;
     while ( (ii<max_it) & (chng>vtol) ){
-      //for(int ii=0; ii<max_it;  ++ii){
       chng = z;
       std::pair<double,double> qq = sf->fq(z);
+      if(  std::isnan(qq.first) |  std::isnan(qq.second) ){
+	Rcpp::Rcout << "z: " << z << " q: " << qq.first << " dqdz: " << qq.second << std::endl;
+      }
       z = z - ( (s_prime - Dt*qq.first - z) / (-Dt*qq.second - 1.0) );
       z = std::max(z,0.0);
       chng = std::abs(chng - z);
       ii += 1;
     }
-    //s_sf = std::min(z,s_prime);
+    s_sf = std::min(z,s_prime);
     q_sf = (s_prime - s_sf)/Dt;
   }
   // if(id == 0){
   //   Rcpp::Rcout << s_prime << " " << s_sf << " " << q_sf << std::endl;
   // }
   if( std::isnan(s_sf) | std::isnan(q_sf) | (s_sf<0) | (q_sf<0) ){
-    // Rcpp::Rcout << "id: " << id << " s_sf: " << s_sf << " q_sf_in " << q_sf_in << " v_sf_rz: " << v_sf_rz << " z: " << z << std::endl;
-    // Rcpp::Rcout << "s_sf: " << s_sf << " q_sf: " << q_sf << std::endl;
+    Rcpp::Rcout << "id: " << id << " s_prime: " << s_prime << " q_sf_in " << q_sf_in << " v_sf_rz: " << v_sf_rz << " z: " << z << std::endl;
+    Rcpp::Rcout << "s_sf: " << s_sf << " q_sf: " << q_sf << std::endl;
   }
     
   // single HRU mass balance for development
