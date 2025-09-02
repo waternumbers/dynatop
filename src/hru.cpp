@@ -128,6 +128,12 @@ void hru::update_met(std::vector<double> &obs){
   }
 }
 
+// return volume of flow from uz to sz for given sz value
+double hru::fuz(double const &z){
+  double const &t_d = uz_param[0];
+  return( area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*z + area*Dt), 1/t_d ) );
+}
+  
 void hru::init(){
   // std::vector<double> &vec_q_sf_in, std::vector<double> &vec_q_sz_in,
   // 	       double s_rz_0, double r_uz_sz_0,
@@ -214,7 +220,7 @@ void hru::init(){
 
 void hru::step(){
   double const &s_rzmax = rz_param[0];
-  double const &t_d = uz_param[0];
+  double const &t_d = uz_param[0]; // temp put back in
 
   q_sf_in = vec_q_sf_in[id] + vec_q_sz_in[id];
   q_sz_in = std::min( sz->q_szmax, vec_q_sz_in[id]);
@@ -231,32 +237,128 @@ void hru::step(){
   v_rz_uz = std::max(0.0 ,
 		     s_rz - (area*s_rzmax)  + Dt*(precip - pet) + v_sf_rz);
 
-  // explicit estimate of volume to saturated zone
-  v_uz_sz = area * Dt * std::min( (s_uz+v_rz_uz)/(t_d*s_sz + area*Dt), 1/t_d );
-
   // update the saturated zone
-  // newton step - could be expanded to inc v_uz_sz
-  double s_prime = s_sz - v_uz_sz - Dt*q_sz_in;
-  double z(s_sz);
-  double chng(1e300);
-  int ii(0);
-  while ( (ii<max_it) & (chng>vtol) ){
-    //for(int ii=0; ii<max_it; ++ii){
-    chng = z;
-    std::pair<double,double> qq = sz->fq(z);
-    z = z - ( (s_prime + Dt*qq.first - z) / (Dt*qq.second - 1.0) );
-    z = std::max(z,0.0);
-    chng = std::abs(chng - z);
-    ii += 1;
+
+  // // this use the ridder algorithm which should converge quickly while being robust
+  // // search for s_sz
+  // double lb(0.0), ub(0.0), Hzu(2*vtol), Hzl(2*vtol);
+  
+  // // test ub=0.0 to see if saturated
+  // Hzu = ub - s_sz + fuz(ub) + Dt*(q_sz_in - sz->fq(ub).first);
+  // Hzl = Hzu; // since both are at 0 from initialisation
+  
+  // if( Hzu < 0.0 ){
+  //   // need  a numerical solution
+
+  //   // scale out upper limit until positive
+  //   ub = s_sz + 3*vtol;
+  //   Hzu = ub - s_sz + fuz(ub) + Dt*(q_sz_in - sz->fq(ub).first);
+
+  //   int it(0.0);
+  //   while( (Hzu < 0.0) and (it < max_it) ){
+  //     lb = ub;
+  //     Hzl = Hzu;
+  //     ub += ub;
+  //     Hzu = ub - s_sz + fuz(ub) + Dt*(q_sz_in - sz->fq(ub).first);
+  //     it +=1;
+  //   }
+  //   if( Hzu < 0 ){
+  //     Rcpp::warning("SZ: No upper bound found within %i iterations. Difference between bounds is %d.",
+  // 		    it, ub - lb); //bnd.second - bnd.first);
+  //     //Rcpp::Rcout << "id: "<< id << " lb: " << lb << " Hzl: " << Hzl << " ub: " << ub << " Hzu: " << Hzu << std::endl;
+  //   }
+    
+    
+  //   // shrink back to find solution
+  //   it = 0;
+  //   double z, Hz(2*vtol), zz, Hzz;
+  //   while( (Hzu > vtol) and (it < max_it) ){
+  //     // bisection 
+  //     z = (ub+lb)/2.0;
+  //     Hz = z - s_sz + fuz(z) + Dt*(q_sz_in - sz->fq(z).first);
+  //     // if( Hz < 0 ){
+  //     // 	lb = z;
+  //     // 	Hzl = Hz;
+  //     // }else{
+  //     // 	ub = z;
+  //     // 	Hzu = Hz;
+  //     // }
+  //     // Ridder projection
+  //     double sgn = Hzl - Hzu;
+  //     if( sgn > 0 ){sgn = 1.0;}
+  //     if( sgn < 0 ){sgn = -1.0;}
+  //     zz = z + (z-lb)*( (sgn*Hz) /std::sqrt( (Hz*Hz) - (Hzl*Hzu) ) );
+  //     Hzz = zz - s_sz + fuz(zz) + Dt*(q_sz_in - sz->fq(zz).first);
+  //     if( Hzz < 0 ){
+  // 	lb = zz;
+  // 	Hzl = Hzz;
+  // 	if( Hz*Hzz < 0.0 ){
+  // 	  ub = z;
+  // 	  Hzu = Hz;
+  // 	}
+  //     }else{
+  // 	ub = zz;
+  // 	Hzu = Hzz;
+  // 	if( Hz*Hzz < 0.0 ){
+  // 	  lb = z;
+  // 	  Hzl = Hz;
+  // 	}
+  //     }
+  //     it += 1; 
+  //   }
+  //   if((it == max_it) and (Hzu > vtol)){
+  //     Rcpp::warning("HRU %i SZ: No solution found within %i iterations. Difference between bounds is %d",
+  // 		    id, it, ub - lb); //bnd.second - bnd.first);
+  //     //Rcpp::Rcout << "id: " << id << " iter: " << it << " diff: " << ub - lb << " Hzu: " << Hzu << std::endl;
+  //   }
+  //   //Rcpp::Rcout << "id: " << id << " iter: " << it <<std::endl;
+  // }
+  
+  // // upward pass
+  // q_sz = sz->fq(ub).first;
+  // v_uz_sz = s_sz + Dt*(q_sz-q_sz_in) - ub;
+  // s_sz = ub;
+
+  // // this is a Newton solution
+  double z(0.0);
+  double fz = z - s_sz + fuz(z) + Dt*(q_sz_in - sz->fq(z).first);
+
+  if( fz < 0 ){ // need numerical solution
+
+    z = s_sz;
+    fz = z - s_sz + fuz(z) + Dt*(q_sz_in - sz->fq(z).first);
+    if( fz > 0 ){z = 0.0;}
+    
+    double chng(1e300);
+    int ii(0);
+    while ( (ii<max_it) & (chng>vtol) ){
+      //for(int ii=0; ii<max_it; ++ii){
+      chng = z;
+      double vu = fuz(z);
+      double dvu = -(t_d/(t_d*z + area*Dt))*vu;
+      if( vu >= (area*Dt/t_d) ){ dvu = 0.0; }
+	
+      // compute outflow and gradient
+      std::pair<double,double> qq = sz->fq(z);
+
+      double e = z - s_sz + vu + Dt*(q_sz_in - qq.first);
+      double de = 1 + dvu - Dt*qq.second;
+      z = z - (e/de);
+      z = std::max(z,0.0);
+      chng = std::abs(chng - z);
+      ii += 1;
+    }
   }
-  q_sz = std::min(sz->q_szmax, (z-s_prime)/Dt);
-  if(q_sz<0){
-    // Rcpp::Rcout << id << q_sz << std::endl;
-  }
-  				  
+  
   // upward pass
+  q_sz = sz->fq(z).first;
   v_uz_sz = s_sz + Dt*(q_sz-q_sz_in) - z;
   s_sz = z;
+  if(v_uz_sz > s_uz + v_rz_uz){
+    //Rcpp::Rcout << id << " " << v_uz_sz << " " << s_uz <<" "<< v_rz_uz << std::endl;
+  }
+  				  
+  //double z;
   
   z = std::max(0.0,std::min(s_sz, s_uz+v_rz_uz-v_uz_sz)); // to stop negative values appearing
   v_rz_uz = z + v_uz_sz - s_uz;
@@ -267,15 +369,15 @@ void hru::step(){
   aet = pet * s_rz / (area*s_rzmax);
   
   // surface
-  s_prime = s_sf + (Dt*q_sf_in) - v_sf_rz; // max surface storage
+  double s_prime = s_sf + (Dt*q_sf_in) - v_sf_rz; // max surface storage
   if( s_prime == 0.0 ){ // no stroage so no outflow
     s_sf = 0.0;
     q_sf = 0.0;
   }else{
     // newton iteration
     z = s_prime;
-    chng = 1e300;
-    ii = 0;
+    double chng = 1e300;
+    int ii = 0;
     while ( (ii<max_it) & (chng>vtol) ){
       chng = z;
       std::pair<double,double> qq = sf->fq(z);

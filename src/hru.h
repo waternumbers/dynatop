@@ -42,8 +42,9 @@ class hru {
 
   double Dx;
   
-  double fsz(double&, double&, double&, double&, double const&);
-  double fsf(double&, double&, double&, double&, double const&);
+  double fuz(double const&);
+  //double fsz(double&, double&, double&, double&, double const&);
+  //double fsf(double&, double&, double&, double&, double const&);
   
 public:
   // variables initialised
