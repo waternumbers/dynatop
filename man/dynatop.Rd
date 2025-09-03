@@ -149,7 +149,7 @@ Simulate the hillslope and channel components of a dynatop object
   sub_step = NULL,
   vtol = 0.001,
   ftol = sqrt(.Machine$double.eps),
-  max_it = 10,
+  max_it = 100,
   n_thread = 1
 )}\if{html}{\out{</div>}}
 }

@@ -197,57 +197,35 @@ sfc_mct_rect::sfc_mct_rect(std::vector<double> const &param, std::vector<double>
  
   // computed values
   beta = std::sqrt(grd) / n;
-  y_crit = 1e300; // set large so next part stays within the rectangular channel part
-  y_crit = solve_depth(q_crit);
-  A_crit = B0 * y_crit;
-  // Rcpp::Rcout << "y_crit: " << y_crit << " A_crit: " << A_crit << " q_crit: " << q_crit << " qest: " << Qy(y_crit) << " beta: " << beta << " P(y): " << Py(y_crit) << " grd: " << grd << " n: " << n << std::endl;
+  s_crit = 1e300; // set large so next part stays within the rectangular channel part
+  s_crit = solve_storage(q_crit);
+  y_crit = s_crit / (Dx*B0);
 }
-// helper function
-double sfc_mct_rect::Ay(double const&y){ return( (B0*y) + std::max(0.0,y-y_crit)*ca*std::max(0.0,y-y_crit) ); }; // y = x*sin(theta) => x*cos(theta) = y *cos(theta)/sin(theta) = y/grad = y * cot(theta)
-double sfc_mct_rect::Py(double const&y){ return( B0 + 2.0*std::min(y,y_crit) + 2.0*(std::max(0.0,y-y_crit)/sa) ); };
-double sfc_mct_rect::Qy(double const&y){ return( (beta * std::pow(Ay(y),(5.0/3.0))) / std::pow(Py(y),(2.0/3.0)) ); };
-double sfc_mct_rect::dQ_dy(double const&y){
-  double dP_dy = 2;
-  if( y> y_crit){ dP_dy = 2.0/sa; }
-  return( Qy(y)*( (5.0/3.0)*(B0+2.0*ca*std::max(0.0,y-y_crit))/Ay(y) - (2.0/3.0)*dP_dy/Py(y) ) );
-};
-// q = A*sqrt(s)*(R^2/3)/n;
-// y<yc
-// A=b_lower*y;
-// wp = b_lower+ 2*y;
-// y>yc
-// alpha = atan(b_upper);
-// A = b_lower*y + (y-yc)*(y-yc)/b_upper;
-// wp = b_lower + 2*yc + (y-yc)/sin(alpha);
-// celerity
-// beta = sqrt(s)/n;
-// celerity dq/dA = beta*(R^2/3) + A*beta*(2/3)*(R^-1/3)/wp
-// dq/dy = dq/dA dA/dy
-// dA/dy = b_lower + 2(y-yc)/b_upper
- 
 // solve depth for a given outflow
-double sfc_mct_rect::solve_depth(double const&Q){
+double sfc_mct_rect::solve_storage(double const&Q){
   if(Q==0){
     return(0.0);
   }
-  double y = 1.0; //initial estimate
-  double e = Q - Qy(y);
-  double y_old = 100.2342; // previous guess
+  double s = 1.0*Dx; //initial estimate of storage
+  std::pair<double,double> q = fq(s);
+  double e = Q - q.first;
+  double s_old = 100.2342; // previous guess
   int it = 0;
-  //Rcpp:Rcout << "it: " << it << " y " << y << " q " << Qy(y) << " e "<< e << std::endl;
-  while( (it<100) and (std::abs(y_old - y) > 1e-6) and (std::abs(e)>1e-6) ){
-    y_old = y;
-    y = std::max(y + (e/dQ_dy(y)) , 0.0);
-    if(y == 0 ){
+  //Rcpp:Rcout << "it: " << it << " s " << s << " q " << Qs(s) << " e "<< e << std::endl;
+  while( (it<100) and (std::abs(s_old - s) > 1e-6) and (std::abs(e)>1e-6) ){
+    s_old = s;
+    s = std::max(s + (e/q.second) , 0.0);
+    if(s == 0 ){
       return(0); //break;
     }
-    e = Q - Qy(y);
+    q = fq(s);
+    e = Q - q.first;
     it +=1;
-    //Rcpp:Rcout << "it: " << it << " y " << y << " q " << Qy(y) << " e "<< e << std::endl;
+    //Rcpp:Rcout << "it: " << it << " s " << s << " q " << Qs(s) << " e "<< e << std::endl;
   }
   
-  //Rcpp:Rcout << " y " << y << " q " << Qy(y) << " e "<< e << std::endl;
-  return( y );
+  //Rcpp:Rcout << " s " << s << " q " << Qs(s) << " e "<< e << std::endl;
+  return( s );
 }
 
 // internal update
@@ -256,19 +234,31 @@ std::pair<double,double> sfc_mct_rect::fq(double const&s){
   if( s > 0 ){
     // solve for height given the cross sectional area
     double A = s/Dx;
-    double y(A/B0), dh_ds(1.0/(B0*Dx));
-    if(A > A_crit){ // then some trapezoid part
+    // comput depth y
+    double y(A/B0), dy_ds(1.0/(B0*Dx)); // initial assuming in rectangular part
+    if( s > s_crit ){
+      // include the trapezoid part
+      double A_crit = s_crit / Dx;  
       y = y_crit + ( (-B0 + std::sqrt( std::pow(B0,2.0) + 4*(A-A_crit)*ca )) / (2.0*ca) );
       if( y < y_crit){
 	Rcpp::Rcout <<"Negative h_2 " << y << " "<< y_crit << std::endl;
 	y = y_crit;
       }
-      dh_ds = 1.0 / (Dx * std::sqrt( std::pow(B0,2.0) + 4.0*(A-A_crit)*ca ));
+      dy_ds = 1.0 / (Dx * std::sqrt( std::pow(B0,2.0) + 4.0*(A-A_crit)*ca )); // TODO check
     }
     
-    // compute flow
-    out.first = Qy(y);
-    out.second = dQ_dy(y)*dh_ds;
+    // solve flow in rectangular section
+    double A = B0*y;
+    double P = B0 + 2*std::min(y,y_crit);
+    out.first = beta * std::pow(A,(5.0/3.0)) / std::pow(P,(2.0/3.0));
+    out.second = -999.9;
+    if(y > y_crit){
+      A = 0.5*std::max(0.0,y-y_crit)*ca*std::max(0.0,y-y_crit);
+      P = std::max(0,y-y_crit)/sa;
+      out.first += 2 * beta * std::pow(A,(5.0/3.0)) / std::pow(P,(2.0/3.0));
+      out.second = -9999.9;
+    }
+
   }  
   return( out );
 };

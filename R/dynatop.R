@@ -85,7 +85,7 @@ dynatop <- R6Class(
         #'
         #' @return invisible(self) for chaining
         sim = function(output_defn,keep_states=NULL,sub_step=NULL,
-                       vtol=0.001,ftol=sqrt(.Machine$double.eps), max_it=10, n_thread=1){
+                       vtol=0.001,ftol=sqrt(.Machine$double.eps), max_it=100, n_thread=1){
 
             ## check the solver options
             vtol <- as.double(vtol); ftol <- as.double(ftol)

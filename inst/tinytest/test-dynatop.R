@@ -171,7 +171,7 @@ expect_silent({
     mdl <- lapply(Swindale$model$hru,
                   function(h){
                       h$sf$parameters <- c("n" = 0.03,
-                                           "bank_slope" = 1,
+                                           "bank_slope" = 0.01,
                                            "bed_width" = 5)
                       h$sf$type <- "mct"
                       h
@@ -191,7 +191,7 @@ expect_silent({
                       h$sf$parameters <- c("n" = 0.03,
                                            "b_lower" = 5,
                                            "tan_alpha" = 0.01,
-                                           "q_crit" = 20000)
+                                           "q_crit" = 10)
                       h$sf$type <- "mct_rect"
                       h
                   })
