@@ -1,0 +1,160 @@
+---
+title: "Boundary Flux"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Boundary Flux}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+--- 
+
+This document contains the flux from the boundary and the gradient
+with respect to the storage.
+
+## Rectangular and Trapezoid 
+- $B_{0}$ bed width
+- $\alpha$ angle of the side slope of trapezoid
+- $y_c$ height of rectangular section
+
+The cross sectional area over which flow occurs is given by
+\[ 
+A = \frac{s}{\Delta x} = B_{0}y + \cot\left(\alpha\right)\max\left(0,y-y_{c}\right)^2
+\]
+
+If $s <= y_{c}\Delta x$ the depth of the water is given by $y =
+ \frac{s}{B_{0}\Delta x}$.
+If $s > y_{c}\Delta x$ the depth can be written as $y = y_{c} +
+ \delta_{y}$ and the cross section area as $A = B_{0}y_{c} +
+ \delta_{A}$. The expression 
+ \[
+ \delta_{A} = \delta_{y}\left(B_{0} + \cot\left(\alpha\right) \delta_{y}\right)
+ \]
+ gives a quadratic for $\delta_{y}$
+ \[
+0= \cot\left(\alpha\right) \delta_{y}^{2} + \delta_{y}B_{0} - \delta_{A}
+ \]
+ which given the positive values for all terms results in
+ \[
+ \delta_{y} = \frac{1}{2\cot\left(\alpha\right)}\left(-B_{0} + \sqrt{ B_{0}^{2} +
+ 4\delta_{A}\cot\left(\alpha\right)}\right)
+ \]
+ 
+ 
+ ### Computing flow
+ 
+ The central rectangular and two triangular sections are solved
+ seperately such the the total flow is 
+ $q = q_{rect} + 2q_{tri}$.
+ The potentially different gradients and/or roughnesses may apply to the
+ different sections as $\beta_{rect}$ and $\beta_{tri}$.
+ 
+ Using Mannings equation
+ \[
+ q_{rect} = \beta_{rect} \frac{ \left(B_{0}y\right)^{5/3} }{
+ \left(B_{0} + 2\min\left(y,y_{c}\right)\right)^{2/3} }
+ \]
+ and
+ \[
+ q_{tri} = \beta_{tri} \frac{ \left( \frac{1}{2} \cot\left(\alpha\right)
+ \delta_{y}^{2}\right)^{5/3} }{ \left(
+ \frac{\delta_{y}}{\sin\left(\alpha\right)}\right)^{2/3} }
+ \\
+ = \beta_{tri}\left(\frac{1}{2}\right)^{5/3}\cot\left(\alpha\right)^{5/3}\sin\left(\alpha\right)^{2/3}\delta_{y}^{8/3}
+ \]
+ 
+ ### Rate of change WRTs
+ 
+ For the case $s <= y_{c}\Delta x$ only flow int he rectangular
+ section need to be considered. Since $y<y_{c}$
+ 
+ \[
+ q = \beta_{rect} \left(B_{0}y\right)^{5/3} 
+ \left(B_{0} + 2y \right)^{-2/3}
+ \]
+
+Differentiating this with respect to $y$
+
+\[
+\frac{dq}{dy} = 
+\beta_{rect} \left( \frac{5}{3}B_{0}^{5/3} y^{2/3} \left(B_{0} + 2y
+\right)^{-2/3} +
+\left(B_{0}y\right)^{5/3} \left(-\frac{2}{3}\right) \left(B_{0} + 2y
+\right)^{-5/3} 2
+\right) \\
+= \beta_{rect} \left( \frac{5}{3}B_{0}^{5/3} y^{2/3} \left(B_{0} + 2y
+\right)^{-2/3} -\frac{4}{3}
+\left(B_{0}y\right)^{5/3} \left(B_{0} + 2y
+\right)^{-5/3}
+\right) \\
+=  \frac{5}{3} \frac{q}{y} -\frac{4}{3} \frac{q}{B_{0} + 2y}
+\]
+Then since $y =
+ \frac{s}{B_{0}\Delta x}$
+ 
+ \[
+ \frac{dy}{ds} =  \frac{1}{B_{0}\Delta x}
+ \]
+ 
+ giving
+ 
+ \[
+ \frac{dq}{ds} = \frac{dq}{dy}  \frac{dy}{ds} =  \frac{1}{B_{0}\Delta
+ x} \left( \frac{5}{3} \frac{q}{y} -\frac{4}{3} \frac{q}{B_{0} + 2y}
+ \right) \\
+ = \frac{1}{B_{0}\Delta
+ x} \left( \frac{5}{3} \frac{qB_{0}\Delta x}{s} -\frac{4}{3} \frac{qB_{0}\Delta x}{B_{0}B_{0}\Delta x + 2s}
+ \right) \\
+ = \frac{5}{3} \frac{q}{s} -\frac{4}{3} \frac{q}{B_{0}^{2}\Delta x + 2s}
+ \]
+
+
+When $s > y_{c}\Delta x$ the flow can be written as
+
+\[
+q = \beta_{rect} \frac{ \left(B_{0}\left(y_{c}+\delta_{y}\right)\right)^{5/3} }{
+ \left(B_{0} + 2y_{c}\right)^{2/3} } + 
+ 2\beta_{tri}\left(\frac{\cot\left(\alpha\right)}{2}\right)^{5/3}\sin\left(\alpha\right)^{2/3}\delta_{y}^{8/3}
+\]
+
+from this
+
+\[
+\frac{dq}{d\delta_{y}} = 
+\frac{5}{3} \beta_{rect} \frac{ B_{0}^{5/3}\left(y_{c}+\delta_{y}\right)^{2/3} }{
+ \left(B_{0} + 2y_{c}\right)^{2/3} } + 
+ \frac{16}{3}\beta_{tri}\left(\frac{\cot\left(\alpha\right)}{2}\right)^{5/3}\sin\left(\alpha\right)^{2/3}\delta_{y}^{5/3}
+ \\
+ = \frac{5}{3}\frac{q_{rect}}{y_{c}+\delta_{y}} + \frac{16}{3}\frac{q_{tri}}{\delta_{y}}
+\]
+
+Using $\frac{d\delta_{y}}{ds} =
+\frac{d\delta_{y}}{d\delta_{A}}\frac{d\delta_{A}}{ds}$ with
+
+ \[
+ \delta_{y} = \frac{1}{2\cot\left(\alpha\right)}\left(-B_{0} + \sqrt{ B_{0}^{2} +
+ 4\delta_{A}\cot\left(\alpha\right)}\right)
+ \]
+ 
+\[
+\frac{d\delta_{y}}{d\delta_{A}} = \frac{1}{2\cot\left(\alpha\right)}
+\frac{1}{2} 4 \cot\left(\alpha\right)
+\left( B_{0}^{2}+
+ 4\delta_{A}\cot\left(\alpha\right)\right)^{-1/2} \\
+= \left( B_{0}^{2}+
+ 4\delta_{A}\cot\left(\alpha\right)\right)^{-1/2}
+ \]
+
+and
+
+\[
+\frac{d\delta_{A}}{ds} = \frac{1}{\Delta x}
+\]
+
+giving
+
+\[
+\frac{dq}{ds} = 
+\left( \frac{5}{3}\frac{q_{rect}}{y_{c}+\delta_{y}} +
+\frac{16}{3}\frac{q_{tri}}{\delta_{y}} \right)
+\left( B_{0}^{2}+
+ 4\delta_{A}\cot\left(\alpha\right)\right)^{-1/2}\frac{1}{\Delta x}
+ \]

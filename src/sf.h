@@ -72,8 +72,8 @@ public:
 // MCT with double rectangle channel
 class sfc_mct_rect: public sfc {
 private:
-  double Dx, B0, n, ca, sa, A_crit, beta, y_crit;
-  double solve_depth(double const&);
+  double Dx, B0, n, ca, sa, s_crit, beta, y_crit;
+  double solve_storage(double const&);
   double Ay(double const&), Py(double const&), Qy(double const&), dQ_dy(double const&);
 public:
   sfc_mct_rect(std::vector<double> const&, std::vector<double> const&); //, std::vector<double> const&);

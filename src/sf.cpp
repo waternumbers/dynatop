@@ -234,40 +234,59 @@ std::pair<double,double> sfc_mct_rect::fq(double const&s){
   if( s > 0 ){
     // solve for height given the cross sectional area
     double A = s/Dx;
-    // comput depth y
-    double y(A/B0), dy_ds(1.0/(B0*Dx)); // initial assuming in rectangular part
+    // comput depth assuming in rectangular part
+    double y(A/B0), Dy(0.0), dy_ds(1.0/(B0*Dx)); // initial assuming in rectangular part
     if( s > s_crit ){
       // include the trapezoid part
       double A_crit = s_crit / Dx;  
       y = y_crit + ( (-B0 + std::sqrt( std::pow(B0,2.0) + 4*(A-A_crit)*ca )) / (2.0*ca) );
+      Dy = y-y_crit;
       if( y < y_crit){
 	Rcpp::Rcout <<"Negative h_2 " << y << " "<< y_crit << std::endl;
 	y = y_crit;
       }
       dy_ds = 1.0 / (Dx * std::sqrt( std::pow(B0,2.0) + 4.0*(A-A_crit)*ca )); // TODO check
     }
-    
-    // solve flow in rectangular section
-    double A = B0*y;
-    double P = B0 + 2*std::min(y,y_crit);
-    out.first = beta * std::pow(A,(5.0/3.0)) / std::pow(P,(2.0/3.0));
-    out.second = -999.9;
-    if(y > y_crit){
-      A = 0.5*std::max(0.0,y-y_crit)*ca*std::max(0.0,y-y_crit);
-      P = std::max(0,y-y_crit)/sa;
-      out.first += 2 * beta * std::pow(A,(5.0/3.0)) / std::pow(P,(2.0/3.0));
-      out.second = -9999.9;
+    // compute flux
+    double qrect = beta*std::pow(B0*y,(5.0/3.0)) /
+      std::pow(B0+2*(y-Dy),(2.0/3.0));
+    double qtri = beta * std::pow(ca/2,5.0/3.0) * std::pow(sa,2.0/3.0) * std::pow(Dy, 8.0/3.0);
+    out.first = qrect + 2*qtri;
+    // compute gradient
+    out.second = (5.0/3.0)*(qrect/y);
+    if( s > s_crit ){
+      out.second += (16.0/3.0)*qtri/Dy;
+    }else{
+      out.second -= (4.0/3.0)*(qrect/(B0+2*y));
     }
-
-  }  
-  return( out );
+    
+    out.second *= dy_ds;
+  }
+  return(out);
 };
+  
+    
+//     // solve flow in rectangular section
+//     double A = B0*y;
+//     double P = B0 + 2*std::min(y,y_crit);
+//     out.first = beta * std::pow(A,(5.0/3.0)) / std::pow(P,(2.0/3.0));
+//     out.second = -999.9;
+//     if(y > y_crit){
+//       A = 0.5*std::max(0.0,y-y_crit)*ca*std::max(0.0,y-y_crit);
+//       P = std::max(0,y-y_crit)/sa;
+//       out.first += 2 * beta * std::pow(A,(5.0/3.0)) / std::pow(P,(2.0/3.0));
+//       out.second = -9999.9;
+//     }
+
+//   }  
+//   return( out );
+// };
 
 // internal update
 double sfc_mct_rect::fs(double const&q){
   //Rcpp:Rcout << "in fS" << std::endl;
   if( q<= 0.0 ){ return(0.0); }
-  double y = solve_depth(q);
-  return( Ay(y)*Dx );
+  double y = solve_storage(q);
+  return( y ); //Ay(y)*Dx );
 };
 
