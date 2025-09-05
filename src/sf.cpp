@@ -206,22 +206,30 @@ double sfc_mct_rect::solve_storage(double const&Q){
   if(Q==0){
     return(0.0);
   }
-  double s = 1.0*Dx; //initial estimate of storage
+  double s = 1000.0; //initial estimate of storage
   std::pair<double,double> q = fq(s);
   double e = Q - q.first;
   double s_old = 100.2342; // previous guess
   int it = 0;
-  //Rcpp:Rcout << "it: " << it << " s " << s << " q " << Qs(s) << " e "<< e << std::endl;
+  bool show(false);
+  if( std::abs(Q-45.3) <1e-6 ){
+    show = true;
+  }
+  if(show){
+    Rcpp::Rcout << "Q: " << Q << " it: " << it << " s: " << s << " q: " << q.first << " dqds: " << q.second << " e: "<< e << std::endl;
+  }
   while( (it<100) and (std::abs(s_old - s) > 1e-6) and (std::abs(e)>1e-6) ){
     s_old = s;
-    s = std::max(s + (e/q.second) , 0.0);
-    if(s == 0 ){
-      return(0); //break;
-    }
+    s = std::max(s + (e/q.second) , 1e-6);
+    // if(s == 0 ){
+    //   return(0); //break;
+    // }
     q = fq(s);
     e = Q - q.first;
     it +=1;
-    //Rcpp:Rcout << "it: " << it << " s " << s << " q " << Qs(s) << " e "<< e << std::endl;
+    if(show){
+      Rcpp::Rcout << "it: " << it << " sold: " << s_old <<" s: " << s << " q: " << q.first << " dqds: " << q.second << " e: "<< e << std::endl;
+    }
   }
   
   //Rcpp:Rcout << " s " << s << " q " << Qs(s) << " e "<< e << std::endl;
