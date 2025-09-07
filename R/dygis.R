@@ -477,8 +477,10 @@ dynatopGIS <- R6::R6Class(
             chn_frac <- terra::mask(chn_frac,private$brk[["catchment"]])
             names(chn_frac) <- "channel_fraction"
             terra::values(chn_frac) <- round(terra::values(chn_frac),2)## else get horrible rounding errors close to 1
-            ## add a fraction to those cells with an ID but no fractions
-            chn_frac[chn_frac==0 & !is.na(chn_rst)] <- 0.005
+            ## remove id from cells with an ID but no fraction
+            chn_rst[chn_fac==0] <- NA
+            ## ## add a fraction to those cells with an ID but no fractions
+            ## chn_frac[chn_frac==0 & !is.na(chn_rst)] <- 0.005
 
             ## rescale channel fractions which are <1 to match channel area
             cell_area <- prod(terra::res(chn_frac))
@@ -1026,7 +1028,7 @@ dynatopGIS <- R6::R6Class(
                 hru[[ii]]$uid["band"] <- as.integer( shp$band[ii] )
                 hru[[ii]]$properties["Dx"] <- as.numeric( shp$length[ii] )
                 hru[[ii]]$properties["gradient"] <- as.numeric( shp$slope[ii] )
-                hru[[ii]]$properties["area"] <- 0 #as.numeric( shp$area[ii] )
+                hru[[ii]]$properties["area"] <- as.numeric( shp$area[ii] )
                 hru[[ii]]$class <- as.list( shp[ii,chn_class_names] )
 
                 kdx <- chn_precip$id == ii
@@ -1056,10 +1058,6 @@ dynatopGIS <- R6::R6Class(
             cnt <- n_channel
             for(ii in idx){
                 chn_frc <- hru_data[ii,"channel_fraction"]
-
-                if( chn_frc > 0 ){
-                    hru[[ hru_data[ii,"channel"] ]]$properties["area"] <- hru[[ hru_data[ii,"channel"] ]]$properties["area"] + cell_area * chn_frc
-                }
 
                 if( chn_frc == 1 ){ next } ## totally handled in the channel part
 

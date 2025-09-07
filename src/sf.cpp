@@ -193,10 +193,12 @@ sfc_mct_rect::sfc_mct_rect(std::vector<double> const &param, std::vector<double>
   ca = 1.0 / param[2] ; // cotangent (cot) of side slop angle
   sa = std::sin( std::atan(param[2]) ); // sin of side slope angle
   double const& q_crit = param[3]; // threshold flow
+  double const& n_out_of_bank = param[4];
   // functions
  
   // computed values
-  beta = std::sqrt(grd) / n;
+  beta_rect = std::sqrt(grd) / n;
+  beta_tri = std::sqrt(grd) / n_out_of_bank;
   s_crit = 1e300; // set large so next part stays within the rectangular channel part
   s_crit = solve_storage(q_crit);
   y_crit = s_crit / (Dx*B0);
@@ -206,34 +208,79 @@ double sfc_mct_rect::solve_storage(double const&Q){
   if(Q==0){
     return(0.0);
   }
-  double s = 1000.0; //initial estimate of storage
-  std::pair<double,double> q = fq(s);
-  double e = Q - q.first;
-  double s_old = 100.2342; // previous guess
-  int it = 0;
-  bool show(false);
-  if( std::abs(Q-45.3) <1e-6 ){
-    show = true;
-  }
-  if(show){
-    Rcpp::Rcout << "Q: " << Q << " it: " << it << " s: " << s << " q: " << q.first << " dqds: " << q.second << " e: "<< e << std::endl;
-  }
-  while( (it<100) and (std::abs(s_old - s) > 1e-6) and (std::abs(e)>1e-6) ){
-    s_old = s;
-    s = std::max(s + (e/q.second) , 1e-6);
-    // if(s == 0 ){
-    //   return(0); //break;
-    // }
-    q = fq(s);
-    e = Q - q.first;
-    it +=1;
-    if(show){
-      Rcpp::Rcout << "it: " << it << " sold: " << s_old <<" s: " << s << " q: " << q.first << " dqds: " << q.second << " e: "<< e << std::endl;
+  
+  
+  // this use the ridder algorithm which should converge quickly while being robust
+  // search for s_sz
+  double lb(0.0), ub(100*Dx);
+  double qlb = fq(lb).first;
+  double qub = fq(ub).first;
+  
+  if( qub > 0.0 ){
+    int it(0.0);
+    while( (Q > qub) and (it < 1000) ){
+      lb = ub;
+      qlb = qub;
+      ub += ub + 3;
+      qub = fq(ub).first;
+      it +=1;
     }
   }
+      
+  // shrink back to find solution
+  int it(0);
+  double z((lb+ub)/2.0);
+  double qz = fq(z).first;
+  while( (std::abs(Q-qz) > 0.1) and (it < 1000) ){
+    // bisection 
+    z = (ub+lb)/2.0;
+    qz = fq(z).first;
+    if( Q > qz ){
+      lb = z;
+      qlb = qz;
+    }else{
+      ub = z;
+      qub = qz;
+    }
+    it += 1; 
+  }
+  if((it == 1000) and (std::abs(Q-qz) > 0.1)){
+    Rcpp::warning("HRU %i SZ: No solution found within %i iterations. Difference between bounds is %d",
+		  it, it, ub - lb); //bnd.second - bnd.first);
+    //Rcpp::Rcout << "id: " << id << " iter: " << it << " diff: " << ub - lb << " Hzu: " << Hzu << std::endl;
+  }
+  //Rcpp::Rcout << "id: " << id << " iter: " << it <<std::endl;
+  
+  
+  // newton approach - a bit unstable - maybe gradient is wrong??
+  // double s = 1000.0; //initial estimate of storage
+  // std::pair<double,double> q = fq(s);
+  // double e = Q - q.first;
+  // double s_old = 100.2342; // previous guess
+  // int it = 0;
+  // bool show(false);
+  // if( std::abs(Q-45.3) <1e-6 ){
+  //   show = true;
+  // }
+  // if(show){
+  //   Rcpp::Rcout << "Q: " << Q << " it: " << it << " s: " << s << " q: " << q.first << " dqds: " << q.second << " e: "<< e << std::endl;
+  // }
+  // while( (it<100) and (std::abs(s_old - s) > 1e-6) and (std::abs(e)>1e-6) ){
+  //   s_old = s;
+  //   s = std::max(s + (e/q.second) , 1e-6);
+  //   // if(s == 0 ){
+  //   //   return(0); //break;
+  //   // }
+  //   q = fq(s);
+  //   e = Q - q.first;
+  //   it +=1;
+  //   if(show){
+  //     Rcpp::Rcout << "it: " << it << " sold: " << s_old <<" s: " << s << " q: " << q.first << " dqds: " << q.second << " e: "<< e << std::endl;
+  //   }
+  // }
   
   //Rcpp:Rcout << " s " << s << " q " << Qs(s) << " e "<< e << std::endl;
-  return( s );
+  return( z );
 }
 
 // internal update
@@ -256,9 +303,9 @@ std::pair<double,double> sfc_mct_rect::fq(double const&s){
       dy_ds = 1.0 / (Dx * std::sqrt( std::pow(B0,2.0) + 4.0*(A-A_crit)*ca )); // TODO check
     }
     // compute flux
-    double qrect = beta*std::pow(B0*y,(5.0/3.0)) /
+    double qrect = beta_rect*std::pow(B0*y,(5.0/3.0)) /
       std::pow(B0+2*(y-Dy),(2.0/3.0));
-    double qtri = beta * std::pow(ca/2,5.0/3.0) * std::pow(sa,2.0/3.0) * std::pow(Dy, 8.0/3.0);
+    double qtri = beta_tri * std::pow(ca/2,5.0/3.0) * std::pow(sa,2.0/3.0) * std::pow(Dy, 8.0/3.0);
     out.first = qrect + 2*qtri;
     // compute gradient
     out.second = (5.0/3.0)*(qrect/y);

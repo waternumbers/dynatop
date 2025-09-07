@@ -305,7 +305,7 @@ dynatop <- R6Class(
                                   paste0("area_",1:max(2,ceiling(length(h[[ii]]$parameters)/2))),
                                   paste0("flow_",1:max(2,ceiling(length(h[[ii]]$parameters)/2)))),
                               "sf_mct" = c("n","bank_slope","bed_width"),
-                              "sf_mct_rect" = c("n","b_lower","tan_alpha","q_crit"),
+                              "sf_mct_rect" = c("n","b_lower","tan_alpha","q_crit","n_tri"),
                               "rz_orig" = c("s_rzmax"),
                               "uz_orig" = c("t_d"),
                               "sz_exp" = c("t_0","m"),
