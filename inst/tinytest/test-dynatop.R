@@ -191,7 +191,8 @@ expect_silent({
                       h$sf$parameters <- c("n" = 0.03,
                                            "b_lower" = 5,
                                            "tan_alpha" = 0.01,
-                                           "q_crit" = 10)
+                                           "q_crit" = 10,
+                                           "n_tri" = 0.06)
                       h$sf$type <- "mct_rect"
                       h
                   })

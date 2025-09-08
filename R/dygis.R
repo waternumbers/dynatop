@@ -478,7 +478,7 @@ dynatopGIS <- R6::R6Class(
             names(chn_frac) <- "channel_fraction"
             terra::values(chn_frac) <- round(terra::values(chn_frac),2)## else get horrible rounding errors close to 1
             ## remove id from cells with an ID but no fraction
-            chn_rst[chn_fac==0] <- NA
+            chn_rst[chn_frac==0] <- NA
             ## ## add a fraction to those cells with an ID but no fractions
             ## chn_frac[chn_frac==0 & !is.na(chn_rst)] <- 0.005
 
