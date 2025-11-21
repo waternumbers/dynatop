@@ -148,9 +148,9 @@ void hru::init(){
   q_sz_in = std::min( sz->q_szmax, vec_q_sz_in[id]);
   q_sf_in -= q_sz_in;
 
-  if( id == 0 ){
-    Rcpp::Rcout << "q_sf_in: "<< q_sf_in << " q_sz_in: " << q_sz_in << std::endl;
-  }
+  // if( id == 0 ){
+  //   Rcpp::Rcout << "q_sf_in: "<< q_sf_in << " q_sz_in: " << q_sz_in << std::endl;
+  // }
   
   // only water at surface if inflow can't be absorbed so max downward flux is
   double r_sf_rz = q_sf_in;
@@ -200,8 +200,8 @@ void hru::init(){
   // solve surface
   q_sf = q_sf_in - r_sf_rz;
   s_sf = sf->fs(q_sf);
-  if( id == 0 ){
-    Rcpp::Rcout << "q_sf: " << q_sf << " s_sf: " << s_sf << std::endl;
+  if( (id == 595) or (id == 595) or (id == 553) or (id == 519)){
+    Rcpp::Rcout << "id: " << id << "q_sf_in:" << q_sf_in << " q_sf: " << q_sf << " s_sf: " << s_sf << std::endl;
   }
   // s_sf = sf->fs(q_sf_in,r_sf_ );
   // if( std::abs( sf->fq(s_sf) - q_sf ) > 1e-10 ){ //,q_sf_in,r_sf_rz) - q_sf ) > 1e-10 ){

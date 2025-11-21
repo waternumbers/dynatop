@@ -123,7 +123,7 @@ double szc_dexp::fs(double const &q){ // get storage from flow
     Rcpp::Rcout << "q > qmax " << q << " " << q_szmax << " " << q - q_szmax << std::endl;
     z = 0.0;
   }
-  if( q == q_szmax ){ z = 0.0; }
+  if( q >= q_szmax ){ z = 0.0; }
   else{
     
     double lwr = -std::log(q/q_szmax) / psi;
