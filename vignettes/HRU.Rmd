@@ -28,21 +28,22 @@ implementation of the HRU. The HRU is a representation of
 an area of the catchment with, for example, similar topographic, soil and upslope area
 characteristics.
 
-The HRU is considered to be a area of catchment with outflow
-occurring across a specified width of it boundary.
-It is formed of four zones representing the surface water, which
-passes water between HRUs and drains to the root zone. The root zone characterises
+We conceptualise the model using cells, that is area where flux is
+vertical, and edges over which lateral fluxes pass.
+
+The cell is formed of four zones representing the surface water, which
+passes over edges between cells and drains to the root zone. The root zone characterises
 the interactions between evapotranspiration and precipitation and when full spills to
-the unsaturated zone. This drains to the saturated zone which also interacts
-with other HRUs. The behaviour of the saturated zone is modelled using a kinematic wave
-approximation. The zones and variables used below are shown in the schematic diagram.
+the unsaturated zone. This drains to the saturated zone which also has
+edges to other cells. The zones and variables used below are shown in the schematic diagram.
 
 ```{r, echo=FALSE, purl=FALSE, out.width="75%", fig.align="center", fig.cap="Schematic of the Hill slope HRU"}
 knitr::include_graphics("./Hillslope_HRU.png")
 ```
 
-In the following section the governing equations of the HRU are
-given in a finite volume form. Approximating equations for the solution of the
+In the following sections the governing equations of the cell are
+given in a finite volume form and the equations for transport over the
+edges are derived. Approximating equations for the solution of the
 governing equations are then derived with associated implicit and semi-implicit numerical
 schemes. These are valid for the wide range of surface zone and saturated zone
 transmissivity profiles presented in the vignette. Appendices provide supporting information.
@@ -104,7 +105,7 @@ The following conventions are used:
   Table: (\#tab:hs-x-notation) Outline of notation for describing a cross
   section of the hillslope HRU
 
-# Finite Volume Formulation
+# Finite Volume Formulation for a cell
 
 In this section a finite volume formulation of the Dynamic TOPMODEL equations
 is derived for the evolution of the states over the time step $t$ to $t +
@@ -114,13 +115,13 @@ time step, allowing for a semi-analytical solution of some storage zones.
 
 ## Surface zone
 
+Take flux over the surface edge to be positive when leaving the cell.
 The storage in the surface zone satisfies the mass balance equation
 
 \[
-\frac{ds_{sf}}{dt} = q^{-}_{sf} - r_{sf \rightarrow rz} - q^{+}_{sf} 
+- \frac{ds_{sf}}{dt} = \sum q_{sf} + r_{sf \rightarrow rz}
 \]
 
-where surface storage is increased by lateral downslope flow from upslope HRUs. 
 Water flows to the root zone at a constant rate $r_{sf \rightarrow rz}$, unless limited by
 the available storage at the surface or the ability of the root zone to
 receive water (for example if the saturation storage deficit is 0 and the root
@@ -128,24 +129,6 @@ zone storage is full). In cases where lateral flow in the saturated zone produce
 saturation storage deficits water may be returned from the root
 zone to the surface giving negative values of $r_{sf \rightarrow rz}$.
 
-The outflow $q^{+}_{sf}$ is considered a function of 
-$q^{-}_{sf}$, $s_{sf}$, $r_{sf \rightarrow rz}$ and parameters $\Theta_{sf}$ denoted by
-\[
-q^{+}_{sf} = \mathcal{F}\left(s_{sf},q^{-}_{sf},r_{sf \rightarrow
-rz},\Theta_{sf}\right)
-\]
-For the purposes the numerical scheme we limit the set to possible functions
-$\mathcal{F}$ to those that are non-decreasing with respect to $s_{sf}$ and
-take the value $0$ when $s_{sf}=0$. More formally
-\[
-\frac{\partial}{\partial s_{sf}} \mathcal{F}\left(s_{sf},q^{-}_{sf},r_{sf \rightarrow
-rz},\Theta_{sf}\right) \geq 0
-\]
-and
-\[
-\mathcal{F}\left(0,q^{-}_{sf},r_{sf \rightarrow
-rz},\Theta_{sf}\right) = 0
-\]
 
 ## Root zone
 
@@ -183,15 +166,61 @@ receive water, then $r_{sf\rightarrow rz}$ is adjusted (potentially becoming
 negative) to ensure the equality is met.
 
 
-## Unsaturated Zone
+## Unsaturated & Saturated Zone
 
-The unsaturated zone acts as a non-linear tank subject to the constraint 
+The unsaturated and saturated zones act in a coupled fashin subject
+to the constraint 
 \begin{equation} 0 \leq s_{uz} \leq s_{sz} \end{equation}
 
-The governing ODE is written as
+In many TOPMODEL and dynamic TOPMODEL forumations the governing ODE is written as
+
 \begin{equation}
 \frac{ds_{uz}}{dt} = r_{rz \rightarrow uz} - \frac{A s_{uz}}{T_d s_{sz}}
 \end{equation}
+
+however it is acknowledged that this formaulation has no physical
+basis (Beven, The Primer, Box?? 20**)
+
+Here we develop an equally parsimonious alternative informed by the
+previsou analysis of (Bevn 1984, Ion, 1989 paper).
+Let $K_0$ be the vertical saturated conductivity at the surface. On
+the basis that saturated conductivity decreases with depth let, for
+the upper most soil layer for some storage defict $z$
+\[
+K\left(z\right) = K_0 \exp\left(-\frac{z}{m}\right)
+\]
+
+Letting the lateral saturated conductivity for the soil later at
+deficit $z$ be $\lambda K\left(z\right)$ the downslope flow is given
+by
+
+\[
+\lambda K_0 \exp\left(-\frac{z}{m}\right) \tan\left(\beta\right)
+\]
+
+Integrating this over the saturated zone gives
+\[
+T\left(s_{sz}\right) =  \lambda K_0 \tan\left(\beta\right)
+\int\limits_{s_{sz}}^{\infty} \exp\left(-\frac{z}{m}\right) dz \\
+= \lambda K_0 \tan\left(\beta\right) 
+\left[-m \exp\left(-\frac{z}{m}\right) \right]_{s_{sz}}^{\infty} \\
+= \lambda m K_0 \tan\left(\beta\right) \exp\left(-\frac{s_{sz}}{m}\right)
+\]
+
+For vertical flow it is assumed that the flow interfaces saturate from
+above so the inflow to the unsaturated zone is
+$\min\left(r_{rz \rightarrow uz},K_{0}\right)$. However if the
+unsaturated zone is not full (i.e. not $s_{uz} = s_{sz}$) then the
+interface to the saturated zone may not be saturated from above. To
+approximate this the flux is taken to be
+
+\[
+r_{uz \rightarrow sz} = K_0 \exp\left(-\frac{s_{sz}}{m}\right) \frac{s_{uz}}{s_{sz}}
+\]
+
+
+Flow from the
+unsaturated zone to the saturated zone is
 
 If water is able to pass freely to the saturated zone, then it flows at the rate
 $\frac{A s_{uz}}{T_d s_{sz}}$. 
@@ -223,6 +252,35 @@ It is assummed that flow increases with storage so
 \]
 while at the maximum storage deficit
 $\mathcal{G}\left(D,q^{-}_{sz},\Theta_{sz}\right) = 0$
+
+
+# Edges
+
+
+
+The outflow $q^{+}_{sf}$ is considered a function of 
+$q^{-}_{sf}$, $s_{sf}$, $r_{sf \rightarrow rz}$ and parameters $\Theta_{sf}$ denoted by
+\[
+q^{+}_{sf} = \mathcal{F}\left(s_{sf},q^{-}_{sf},r_{sf \rightarrow
+rz},\Theta_{sf}\right)
+\]
+For the purposes the numerical scheme we limit the set to possible functions
+$\mathcal{F}$ to those that are non-decreasing with respect to $s_{sf}$ and
+take the value $0$ when $s_{sf}=0$. More formally
+\[
+\frac{\partial}{\partial s_{sf}} \mathcal{F}\left(s_{sf},q^{-}_{sf},r_{sf \rightarrow
+rz},\Theta_{sf}\right) \geq 0
+\]
+and
+\[
+\mathcal{F}\left(0,q^{-}_{sf},r_{sf \rightarrow
+rz},\Theta_{sf}\right) = 0
+\]
+
+
+
+
+
 
 
 # Numerical Solution
