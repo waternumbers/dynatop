@@ -25,12 +25,13 @@ Depends:
 	R (>= 4.0.0)
 BugReports: https://github.com/waternumbers/dynatop/issues
 URL: https://waternumbers.github.io/dynatop/, https://github.com/waternumbers/dynatop
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.3
 Suggests:
     terra,
     knitr,
     rmarkdown,
     bookdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    tinytest
 VignetteBuilder: knitr
 Language: en-GB

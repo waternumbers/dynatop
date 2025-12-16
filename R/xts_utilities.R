@@ -3,14 +3,14 @@
 #' @description Takes an xts time series object and resamples then to a new time step.
 #' @param obs A times series (xts) object with a POSIXct index.
 #' @param dt New time interval in seconds
-#' @param is.rate If TRUE then these are rates i.e m/h. Otherwise they are absolute values accumulated within the preceding time interval. Values are scaled before returning so resampling is conservative.
+#' @param is.rate If TRUE then these are rates e.g m/h. Otherwise they are absolute values accumulated within the preceding time interval. Values are scaled before returning so resampling is conservative.
 #'
 #' @return An xts object with the new timestep
 #'
 #' @details Time series of observation data are often of different temporal resolutions, however the input to most hydrological models, as is the case with the Dynamic TOPMODEL, requires those data at the same interval. This provides a method to resample a collection of such data to a single interval.
 #'
 #' Because of the methods used the results:
-#' 
+#'
 #' - are not accurate when the input data does not have a constant timestep. The code issues a warning and proceeds assuming the data are equally spaced with the modal timestep.
 #' - do not guarantee the requested time step but returns a series with the timestep computed from an integer rounding the ratio of the current and requested time step.
 #'
@@ -24,7 +24,7 @@
 #' dobs <- resample_xts(cobs,dt=15*60) # back to 15 minute data
 #' cdobs <- resample_xts(dobs,dt=60*60) # back to hourly data - checks time stamp conversion
 #' obs <- obs[zoo::index(obs)<=max(zoo::index(cobs)),]
-#' 
+#'
 #' # check totals
 #' stopifnot( all.equal(sum(obs),sum(cobs)) )
 #' stopifnot( all.equal(sum(obs),sum(dobs)) )
@@ -79,7 +79,7 @@ resample_xts <- function(obs, dt, is.rate=FALSE){
         if(is.rate){fun=mean}else{fun=sum}
         obs_agg <- as.xts(aggregate(zoo::zoo(obs), by = idx, FUN=fun))
         names(obs_agg) <- names(obs)
-        
+
     }
 
     return(obs_agg)
