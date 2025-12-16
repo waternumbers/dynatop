@@ -33,7 +33,7 @@ during his PhD sponsored by the [JBA Trust](https://www.jbatrust.org).
 * The [NERC Q-NFM project (NE/R004722/1)](https://www.lancaster.ac.uk/lec/sites/qnfm/) at Lancaster University for supporting this update to dynatop.
 * The original developers of Dynamic TOPMODEL, [Keith
 Beven](https://www.lancaster.ac.uk/lec/about-us/people/keith-beven) and [Jim
-Freer](http://www.bristol.ac.uk/geography/people/jim-e-freer/index.html), who
+Freer](https://www.bristol.ac.uk/geography/people/jim-e-freer/index.html), who
 contributed to the original R port of Dynamic TOPMODEL.
 
 ## Using the code
@@ -46,5 +46,7 @@ the git repository from within R using the devtools package:
 devtools::install_github("waternumbers/dynatop")
 ```
 
-Prebuild packages of the development version (which may be ahead of CRAN) are available from the [r-universe](https://waternumbers.r-universe.dev/ui#package:dynatop)
+Prebuild packages of the development version (which may be ahead of CRAN) are
+available from the
+[r-universe](https://waternumbers.r-universe.dev/#package:dynatop)
 
