@@ -41,8 +41,6 @@ dynatop <- R6Class(
         #'
         #' @details This function makes some basic consistency checks on the observations to ensure they have uniform timestep and all required series are present.
         add_data = function(obs_data){
-            self$clear_data()
-            ## check input and get model timestep
             private$digest_obs(obs_data)
             invisible(self)
         },
@@ -210,179 +208,61 @@ dynatop <- R6Class(
     ),
     private = list(
         ## stores of data
-        version = "0.3.0",
+        version = "0.5.0",
         model = list(), # storage for model object
-        map  = NULL, # storage for map object
-        output_defn = list(), ## definition of output
+        ## map  = NULL, # storage for map object
+        ## output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
-        info = list(sf = setNames(as.integer(1:3),c("cnst","kin","comp")),
-                    rz = setNames(as.integer(1),c("orig")),
-                    uz = setNames(as.integer(1),c("orig")),
-                    sz = setNames(as.integer(1:4),c("exp","bexp","dexp","cnst")),
-                    
-                    output = setNames(1:14, c("precip","pet","aet",
-                                              "q_sf","q_sf_in","q_sz","q_sz_in",
-                                              "s_sf","s_rz","s_uz","s_sz",
-                                              "v_sf_rz","v_rz_uz","v_uz_sz"))
-                    ),
-        digest_hru = function(h, use_states, delta){ ## check HRU returns a text string of errors
-            etxt = character(0)
-            
-            ## check id
-            if("id" %in% names(h)){
-                if( length( h$id ) > 1 ){ etxt <- c(etxt, paste0(h$id[1], ": ID should be of length 1")) }
-                if( !is.integer( h$id ) ){ etxt <- c(etxt, paste0( h$id, ": ID should be an integer")) }
-            }else{
-                etxt <- c(etxt, "No ID is specified")
-                h$id <- NA ## for error messages
-            }
-            
-            ## check properties
-            if("properties" %in% names(h)){
-                prpnm <- c("area", "width", "Dx", "gradient")
-                if( !is.numeric(h$properties) ){ etxt <- c( etxt, paste0(h$id, ": properties should be a numeric vector") ) }
-                if( all(prpnm %in% names(h$properties)) ){
-                    if( !all( h$properties[c("gradient","width")] >0 ) ){
-                        etxt <- c( etxt, paste0(h$id, ": gradient and width but be greater then 0") )
-                    }
-                    if( h$properties["area"] < 0 ){
-                        etxt <- c( etxt, paste0(h$id, ": area must not be negative"))
-                    }
-                    h$properties <- h$properties[ c( prpnm, setdiff(names(h$properties),prpnm)) ]
-                }else{
-                    etxt <- c(etxt, paste0(h$id, ": properties is missing named values") )
+        ## info = list(sf = setNames(as.integer(1:3),c("cnst","kin","comp")),
+        ##             rz = setNames(as.integer(1),c("orig")),
+        ##             uz = setNames(as.integer(1),c("orig")),
+        ##             sz = setNames(as.integer(1:4),c("exp","bexp","dexp","cnst")),
+        info = list(
+            output = setNames(1:14, c("precip","pet","aet",
+                                      "q_sf","q_sf_in","q_sz","q_sz_in",
+                                      "s_sf","s_rz","s_uz","s_sz",
+                                      "q_sf_rz","q_rz_uz","q_uz_sz"))
+        ),
+        ## function that checks a hru
+        digest_hru = function(h, use_states){ ## check HRU returns a text string of errors
+            etxt = NULL
+            types <- c(id = "integer",
+                       z = "numeric",
+                       depth = "numeric",
+                       band = "integer",
+                       cell = "integer",
+                       precip = "character",
+                       pet = "character",
+                       grp = "integer",
+                       area = "numeric",
+                       edges = "data.frame")
+
+            for(ii in names(types)){
+                if( !("ii" %in% names(h)) | (length(h[[ii]])>1) | !is(h[[ii]],type[ii]) ){
+                    etxt = c(etxt, paste0(ii," is not a single ", type[ii]))
                 }
-            }else{
-                etxt <- c(etxt,paste0(h$id, ": properties is missing") )
-            }
-                
-            ## check states
-            snm <- c("s_sf","s_rz","s_uz","s_sz")
-            if("states" %in% names(h)){
-                if( !is.numeric(h$states) ){ etxt <- paste(etxt, paste0(h$id, ": states should be a numeric vector"), sep="\n") }
-                if( !all(snm %in% names(h$states)) ){
-                    etxt <- c(etxt, paste0(h$id, ": states is missing named values"))
-                }
-                h$states <- h$states[ c(snm, setdiff(names(h$states),snm)) ] ## make sure states are in correct order
-            }else{
-                etxt <- c(etxt,paste0(h$id, ": states is missing") )
             }
             
-            ## check sf, rz, uz, sz
-            for(ii in c("sf","rz","uz","sz")){
-                if(!(ii %in% names(h))){
-                    etxt <- c(etxt,paste0(h$id, ": ",ii," definition is not present"))
-                    next
-                }
-                if( !all(c("type","parameters") %in% names(h[[ii]])) ){
-                    etxt <- c(etxt,paste0(h$id, ": ",ii, " definition is missing type and.or parameters"))
-                    next
-                }
-                if( length( h[[ii]]$type ) >1 ){
-                    etxt <- c(etxt, paste0(h$id[1], ": ", ii, " type should be of length 1"))
-                    next
-                }
-                
-                if( !( h[[ii]]$type %in% names(private$info[[ii]])) ){
-                    etxt <- c(etxt, paste0(h$id[1], ": ", ii, " type is not valid"))
-                    next
-                }
-                pnm <- switch( paste0(ii, "_", h[[ii]]$type), ## make a unique code
-                              "sf_cnst" = c("c_sf","d_sf","s_raf","t_raf"),
-                              "sf_kin" = c("n","s_raf","t_raf"),
-                              "sf_comp" = c("v_sf_1","d_sf_1","s_1","v_sf_2","d_sf_2"),
-                              "rz_orig" = c("s_rzmax"),
-                              "uz_orig" = c("t_d"),
-                              "sz_exp" = c("t_0","m"),
-                              "sz_bexp" = c("t_0","m","h_sz_max"),
-                              "sz_cnst" = c("v_sz","h_sz_max"),
-                              "sz_dexp" = c("t_0","m","m2","omega"),
-                              stop("Invalid options for pname")
-                              )
-                if( !is.numeric( h[[ii]]$parameters )){
-                    etxt <- c(etxt, paste0(h$id[1], ": ", ii, " parameters should be a numeric vector"))
-                    next
-                }
-                if( !all( pnm %in% names(h[[ii]]$parameters)) ){
-                    etxt <- c(etxt,paste0(h$id, ": ",ii, " is missing parameters"))
-                    next
-                }
-                if( !all( h[[ii]]$parameters[ pnm ] >=0 ) ){
-                    etxt <- c(etxt, paste0(h$id, ": some ", ii, " parameters are negatve"))
-                    next
-                }
-                h[[ii]]$parameters <- h[[ii]]$parameters[ c(pnm,setdiff(names(h[[ii]]$parameters),pnm)) ] ## make sure parameters are in correct order
-                ## print(h[[ii]]$parameters)
+            if( !all(c("to","slope","width") %in% names(h$edges)) |
+                all( h$edges$slope > 0 ) |
+                all( h$edges$width > 0 ) ){
+                etxt = c(etxt, paste0(edges," is not a valid"))
+            }
+
+            if( !("states" %in% names(h)) |
+                (length(h$states)!=4) |
+                is(h$states,"numeric") |
+                !all( c("s_sf","s_rz","s_uz","s_sz") %in% names(h$states) ) ){
+                etxt <- c(etxt, "state vector not valid")
+            }
+            if( use_states & !all(is.finite(h$states)) & !all(h$states>=0) ){
+                etxt <- c(etxt, "states are negative or  non-finite")
             }
             
-            ## check precip and pet
-            for(ii in c("precip","pet")){
-                if( !all(c("name","fraction") %in% names(h[[ii]])) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " should contain names and fractions"))
-                    next
-                }
-                if( !is.character(h[[ii]]$name) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " name should be a character vector"))
-                    next
-                }
-                if( !is.numeric(h[[ii]]$fraction) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " fraction should be a numeric vector"))
-                    next
-                }
-                if( length( h[[ii]]$name) != length(h[[ii]]$fraction) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " name and fraction should be the same length"))
-                    next
-                }
-                if( any(h[[ii]]$fraction < 0) | ( abs( sum(h[[ii]]$fraction) -1) > delta) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " fractions should be positive and sum to 1"))
-                    next
-                }
+            if( !is.null(etxt) ){
+                stop( paste(etxt, collapse="\n") )
             }
-
-            ## check lateral flow
-            for(ii in c("sf_flow_direction","sz_flow_direction")){
-                if( !all(c("id","fraction") %in% names(h[[ii]])) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " should contain ids and fractions"))
-                    next
-                }
-                if( !is.integer(h[[ii]]$id) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " id should be an integer vector"))
-                    next
-                }
-                if( !is.numeric(h[[ii]]$fraction) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " fraction should be a numeric vector"))
-                    next
-                }
-                if( length( h[[ii]]$id) != length(h[[ii]]$fraction) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " id and fraction should be the same length"))
-                    next
-                }
-                if( any(h[[ii]]$id >= h$id) ){
-                    etxt <- c(etxt, paste0(h$id, ": ", ii, " id value be less then current id"))
-                    next
-                }
-                if( length(h[[ii]]$fraction)>0 ){
-                    
-                    if( any(h[[ii]]$fraction < 0) | ( abs( sum(h[[ii]]$fraction) -1) > delta) ){
-                        etxt <- c(etxt, paste0(h$id, ": ", ii, " fractions should be positive and sum to 1"))
-                        next
-                    }
-                }
-            }
-
-            ## fail if errors
-            if( length( etxt ) >0 ){
-                stop( paste(etxt,collapse = "\n") )
-            }
-
-            ## convert for C++
-            for(ii in c("sf","rz","uz","sz")){ ## convert type to integer
-                h[[ii]]$type <- private$info[[ii]][ h[[ii]]$type ]
-            }
-
-            if( !use_states ){ h$states[] <- NA }
             return(h)
-
         },
         regurge_hru = function(h){
             ## convert for C++
