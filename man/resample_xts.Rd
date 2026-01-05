@@ -11,7 +11,7 @@ resample_xts(obs, dt, is.rate = FALSE)
 
 \item{dt}{New time interval in seconds}
 
-\item{is.rate}{If TRUE then these are rates i.e m/h. Otherwise they are absolute values accumulated within the preceding time interval. Values are scaled before returning so resampling is conservative.}
+\item{is.rate}{If TRUE then these are rates e.g m/h. Otherwise they are absolute values accumulated within the preceding time interval. Values are scaled before returning so resampling is conservative.}
 }
 \value{
 An xts object with the new timestep
