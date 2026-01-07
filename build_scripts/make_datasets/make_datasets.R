@@ -14,3 +14,21 @@ names(obs) <- c("flow","precip","pet")
 Swindale <- list(model=model,obs=obs)
 save("Swindale",file="../data/Swindale.rda")
 
+
+## #######################################
+## make GIS data for dynatopGIS
+## run from root dynatop directory
+rm(list=ls())
+library(terra)
+
+dem <- rast("./build_scripts/make_datasets/raw/SwindaleDTM40m.tif")
+dem <- extend(dem,1) ## padd with NA
+writeRaster(dem,"./inst/extdata/GIS/SwindaleDTM.tif",overwrite=TRUE)
+catchment_outline <- terra::as.polygons(terra::ifel(is.finite(dem),1,NA),dissolve=TRUE)
+writeVector(catchment_outline,"./inst/extdata/GIS/SwindaleBoundary.gpkg")
+
+chn <- vect("./build_scripts/make_datasets/raw/SwindaleRiverNetwork.shp")
+writeVector(chn,"./inst/extdata/GIS/SwindaleRiverNetwork.gpkg")
+
+
+ctch$add_catchment(catchment_outline,dem)

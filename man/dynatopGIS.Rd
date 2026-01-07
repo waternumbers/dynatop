@@ -270,10 +270,10 @@ Compute a Dynamic TOPMODEL
 \if{html}{\out{<div class="r">}}\preformatted{dynatopGIS$create_model(
   model_name,
   class_layer = NULL,
-  rain_layer = "precip",
-  rain_label = character(0),
-  pet_layer = "pet",
-  pet_label = character(0),
+  rain_layer = NULL,
+  rain_label = "precip",
+  pet_layer = NULL,
+  pet_label = "pet",
   verbose = FALSE
 )}\if{html}{\out{</div>}}
 }

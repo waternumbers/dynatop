@@ -3,8 +3,11 @@ devtools::load_all(".")
 
 
 ## ----tempory_dir-------------------------------------------------------------------------------------------------
-demo_file <- "./build_scripts/debug/dygis.tif"
+temp_dir <- "./build_scripts/debug/demo"
+dir.create(temp_dir)
+demo_file <- file.path(temp_dir,"dygis.tif")
 unlink(demo_file)
+unlink(gsub(".tif$",".geojson",demo_file))
 
 
 ## ----initialisation----------------------------------------------------------------------------------------------
