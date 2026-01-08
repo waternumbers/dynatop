@@ -23,7 +23,7 @@
 #'   calculated (for the catchment's latitude). Integration over the daylight
 #'   hours allows the daily maximum to be calculated and thus a sub-daily series
 #'   generated.
-#' 
+#'
 #' @return Time series (xts) of potential evapotranspiration totals for the time steps given in same units as eMin and eMax
 #'
 #' @references Beven, K. J. (2012). Rainfall-runoff modelling : the primer. Chichester, UK, Wiley-Blackwell.
@@ -47,13 +47,13 @@
 #' stopifnot(all.equal(sum(hpet), sum(dpet)))
 #' @export
 evap_est <- function(ts, eMin=0, eMax=0){
-
+    stop("Not Checked - needs updating with ability to take daily PET values")
     ## Check min and max
     if(!(eMin < eMax)){
         stop("eMin should be less then eMax")
     }
-    
-    
+
+
     ## Check timestep
     dt <- diff(as.numeric(ts))
     if(!all(dt[]==dt[1])){
@@ -66,7 +66,7 @@ evap_est <- function(ts, eMin=0, eMax=0){
     ## create a series of daily PET values based on eMin and eMax
     ## day 0 is Jan 1, 31 Dec is day 364 or day 365 depending on if leap year
     yday <- 0:365
-    fact <- 1+sin(2*pi*yday/365-pi/2)    
+    fact <- 1+sin(2*pi*yday/365-pi/2)
     daily_pet <- eMin + 0.5*(eMax-eMin)*fact
     dawn <- (10 - 2.5*fact)*60*60 # in seconds from start of day
     dayLength <- (6 + 4*fact) * 60*60 # in sec from start fo day
@@ -88,7 +88,7 @@ evap_est <- function(ts, eMin=0, eMax=0){
     ## take away the fraction from the start
     sc <- as.numeric(sts) - as.numeric(dsts)
     frc <- (sc - dawn[ as.POSIXlt(sts)$yday +1 ])/ dayLength[ as.POSIXlt(sts)$yday +1]
-    frc <- pmin(1,pmax(0,frc))    
+    frc <- pmin(1,pmax(0,frc))
     pet <- pet -  daily_pet[ as.POSIXlt(sts)$yday + 1]*0.5*(1-cos(frc*pi))
     ## add fraction from start fo currect day
     sc <- as.numeric(ts) - as.numeric(dts)

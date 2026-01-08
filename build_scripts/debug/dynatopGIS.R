@@ -1,4 +1,5 @@
 rm(list=ls())
+graphics.off()
 devtools::load_all(".")
 
 
@@ -58,33 +59,18 @@ ctch$get_layer("dem")
 ## ----sink_fill---------------------------------------------------------------------------------------------------
 ctch$sink_fill()
 
+
 terra::plot( ctch$get_layer('filled_dem') - ctch$get_layer('dem'),
             main="Changes to height")
 
 
 ## ----band--------------------------------------------------------------------------------------------------------
 ctch$plot_layer("band")
+ctch$plot_layer("hru")
 
-
-ctch$create_model("test_model")
-
-
-## ----calc_atb----------------------------------------------------------------------------------------------------
-ctch$compute_properties()
-
-
-## ----plot_atb----------------------------------------------------------------------------------------------------
-## plot of topographic index (log(a/tan b))
-ctch$plot_layer('atb')
-
-
-## ----flow_length-------------------------------------------------------------------------------------------------
-ctch$compute_flow_lengths(flow_routing="shortest")
-
-
-## ----flow_length_plot--------------------------------------------------------------------------------------------
-ctch$get_layer()
-ctch$plot_layer("shortest_flow_length")
+devtools::load_all(".")
+ctch <- dynatopGIS$new(demo_file)
+ctch$create_model("./inst/extdata/mdl/SwindaleModel")
 
 
 ## ----extract_filled----------------------------------------------------------------------------------------------
@@ -93,41 +79,10 @@ tmp <- ctch$get_layer("filled_dem")
 
 ## ----height layer------------------------------------------------------------------------------------------------
 ## T
-tmp <- terra::ifel(tmp<=500,NA,-999)
+tmp <- terra::ifel(tmp<=500,0,1)
 
 
 ## ----add_height_layer--------------------------------------------------------------------------------------------
 ctch$add_layer(tmp, "greater_500")
 ctch$get_layer()
-
-
-## ----atb_split---------------------------------------------------------------------------------------------------
-ctch$classify("atb_20","atb",cuts=20)
-ctch$plot_layer("atb_20")
-
-
-## ----atb_splt_get_class------------------------------------------------------------------------------------------
-ctch$get_method("atb_20")
-
-
-## ----atb_20_band-------------------------------------------------------------------------------------------------
-ctch$combine_classes("atb_20_band",c("atb_20","band"))
-ctch$plot_layer("atb_20_band")
-
-
-## ----atb_20_band_burn--------------------------------------------------------------------------------------------
-ctch$combine_classes("atb_20_band_500",pairs=c("atb_20","band"),burns="greater_500")
-ctch$plot_layer("atb_20_band_500")
-
-
-## ----see_class---------------------------------------------------------------------------------------------------
-head( ctch$get_method("atb_20_band_500")$groups )
-
-
-## ----model_atb_split---------------------------------------------------------------------------------------------
-ctch$create_model(file.path(demo_dir,"new_model"),"atb_20")
-
-
-## ----model files-------------------------------------------------------------------------------------------------
-list.files(demo_dir,pattern="new_model*")
 

@@ -140,7 +140,11 @@ dynatopGIS <- R6::R6Class(
             lyr <- self$get_layer(layer_name)
             terra::plot( lyr, main = layer_name)
             if( add_channel & length(private$chn) > 0){
-                terra::plot(private$chn, add=TRUE )
+                if(layer_name %in% names(private$chn)){
+                    terra::plot(private$chn,layer_name, add=TRUE )
+                }else{
+                    terra::plot(private$chn, add=TRUE )
+                }
             }
         },
         #' @description The sink filling algorithm of Planchona and Darboux (2001)
@@ -232,16 +236,16 @@ dynatopGIS <- R6::R6Class(
         #' Setting the sf_opt and sz_opt options ensures the model is set up with the correct parameters present.
         #' The \code{rain_layer} (\code{pet_layer}) can contain the numeric id values of different rainfall (pet) series. If the value of \code{rain_layer} (\code{pet_layer}) is not \code{NULL} the weights used to compute an averaged input value for each HRU are computed, otherwise an input table for the models generated with the value "missing" used in place of the series name.
         create_model = function(model_name,class_layer = NULL,
-                                rain_layer=NULL, rain_label="precip",
-                                pet_layer=NULL, pet_label="pet",
+                                rain_layer=NULL,# rain_label="precip",
+                                pet_layer=NULL,# pet_label="pet",
                                 verbose=FALSE){
 
             ## check valid transmissivity and channel_solver
             ##sf_opt<- match.arg(sf_opt)
             ##sz_opt <- match.arg(sz_opt)
             private$apply_create_model(model_name,class_layer,
-                                       rain_layer, rain_label,
-                                       pet_layer, pet_label,
+                                       rain_layer,# rain_label,
+                                       pet_layer,# pet_label,
                                        verbose
                                        )
 
@@ -392,7 +396,7 @@ dynatopGIS <- R6::R6Class(
             ## pass down channel adding id and bands
             if("id" %in% names(chn)){ warning("Overwriting id variable") }
             chn$id <- 1:nrow(chn)
-            
+
             ## channel raster of id
             chn_rst <- terra::rasterize(chn,private$brk[["catchment"]],field = "id",touches=TRUE)
             names(chn_rst) <- "channel_id"
@@ -444,6 +448,10 @@ dynatopGIS <- R6::R6Class(
         apply_sink_fill = function(min_grad,max_it,verbose,hot_start){ #,flow_type){
 
             ## recall the catchments is padded with NA values
+            if(!hot_start & ("filled_dem" %in% names(private$brk))){
+                warning("Filled DEM already created")
+                return()
+            }
 
             d <- ifelse(hot_start,"filled_dem","dem")
 
@@ -452,6 +460,7 @@ dynatopGIS <- R6::R6Class(
             if(!all(rq %in% names(private$brk))){
                 stop("Not all required layers are available")
             }
+
 
             d <- terra::as.matrix( private$brk[[d]] ,wide=TRUE)
             ch <- terra::as.matrix( private$brk[["channel_id"]] , wide=TRUE )
@@ -552,17 +561,17 @@ dynatopGIS <- R6::R6Class(
             d <- terra::values( private$brk[["filled_dem"]] )
             chn_id <- terra::values( private$brk[["channel_id"]] )
             chn_frc <- terra::values( private$brk[["channel_fraction"]] )
-            
+
             ## initialise the bands
-            bnd <- is.finite(dem)*1 ## initialise everything
+            bnd <- is.finite(d)*1 ## initialise everything
             chn_bnd <- rep(1,nrow(private$chn)) ## we will populate this by id so will need merging back into private$chn carefully
-                           
+
             if( verbose ){ print("Computing downward pass of hillslope") }
-            
+
             idx <- order(d,na.last=NA,decreasing=TRUE) ## search order
-            
+
             nr <- terra::ncol(private$brk); delta <- c(-nr-1,-nr,-nr+1,-1,1,nr-1,nr,nr+1) ## neighbours
-            
+
             ## set up printing variables
             if(verbose){
                 print_step <- c(1,rep(round(length(idx)/20,2)),length(idx)) # current, next print, step, total
@@ -610,36 +619,36 @@ dynatopGIS <- R6::R6Class(
                 }
                 jdx <- jdx[cnt[jdx]==0] ## only move down if it is the last visit to the endNode
                 idx <- sN %in% jdx
-                
+
                 it <- it+1
             }
             stopifnot(
                 "Error processing channel: problem with visiting all points" = all(cnt==0)
             )
-            private$chn$band <- chn_band
-            
+            private$chn$band <- chn_bnd
+
             if( verbose ){ print("Computing HRU IDs") }
             ## work out hru id
             max_hru <- -1
             hru <- rep(NA,length(bnd))
             chn_hru <- rep(NA,length(chn_bnd))
-            for(ii in 1:max(chn_band)){
+            for(ii in 1:max(chn_bnd)){
                 idx <- bnd==ii
                 nidx <- sum(idx)
-                hru_idx[idx] <- max_hru + 1:nidx
+                hru[idx] <- max_hru + 1:nidx
                 max_hru <- max_hru + nidx
                 idx <- chn_bnd == ii
                 nidx <- sum(idx)
                 chn_hru[idx] <- max_hru + 1:nidx
             }
             private$chn$hru <- chn_hru
-            
+
             ## save
             rbnd <- private$brk["filled_dem"]
             names(rbnd) <- "band"
             terra::values(rbnd) <- bnd
             rhru <- private$brk["filled_dem"]
-            names(rhru) <- "HRU"
+            names(rhru) <- "hru"
             terra::values(rhru) <- hru
             private$brk <- c(private$brk,rbnd,rhru)
             private$save_project(chn=TRUE)
@@ -651,7 +660,6 @@ dynatopGIS <- R6::R6Class(
                                       pet_lyr,
                                       verbose){
 
-            browser()
             ## check layers
             rq <- c("hru","band",
                     "filled_dem",
@@ -659,13 +667,14 @@ dynatopGIS <- R6::R6Class(
                     rain_lyr,
                     pet_lyr,
                     class_lyr)
-            
+
             stopifnot(
                 "Missing layers" = all(rq %in% names(private$brk))
             )
 
             ## work out some properties of the brick
             rs <- terra::res( private$brk )[1]
+            nr <- terra::ncol(private$brk)
             delta <- c(-nr-1,-nr,-nr+1,-1,1,nr-1,nr,nr+1)
             sc <- c(sqrt(2),1,sqrt(2),1,1,sqrt(2),1,sqrt(2))
             dxy <- sc*rs
@@ -695,19 +704,19 @@ dynatopGIS <- R6::R6Class(
 
             mdl$is_channel <- FALSE
             mdl$edges <- NA_character_
-            
+
             ## compute area and set value to NA if no hillslope
-            mdl$area <- cell_area * (1 - hs_data$channel_fraction)
-            
+            mdl$area <- cell_area * (1 - mdl$channel_fraction)
+
             ## initialise the channel HRUs
             chn <- as.data.frame(private$chn)
             chn$is_channel <- TRUE
             chn$edges <- NA_character_
             chn$z <- NA
-            
+
             ## compute the index of cellls to evaluate
-            cell_idx <- which( is.finite(hs_data$z) )
-            
+            cell_idx <- which( is.finite(mdl$z) )
+
             ## initialise the channel storage to compute as we loop
             chn_n <- nrow(chn)
             total_chn_frac <- rep(0,chn_n)
@@ -731,7 +740,7 @@ dynatopGIS <- R6::R6Class(
                     str <- paste(mdl$pet[ii])
                     if( !(str %in% names(chn_pet[[jj]])) ){ chn_pet[[jj]][str] <- 0 }
                     chn_pet[[jj]][str] <- chn_pet[[jj]][str] + mdl$channel_fraction[ii]
-                    
+
                 }else{
                     jdx <- ii+delta
                     slp[] <- (mdl$z[ii] - mdl$z[jdx])/dxy
@@ -770,34 +779,47 @@ dynatopGIS <- R6::R6Class(
                     outlets <- c(outlets,chn$hru[ii])
                 }
             }
-            
-            ## add geometries and parameters to the channel
+
+            ## add geometries and parameters to the channel then remove unwanted variables
             chn$geom <- terra::geom(private$chn,wkt=TRUE)
-            chn$sf_type <- 1; chn$sf_param <- '["n":0.1]'
-            chn$rz_type <- 1; chn$rz_param <- '["s_rz_max":0.0]'
-            chn$uz_type <- 1; chn$uz_param <- '["t_uz":0.0]'
+            chn$sf_type <- 2; chn$sf_param <- paste0('["n":0.1,"depth":',chn$depth,']')
+            chn$rz_type <- 1; chn$rz_param <- '["s_rz_max":0.1]'
+            chn$uz_type <- 1; chn$uz_param <- '["t_uz":0.001]'
             chn$sz_type <- 1; chn$sz_param <- '["t_0":0.0,"m":0.02]'
-            
-            mdl$geom <- terra::geom(terra::as.polygons(private$brk,aggregate=FALSE,values=FALSE))
-            mdl <- mdl[mdl$area>0,]
+            chn[,c("startNode","endNode","depth","slope","width","id")] <- NULL
+
+            mdl <- mdl[is.finite(mdl$hru),]
+            mdl$geom <- terra::geom(terra::as.polygons(private$brk[["hru"]],aggregate=FALSE,values=FALSE),
+                                    wkt=TRUE)
             mdl$sf_type <- 1; mdl$sf_param <- '["n":0.3]'
             mdl$rz_type <- 1; mdl$rz_param <- '["s_rz_max":0.1]'
             mdl$uz_type <- 1; mdl$uz_param <- '["t_uz":0.001]'
             mdl$sz_type <- 1; mdl$sz_param <- '["t_0":0.001,"m":0.02]'
+            mdl$channel_id <- mdl$channel_fraction <- NULL
 
-            mdl <- merge(mdl,chn,by="hru",all=TRUE)
+            mdl <- merge(mdl,chn,all=TRUE)
+            mdl$s_sf <- NA
+            mdl$s_rz <- NA
+            mdl$s_uz <- NA
+            mdl$s_sz <- NA
 
             ## sort outlets
             output <- data.frame(names = paste0("q_sf_",outlets),
                                  hru = outlets,
                                  flux = "q_sf",
                                  scale = 1)
-            
+
             ## save the model
-            write.csv2(mdl,paste0(model_name,".csv"),row.names=FALSE)
-            write.csv2(mdl,paste0(outlets,"_outlets.csv"),row.names=FALSE)
-            
+            write.table(mdl, paste0(model_name,".csv"),
+                        sep=";",row.names=FALSE,
+                        na="",quote=FALSE,
+                        fileEncoding = "UTF-8")
+            write.csv(mdl,paste0(model_name,"_outlets.csv"),row.names=FALSE)
+
             saveRDS(list(hru=mdl, output = output),paste0(model_name,".rds"))
+
+            mdl <- terra::vect(mdl,geom="geom")
+            terra::writeVector(mdl,paste0(model_name,".geojson"),overwrite=TRUE)
         }
     )
     )
