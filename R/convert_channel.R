@@ -1,107 +1,539 @@
+## to fix
+## warningnote when gm[] <- NULL
+## documentation
+## crop channels when merging in waterbodies - check same number  of inputs and outputs (unless wb added at top)
+
+
 #' Function for assisting in the conversion of object to be suitable channel inputs to a dynatopGIS object
 #'
-#' @description Converts SpatialLinesDataFrame or SpatialPolygonsDataFrame to the correct format of SpatialPolygonsDataFrame for dynatopGIS.
-#' @param vect_object a SpatVect object or a file which can read by terra::vect to create one
+#' @description Converts SpatVect of the channel network into SpatVect containing polgons suitable for dynatopGIS
+#' @param chn a SpatVect object or a file which can read by terra::vect to create one
 #' @param property_names a named vector of containing the columns of existing data properties required in the final SpatialPolygonsDataFrame
-#' @param default_width the width in m to be used for buffering lines to produce polygons
-#' @param default_slope the slope in m/m to be used when none is provided
+#' @param defaults default values used to replace missing widths, slopes and depths
 #'
-#' @details If the property_names vector contains a width this is used for buffering lines to produce polygons, otherwise the default_width value is used.
-#'
+#' @return A SpatVect containing polygons of the channel network, with at least the following properties: uid, width, depth, slope, startNode and endNode.
+#' 
+#' @details The processing follows the follwoing sequence:
+#'   - The `property_names` input is used to rename the data associated with spatial objects. Remaining data is dropped
+#'   - Varaibles are converted to the expected type then checked for missing values; in doing this
+#'       - Missing `slope`, `width` and `depth`  values are populated by the default and a warning issued
+#'   - If the spatial objects are lines
+#'      - The spatial objects are buffered using the half `width`
+#' 
 #' @examples
+#' channel_file <- system.file("extdata", "SwindaleRiverNetwork.shp",
+#' package="dynatopGIS", mustWork = TRUE)
+#' vect_lines <- terra::vect(channel_file)
+#' property_names <- c(uid="identifier",endNode="endNode",startNode="startNode")
+#' chn <- convert_channel(vect_lines,property_names)
+#' @export
+convert_channel <- function(chn,
+                            property_names=c(uid = "uid",
+                                             startNode = "startNode",
+                                             endNode = "endNode",
+                                             width = "width",
+                                             slope = "slope",
+                                             depth = "depth"),
+                            defaults = c("width"=2,"slope"=0.001,"depth"=1)
+                            ){
+    
+    ## read in the chn sp object is a character sting
+    if(is.character(chn)){
+        if(file.exists(chn)){
+            chn <- terra::vect(chn)
+        }else{
+            stop("chn is a character string but the file specified does not exist")
+        }
+    }
+    
+    ## check the SptVect object and property names
+    stopifnot("The channel network does not have a line or polygon geometry (even when read in)" =
+                  terra::geomtype(chn) %in% c("lines","polygons"),
+              "A field given in chn_property_names does not exist" = all( property_names %in% names(chn) ),
+              "A new field name is duplicated" = !any(duplicated(names(property_names)))
+              )
+    is_polygon <- terra::geomtype(chn)=="polygons"
+
+    ## checks the on defults
+    stopifnot("defaults should be numeric" = is.numeric(defaults),
+              "defaults should be finite" = all(is.finite(defaults)),
+              "default values for width, slope and depth required" = all( c("width","slope","depth") %in% names(defaults) ))
+
+    
+    ## mutate the names so that they match those on the property_names
+    chn <- chn[,property_names]
+    names(chn) <- names(property_names)
+
+    ## check required columns with defualts exist
+    chn[,setdiff(c("width","depth","slope"),names(chn))] <- NA
+    
+    ## some type conversions
+    chn$uid <- as.character(chn$uid)
+    chn$width <- as.numeric(chn$width)
+    chn$slope <- as.numeric(chn$slope)
+    chn$startNode <- as.character(chn$startNode)
+    chn$endNode <- as.character(chn$endNode)
+    chn$depth <- as.numeric(chn$depth)
+
+    ## populate the default missing values
+    for(ii in c("slope","width","depth")){
+        idx <- is.na(chn[[ii]])
+        if(any(idx)){
+            warning( paste("Replacing missing",ii,"values with default") )
+            chn[[ii]][idx] <- defaults[ii]
+        }
+    }
+
+    ## make into polygom if required
+    if(!is_polygon){
+        chn <- terra::buffer(chn, width=chn$width/2)
+    }
+
+    ## final check it is a channel...
+    check_channel(chn)
+
+    return(chn)
+}
+
+#' Trim channel objects
+#'
+#' @description Trim channel objects to those draining to named outlets
+#'
+#' @param chn the channel object
+#' @param outlets names of the outlets to consider
+#' @param removed should the removed objects be returned
+#'
+#' @details Starting with the named outlet objects the channel network is passed up using the
+#' connectivity given by the start and end node, only those flaged as connected are returned.
+#' @export
+trim_channel <- function(chn,outlets,removed=FALSE){
+       stop("Not updated")
+
+    ## check chn is a channel
+    if(is.character(chn)){ x <- terra::vect(chn) }
+    check_channel(chn)
+    
+    ## check outlets are in the channel
+    stopifnot("Not all outlets are in the channel object" = all( outlets %in% chn$name ))
+
+    ## set up initial conditions
+    idx <- chn$name %in% outlets
+    not_eval <- !idx
+    in_network <- idx
+    
+    ## for speed
+    sN <- chn$startNode
+    eN <- chn$endNode
+
+    while( any(idx) ){
+        idx <- (eN %in% sN[idx]) & not_eval
+        not_eval[idx] <- FALSE
+        in_network[idx] <- TRUE
+    }
+    
+    if( removed ){ in_network <- !in_network }
+    
+    chn <- chn[in_network,]
+
+    if( !removed ){ check_channel(chn,outlets) }
+
+    return(chn)
+}
+
+
+#' Merge two channel objects
+#'
+#' @description Merge on channel object into another by burning them in
+#'
+#' @param x the channel object to burn into
+#' @param y the channel object to be burnt in
+#' @param outlets names of the channel lengths that are outlets, must be in x
+#' @param verbose show progress
+#'
+#' @details Elements in x are either cropped, or fully removed if they lie under y. Attempts are made to ensure that the start and end Nodes are suitably replaced
+#' @export
+merge_channels <- function(x,y,outlets=NULL,verbose=FALSE){
+   stop("Not updated")
+
+    ## check x is a channel
+    if(is.character(x)){ x <- terra::vect(x) }
+    check_channel(x,outlets)
+    
+    ## check y is a channel
+    if(is.character(y)){ x <- terra::vect(y) }
+    check_channel(y)
+
+    ## check names and node names are unique and projection
+    stopifnot("names must be unique" = !any(x$name %in% y$name),
+              "node names must be unique" = !any(c(x$startNode,x$endNode) %in% c(y$startNode,y$endNode)), ## this is prtty ineffiecent?
+              "Projection of channel objects does not match" =  terra::crs(x, proj=TRUE)==terra::crs(y, proj=TRUE)
+              )
+
+    if(verbose){
+        pb <- txtProgressBar(min = 0, max = nrow(y), initial = 0, char = "=",
+                             width = NA, "progress...", "whoop", style = 3, file = "")
+        on.exit( close(pb) )
+    }
+
+    keep_x <- rep(TRUE,nrow(x))
+    keep_y <- rep(FALSE,nrow(y))
+
+    x_sn <- x$startNode
+    x_en <- x$endNode
+    y_sn <- y$startNode
+    y_en <- y$endNode
+    
+    for(ii in 1:nrow(y)){
+        idx <- terra::is.related(x, y[ii,], "intersects")
+        idx <- idx & keep_x ## drop any intersection with already dropped items
+        if(any(idx)){ 
+            keep_y[ii] <- TRUE
+            
+            if(sum(idx)==1){
+                ## assume an outlet else there should be two intersections
+                ## presumes no intersection at the outlet of x
+                edx <- FALSE
+                sdx <- TRUE
+            }else{
+                edx <- x_en[idx] %in% x_sn[idx] ## true is end of reach is start of another reach in subset                
+                sdx <- x_sn[idx] %in% x_en[idx] ## true is start is also and endNode for another reach i
+                ## edx <- x$endNode[idx] %in% x$startNode[idx] ## true is end of reach is start of another reach in subset                
+                ## sdx <- x$startNode[idx] %in% x$endNode[idx] ## true is start is also and endNode for another reach in subet
+            }
+
+            ## redo end nodes
+            tmp <- unique( x_en[idx][ edx ] ) ## end Nodes in the new object
+            x_en[ x_en %in% tmp ] <- y_sn[ii]
+            
+            ## redo start nodes
+            tmp <- unique( x_sn[idx][sdx] )
+            x_sn[ x_sn %in% tmp ] <- y_en[ii]
+            
+            ## flag ones to remove
+            keep_x[idx][ (edx & sdx) ] <- FALSE
+            
+        }
+
+        if( verbose ){ setTxtProgressBar(pb, ii, title = NULL, label = NULL) }
+    }
+
+    x$endNode <- x_en
+    x$startNode <- x_sn
+#    y$endNode <- y_en
+#    y$startNode <- y_sn
+
+    x <- rbind(x[keep_x,],y[keep_y,])
+    
+    check_channel(x,outlets)
+
+    return(x)
+}
+
+
+
+#' simplify and channel object
+#'
+#' @description Simplify a channel object by merging spatial objects
+#'
+#' @param chn the channel object
+#' @param simplify_length minimum length of channel sections to remove
+#' @param outlets specify outlet reaches to check the simplified channel on exit
+#' @param strict_routing see details
+#' @param verbose print a higher level of output
+#'
+#' @details strict_routing will maintain the flow pathways by only removing nodes with a single input and output, otherwise the routing may alter the effective flow lengths.
+#' The is_wb feild in the data is used to flag objects that shouldn't be merged..
+#' @export
+simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_routing = TRUE, verbose = FALSE){
+   stop("Not updated")
+
+    ## check chn is a channel
+    if(is.character(chn)){ chn <- terra::vect(chn) }
+    check_channel(chn,outlets)
+
+    if( simplify_length <= 0 ){
+        stop("simplify_length must be positive")
+    }
+    
+
+    ## split geom and data - seems quicker...
+    gm <- chn
+    terra::values(gm) <- NULL
+    gm <- split(gm,1:nrow(gm))
+    chn <- as.data.frame(chn)
+
+    loop_flag <- TRUE
+    lp <- 0
+
+    while( loop_flag ){
+        lp <- lp + 1
+        print(paste("starting loop",lp))
+
+        
+        to_keep <- rep(TRUE,nrow(chn))
+    
+        if("is_wb" %in% names(chn)){ not_wb <- !chn$is_wb }
+        else{ not_wb <- rep(TRUE, nrow(chn)) }
+        
+        ## find channels to merge and order
+        idx <- which( (chn$length < simplify_length) & not_wb)
+        idx <- idx[order(chn$length[idx])]
+        
+        n <- length(idx)
+        if( verbose ){
+            pb <- txtProgressBar(min = 0, max = n, initial = 0, char = "=",
+                                 width = NA, "progress...", "whoop", style = 3, file = "")
+            on.exit( close(pb) )
+            cnt <- 0
+        }
+
+    
+    
+        for(ii in idx){
+            if( chn$length[ii] >= simplify_length ){
+                ## catch incase a merge has already made it long
+                cnt <- cnt+1
+                setTxtProgressBar(pb, cnt, title = NULL, label = NULL)
+                next
+            } 
+            
+            in_hn <-  which( chn$endNode == chn$startNode[ii] )
+            out_hn <-  which( chn$startNode == chn$startNode[ii] )
+            in_en <- which( chn$endNode == chn$endNode[ii] )
+            out_en <- which( chn$startNode == chn$endNode[ii] )
+            jj <- NA
+            if( length(in_en)==1 &&
+                length(out_en)==1 &&
+                not_wb[out_en] ){
+                ## endNode is a 1-to-1 join and can merge d/s
+                jj <- out_en
+                chn$startNode[jj] <- chn$startNode[ii]
+            }
+            if( length(in_hn)==1 &&
+                not_wb[in_hn] &&
+                length(out_hn)==1 &&               
+                is.na(jj) ){
+                ## startNode is a 1-to-1 join and can merge u/s
+                jj <- in_hn
+                chn$endNode[jj] <- chn$endNode[ii]
+            }
+            if( length(out_hn)==1 &&
+                is.na(jj) &&
+                !strict_routing ){
+                ## remove the channel entirely...
+                jj <- NA
+                if( length(out_en) > 0 &&
+                    any(not_wb[out_en]) ){
+                    ## merge with one downstream
+                    jj <- out_en[not_wb[out_en]][1]
+                }
+                if( is.na(jj) &&
+                    length(in_hn) > 0 &&
+                    any(not_wb[in_hn]) ){
+                    ## merge with one upstream
+                    jj <- in_hn[not_wb[in_hn]][1]
+                }
+                if(!is.na(jj)){
+                    chn$endNode[in_hn] <- chn$endNode[ii]
+                }
+                
+                
+                ## ## endNode is a single outlet so merge d/s but reroute other flows to
+                ## ## new start of reach
+                ## jj <- out_en
+                ## chn$endNode[ in_en ] <- chn$startNode[ii]
+                ## chn$startNode[jj] <- chn$startNode[ii]
+            }
+            
+            if(!is.na(jj)){ ## can simplify
+                
+                ##print(paste(cnt,ii,jj))
+                
+                ## merge properties (default to those for jj)
+                chn$length[jj] <- chn$length[jj] + chn$length[ii]
+                chn$area[jj] <- chn$area[jj] + chn$area[ii]
+                chn$width[jj] <- chn$area[jj] / chn$length[jj]
+                chn$channelVol[jj] <- chn$channelVol[jj] + chn$channelVol[ii]
+                chn$endNode[ii] <- chn$startNode[ii] <- NA # to stop matching on deleted segments
+                
+                ## merge geom
+                gm[[jj]] <- terra::combineGeoms( gm[[jj]], gm[[ii]], minover=0 )
+                to_keep[ii] <- FALSE
+            }
+            
+            if( verbose ){
+                cnt <- cnt+1
+                setTxtProgressBar(pb, cnt, title = NULL, label = NULL)
+            }
+        }
+
+        close(pb)
+
+        if( all(to_keep) ){ loop_flag <- FALSE }
+        else{
+            gm <- gm[to_keep]
+            chn <- chn[to_keep,]
+        }
+
+    }
+    
+    ## merge back into data.frame
+    chn <- cbind(terra::vect(gm[to_keep]),chn[to_keep,])
+
+    check_channel(chn,outlets)
+    
+    return(chn)
+}
+
+#' Function for checking channel networks are valid and suitable for dynatopGIS
+#'
+#' @description Performs chacks ont he values and properties of a channel then checks connnections to outlets if given
+#' @param chn a SpatVect object representing the channel newtork as returned by convert_channel
+#' @param outlets uid values of the outlets of the channel network
+#'
+#' @return TRUE if completes else failure message
+#' 
+#' @details The processing follows the follwoing sequence:
+#'   - Checks of the required properties of the channel netowrk for use in dynatopGIS
+#'   - checks on the connectivity for loops
+#'   - If outlets provided comparision of identified and known outlets
+#'
+#' and checks on the comparision fThe `property_names` input is used to rename the data associated with spatial objects. Remaining data is dropped
+#'   - Varaibles are converted to the expected type then checked for missing values; in doing this
+#'       - Missing `slope`, `width` and `depth`  values are populated by the default and a warning issued
+#'   - If the spatial objects are lines
+#'      - The spatial objects are buffered using the half `width`
+#' 
+#' @examples
+#' stop("example not updated")
 #' channel_file <- system.file("extdata", "SwindaleRiverNetwork.shp",
 #' package="dynatopGIS", mustWork = TRUE)
 #' vect_lines <- terra::vect(channel_file)
 #' property_names <- c(name="identifier",endNode="endNode",startNode="startNode",length="length")
 #' chn <- convert_channel(vect_lines,property_names)
 #' @export
-convert_channel <- function(vect_object,property_names=c(startNode = "startNode",
-                                                         endNode = "endNode",
-                                                         width = "width",
-                                                         depth = "depth",
-                                                         slope = "slope"),
-                            default_width=2, default_slope=0.001, default_depth = 1){
+check_channel <- function(chn,outlets=NULL){
+    ## direct checks
+    stopifnot(
+        "The channel network does not have a polygon geometry" = terra::geomtype(chn) == "polygons",
+        ## names
+        "uid property is missing" = "uid" %in% names(chn),
+        "uids should be strings" = is.character(chn$uid),
+        "uids cannot be missing" = !any(is.na(chn$uid)),
+        "uids should be unique" = !any(duplicated(chn$uid)),
+        ## startNode
+        "startNode property is missing" = "startNode" %in% names(chn),
+        "startNodes should be strings" = is.character(chn$startNode),
+        "startNodes cannot be missing" = !any(is.na(chn$startNode)),
+        ## endNode
+        "endNode property is missing" = "endNode" %in% names(chn),
+        "endNodes should be strings" = is.character(chn$endNode),
+        "endNodes cannot be missing" = !any(is.na(chn$endNode)),
+        ## depth
+        "depth property is missing" = "depth" %in% names(chn),
+        "depths should be numeric" = is.numeric(chn$depth),
+        "depths cannot be missing" = !any(is.na(chn$depth)),
+        "depths should be posistive" = all(chn$depth>0),
+        ## slope
+        "slope property is missing" = "slope" %in% names(chn),
+        "slopes should be numeric" = is.numeric(chn$slope),
+        "slopes cannot be missing" = !any(is.na(chn$slope)),
+        "slopes should be positive" = all(chn$slope>0),
+        ## width
+        "width property is missing" = "width" %in% names(chn),
+        "widths should be numeric" = is.numeric(chn$width),
+        "widths cannot be missing" = !any(is.na(chn$width)),
+        "widths should be positive" = all(chn$width>0)
+    )
 
-    ## read in Spatvect object is a character sting
-    if(is.character(vect_object)){
-        if(file.exists(vect_object)){
-            vect_object <- terra::vect(vect_object)
-        }else{
-            stop("vect_object is a character string but the file specified does not exist")
+    ## check outlets
+    if( !is.null(outlets) ){
+        chn_outlets <- chn$uid[ !(chn$endNode %in% chn$startNode) ]
+        if( !all(chn_outlets %in% outlets) ){
+            stop(paste("Additional channel outlets:",paste( setdiff(chn_outlets,outlets), collapse=", ")))
+        }
+        if( !all(outlets %in% chn_outlets) ){
+            stop(paste("Missing channel outlets:",paste( setdiff(outlets,chn_outlets), collapse=", ")))
         }
     }
+    
+    ## check connectivity
+    ## This is much quicker using vectors and not constantly accessing via the SpatVect object
+    sN <- chn$startNode
+    eN <- chn$endNode
 
-    if(!(terra::geomtype(vect_object) %in% c("lines","polygons"))){
-        stop("The channel network does not have a line or polygon geometry (even when read in)")
+    idx <- !(eN %in%sN) ## outlets are channel lengths whose outlet does not join another channel
+    it <- 0
+    cnt <- table(sN) ## we should never vist a node more times then it is a starting point
+    while(sum(idx)>0){
+        jdx <- sN[idx]
+        for(ii in jdx){ cnt[ii] <- cnt[ii] - 1 } ## since sN might appear more then once..
+        if( any(cnt<0) ){
+            stop(paste("Failing loop involving nodes:", paste(names(cnt)[cnt<0],collapse=", ")))
+        }
+        jdx <- jdx[cnt[jdx]==0] ## only move up if it is the last visit to the startNode
+        idx <- eN %in% jdx
+        it <- it+1
     }
-    is_polygon <- terra::geomtype(vect_object)=="polygons"
-
-    ## check all feilds in property_names exist
-    if( !all( property_names %in% names(vect_object) ) ){
-        stop("A field given in property_names does not exist")
-    }
-
-    ## mutate the names so that they match those on the property_names
-    nm <- names(vect_object)
-    for(ii in names(property_names)){
-        nm[nm == property_names[ii]] <- ii
-    }
-    names(vect_object) <- nm
-
-    ## work out required names
-    req_names <- c("startNode","endNode")
-    if(!all(req_names %in% names(vect_object))){
-        stop("Not all the required field names are present")
-    }
-
-    ## check there is a width
-    if(!("width" %in% names(vect_object))){
-        warning("Width missing - using default value")
-        vect_object$width <- default_width
-    }
-    idx <- is.na(vect_object$width)
-    if( any(idx) ){
-        warning("Replacing missing widths with default value")
-        vect_object$width[idx] <- default_width
-    }
-
-    ## check there is a depth
-    if(!("depth" %in% names(vect_object))){
-        warning("Depth missing - using default value")
-        vect_object$depth <- default_depth
-    }
-    idx <- is.na(vect_object$depth)
-    if( any(idx) ){
-        warning("Replacing missing depths with default value")
-        vect_object$depth[idx] <- default_depth
-    }
-
-    ## check there is a slope
-    if(!("slope" %in% names(vect_object))){
-        warning("Slope missing - adding default value")
-        vect_object$slope <- default_slope
-    }
-    idx <- is.na(vect_object$slope)
-    if( any(idx) ){
-        warning("Replacing missing slopes with default value")
-        vect_object$slope[idx] <- default_slope
-    }
-
-    ## check if SpatialPolygon object - if not buffer using a width
-    if(!is_polygon){
-        warning("Modifying to spatial polygons using specified width")
-        vect_object <- terra::buffer(vect_object, width=vect_object$width/2)
-    }
-
-    ## some further basic checks
-    vect_object$startNode <- as.character(vect_object$startNode)
-    vect_object$endNode <- as.character(vect_object$endNode)
-    vect_object$slope <- as.numeric(vect_object$slope)
-    vect_object$depth <- as.numeric(vect_object$depth)
-    vect_object$width <- as.numeric(vect_object$width)
-    if(!all(is.finite(c(vect_object$depth,vect_object$width,vect_object$slope))) ){
-        stop("Some non-finite values of channel depths, widths or slopes found!")
-    }
-    return( vect_object )
+    stopifnot(
+        "Error ingesting channel: problem with visiting all points" = all(cnt==0)
+    )
+    
+    invisible(TRUE)
 }
 
+
+#' Locate flow gauges on a channel network
+#'
+#' @description Locate flow gauges on a channel network
+#'
+#' @param chn the channel object
+#' @param gauges either points of gauge locations of polygons of catchment boundaries
+#' @param gauge_name feild name in gauges to use for name of gauge
+#' @param max_dist maxium distance between gauge points and channel
+#'
+#' @details If gauges are points the nearest channel length within max_dist is chosen. If catchment polygons are given all channel lengths leaving the catchment are returned.
+#' @export
+locate_gauges <- function(chn,gauges,gauge_name="name",max_dist = 100){
+    stop("Not updated")
+    ## check chn is a channel
+    if(is.character(chn)){ chn <- terra::vect(chn) }
+    check_channel(chn)
+    
+    ## check y is a terra object of points of polygons
+    if(is.character(gauges)){ gauges <- terra::vect(gauges) }
+    stopifnot("The gauges do not have a point or polygon geometry (even when read in)" =
+                  terra::geomtype(gauges) %in% c("points","polygons"),
+              "The gauge_name field does not exist" = gauge_name %in% names(gauges)
+              )
+
+    if( terra::geomtype(gauges) == "points" ){
+        g_buff <- terra::buffer(gauges, width=max_dist)
+        idx <- terra::is.related(chn, g_buff, "intersects")
+        chn <- chn[idx,]
+        dst <- terra::distance(gauges,chn) ## distance between gauges(row) and channels(column)
+        idx <- apply(dst,1,which.min) ## index of closest channel for each gauge
+        out <- data.frame(name = terra::values(gauges)[[gauge_name]],
+                          channel_name = chn$name[ apply(dst,1,which.min) ],
+                          distance = apply(dst,1,min))
+        out$channel_name[ out$distance > max_dist ] <- NA
+    }else{
+        out <- list()
+        gnm <- terra::values(gauges)[[gauge_name]]
+        for(ii in 1:nrow(gauges)){
+            idx <- terra::is.related(chn, gauges[ii,], "intersects")
+            if( any(idx) ){
+                out[[ii]] <- data.frame(name = gnm[ii],
+                                        channel_name = chn$name[idx][ !(chn$endNode[idx] %in% chn$startNode[idx]) ]
+                                        )
+            }else{
+                out[[ii]] <- data.frame(name = gnm[ii],
+                                        channel_name = NA_character_
+                                        )
+            }
+            
+        }
+        out <- do.call(rbind,out)
+    }
+    return(out)
+}

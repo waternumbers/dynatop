@@ -9,32 +9,34 @@ demo_file <- file.path(temp_dir,"dygis.tif")
 unlink(demo_file)
 unlink(gsub(".tif$",".geojson",demo_file))
 
+## ----data_files--------------------------------------------------------------------------------------------------
+dem_file <- system.file("extdata", "GIS", "SwindaleDTM.tif", package="dynatop", mustWork = TRUE)
+channel_file <- system.file("extdata", "GIS", "SwindaleRiverNetwork.gpkg", package="dynatop", mustWork = TRUE)
+catchment_outline <- system.file("extdata", "GIS", "SwindaleBoundary.gpkg", package="dynatop", mustWork = TRUE)
 
 ## ----initialisation----------------------------------------------------------------------------------------------
 ctch <- dynatopGIS$new(demo_file)
 
-
-## ----data_files--------------------------------------------------------------------------------------------------
-dem_file <- system.file("extdata", "gis", "SwindaleDTM40m.tif", package="dynatop", mustWork = TRUE)
-channel_file <- system.file("extdata", "gis", "SwindaleRiverNetwork.shp", package="dynatop", mustWork = TRUE)
-
-
 ## ----add_catchment-----------------------------------------------------------------------------------------------
-dem <- terra::rast(dem_file)
-dem <- terra::extend(dem,1) ## pad with NA values
-catchment_outline <- terra::as.polygons(terra::ifel(is.finite(dem),1,NA),dissolve=TRUE)
-ctch$add_catchment(catchment_outline,dem)
+ctch$add_catchment(catchment_outline,dem_file)
 
 
 ## ----channel_current---------------------------------------------------------------------------------------------
-sp_lines <- terra::vect(channel_file)
-head(sp_lines)
+channel_lines <- terra::vect(channel_file)
+head(channel_lines)
 
 
 ## ----channel_properties------------------------------------------------------------------------------------------
-property_names <- c(endNode="endNode",
-                    startNode="startNode")
-chn <- convert_channel(sp_lines,property_names)
+property_names <- c(uid = "identifier",
+                    endNode = "endNode",
+                    startNode = "startNode",
+                    name="name1")
+chn <- convert_channel(channel_lines,property_names)
+
+## ----check channel------------
+
+print(check_channel(chn,outlets = "F6D9CBCC-436F-46E0-A631-1F7A5F007FBF"))
+
 
 
 ## ----add_channel-------------------------------------------------------------------------------------------------

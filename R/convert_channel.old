@@ -1,0 +1,113 @@
+#' Function for assisting in the conversion of object to be suitable channel inputs to a dynatopGIS object
+#'
+#' @description Converts SpatialLinesDataFrame or SpatialPolygonsDataFrame to the correct format of SpatialPolygonsDataFrame for dynatopGIS.
+#' @param vect_object a SpatVect object or a file which can read by terra::vect to create one
+#' @param property_names a named vector of containing the columns of existing data properties required in the final SpatialPolygonsDataFrame
+#' @param default_width the width in m to be used for buffering lines to produce polygons
+#' @param default_slope the slope in m/m to be used when none is provided
+#'
+#' @details If the property_names vector contains a width this is used for buffering lines to produce polygons, otherwise the default_width value is used.
+#'
+#' @examples
+#' channel_file <- system.file("extdata", "SwindaleRiverNetwork.shp",
+#' package="dynatopGIS", mustWork = TRUE)
+#' vect_lines <- terra::vect(channel_file)
+#' property_names <- c(name="identifier",endNode="endNode",startNode="startNode",length="length")
+#' chn <- convert_channel(vect_lines,property_names)
+#' @export
+convert_channel <- function(vect_object,property_names=c(uid="uid",
+                                                         startNode = "startNode",
+                                                         endNode = "endNode",
+                                                         width = "width",
+                                                         depth = "depth",
+                                                         slope = "slope"),
+                            default_width=2, default_slope=0.001, default_depth = 1){
+
+    ## read in Spatvect object is a character sting
+    if(is.character(vect_object)){
+        if(file.exists(vect_object)){
+            vect_object <- terra::vect(vect_object)
+        }else{
+            stop("vect_object is a character string but the file specified does not exist")
+        }
+    }
+
+    if(!(terra::geomtype(vect_object) %in% c("lines","polygons"))){
+        stop("The channel network does not have a line or polygon geometry (even when read in)")
+    }
+    is_polygon <- terra::geomtype(vect_object)=="polygons"
+
+    ## check all feilds in property_names exist
+    if( !all( property_names %in% names(vect_object) ) ){
+        stop("A field given in property_names does not exist")
+    }
+
+    ## check all new names are unique
+    if( any(duplicated(names(property_names))) ){
+        stop("Duplicate value in new names")
+    }
+    
+    ## mutate the names so that they match those on the property_names
+    vect_object <- vect_object[,property_names]
+    names(vect_object) <- names(property_names)
+    
+    ## work out required names
+    req_names <- c("uid","startNode","endNode")
+    if(!all(req_names %in% names(vect_object))){
+        stop("Not all the required field names are present")
+    }
+
+    ## check there is a width
+    if(!("width" %in% names(vect_object))){
+        warning("Width missing - using default value")
+        vect_object$width <- default_width
+    }
+    idx <- is.na(vect_object$width)
+    if( any(idx) ){
+        warning("Replacing missing widths with default value")
+        vect_object$width[idx] <- default_width
+    }
+
+    ## check there is a depth
+    if(!("depth" %in% names(vect_object))){
+        warning("Depth missing - using default value")
+        vect_object$depth <- default_depth
+    }
+    idx <- is.na(vect_object$depth)
+    if( any(idx) ){
+        warning("Replacing missing depths with default value")
+        vect_object$depth[idx] <- default_depth
+    }
+
+    ## check there is a slope
+    if(!("slope" %in% names(vect_object))){
+        warning("Slope missing - adding default value")
+        vect_object$slope <- default_slope
+    }
+    idx <- is.na(vect_object$slope)
+    if( any(idx) ){
+        warning("Replacing missing slopes with default value")
+        vect_object$slope[idx] <- default_slope
+    }
+
+    ## check if SpatialPolygon object - if not buffer using a width
+    if(!is_polygon){
+        warning("Modifying to spatial polygons using specified width")
+        vect_object <- terra::buffer(vect_object, width=vect_object$width/2)
+    }
+
+    ## some further basic checks
+    vect_object$uid <- as.character(vect_object$uid)
+    vect_object$startNode <- as.character(vect_object$startNode)
+    vect_object$endNode <- as.character(vect_object$endNode)
+    vect_object$slope <- as.numeric(vect_object$slope)
+    vect_object$depth <- as.numeric(vect_object$depth)
+    vect_object$width <- as.numeric(vect_object$width)
+    if(!all(is.finite(c(vect_object$depth,vect_object$width,vect_object$slope))) ){
+        stop("Some non-finite values of channel depths, widths or slopes found!")
+    }
+    if(any(duplicated(vect_object$uid))){ stop("Duplicated uid values") }
+    
+    return( vect_object )
+}
+

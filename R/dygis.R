@@ -158,7 +158,7 @@ dynatopGIS <- R6::R6Class(
         #'
         sink_fill = function(min_grad = 1e-4,max_it=1e6,verbose=FALSE, hot_start=FALSE){
             private$apply_sink_fill(min_grad,max_it,verbose,hot_start)
-            private$apply_upward_pass(verbose)
+            private$apply_downward_pass(verbose)
             invisible(self)
         },
         ## #' @description Computes the computational band of each cell
@@ -377,87 +377,25 @@ dynatopGIS <- R6::R6Class(
         },
         ## add the channel
         apply_add_channel = function(chn,verbose){
-
-
             rq <- c("catchment","dem")
-            chn_variables <- c(
-                "depth" = "numeric",
-                "width" = "numeric",
-                ##                "name" = "character",
-                ## "length" = "numeric",
-                ## "area" = "numeric",
-                "startNode" = "character",
-                "endNode" = "character",
-                "slope" = "numeric"
-            )
 
             stopifnot(
                 "Not all required layers are available" = all(rq %in% names(private$brk)),
                 "Channel already added" = !("channel" %in% names(private$brk)),
-                "A required property name is not specified" = all(names(chn_variables) %in% names(chn)),
                 "Projection of channel object does not match that of project" =
                     terra::crs(private$brk, proj=TRUE) == terra::crs(chn, proj=TRUE)
             )
 
-            ## ensure required properties are of correct type
-            for(ii in names(chn_variables)){
-                chn[[ii]][[ii]] <- as(chn[[ii]][[ii]],chn_variables[ii])
-            }
+            if(verbose){ print("Checking channel") }
+            check_channel(chn)
 
-            if( "id" %in% names(chn) ){
-                warning("Channel id variable overwritten")
-                chn$id[] <- NA_integer_
-            }
-
-            stopifnot(
-                ##"Some non-finite values of id found!" = all(is.finite(chn$id)),
-                "Some non-finite values of depth found!" = all(is.finite(chn$depth)),
-                "Some zero length startNode values found!" = all( nchar(chn$startNode) > 0 ),
-                "Some zero length endNode value found!" = all( nchar(chn$endNode) > 0)
-            )
-
-            ## arrange in order of flow direction - so lowest values at outlets of the network
-            ## set id and band to match
-            if( verbose ){ print("Computing channel id's and bands") }
-            ## This is much quicker using vectors and not constantly accessing via the vect object
-            id <- rep(as.integer(-1),nrow(chn))
-            bnd <- rep(as.integer(-1),nrow(chn))
-            sN <- chn$startNode
-            eN <- chn$endNode
-
-            idx <- !(eN %in%sN) ## outlets are channel lengths whose outlet does not join another channel
-            it <- 0
-            cnt <- table(sN) ## we should never vist a node more times then it is a starting point
-            while(sum(idx)>0){
-                id[idx] <- max(id) + 1:sum(idx)
-                bnd[idx] <- it
-
-                jdx <- sN[idx]
-                for(ii in jdx){ cnt[ii] <- cnt[ii] - 1 } ## since sN might appear more then once..
-                if( any(cnt<0) ){
-                    stop(paste("Failing loop involving nodes:", paste(names(cnt)[cnt<0],collapse=", ")))
-                }
-                jdx <- jdx[cnt[jdx]==0] ## only move up if it is the last visit to the startNode
-                idx <- eN %in% jdx
-                it <- it+1
-            }
-            chn$id <- id
-            chn$band <- bnd
-
-            stopifnot(
-                "Error ingesting channel: check connectivity" = all(chn$id >=0),
-                "Error ingesting channel: problem with bands" = all(chn$band >= 0),
-                "Error ingesting channel: problem with visiting all points" = all(cnt==0)
-            )
-
-            chn <- chn[ order(chn$id),]
-
+            ## pass down channel adding id and bands
+            if("id" %in% names(chn)){ warning("Overwriting id variable") }
+            chn$id <- 1:nrow(chn)
+            
             ## channel raster of id
             chn_rst <- terra::rasterize(chn,private$brk[["catchment"]],field = "id",touches=TRUE)
             names(chn_rst) <- "channel_id"
-            ## channel raster of depth - TODO is this needed
-            ##chn_depth <- terra::rasterize(chn,private$brk[["catchment"]],field = "depth",touches=TRUE)
-            ##names(chn_depth) <- "channel_depth"
             ## create a raster of channel coverage fractions
             chn_frac <- terra::rasterize(chn,private$brk[["catchment"]],background=0,cover=TRUE) ## fraction of cell covered by channel
             chn_frac <- terra::mask(chn_frac,private$brk[["catchment"]])
@@ -601,10 +539,8 @@ dynatopGIS <- R6::R6Class(
 
             if(it>max_it){ stop("Maximum number of iterations reached, sink filling not complete") }
         },
-        ## function to do property calculations on an upwards pass (low to high DEM values)
-        ## if we go up in height order then we are working from near the channel to the heighest point
-        ## could add back in flow distances here
-        apply_upward_pass = function(verbose){
+        ## function to do property calculations on an upwards pass (high to low DEM values)
+        apply_downward_pass = function(verbose){
 
             rq <- c("filled_dem","channel_id","channel_fraction")
             stopifnot(
@@ -614,30 +550,37 @@ dynatopGIS <- R6::R6Class(
 
             ## load dem
             d <- terra::values( private$brk[["filled_dem"]] )
-
-            ## start band based on channel
-            bnd <- terra::values( private$brk[["channel_id"]] )
-            idx <- match(bnd,private$chn$id)
-            bnd <- private$chn$band[idx]
-
-            if( verbose ){ print("Computing upward pass") }
-
-            idx <- order(d,na.last=NA) ## search order
+            chn_id <- terra::values( private$brk[["channel_id"]] )
+            chn_frc <- terra::values( private$brk[["channel_fraction"]] )
+            
+            ## initialise the bands
+            bnd <- is.finite(dem)*1 ## initialise everything
+            chn_bnd <- rep(1,nrow(private$chn)) ## we will populate this by id so will need merging back into private$chn carefully
+                           
+            if( verbose ){ print("Computing downward pass of hillslope") }
+            
+            idx <- order(d,na.last=NA,decreasing=TRUE) ## search order
+            
             nr <- terra::ncol(private$brk); delta <- c(-nr-1,-nr,-nr+1,-1,1,nr-1,nr,nr+1) ## neighbours
-
+            
             ## set up printing variables
             if(verbose){
                 print_step <- c(1,rep(round(length(idx)/20,2)),length(idx)) # current, next print, step, total
             }
 
-            ## main loop
+            ## main loop through hillslope cells
             dz <- rep(NA,8)
             for(ii in idx){
-                jdx <- ii+delta
-                dz[] <- d[ii] - d[jdx]
-                is_lower <- is.finite(dz) & dz>0
-                bnd[ii] <- max(bnd[ii], bnd[jdx[is_lower]], na.rm=TRUE) + 1
-
+                jj <- chn_id[ii]
+                if( is.na(jj) ){
+                    jdx <- ii+delta
+                    dz[] <- d[ii] - d[jdx]
+                    is_lower <- is.finite(dz) & dz>0
+                    bnd[ jdx[is_lower] ] <-  pmax( bnd[ jdx[is_lower] ], bnd[ii]+1 )
+                }else{
+                    chn_bnd[jj] <- max( bnd[ii], chn_bnd[jj] )
+                    if(chn_frc[ii]==1){bnd[ii] <- NA} ## this is important else these cells get an HRU id
+                }
                 if(verbose){
                     print_step[1] <- print_step[1] + 1
                     if( print_step[1] > print_step[2] ){
@@ -646,76 +589,127 @@ dynatopGIS <- R6::R6Class(
                         print_step[2] <- print_step[2] + print_step[3]
                     }
                 }
-
             }
 
+            if( verbose ){ print("Computing downward pass of channels") }
+            ## assume channel id values are ordered 1:nrow(chn)
+            stopifnot("Channel id are not correct" = all( 1:nrow(chn) == private$chn$id ))
+            ## This is much quicker using vectors and not constantly accessing via the SpatVect object
+            sN <- private$chn$startNode
+            eN <- private$chn$endNode
+
+            idx <- !(sN %in%eN) ## initial channel reaches
+            it <- 0
+            cnt <- table(eN) ## we should never vist a node more times then it is an endpoint
+            while(sum(idx)>0){
+                chn_bnd[idx] <- pmax( chn_bnd[idx], it )
+                jdx <- eN[idx]
+                for(ii in jdx){ cnt[ii] <- cnt[ii] - 1 } ## since eN might appear more then once..
+                if( any(cnt<0) ){
+                    stop(paste("Failing loop involving nodes:", paste(names(cnt)[cnt<0],collapse=", ")))
+                }
+                jdx <- jdx[cnt[jdx]==0] ## only move down if it is the last visit to the endNode
+                idx <- sN %in% jdx
+                
+                it <- it+1
+            }
+            stopifnot(
+                "Error processing channel: problem with visiting all points" = all(cnt==0)
+            )
+            private$chn$band <- chn_band
+            
+            if( verbose ){ print("Computing HRU IDs") }
+            ## work out hru id
+            max_hru <- -1
+            hru <- rep(NA,length(bnd))
+            chn_hru <- rep(NA,length(chn_bnd))
+            for(ii in 1:max(chn_band)){
+                idx <- bnd==ii
+                nidx <- sum(idx)
+                hru_idx[idx] <- max_hru + 1:nidx
+                max_hru <- max_hru + nidx
+                idx <- chn_bnd == ii
+                nidx <- sum(idx)
+                chn_hru[idx] <- max_hru + 1:nidx
+            }
+            private$chn$hru <- chn_hru
+            
             ## save
             rbnd <- private$brk["filled_dem"]
             names(rbnd) <- "band"
             terra::values(rbnd) <- bnd
-            private$brk <- c(private$brk,rbnd)
-            private$save_project()
+            rhru <- private$brk["filled_dem"]
+            names(rhru) <- "HRU"
+            terra::values(rhru) <- hru
+            private$brk <- c(private$brk,rbnd,rhru)
+            private$save_project(chn=TRUE)
 
         },
         ## create a model
         apply_create_model = function(model_name,class_lyr,
-                                      rain_lyr,rainfall_label,
-                                      pet_lyr,pet_label,
+                                      rain_lyr,
+                                      pet_lyr,
                                       verbose){
 
             browser()
             ## check layers
-            rq <- c("filled_dem","channel_id",
-                    "channel_fraction","band",
-                    class_lyr,
+            rq <- c("hru","band",
+                    "filled_dem",
+                    "channel_id","channel_fraction",
                     rain_lyr,
-                    pet_lyr)
+                    pet_lyr,
+                    class_lyr)
+            
             stopifnot(
                 "Missing layers" = all(rq %in% names(private$brk))
             )
 
-            ## work out some properties of the brick and channel
+            ## work out some properties of the brick
             rs <- terra::res( private$brk )[1]
-            nr <- terra::ncol(private$brk)
             delta <- c(-nr-1,-nr,-nr+1,-1,1,nr-1,nr,nr+1)
             sc <- c(sqrt(2),1,sqrt(2),1,1,sqrt(2),1,sqrt(2))
             dxy <- sc*rs
             dcl <- (0.5/sc)*rs
             cell_area <- rs*rs
 
-            ## number of channel hrus
-            chn_n <- nrow(private$chn)
-
             ## read in the data required for hillslope
-            hs_data <- terra::values(private$brk[[rq]], dataframe=TRUE)
-            hs_data$area <- cell_area * (1 - hs_data$channel_fraction)
-            hs_data$id[order(hs_data$band)] <- (1:hs_n) + chn_n - 1 ## since channle id starts at 0
+            mdl <- terra::values(private$brk[[rq]], dataframe=TRUE)
 
+            ## rename and sort out some variables
+            if(is.null(rain_lyr)){
+                mdl$precip <- 2L
+            }else{
+                mdl$precip <- mdl[[rain_lyr]]
+                mdl[[rain_lyr]] <- NULL
+            }
+
+            if(is.null(pet_lyr)){
+                mdl$pet <- 3L
+            }else{
+                mdl$pet <- mdl[[pet_lyr]]
+                mdl[[pet_lyr]] <- NULL
+            }
+
+            mdl$z <- mdl$filled_dem
+            mdl$filled_dem <- NULL
+
+            mdl$is_channel <- FALSE
+            mdl$edges <- NA_character_
+            
+            ## compute area and set value to NA if no hillslope
+            mdl$area <- cell_area * (1 - hs_data$channel_fraction)
+            
+            ## initialise the channel HRUs
+            chn <- as.data.frame(private$chn)
+            chn$is_channel <- TRUE
+            chn$edges <- NA_character_
+            chn$z <- NA
+            
             ## compute the index of cellls to evaluate
-            cell_idx <- which( is.finite(hs_data$area) & (hs_data$area>0) )
-            hs_n <- length( cell_idx )
-
-            ## create HRU record to populate
-            hru <- rep(
-                list(list(
-                    id = NA_integer_,
-                    gid = 1L,
-                    z = NA,
-                    band = NA_integer_,
-                    cell = NA_integer_,
-                    precip = NA_character_,
-                    pet = NA_character_,
-                    area = NA,
-                    states = c("s_sf" = NA, "s_rz"=NA, "s_uz"=NA, "s_sz"=NA),
-                    edges = data.frame(
-                        to = rep(NA,8),
-                        slope = rep(NA,8),
-                        width = rep(NA,8)
-                    ),
-                    class=NULL
-                )), hs_n + chn_n)
-
+            cell_idx <- which( is.finite(hs_data$z) )
+            
             ## initialise the channel storage to compute as we loop
+            chn_n <- nrow(chn)
             total_chn_frac <- rep(0,chn_n)
             chn_precip <- rep(list(NULL),chn_n)
             chn_pet <- rep(list(NULL),chn_n)
@@ -723,127 +717,87 @@ dynatopGIS <- R6::R6Class(
             ## Loop hillslope cells
             slp <- rep(NA,8)
             for(ii in cell_idx){
-
-                jj <- hs_data$id[ii] + 1 ## index to stor in
-                print(paste(ii,jj))
-                hru[[jj]]$id <- hs_data$id[ii]
-                hru[[jj]]$z <- hs_data$filled_dem[ii]
-                hru[[jj]]$area <- hs_data$area[ii]
-                hru[[jj]]$band <- hs_data$band[ii]
-                hru[[jj]]$cell <- ii
-                if(is.null(rain_lyr)){
-                    hru[[jj]]$precip <- rainfall_label
-                }else{
-                    browser()
-                    hru[[jj]]$precip <- paste0(rainfall_label,hs_data[[rain_lyr]][ii])
-                }
-                if(is.null(pet_lyr)){
-                    hru[[jj]]$pet <- pet_label
-                }else{
-                    hru[[jj]]$pet <- paste0(pet_label,hs_data[[pet_lyr]][ii])
-                }
-
-                ## work out edges
-                ## TODO this own;t work with equal hieght cells - may be if equal hieght
-                ## only add if id's in given order
-                if( is.finite(hs_data$channel_id[ii]) ){
-                    ## there is some channel
-                    kk <- hs_data$channel_id[ii] + 1 ## storage to add to
-                    ## add fraction
-                    total_chn_frac[kk] <- total_chn_frac[kk] + hs_data$channel_fraction[ii]
+                jj <- mdl$channel_id[ii]
+                if( is.finite(jj) ){
+                    total_chn_frac[jj] <- total_chn_frac[jj] + mdl$channel_fraction[ii]
+                    ## edges
+                    mdl$edges[ii] <- sprintf('{"hru":%i,"width":%f,slope:%f}',
+                                             chn$hru[jj], rs, chn$depth[jj] / rs)
                     ## add precip
-                    str <- hru[[jj]]$precip
-                    if( !(str %in% names(chn_precip[[kk]])) ){ chn_precip[[kk]][str] <- 0 }
-                    chn_precip[[kk]][str] <- chn_precip[[kk]][str] + hs_data$channel_fraction[ii]
+                    str <- paste(mdl$precip[ii])
+                    if( !(str %in% names(chn_precip[[jj]])) ){ chn_precip[[jj]][str] <- 0 }
+                    chn_precip[[jj]][str] <- chn_precip[[jj]][str] + mdl$channel_fraction[ii]
                     ## add pet
-                    str <- hru[[jj]]$pet
-                    if( !(str %in% names(chn_pet[[kk]])) ){ chn_pet[[kk]][str] <- 0 }
-                    chn_pet[[kk]][str] <- chn_pet[[kk]][str] + hs_data$channel_fraction[ii]
-                    ## set the down slope connections
-                    hru[[jj]]$edges$to[1] <- hs_data$channel_id[ii]
-                    hru[[jj]]$edges$slope[1] <- private$chn$depth[kk] / rs
-                    hru[[jj]]$edges$width[1] <- rs
+                    str <- paste(mdl$pet[ii])
+                    if( !(str %in% names(chn_pet[[jj]])) ){ chn_pet[[jj]][str] <- 0 }
+                    chn_pet[[jj]][str] <- chn_pet[[jj]][str] + mdl$channel_fraction[ii]
+                    
                 }else{
                     jdx <- ii+delta
-                    slp[] <- (hs_data$filled_dem[ii] - hs_data$filled_dem[jdx])/dxy
+                    slp[] <- (mdl$z[ii] - mdl$z[jdx])/dxy
                     is_lower <- is.finite(slp) & (slp > 0)
                     if(!any(is_lower)){
                         stop(paste("No lower cells for",ii))
                     }
-                    hru[[jj]]$edges$to[is_lower] <- hs_data$id[jdx][is_lower]
-                    hru[[jj]]$edges$slope[is_lower] <- slp[is_lower]
-                    hru[[jj]]$edges$width[is_lower] <- dcl[is_lower]
+                    mdl$edges[ii] <- sprintf('{"hru":%s,"width":%s,slope:%s}',
+                                             paste0("[", paste(mdl$hru[jdx[is_lower]],collapse=","),"]"),
+                                             paste0("[", paste(slp[is_lower],collapse=","),"]"),
+                                             paste0("[", paste(dcl[is_lower],collapse=","),"]"))
                 }
-                ## class data
-                hru[[jj]]$class <- hs_data[ii,class_lyr]
             }
 
+            ## apply some more channel HRU calculations
+            chn$area <- total_chn_frac * cell_area
+            fin <- function(x){
+                out <- if(length(x)==0){ NA_integer_ }else{ as.integer(names(x)[which.max(x)]) }
+                return(out)
+            }
+            chn$precip <- sapply(chn_precip,fin)
+            chn$pet <- sapply(chn_pet,fin)
+
+            ## loop channels to make edges
             outlets <- NULL
-            ## loop channels
-            chn_class_lyr <- setdiff(names(private$chn),c("id","band","width","depth"))
-            for(ii in 1:nrow(private$chn)){
-                ## hrus
-                hru[[ii]]$id <- private$chn$id[ii]
-                hru[[ii]]$gid <- 0L
-                hru[[ii]]$z <- private$chn$depth[ii]
-                hru[[ii]]$is_channel <- 1L
-                hru[[ii]]$area <- total_chn_frac[ii] * cell_area
-                hru[[ii]]$band <- private$chn$band[ii]
-                ## add precip
-                tmp <- chn_precip[[ii]]
-                if( length(tmp) > 0 ){
-                    hru[[ii]]$precip <- names(tmp)[which.max(tmp)]
-                }
-                ## add pet
-                tmp <- chn_pet[[ii]]
-                if( length(tmp) > 0 ){
-                    hru[[ii]]$pet <- names(tmp)[which.max(tmp)]
-                }
+            for(ii in 1:nrow(chn)){
                 ## edges
-                idx <- private$chn$startNode == private$chn$endNode[ii]
+                idx <- chn$startNode == chn$endNode[ii]
                 if(any(idx)){
-                    ## goes down stream
-                    jdx <- 1:sum(idx)
-                    hru[[ii]]$edges$to[jdx] <- private$chn$id[ idx ]
-                    hru[[ii]]$edges$slope[jdx] <- private$chn$slope[ii]
-                    hru[[ii]]$edges$width[jdx] <- private$chn$width[ii] / sum( idx )
-
+                    ne <- sum(idx)
+                    chn$edges[ii] <- sprintf('{"hru":%s,"width":%s,slope:%s}',
+                                             paste0("[", paste(chn$hru[idx],collapse=","),"]"),
+                                             paste0("[", paste(rep(chn$slope[ii],ne), collapse=","),"]"),
+                                             paste0("[", paste(rep(chn$width[ii]/ne,ne), collapse=","),"]"))
                 }else{
-                    outlets <- c(outlets,private$chn$id[ii])
-                }
-                ## class
-                hru[[jj]]$class <- hs_data[ii,chn_class_lyr]
-            }
-
-            ## work out groups
-            if( !is.null(class_lyr) ){
-                grp <- unique(hs_data[,class_lyr])
-                jdx <- match(hs_data[,class_lyr],grp)
-                grp$gid <- 1:nrow(grp)
-                ## TODO got here
-                ## add to HRUs
-                gid <- grp$gid[jdx]
-                for(ii in cell_idx){
-                    jj <-  hs_data$id[ii] + 1 ## index to store in
-                    hru[[jj]]$gid <- gid[ii]
+                    outlets <- c(outlets,chn$hru[ii])
                 }
             }
+            
+            ## add geometries and parameters to the channel
+            chn$geom <- terra::geom(private$chn,wkt=TRUE)
+            chn$sf_type <- 1; chn$sf_param <- '["n":0.1]'
+            chn$rz_type <- 1; chn$rz_param <- '["s_rz_max":0.0]'
+            chn$uz_type <- 1; chn$uz_param <- '["t_uz":0.0]'
+            chn$sz_type <- 1; chn$sz_param <- '["t_0":0.0,"m":0.02]'
+            
+            mdl$geom <- terra::geom(terra::as.polygons(private$brk,aggregate=FALSE,values=FALSE))
+            mdl <- mdl[mdl$area>0,]
+            mdl$sf_type <- 1; mdl$sf_param <- '["n":0.3]'
+            mdl$rz_type <- 1; mdl$rz_param <- '["s_rz_max":0.1]'
+            mdl$uz_type <- 1; mdl$uz_param <- '["t_uz":0.001]'
+            mdl$sz_type <- 1; mdl$sz_param <- '["t_0":0.001,"m":0.02]'
 
-            ## default parameters
-            grp$n <- 0.3
-            grp$s_rz_max <- 0.1
-            grp$t_u <- 0.001
-            grp$t_0 <- 0.001
-            grp$m <- 0.02
+            mdl <- merge(mdl,chn,by="hru",all=TRUE)
 
             ## sort outlets
             output <- data.frame(names = paste0("q_sf_",outlets),
-                                 id = outlets,
+                                 hru = outlets,
                                  flux = "q_sf",
                                  scale = 1)
-
+            
             ## save the model
-            saveRDS(list(hru=hru, group=grp, output = output),paste0(model_name,".rds"))
+            write.csv2(mdl,paste0(model_name,".csv"),row.names=FALSE)
+            write.csv2(mdl,paste0(outlets,"_outlets.csv"),row.names=FALSE)
+            
+            saveRDS(list(hru=mdl, output = output),paste0(model_name,".rds"))
         }
     )
     )
