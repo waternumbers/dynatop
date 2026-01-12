@@ -2,10 +2,6 @@
 ## simple run for debugging
 rm(list=ls())
 devtools::load_all(".")
-data("Swindale");
-
-
-
 
 
 mdl <- Swindale$model

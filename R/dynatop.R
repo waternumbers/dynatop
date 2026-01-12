@@ -213,119 +213,243 @@ dynatop <- R6Class(
         ## map  = NULL, # storage for map object
         ## output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
-        ## info = list(sf = setNames(as.integer(1:3),c("cnst","kin","comp")),
-        ##             rz = setNames(as.integer(1),c("orig")),
-        ##             uz = setNames(as.integer(1),c("orig")),
-        ##             sz = setNames(as.integer(1:4),c("exp","bexp","dexp","cnst")),
         info = list(
             output = setNames(1:14, c("precip","pet","aet",
                                       "q_sf","q_sf_in","q_sz","q_sz_in",
                                       "s_sf","s_rz","s_uz","s_sz",
                                       "q_sf_rz","q_rz_uz","q_uz_sz"))
         ),
-        ## function that checks a hru
-        digest_hru = function(h, use_states){ ## check HRU returns a text string of errors
+        ## ## function that checks a hru
+        ## digest_hru = function(h, use_states){ ## check HRU returns a text string of errors
+        ##     types <- c(hru = "integer",
+        ##                band = "integer",
+        ##                precip = "integer",
+        ##                pet = "integer",
+        ##                z = "numeric",
+        ##                is_channel = "logical",
+        ##                edges = "character",
+        ##                area = "integer",
+        ##                geom = "character",
+        ##                sf_type = "integer",
+        ##                sf_param = "character",
+        ##                rz_type = "integer",
+        ##                rz_param = "character",
+        ##                uz_type = "integer",
+        ##                uz_param = "character",
+        ##                sz_type = "integer",
+        ##                sz_param = "character",
+        ##                s_sf = "numeric",
+        ##                s_rz = "numeric",
+        ##                s_uz = "numeric",
+        ##                s_sz = "numeric"
+        ##                )
+
+
+        ##     ## numerics need to be real for the C++ code - sometimes they appear as integer
+        ##     ## let try to conver them
+        ##     for(ii in names(types)){
+        ##         if( !("ii" %in% names(h)) | (length(h[[ii]])>1) | !is(h[[ii]],type[ii]) ){
+        ##             etxt = c(etxt, paste0(ii," is not a single ", type[ii]))
+        ##         }
+        ##     }
+
+        ##     if( !all(c("to","slope","width") %in% names(h$edges)) |
+        ##         all( h$edges$slope > 0 ) |
+        ##         all( h$edges$width > 0 ) ){
+        ##         etxt = c(etxt, paste0(edges," is not a valid"))
+        ##     }
+
+        ##     if( !("states" %in% names(h)) |
+        ##         (length(h$states)!=4) |
+        ##         is(h$states,"numeric") |
+        ##         !all( c("s_sf","s_rz","s_uz","s_sz") %in% names(h$states) ) ){
+        ##         etxt <- c(etxt, "state vector not valid")
+        ##     }
+        ##     if( use_states & !all(is.finite(h$states)) & !all(h$states>=0) ){
+        ##         etxt <- c(etxt, "states are negative or  non-finite")
+        ##     }
+
+        ##     if( !is.null(etxt) ){
+        ##         stop( paste(etxt, collapse="\n") )
+        ##     }
+        ##     return(h)
+        ## },
+        ## regurge_hru = function(h){
+        ##     ## convert for C++
+        ##     for(ii in c("sf","rz","uz","sz")){ ## convert type to integer
+        ##         h[[ii]]$type <- private$info[[ii]][ h[[ii]]$type ]
+        ##     }
+        ##     return(h)
+        ## },
+        ## this code checks and digests the model
+        digest_model = function(mdl){
+            ## define HRU column types
             types <- c(hru = "integer",
                        band = "integer",
                        precip = "integer",
                        pet = "integer",
-                       z = "numeric",
-                       is_channel = "logical",
+                       ##z = "numeric",
+                       ##is_channel = "logical",
                        edges = "character",
                        area = "integer",
                        geom = "character",
-                       sf_type = "integer",
+                       sf_type = "character",
                        sf_param = "character",
-                       rz_type = "integer",
+                       rz_type = "character",
                        rz_param = "character",
-                       uz_type = "integer",
+                       uz_type = "character",
                        uz_param = "character",
-                       sz_type = "integer",
+                       sz_type = "character",
                        sz_param = "character",
-                       ##uid = "character"
-                       ##name = "character"
                        s_sf = "numeric",
                        s_rz = "numeric",
                        s_uz = "numeric",
                        s_sz = "numeric"
                        )
 
+            ## definitions of surface types
+            sf_defn = list(
+                "mannings" = c("n"),
+                "raf" = c("n","t_raf","s_raf")
+            )
+            ## definitions of root zone types
+            rz_defn = list(
+                "spill" = c("s_rz_max")
+            )
+            ## unsaturated zone types
+            uz_defn = list(
+                "tank" = "T_d",
+                "vel" = "v_d"
+            )
+            ## saturated zone type
+            sz_defn = list(
+                "exp" = c("t_0","m")
+            )
 
-            ## numerics need to be real for the C++ code - sometimes they appear as integer
-            ## let try to conver them
-            if( "z" %in% names(
-            for(ii in names(types)){
-                if( !("ii" %in% names(h)) | (length(h[[ii]])>1) | !is(h[[ii]],type[ii]) ){
-                    etxt = c(etxt, paste0(ii," is not a single ", type[ii]))
-                }
+            ## some initial calc from mdl
+            cls <- sapply(mdl,class)
+
+            ## check classes read in are correct
+            stopifnot(
+                ## general structure
+                "Missing variable names" = all(names(types) %in% names(mdl)),
+                "Incorrect variable classes" = all( cls[names(types)]==types ),
+                ## HRU numbers
+                "HRU numbers are incorrect or unsequenced" = all( mdl$hru == 0:(nrow(mdl)-1) ),
+                ## band numbers
+                "Band numbers are not ordered" = all(diff(mdl$band)>=0) & mdl$band[1]==1,
+                ## precip
+                "No missing precipitation inputs allowed" = all( nchar(mdl$precip) > 0 ),
+                ## pet
+                "No missing pet inputs allowed" = all( nchar(mdl$pet) > 0 ),
+                ## edges
+                "No missing edges allowed" = all( nchar(mdl$pet) > 0 ),
+                ## area
+                "Negative or missing areas" = all( mdl$area>=0 ),
+                ## sf_type = "character",
+                "Incorrect sf type" = all( mdl$sf_type %in% names(sf_defn) ),
+                ## sf_param = "character",
+                "No missing sf_param allowed" = all( nchar(mdl$sf_param) > 0 ),
+                ## rz_type = "character",
+                "Incorrect rz type" = all( mdl$rz_type %in% names(rz_defn) ),
+                ## rz_param = "character",
+                "No missing rz_param allowed" = all( nchar(mdl$rz_param) > 0 ),
+                ## uz_type = "character",
+                "No missing uz_param allowed" = all( nchar(mdl$uz_param) ),
+                ## uz_param = "character"
+                "No missing uz_param allowed" = all( nchar(mdl$uz_param) > 0 ),
+                ## sz_type = "character",
+                "No missing sz_param allowed" = all( nchar(mdl$sz_param) ),
+                ## sz_param = "character"
+                "No missing sz_param allowed" = all( nchar(mdl$sz_param) > 0 )
+                ## check sf state
+                "Negative or missing s_sf" = all(is.na(mdl$s_sf)) || all(mdl$s_sf >= 0),
+                ## check rz state
+                "Negative or missing s_rz" = all(is.na(mdl$s_rz)) || all(mdl$s_rz >= 0),
+                ## check uz state
+                "Negative or missing s_uz" = all(is.na(mdl$s_uz)) || all(mdl$s_uz >= 0),
+                ## check sz state
+                "Negative or missing s_sz" = all(is.na(mdl$s_sz)) || all(mdl$s_sz >= 0),
+                ## check states combined
+                "Mixture of missing and finite states" = all(is.na(mdl[,c("s_sf","s_rz","s_uz","s_sz")])) ||
+                    all(mdl[,c("s_sf","s_rz","s_uz","s_sz")] >= 0)
+            )
+
+            ## check edges in more detail
+            mdl$edges <- jsonlite::fromJSON(mdl$edges)
+            z <- sapply(mdl$edges,
+                        function(x){
+                            c(range(x$hru),
+                              length(x$hru)==length(x$width),
+                              length(x$hru)==length(x$slope),
+                              all(x$width>0)
+                              all(x$slope>=0),
+                              all( c("hru","width","slope") %in% names(x))
+                              )
+                        }
+                        )
+            stopifnot(
+                "Incorrect names" = all(z[,7]),
+                "Edge passing to lower HRU value" = all( z[,1] > mdl$hru ),
+                "Edge passing to HRU value out of range" = all( z[,2] <= max(mdl$hru) ),
+                "Edge not passing to a higher band" = all( mdl$band[z[,1]-1] > mdl$band ),
+                "Not as many widths as downslope HRUs" = all(z[,3]),
+                "Not as many slopes as downslope HRUs" = all(z[,4]),
+                "All widths sould be positive" = all(z[,5]),
+                "All slopes should be non-negative" = all(z[,6])
+            )
+            ## check sf_param in more detail
+            mdl$sf_param <- jsonlite::fromJSON(mdl$sf_param)
+            z <- matrix(FALSE,nrow(mdl),2)
+            for(ii in unique(mdl$sf_type)){
+                idx <- mdl$sf_type == ii
+                z[idx,] <- sapply(mdl$sf_param[idx],
+                                 function(x,z){
+                                     c(all(x>0),all(z%in%x))},
+                                 z=sf_defn[[ii]])
             }
+            stopifnot("Missing sf parameters" = all(z[,2]),
+                      "Negative or missing sf parameter values" = all(z[,1]))
 
-            if( !all(c("to","slope","width") %in% names(h$edges)) |
-                all( h$edges$slope > 0 ) |
-                all( h$edges$width > 0 ) ){
-                etxt = c(etxt, paste0(edges," is not a valid"))
+            ## check rz_parm in more detail
+            mdl$rz_param <- jsonlite::fromJSON(mdl$rz_param)
+            z <- matrix(FALSE,nrow(mdl),2)
+            for(ii in unique(mdl$rz_type)){
+                idx <- mdl$rz_type == ii
+                z[idx,] <- sapply(mdl$rz_param[idx],
+                                 function(x,z){
+                                     c(all(x>0),all(z%in%x))},
+                                 z=rz_defn[[ii]])
             }
+            stopifnot("Missing rz parameters" = all(z[,2]),
+                      "Negative or missing rz parameter values" = all(z[,1]))
 
-            if( !("states" %in% names(h)) |
-                (length(h$states)!=4) |
-                is(h$states,"numeric") |
-                !all( c("s_sf","s_rz","s_uz","s_sz") %in% names(h$states) ) ){
-                etxt <- c(etxt, "state vector not valid")
+            ## check uz_parm in more detail
+            mdl$uz_param <- jsonlite::fromJSON(mdl$uz_param)
+            z <- matrix(FALSE,nrow(mdl),2)
+            for(ii in unique(mdl$uz_type)){
+                idx <- mdl$uz_type == ii
+                z[idx,] <- sapply(mdl$uz_param[idx],
+                                 function(x,z){
+                                     c(all(x>0),all(z%in%x))},
+                                 z=uz_defn[[ii]])
             }
-            if( use_states & !all(is.finite(h$states)) & !all(h$states>=0) ){
-                etxt <- c(etxt, "states are negative or  non-finite")
+            stopifnot("Missing uz parameters" = all(z[,2]),
+                      "Negative or missing uz parameter values" = all(z[,1]))
+
+            ## check sz_parm in more detail
+            mdl$sz_param <- jsonlite::fromJSON(mdl$sz_param)
+            z <- matrix(FALSE,nrow(mdl),2)
+            for(ii in unique(mdl$sz_type)){
+                idx <- mdl$sz_type == ii
+                z[idx,] <- sapply(mdl$sz_param[idx],
+                                 function(x,z){
+                                     c(all(x>0),all(z%in%x))},
+                                 z=sz_defn[[ii]])
             }
-
-            if( !is.null(etxt) ){
-                stop( paste(etxt, collapse="\n") )
-            }
-            return(h)
-        },
-        regurge_hru = function(h){
-            ## convert for C++
-            for(ii in c("sf","rz","uz","sz")){ ## convert type to integer
-                h[[ii]]$type <- private$info[[ii]][ h[[ii]]$type ]
-            }
-            return(h)
-        },
-        ## this code checks and digests the model
-        digest_model = function(model){
-                       types <- c(hru = "integer",
-                       band = "integer",
-                       precip = "integer",
-                       pet = "integer",
-                       z = "numeric",
-                       is_channel = "logical",
-                       edges = "character",
-                       area = "integer",
-                       geom = "character",
-                       sf_type = "integer",
-                       sf_param = "character",
-                       rz_type = "integer",
-                       rz_param = "character",
-                       uz_type = "integer",
-                       uz_param = "character",
-                       sz_type = "integer",
-                       sz_param = "character",
-                       ##uid = "character"
-                       ##name = "character"
-                       s_sf = "logical",
-                       s_rz = "logical",
-                       s_uz = "logical",
-                       s_sz = "logical"
-                       )
-
-            if( "z" %in% names(
-
-
-            m <- lapply( model, private$digest_hru, use_states = use_states, delta = delta)
-            ## check ids
-            id <- sapply(m, function(x){x$id})
-            idx <- order(id)
-            id <- id[idx]
-            if( !all( id == 0:(length(id)-1) ) ){ stop("ids are not in sequence") }
-
-            private$model <- m[idx]
+            stopifnot("Missing sz parameters" = all(z[,2]),
+                      "Negative or missing sz parameter values" = all(z[,1]))
+            private$model <- mdl
         },
         ## check and add observations
         digest_obs = function(obs){
@@ -340,9 +464,7 @@ dynatop <- R6Class(
             }
 
             ## get all the observed series names
-            nm <- lapply(private$model,
-                         function(h){unique(c(h$precip$name,h$pet$name))})
-            nm <- unique(do.call(c,nm))
+            nm <- unique(c(private$mdl$precip,private$mdl$pet))
 
             ## check names
             idx <- nm %in% names(obs)
@@ -355,15 +477,6 @@ dynatop <- R6Class(
                 stop("There are non finite values in the required time series")
             }
 
-            nm = setNames(0:(ncol(obs)-1),colnames(obs))
-
-            faddobs <- function(h,nm){
-                h$precip$idx <- nm[ h$precip$name ]
-                h$pet$idx <- nm[ h$pet$name ]
-                h
-            }
-
-            private$model <- lapply( private$model, faddobs,nm = nm)
             private$time_series$obs_data <- as.matrix(obs)
             private$time_series$index <- index(obs)
 
@@ -371,8 +484,11 @@ dynatop <- R6Class(
         ## digest the output definition
         digest_output_defn = function(defn){
             ## check table
+            stopifnot(
+                "Output definition should be a data frame" = is.data.frame(defn),
+                "Output definition must have variables name, id, flux" =
             if( !is.data.frame(defn) ){ stop("Output definition should be a data frame") }
-            if( !all(c("name","id","flux") %in% names(defn) ) ){ stop("Output definition must have variables name, id and flux") }
+            if( !all(c("name","id","flux","scale") %in% names(defn) ) ){ stop("Output definition must have variables name, id and flux") }
             if( !all(defn$id %in% (0:(length(private$model)-1))) ){
                 stop(paste("id should be between 0 and",length(private$model)-1))
             }
