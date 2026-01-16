@@ -56,11 +56,9 @@ dynatopGIS <- R6::R6Class(
         #' @details If it exists this loads the tif file or states a new project is being created.
         #'
         #' @return A new `dynatopGIS` object
-        initialize = function(projectDir){
-            ## check directory exists
-            stopifnot("Please create project directory" = dir.exists(projectDir))
+        initialize = function(projectFile){
 
-            private$apply_initialize( projectDir )
+            private$apply_initialize( projectFile )
             invisible(self)
         },
         #' @description Add a catchment outline to the `dynatopGIS` project
@@ -89,11 +87,12 @@ dynatopGIS <- R6::R6Class(
         #' @details Takes the representation of the channel network as a SpatVect with properties name, length, area, startNode, endNode and overlaying it on the DEM. In doing this a variable called id is created (or overwritten) other variables in the data frame are passed through unaltered.
         #'
         #' @return suitable for chaining
-        add_channel = function(channel,verbose=FALSE,allow_lines=FALSE){
+        add_channel = function(channel,verbose=FALSE){
             if(!is(channel,"SpatVector")){ channel <- terra::vect( as.character(channel) ) }
             if(!is(channel,"SpatVector")){ stop("channel is not a SpatVector object") }
+            ## TODO check is polygons
 
-            private$apply_add_channel(channel,as.logical(verbose),as.logical(allow_lines))
+            private$apply_add_channel(channel,as.logical(verbose))
             invisible(self)
         },
         #' @description Add a layer of geographical information
@@ -275,58 +274,78 @@ dynatopGIS <- R6::R6Class(
     ),
     private = list(
         version = "0.5.0",
-        projectDir = character(0),
+        projectFile = character(0),
         brk = NULL,
         chn = NULL,
         reserved_layers = c("catchment","dem","channel","channel_fraction","filled_dem",
                             "gradient","upslope_area","atb",
                             "band"),
-        ## check and read the project files
-        apply_initialize = function(projectDir){
-            ## check for raster files
-            rstFiles <- list.files(projectDir,pattern= ".tif$")
+        ## save and reload changes
+        save_project = function(chn=FALSE){
+            tmpFile <- paste0(private$projectFile,".tmp")
+            terra::writeRaster(private$brk,tmpFile, filetype="Gtiff",datatype="FLT8S",overwrite=TRUE)
+            file.copy(tmpFile,private$projectFile,overwrite=TRUE)
+            private$brk <- terra::rast( private$projectFile )
 
-            ## If no raster files just set projectDir
-            if( length(rstFiles) == 0 ){
-                private$projectDir <- projectDir
+            if(chn){
+                channelFile <- paste0(tools::file_path_sans_ext(private$projectFile),".geojson")
+                tmpFile <- paste0(channelFile,".tmp")
+                terra::writeVector(private$chn,tmpFile,filetype="GeoJSON",overwrite=TRUE)
+                file.copy(tmpFile,channelFile,overwrite=TRUE)
+                private$chn <- terra::vect(channelFile)
+            }
+        },
+        ## check and read the project files
+        apply_initialize = function(projectFile){
+            ## check extension
+            fileType <- tools::file_ext(projectFile)
+            stopifnot( "Incorrect file extension" = fileType == "tif" )
+
+            ## see if file exists
+            if( !file.exists(projectFile) ){
+                message( "Creating a new project" )
+                private$projectFile <- projectFile
                 return()
             }
 
-            ## there is a raster file
-            message( paste("Reading existing project at:", projectDir) )
-            brk <- terra::rast(file.path(projectDir,rstFiles))
-
-            ## initial error checks
-            stopifnot("Raster data not valid: Processing requires projected data" = !terra::is.lonlat(brk),
-                      "Raster data not valid: Processing requires a square grid" = all.equal(diff(terra::res(brk)),0),
-                      "Raster data not valid: No catchment layer in Raster data" = "catchment" %in% names(brk),
-                      "Raster data not valid: No DEM layer in Raster data" = "dem" %in% names(brk))
+            ## read in raster data
+            message( paste("Reading existing project at", projectFile) )
+            brk <- terra::rast( projectFile )
 
             ## check is padded
-            isPadded <- !(any( is.finite(brk[1,][["dem"]]) ) |
-                          any( is.finite(brk[nrow(brk),][["dem"]]) ) |
-                          any( is.finite(brk[,1][["dem"]]) ) |
-                          any( is.finite(brk[,ncol(brk)][["dem"]]) ))
-            stopifnot("Raster data not valid: Processing currently only works with padded grids" = isPadded)
+            isPadded <- !(any( is.finite(brk[1,][[1]]) ) |
+                          any( is.finite(brk[nrow(brk),][[1]]) ) |
+                          any( is.finite(brk[,1][[1]]) ) |
+                          any( is.finite(brk[,ncol(brk)][[1]]) ))
 
-            ## work out channel file names
-            if( "channel" %in% names(brk) ){
-                channelFile <- file.path(projectDir,"channel.gpkg")
-                stopifnot( "Data Error: No channel file available but channel_id raster" = file.exists(channelFile) )
-                private$shp <- terra::vect( channelFile )
+            ## initial error checks
+            stopifnot("Raster data not valid: Processing currently only works on projected data with a square grid" =
+                          all.equal(diff(terra::res(brk)),0) & !terra::is.lonlat(brk),
+                      "No catchment layer in Raster data" = "catchment" %in% names(brk),
+                      "No DEM layer in Raster data" = "dem" %in% names(brk),
+                      "Raster data not valid: Processing currently only works with padded grids" = isPadded)
+
+            if( "channel_id" %in% names(brk) ){
+                channelFile <- paste0(tools::file_path_sans_ext(projectFile),".geojson")
+                stopifnot( "No channel file available" = file.exists(channelFile) )
+                shp <- terra::vect( channelFile )
+            }else{
+                shp <- NULL
             }
 
-            private$projectDir <- projectDir
+            private$projectFile <- projectFile
             private$brk <- brk
+            private$chn <- shp
         },
         ## add a catchment map
         apply_add_catchment = function(catchment,dem){
+
             ## inital stops
             stopifnot(
                 "The catchment map already exists, start a new project" = !("catchment" %in% names(private$brk)),
-                "DEM data not valid: Processing requires projected data" = !terra::is.lonlat(dem),
-                "DEM data not valid: Processing requires square data" = all.equal(diff(terra::res(dem)),0),
-                "DEM data not valid: The DEM must be one layer" = terra::nlyr(dem)==1
+                "DEM data not valid: Processing currently only works on projected data with a square grid" =
+                    all.equal(diff(terra::res(dem)),0) & !terra::is.lonlat(dem),
+                "The DEM must be one layer" = terra::nlyr(dem)==1
             )
 
             ## reproject the catchment
@@ -357,24 +376,23 @@ dynatopGIS <- R6::R6Class(
                           any( is.finite(ctch[,ncol(ctch)][[1]]) ))
             stopifnot("Catchment extends to edge of raster" = isPadded)
 
-            ## save data
-            terra::writeRaster(dem, file.path(private$projectDir,"dem.tif"))
-            terra::writeRaster(ctch, file.path(private$projectDir,"catchment.tif"))
+            ## save
             private$brk <- c(ctch,dem)
+            private$save_project()
         },
         ## add the channel
-        apply_add_channel = function(chn,verbose, allow_lines){
-            rq <- c("catchment")
+        apply_add_channel = function(chn,verbose){
+            rq <- c("catchment","dem")
 
             stopifnot(
                 "Not all required layers are available" = all(rq %in% names(private$brk)),
-                "Channel already added" = !("channel_id" %in% names(private$brk)),
+                "Channel already added" = !("channel" %in% names(private$brk)),
                 "Projection of channel object does not match that of project" =
                     terra::crs(private$brk, proj=TRUE) == terra::crs(chn, proj=TRUE)
             )
 
             if(verbose){ print("Checking channel") }
-            check_channel(chn,allow_lines = allow_lines)
+            check_channel(chn)
 
             ## Add the id
             if("id" %in% names(chn)){ warning("Overwriting id variable") }
@@ -393,11 +411,10 @@ dynatopGIS <- R6::R6Class(
             chn_frac[chn_frac==0 & !is.na(chn_rst)] <- 0.005 ## add a fraction to those cells with an ID but no fractions
 
             ## save output
-            terra::writeRaster(chn_rst, file.path(private$projectDir,"channnel_id.tif"))
-            terra::writeRaster(chn_frac, file.path(private$projectDir,"channel_frac.tif"))
-            terra::writeVector(chn, file.path(private$projectDir,"channel.gpkg"))
             private$brk <- c(private$brk,chn_rst,chn_frac) #,chn_depth)
             private$chn <- chn
+            private$save_project(chn=TRUE)
+
             ## TODO remove channels that aren't in the raster - since these will be small and cause grief
         },
         ## Add a layer
@@ -409,8 +426,7 @@ dynatopGIS <- R6::R6Class(
                 "Name is reserved" = !any(layer_name %in% private$reserved_layers),
                 "Name is already used" = !any(layer_name %in% names(private$brk)),
                 "New layer does not match resolution, extent or projection of project" =
-                    terra::compareGeom(layer,private$brk,stopOnError=FALSE),
-                "New layer has multiple layers" = terra::nlyr(layer)==1
+                    terra::compareGeom(layer,private$brk,stopOnError=FALSE)
             )
 
             ## tidy up the layers to be added
@@ -418,14 +434,18 @@ dynatopGIS <- R6::R6Class(
             names(layer) <- layer_name
 
             ## check for no NA values
-            flg <- terra::global( is.na(layer) &
-                !is.na(private$brk[["catchment"]]) &
-                is.na(private$brk[["channel_id"]]) ,max)
-            stopifnot( "Layer has missing values in the catchment - try running fill_na first" = flag==0 )
+            ## TODO check how global works on a stack, do we just need to call once...
+            for(ii in names(layer)){
+                if( terra::global( is.na(layer[[ii]]) &
+                                   !is.na(private$brk[["catchment"]]) &
+                                   is.na(private$brk[["channel_id"]]) ,max)>0 ){
+                    stop(paste("Layer",ii,"has missing values in the catchment - try running fill_na first"))
+                }
+            }
 
             ## save output
-            terra::writeRaster(layer,file.path(private$projectDir,paste0(names(layer),".tiff")))
             private$brk <- c(private$brk,layer)
+            private$save_project()
         },
         ## Sink fill
         apply_sink_fill = function(min_grad,max_it,verbose,hot_start){ #,flow_type){

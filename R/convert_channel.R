@@ -12,14 +12,14 @@
 #' @param defaults default values used to replace missing widths, slopes and depths
 #'
 #' @return A SpatVect containing polygons of the channel network, with at least the following properties: uid, width, depth, slope, startNode and endNode.
-#' 
+#'
 #' @details The processing follows the follwoing sequence:
 #'   - The `property_names` input is used to rename the data associated with spatial objects. Remaining data is dropped
 #'   - Varaibles are converted to the expected type then checked for missing values; in doing this
 #'       - Missing `slope`, `width` and `depth`  values are populated by the default and a warning issued
 #'   - If the spatial objects are lines
 #'      - The spatial objects are buffered using the half `width`
-#' 
+#'
 #' @examples
 #' channel_file <- system.file("extdata", "SwindaleRiverNetwork.shp",
 #' package="dynatopGIS", mustWork = TRUE)
@@ -36,7 +36,7 @@ convert_channel <- function(chn,
                                              depth = "depth"),
                             defaults = c("width"=2,"slope"=0.001,"depth"=1)
                             ){
-    
+
     ## read in the chn sp object is a character sting
     if(is.character(chn)){
         if(file.exists(chn)){
@@ -45,7 +45,7 @@ convert_channel <- function(chn,
             stop("chn is a character string but the file specified does not exist")
         }
     }
-    
+
     ## check the SptVect object and property names
     stopifnot("The channel network does not have a line or polygon geometry (even when read in)" =
                   terra::geomtype(chn) %in% c("lines","polygons"),
@@ -59,14 +59,14 @@ convert_channel <- function(chn,
               "defaults should be finite" = all(is.finite(defaults)),
               "default values for width, slope and depth required" = all( c("width","slope","depth") %in% names(defaults) ))
 
-    
+
     ## mutate the names so that they match those on the property_names
     chn <- chn[,property_names]
     names(chn) <- names(property_names)
 
     ## check required columns with defualts exist
     chn[,setdiff(c("width","depth","slope"),names(chn))] <- NA
-    
+
     ## some type conversions
     chn$uid <- as.character(chn$uid)
     chn$width <- as.numeric(chn$width)
@@ -112,7 +112,7 @@ trim_channel <- function(chn,outlets,removed=FALSE){
     ## check chn is a channel
     if(is.character(chn)){ x <- terra::vect(chn) }
     check_channel(chn)
-    
+
     ## check outlets are in the channel
     stopifnot("Not all outlets are in the channel object" = all( outlets %in% chn$name ))
 
@@ -120,7 +120,7 @@ trim_channel <- function(chn,outlets,removed=FALSE){
     idx <- chn$name %in% outlets
     not_eval <- !idx
     in_network <- idx
-    
+
     ## for speed
     sN <- chn$startNode
     eN <- chn$endNode
@@ -130,9 +130,9 @@ trim_channel <- function(chn,outlets,removed=FALSE){
         not_eval[idx] <- FALSE
         in_network[idx] <- TRUE
     }
-    
+
     if( removed ){ in_network <- !in_network }
-    
+
     chn <- chn[in_network,]
 
     if( !removed ){ check_channel(chn,outlets) }
@@ -153,18 +153,17 @@ trim_channel <- function(chn,outlets,removed=FALSE){
 #' @details Elements in x are either cropped, or fully removed if they lie under y. Attempts are made to ensure that the start and end Nodes are suitably replaced
 #' @export
 merge_channels <- function(x,y,outlets=NULL,verbose=FALSE){
-   stop("Not updated")
 
     ## check x is a channel
     if(is.character(x)){ x <- terra::vect(x) }
     check_channel(x,outlets)
-    
+
     ## check y is a channel
     if(is.character(y)){ x <- terra::vect(y) }
     check_channel(y)
 
     ## check names and node names are unique and projection
-    stopifnot("names must be unique" = !any(x$name %in% y$name),
+    stopifnot("names must be unique" = !any(x$uid %in% y$uid),
               "node names must be unique" = !any(c(x$startNode,x$endNode) %in% c(y$startNode,y$endNode)), ## this is prtty ineffiecent?
               "Projection of channel objects does not match" =  terra::crs(x, proj=TRUE)==terra::crs(y, proj=TRUE)
               )
@@ -182,36 +181,36 @@ merge_channels <- function(x,y,outlets=NULL,verbose=FALSE){
     x_en <- x$endNode
     y_sn <- y$startNode
     y_en <- y$endNode
-    
+
     for(ii in 1:nrow(y)){
         idx <- terra::is.related(x, y[ii,], "intersects")
         idx <- idx & keep_x ## drop any intersection with already dropped items
-        if(any(idx)){ 
+        if(any(idx)){
             keep_y[ii] <- TRUE
-            
+
             if(sum(idx)==1){
                 ## assume an outlet else there should be two intersections
                 ## presumes no intersection at the outlet of x
                 edx <- FALSE
                 sdx <- TRUE
             }else{
-                edx <- x_en[idx] %in% x_sn[idx] ## true is end of reach is start of another reach in subset                
+                edx <- x_en[idx] %in% x_sn[idx] ## true is end of reach is start of another reach in subset
                 sdx <- x_sn[idx] %in% x_en[idx] ## true is start is also and endNode for another reach i
-                ## edx <- x$endNode[idx] %in% x$startNode[idx] ## true is end of reach is start of another reach in subset                
+                ## edx <- x$endNode[idx] %in% x$startNode[idx] ## true is end of reach is start of another reach in subset
                 ## sdx <- x$startNode[idx] %in% x$endNode[idx] ## true is start is also and endNode for another reach in subet
             }
 
             ## redo end nodes
             tmp <- unique( x_en[idx][ edx ] ) ## end Nodes in the new object
             x_en[ x_en %in% tmp ] <- y_sn[ii]
-            
+
             ## redo start nodes
             tmp <- unique( x_sn[idx][sdx] )
             x_sn[ x_sn %in% tmp ] <- y_en[ii]
-            
+
             ## flag ones to remove
             keep_x[idx][ (edx & sdx) ] <- FALSE
-            
+
         }
 
         if( verbose ){ setTxtProgressBar(pb, ii, title = NULL, label = NULL) }
@@ -219,11 +218,9 @@ merge_channels <- function(x,y,outlets=NULL,verbose=FALSE){
 
     x$endNode <- x_en
     x$startNode <- x_sn
-#    y$endNode <- y_en
-#    y$startNode <- y_sn
 
     x <- rbind(x[keep_x,],y[keep_y,])
-    
+
     check_channel(x,outlets)
 
     return(x)
@@ -254,7 +251,7 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
     if( simplify_length <= 0 ){
         stop("simplify_length must be positive")
     }
-    
+
 
     ## split geom and data - seems quicker...
     gm <- chn
@@ -269,16 +266,16 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
         lp <- lp + 1
         print(paste("starting loop",lp))
 
-        
+
         to_keep <- rep(TRUE,nrow(chn))
-    
+
         if("is_wb" %in% names(chn)){ not_wb <- !chn$is_wb }
         else{ not_wb <- rep(TRUE, nrow(chn)) }
-        
+
         ## find channels to merge and order
         idx <- which( (chn$length < simplify_length) & not_wb)
         idx <- idx[order(chn$length[idx])]
-        
+
         n <- length(idx)
         if( verbose ){
             pb <- txtProgressBar(min = 0, max = n, initial = 0, char = "=",
@@ -287,16 +284,16 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
             cnt <- 0
         }
 
-    
-    
+
+
         for(ii in idx){
             if( chn$length[ii] >= simplify_length ){
                 ## catch incase a merge has already made it long
                 cnt <- cnt+1
                 setTxtProgressBar(pb, cnt, title = NULL, label = NULL)
                 next
-            } 
-            
+            }
+
             in_hn <-  which( chn$endNode == chn$startNode[ii] )
             out_hn <-  which( chn$startNode == chn$startNode[ii] )
             in_en <- which( chn$endNode == chn$endNode[ii] )
@@ -311,7 +308,7 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
             }
             if( length(in_hn)==1 &&
                 not_wb[in_hn] &&
-                length(out_hn)==1 &&               
+                length(out_hn)==1 &&
                 is.na(jj) ){
                 ## startNode is a 1-to-1 join and can merge u/s
                 jj <- in_hn
@@ -336,31 +333,31 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
                 if(!is.na(jj)){
                     chn$endNode[in_hn] <- chn$endNode[ii]
                 }
-                
-                
+
+
                 ## ## endNode is a single outlet so merge d/s but reroute other flows to
                 ## ## new start of reach
                 ## jj <- out_en
                 ## chn$endNode[ in_en ] <- chn$startNode[ii]
                 ## chn$startNode[jj] <- chn$startNode[ii]
             }
-            
+
             if(!is.na(jj)){ ## can simplify
-                
+
                 ##print(paste(cnt,ii,jj))
-                
+
                 ## merge properties (default to those for jj)
                 chn$length[jj] <- chn$length[jj] + chn$length[ii]
                 chn$area[jj] <- chn$area[jj] + chn$area[ii]
                 chn$width[jj] <- chn$area[jj] / chn$length[jj]
                 chn$channelVol[jj] <- chn$channelVol[jj] + chn$channelVol[ii]
                 chn$endNode[ii] <- chn$startNode[ii] <- NA # to stop matching on deleted segments
-                
+
                 ## merge geom
                 gm[[jj]] <- terra::combineGeoms( gm[[jj]], gm[[ii]], minover=0 )
                 to_keep[ii] <- FALSE
             }
-            
+
             if( verbose ){
                 cnt <- cnt+1
                 setTxtProgressBar(pb, cnt, title = NULL, label = NULL)
@@ -376,12 +373,12 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
         }
 
     }
-    
+
     ## merge back into data.frame
     chn <- cbind(terra::vect(gm[to_keep]),chn[to_keep,])
 
     check_channel(chn,outlets)
-    
+
     return(chn)
 }
 
@@ -392,7 +389,7 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
 #' @param outlets uid values of the outlets of the channel network
 #'
 #' @return TRUE if completes else failure message
-#' 
+#'
 #' @details The processing follows the follwoing sequence:
 #'   - Checks of the required properties of the channel netowrk for use in dynatopGIS
 #'   - checks on the connectivity for loops
@@ -403,7 +400,7 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
 #'       - Missing `slope`, `width` and `depth`  values are populated by the default and a warning issued
 #'   - If the spatial objects are lines
 #'      - The spatial objects are buffered using the half `width`
-#' 
+#'
 #' @examples
 #' stop("example not updated")
 #' channel_file <- system.file("extdata", "SwindaleRiverNetwork.shp",
@@ -412,10 +409,11 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
 #' property_names <- c(name="identifier",endNode="endNode",startNode="startNode",length="length")
 #' chn <- convert_channel(vect_lines,property_names)
 #' @export
-check_channel <- function(chn,outlets=NULL){
+check_channel <- function(chn,outlets=NULL,allow_lines=FALSE){
     ## direct checks
+    allowedGeom <- ifelse(allow_lines,c("lines","polygons"),"polygons")
     stopifnot(
-        "The channel network does not have a polygon geometry" = terra::geomtype(chn) == "polygons",
+        "The channel network does not have a suitable geometry" = terra::geomtype(chn) %in% allowedGeom,
         ## names
         "uid property is missing" = "uid" %in% names(chn),
         "uids should be strings" = is.character(chn$uid),
@@ -445,18 +443,17 @@ check_channel <- function(chn,outlets=NULL){
         "widths cannot be missing" = !any(is.na(chn$width)),
         "widths should be positive" = all(chn$width>0)
     )
-
     ## check outlets
     if( !is.null(outlets) ){
         chn_outlets <- chn$uid[ !(chn$endNode %in% chn$startNode) ]
-        if( !all(chn_outlets %in% outlets) ){
-            stop(paste("Additional channel outlets:",paste( setdiff(chn_outlets,outlets), collapse=", ")))
-        }
         if( !all(outlets %in% chn_outlets) ){
             stop(paste("Missing channel outlets:",paste( setdiff(outlets,chn_outlets), collapse=", ")))
         }
+        if( !all(chn_outlets %in% outlets) ){
+            stop(paste("Additional channel outlets:",paste( setdiff(chn_outlets,outlets), collapse=", ")))
+        }
     }
-    
+
     ## check connectivity
     ## This is much quicker using vectors and not constantly accessing via the SpatVect object
     sN <- chn$startNode
@@ -465,9 +462,11 @@ check_channel <- function(chn,outlets=NULL){
     idx <- !(eN %in%sN) ## outlets are channel lengths whose outlet does not join another channel
     it <- 0
     cnt <- table(sN) ## we should never vist a node more times then it is a starting point
-    while(sum(idx)>0){
+
+    while( any(idx) & it <= nrow(chn)){
         jdx <- sN[idx]
-        for(ii in jdx){ cnt[ii] <- cnt[ii] - 1 } ## since sN might appear more then once..
+        tmp <- table(jdx)
+        cnt[ names(tmp) ] <- cnt[ names(tmp) ] - tmp
         if( any(cnt<0) ){
             stop(paste("Failing loop involving nodes:", paste(names(cnt)[cnt<0],collapse=", ")))
         }
@@ -476,9 +475,10 @@ check_channel <- function(chn,outlets=NULL){
         it <- it+1
     }
     stopifnot(
-        "Error ingesting channel: problem with visiting all points" = all(cnt==0)
+        "Error ingesting channel: problem with visiting all points" = all(cnt==0),
+        "To many iterations" = it <= nrow(chn)
     )
-    
+
     invisible(TRUE)
 }
 
@@ -499,7 +499,7 @@ locate_gauges <- function(chn,gauges,gauge_name="name",max_dist = 100){
     ## check chn is a channel
     if(is.character(chn)){ chn <- terra::vect(chn) }
     check_channel(chn)
-    
+
     ## check y is a terra object of points of polygons
     if(is.character(gauges)){ gauges <- terra::vect(gauges) }
     stopifnot("The gauges do not have a point or polygon geometry (even when read in)" =
@@ -531,7 +531,7 @@ locate_gauges <- function(chn,gauges,gauge_name="name",max_dist = 100){
                                         channel_name = NA_character_
                                         )
             }
-            
+
         }
         out <- do.call(rbind,out)
     }

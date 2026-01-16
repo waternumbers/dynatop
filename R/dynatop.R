@@ -283,11 +283,14 @@ dynatop <- R6Class(
         ## },
         ## this code checks and digests the model
         digest_model = function(mdl){
+
+            mdl <- read_model("./inst/extdata/mdl/SwindaleModel.csv")
+
             ## define HRU column types
             types <- c(hru = "integer",
                        band = "integer",
-                       precip = "integer",
-                       pet = "integer",
+                       precip = "character",
+                       pet = "character",
                        ##z = "numeric",
                        ##is_channel = "logical",
                        edges = "character",
@@ -307,10 +310,17 @@ dynatop <- R6Class(
                        s_sz = "numeric"
                        )
 
+            ## the default if all columns are NA (which in some cases is valid) then set to correct type
+            for(ii in intersect(c("s_sf","s_rz","s_uz","s_sz"), names(mdl))){
+                if( all(is.na(mdl[[ii]])) ){ mdl[[ii]] <- NA_real_ }
+            }
+
+
             ## definitions of surface types
             sf_defn = list(
                 "mannings" = c("n"),
-                "raf" = c("n","t_raf","s_raf")
+                "raf" = c("n","t_raf","s_raf"),
+                "rect" = c("n","depth")
             )
             ## definitions of root zone types
             rz_defn = list(
@@ -318,7 +328,7 @@ dynatop <- R6Class(
             )
             ## unsaturated zone types
             uz_defn = list(
-                "tank" = "T_d",
+                "tank" = "t_d",
                 "vel" = "v_d"
             )
             ## saturated zone type
@@ -361,7 +371,7 @@ dynatop <- R6Class(
                 ## sz_type = "character",
                 "No missing sz_param allowed" = all( nchar(mdl$sz_param) ),
                 ## sz_param = "character"
-                "No missing sz_param allowed" = all( nchar(mdl$sz_param) > 0 )
+                "No missing sz_param allowed" = all( nchar(mdl$sz_param) > 0 ),
                 ## check sf state
                 "Negative or missing s_sf" = all(is.na(mdl$s_sf)) || all(mdl$s_sf >= 0),
                 ## check rz state
@@ -382,7 +392,7 @@ dynatop <- R6Class(
                             c(range(x$hru),
                               length(x$hru)==length(x$width),
                               length(x$hru)==length(x$slope),
-                              all(x$width>0)
+                              all(x$width>0),
                               all(x$slope>=0),
                               all( c("hru","width","slope") %in% names(x))
                               )
@@ -398,57 +408,51 @@ dynatop <- R6Class(
                 "All widths sould be positive" = all(z[,5]),
                 "All slopes should be non-negative" = all(z[,6])
             )
+
+            fcheck <- function(x,z){
+                xx <- jsonlite::fromJSON(x)
+                c(all(xx>0),all(z%in%names(xx)))
+            }
             ## check sf_param in more detail
-            mdl$sf_param <- jsonlite::fromJSON(mdl$sf_param)
-            z <- matrix(FALSE,nrow(mdl),2)
+            z <- matrix(FALSE,2,nrow(mdl))
             for(ii in unique(mdl$sf_type)){
                 idx <- mdl$sf_type == ii
-                z[idx,] <- sapply(mdl$sf_param[idx],
-                                 function(x,z){
-                                     c(all(x>0),all(z%in%x))},
-                                 z=sf_defn[[ii]])
+                z[,idx] <- sapply(mdl$sf_param[idx],fcheck,
+                                  z=sf_defn[[ii]])
             }
-            stopifnot("Missing sf parameters" = all(z[,2]),
-                      "Negative or missing sf parameter values" = all(z[,1]))
+            stopifnot("Missing sf parameters" = all(z[2,]),
+                      "Negative or missing sf parameter values" = all(z[1,]))
 
             ## check rz_parm in more detail
-            mdl$rz_param <- jsonlite::fromJSON(mdl$rz_param)
-            z <- matrix(FALSE,nrow(mdl),2)
+            z <- matrix(FALSE,2,nrow(mdl))
             for(ii in unique(mdl$rz_type)){
                 idx <- mdl$rz_type == ii
-                z[idx,] <- sapply(mdl$rz_param[idx],
-                                 function(x,z){
-                                     c(all(x>0),all(z%in%x))},
-                                 z=rz_defn[[ii]])
+                z[idx,] <- sapply(mdl$rz_param[idx],fcheck,
+                                  z=rz_defn[[ii]])
             }
-            stopifnot("Missing rz parameters" = all(z[,2]),
-                      "Negative or missing rz parameter values" = all(z[,1]))
+            stopifnot("Missing rz parameters" = all(z[2,]),
+                      "Negative or missing rz parameter values" = all(z[1,]))
 
             ## check uz_parm in more detail
-            mdl$uz_param <- jsonlite::fromJSON(mdl$uz_param)
-            z <- matrix(FALSE,nrow(mdl),2)
+            z <- matrix(FALSE,2,nrow(mdl))
             for(ii in unique(mdl$uz_type)){
                 idx <- mdl$uz_type == ii
-                z[idx,] <- sapply(mdl$uz_param[idx],
-                                 function(x,z){
-                                     c(all(x>0),all(z%in%x))},
-                                 z=uz_defn[[ii]])
+                z[idx,] <- sapply(mdl$uz_param[idx],fcheck,
+                                  z=uz_defn[[ii]])
             }
-            stopifnot("Missing uz parameters" = all(z[,2]),
-                      "Negative or missing uz parameter values" = all(z[,1]))
+            stopifnot("Missing uz parameters" = all(z[2,]),
+                      "Negative or missing uz parameter values" = all(z[1,]))
 
             ## check sz_parm in more detail
-            mdl$sz_param <- jsonlite::fromJSON(mdl$sz_param)
-            z <- matrix(FALSE,nrow(mdl),2)
+            z <- matrix(FALSE,2,nrow(mdl))
             for(ii in unique(mdl$sz_type)){
                 idx <- mdl$sz_type == ii
-                z[idx,] <- sapply(mdl$sz_param[idx],
-                                 function(x,z){
-                                     c(all(x>0),all(z%in%x))},
-                                 z=sz_defn[[ii]])
+                z[idx,] <- sapply(mdl$sz_param[idx],fcheck,
+                                  z=sz_defn[[ii]])
             }
-            stopifnot("Missing sz parameters" = all(z[,2]),
-                      "Negative or missing sz parameter values" = all(z[,1]))
+            stopifnot("Missing sz parameters" = all(z[2,]),
+                      "Negative or missing sz parameter values" = all(z[1,]))
+
             private$model <- mdl
         },
         ## check and add observations
@@ -486,7 +490,8 @@ dynatop <- R6Class(
             ## check table
             stopifnot(
                 "Output definition should be a data frame" = is.data.frame(defn),
-                "Output definition must have variables name, id, flux" =
+                "Output definition must have variables name, id, flux" = TRUE
+            )
             if( !is.data.frame(defn) ){ stop("Output definition should be a data frame") }
             if( !all(c("name","id","flux","scale") %in% names(defn) ) ){ stop("Output definition must have variables name, id and flux") }
             if( !all(defn$id %in% (0:(length(private$model)-1))) ){

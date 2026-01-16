@@ -2,13 +2,10 @@ rm(list=ls())
 graphics.off()
 devtools::load_all(".")
 
-
 ## ----tempory_dir-------------------------------------------------------------------------------------------------
-temp_dir <- "./build_scripts/debug/demo"
-dir.create(temp_dir)
-demo_file <- file.path(temp_dir,"dygis.tif")
-unlink(demo_file)
-unlink(gsub(".tif$",".geojson",demo_file))
+demo_dir <- "./build_scripts/debug/demo"
+unlink(demo_dir, recursive=TRUE)
+dir.create(demo_dir)
 
 ## ----data_files--------------------------------------------------------------------------------------------------
 dem_file <- system.file("extdata", "GIS", "SwindaleDTM.tif", package="dynatop", mustWork = TRUE)
@@ -16,7 +13,7 @@ channel_file <- system.file("extdata", "GIS", "SwindaleRiverNetwork.gpkg", packa
 catchment_outline <- system.file("extdata", "GIS", "SwindaleBoundary.gpkg", package="dynatop", mustWork = TRUE)
 
 ## ----initialisation----------------------------------------------------------------------------------------------
-ctch <- dynatopGIS$new(demo_file)
+ctch <- dynatopGIS$new(demo_dir)
 
 ## ----add_catchment-----------------------------------------------------------------------------------------------
 ctch$add_catchment(catchment_outline,dem_file)
@@ -68,8 +65,8 @@ terra::plot( ctch$get_layer('filled_dem') - ctch$get_layer('dem'),
 ctch$plot_layer("band")
 ctch$plot_layer("hru")
 
-devtools::load_all(".")
-ctch <- dynatopGIS$new(demo_file)
+#devtools::load_all(".")
+#ctch <- dynatopGIS$new(demo_file)
 ctch$create_model("./inst/extdata/mdl/SwindaleModel")
 
 
