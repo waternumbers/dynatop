@@ -167,28 +167,27 @@ dynatopGIS <- R6::R6Class(
             private$apply_upward_pass(verbose)
             invisible(self)
         },
-        ## #' @description Computes the computational band of each cell
-        ## #'
-        ## #' @param type type of banding
-        ## #' @param verbose print out additional diagnostic information
-        ## #'
-        ## #' @details Banding is used within the model to define the HRUs and control the order of the flow between them; HRUs can only pass flow to HRUs in a lower numbered band. Currently only a strict ordering of river channels and cells in the DEM is implemented. To compute this the algorithm passes first up the channel network (with outlets being in band 1) then through the cells of the DEM in increasing height.
-        ## compute_band = function(type=c("strict"), verbose=FALSE){
-        ##     type = match.arg(type)
-        ##     private$apply_band(type,verbose)
-        ##     invisible(self)
-        ## },
         #' @description Computes statistics e.g. gradient, log(upslope area / gradient) for raster cells
         #'
         #' @param min_grad gradient that can be assigned to a pixel if it can't be computed
         #' @param verbose print out additional diagnostic information
         #'
         #' @details The algorithm passed through the cells in decreasing height. Min grad is applied to all cells. It is also used for missing gradients in pixels which are partially channel but have no upslope neighbours.
-        ## compute_properties = function(min_grad = 1e-4,verbose=FALSE){
-        ##     private$apply_upward_pass(verbose)
-        ##     private$apply_downward_pass(min_grad,verbose)
-        ##     invisible(self)
-        ## },
+        compute_properties = function(default_grad = 1e-4,verbose=FALSE){
+            private$apply_compute_properties(verbose,default_grad)
+            invisible(self)
+        },
+        #' @description Accumulates a layer down the slopes and channels
+        #'
+        #' @param layer names of the layer to accumualte
+        #' @param verbose print out additional diagnostic information
+        #'
+        #' @details The algorithm passed through the cells in decreasing height. If the layer already exisits in the channel data then it is used with adjustment made with channel fractions of cells.
+        accumulate_layer = function(layer,verbose=FALSE){
+            private$apply_accumulate_layer(layer,verbose)
+            invisible(self)
+        },
+
         ## #' @description Computes flow length for each pixel to the channel
         ## #'
         ## #' @param flow_routing TODO
@@ -413,18 +412,24 @@ dynatopGIS <- R6::R6Class(
             chn_rst <- terra::mask(chn_rst,private$brk[["catchment"]])
 
             ## create a raster of channel coverage fractions
-            chn_frac <- terra::rasterize(chn,private$brk[["catchment"]],background=0,cover=TRUE) ## fraction of cell covered by channel
-            chn_frac <- terra::mask(chn_frac,private$brk[["catchment"]])
-            names(chn_frac) <- "channel_fraction"
-            terra::values(chn_frac) <- round(terra::values(chn_frac),2) ## else get horrible rounding errors close to 1
-            chn_frac[chn_frac==0 & !is.na(chn_rst)] <- 0.005 ## add a fraction to those cells with an ID but no fractions
+            if(chn_is_lines){
+                chn_frac <- private$brk[["catchment"]]*0.0
+                names(chn_frac) <- "channel_fraction"
+            }else{
+                chn_frac <- terra::rasterize(chn,private$brk[["catchment"]],background=0,cover=TRUE) ## fraction of cell covered by channel
+                chn_frac <- terra::mask(chn_frac,private$brk[["catchment"]])
+                names(chn_frac) <- "channel_fraction"
+                terra::values(chn_frac) <- round(terra::values(chn_frac),2) ## else get horrible rounding errors close to 1
+                chn_frac[chn_frac==0 & !is.na(chn_rst)] <- 0.005 ## add a fraction to those cells with an ID but no fractions
+            }
 
             ## save output
-            terra::writeRaster(chn_rst, file.path(private$projectDir,"channnel_id.tif"))
+            terra::writeRaster(chn_rst, file.path(private$projectDir,"channel_id.tif"))
             terra::writeRaster(chn_frac, file.path(private$projectDir,"channel_frac.tif"))
             terra::writeVector(chn, file.path(private$projectDir,"channel.gpkg"))
             private$brk <- c(private$brk,chn_rst,chn_frac) #,chn_depth)
             private$chn <- chn
+
             ## TODO remove channels that aren't in the raster - since these will be small and cause grief
         },
         ## Add a layer
@@ -451,7 +456,7 @@ dynatopGIS <- R6::R6Class(
             stopifnot( "Layer has missing values in the catchment - try running fill_na first" = flg==0 )
 
             ## save output
-            terra::writeRaster(layer,file.path(private$projectDir,paste0(names(layer),".tiff")))
+            terra::writeRaster(layer,file.path(private$projectDir,paste0(names(layer),".tif")))
             private$brk <- c(private$brk,layer)
         },
         ## Sink fill
@@ -551,10 +556,11 @@ dynatopGIS <- R6::R6Class(
                 terra::values(private$brk[["filled_dem"]]) <- fd
             }else{
                 rfd <- terra::rast( private$brk[["dem"]], names="filled_dem", vals=fd )
+                names(rfd) <- "filled_dem"
                 private$brk <- c( private$brk, rfd )
             }
             terra::writeRaster(private$brk[["filled_dem"]],
-                               file.path(private$projectDir,"filled_dem.tiff"),overwrite=TRUE)
+                               file.path(private$projectDir,"filled_dem.tif"),overwrite=TRUE)
 
             if(it>max_it){ stop("Maximum number of iterations reached, sink filling not complete") }
         },
@@ -626,20 +632,23 @@ dynatopGIS <- R6::R6Class(
             private$chn$hru <- chn_hru
 
             ## save
+            terra::writeVector(private$chn,"channel.gpkg",overwrite=TRUE)
+
             rbnd <- private$brk["filled_dem"]
             names(rbnd) <- "band"
             terra::values(rbnd) <- bnd
             terra::writeRaster(rbnd, file.path(private$projectDir,"band.tif"))
+
             rhru <- private$brk["filled_dem"]
             names(rhru) <- "hru"
             terra::values(rhru) <- hru
-            terra::writeRaster(rbnd, file.path(private$projectDir,"hru.tif"))
+            terra::writeRaster(rhru, file.path(private$projectDir,"hru.tif"))
+
             private$brk <- c(private$brk,rbnd,rhru)
 
         },
-
-        ## function to do property calculations on a downward pass (high to low DEM values)
-        apply_downward_pass = function(verbose){
+        ## function to do atb calculation
+        apply_compute_properties = function(verbose, default_grad){
             rq <- c("filled_dem","channel_id","channel_fraction")
             stopifnot(
                 "Not all required input layers have been generated \n Try running sink_fill first" =
@@ -660,100 +669,178 @@ dynatopGIS <- R6::R6Class(
             chn_id <- terra::values( private$brk[["channel_id"]] )
             chn_frc <- terra::values( private$brk[["channel_fraction"]] )
 
-            ## initialise the properties
-            up_area
-            atb
-            bnd <- is.finite(d)*1 ## initialise everything
+
+            upslope_area <- rs*rs*(1-chn_frc)
+            chn_upslope <- rep(0,nrow(private$chn))
+            slope <- rep(NA,length(d))
+            atb <- rep(NA,length(d))
 
             if( verbose ){ print("Computing downward pass of hillslope") }
 
             idx <- order(d,na.last=NA,decreasing=TRUE) ## search order
-
-            nr <- terra::ncol(private$brk); delta <- c(-nr-1,-nr,-nr+1,-1,1,nr-1,nr,nr+1) ## neighbours
-
             ## set up printing variables
             if(verbose){
                 print_step <- c(1,round(length(idx)/20,2),length(idx)) # current, next print, step, total
             }
 
             ## main loop through hillslope cells
-            dz <- rep(NA,8)
+            grd <- gcl <- rep(NA,8)
             for(ii in idx){
                 jj <- chn_id[ii]
+                jdx <- ii+delta
+                grd[] <- (d[ii]-d[jdx])/dxy
+                gcl[] <- grd*dcl
                 if( is.na(jj) ){
-                    jdx <- ii+delta
-                    dz[] <- d[ii] - d[jdx]
-                    is_lower <- is.finite(dz) & dz>0
-                    bnd[ jdx[is_lower] ] <-  pmax( bnd[ jdx[is_lower] ], bnd[ii]+1 )
+                    ## pure hillslope so look downslope
+                    is_lower <- is.finite(gcl) & gcl>0
+                    if(!any(is_lower)){ stop("What the hell.....") }
+                    sum_gcl <- sum( gcl[is_lower] )
+                    sum_dcl <- sum( dcl[is_lower] )
+                    f <- gcl[is_lower]/sum_gcl ## frac in each direction
+                    upslope_area[ jdx[is_lower] ] <- upslope_area[ jdx[is_lower] ] + f*upslope_area[ii]
+                    slope[ ii ] <- sum_gcl / sum_dcl
+                    atb[ii] <- log( upslope_area[ii] / slope[ii] )
                 }else{
-                    if(chn_frc[ii]==1){
-                        chn_bnd[jj] <- max( bnd[ii], chn_bnd[jj] )
-                        bnd[ii] <- NA ## this is important else these cells get an HRU id
+                    ## channel cell
+                    chn_upslope[jj] <- chn_upslope[jj] + (chn_frc[ii]*rs*rs) + upslope_area[ii]
+
+                    if( chn_frc[ii] == 1 ){next}
+
+                    ## slope from area draining to the cell or default grad
+                    is_higher <- is.finite(gcl) & gcl<0
+
+                    if(!any(is_higher)){
+                        slope[ii] <- default_grad
                     }else{
-                        chn_bnd[jj] <- max( bnd[ii]+1, chn_bnd[jj] )
+                        sum_gcl <- sum( gcl[is_higher] )
+                        sum_dcl <- sum( dcl[is_higher] )
+                        slope[ii] <- -sum_gcl / sum_dcl
                     }
-                }
-                if(verbose){
-                    print_step[1] <- print_step[1] + 1
-                    if( print_step[1] > print_step[2] ){
-                        cat(round(100*print_step[1] / print_step[3],1),
-                            "% complete","\n")
-                        print_step[1] <- 1
-                    }
+                    atb[ii] <- log( upslope_area[ii] / slope[ii] )
                 }
             }
 
             if( verbose ){ print("Computing downward pass of channels") }
-            ## assume channel id values are ordered 1:nrow(chn)
-            stopifnot("Channel id are not correct" = all( 1:nrow(private$chn) == private$chn$id ),
-                      "Channel order is not correct" = all( (1:max( private$chn$order)) %in% private$chn$order)
-                      )
+
             ## This is much quicker using vectors and not constantly accessing via the SpatVect object
             sN <- private$chn$startNode
             eN <- private$chn$endNode
-            jdx <- match(eN,sN)
-            for(ii in order(private$chn$order,decreasing=TRUE)){
-                if(is.na(jdx[ii])){ next }
-                chn_bnd[ jdx[ii] ] <- max( chn_bnd[ jdx[ii] ], chn_bnd[ii]+1 )
+            for(ii in order(private$chn$band,decreasing=TRUE)){
+                jj <- sN == eN[ii]
+                chn_upslope[jj] <- chn_upslope[jj] + (chn_upslope[ii] / sum(jj))
             }
-            private$chn$band <- chn_bnd
-
-            if( verbose ){ print("Computing HRU IDs") }
-            ## work out hru id - might not need this - could loop bands in create_model
-            max_hru <- -1
-            hru <- rep(NA,length(bnd))
-            chn_hru <- rep(NA,length(chn_bnd))
-            for(ii in 1:max(chn_bnd)){
-                ## hillslope
-                idx <- bnd==ii
-                nidx <- sum(idx)
-                hru[idx] <- max_hru + 1:nidx
-                max_hru <- max_hru + nidx
-                ## channel
-                idx <- chn_bnd == ii
-                nidx <- sum(idx)
-                chn_hru[idx] <- max_hru + 1:nidx
-                max_hru <- max_hru + nidx
-            }
-            private$chn$hru <- chn_hru
 
             ## save
-            rbnd <- private$brk["filled_dem"]
-            names(rbnd) <- "band"
-            terra::values(rbnd) <- bnd
-            terra::writeRaster(rbnd, file.path(private$projectDir,"band.tif"))
-            rhru <- private$brk["filled_dem"]
-            names(rhru) <- "hru"
-            terra::values(rhru) <- hru
-            terra::writeRaster(rbnd, file.path(private$projectDir,"hru.tif"))
-            private$brk <- c(private$brk,rbnd,rhru)
+            private$chn$upslope_area <- chn_upslope
+            terra::writeVector(private$chn,file.path(private$projectDir,"channel.gpkg"),overwrite=TRUE)
+
+            ratb <- private$brk["filled_dem"]
+            names(ratb) <- "atb"
+            terra::values(ratb) <- atb
+            terra::writeRaster(ratb, file.path(private$projectDir,"atb.tif"))
+
+            rup <- private$brk["filled_dem"]
+            names(rup) <- "upslope_area"
+            terra::values(rup) <- upslope_area
+            terra::writeRaster(rup, file.path(private$projectDir,"upslope_area.tif"))
+
+            rslp <- private$brk["filled_dem"]
+            names(rslp) <- "slope"
+            terra::values(rslp) <- slope
+            terra::writeRaster(rslp, file.path(private$projectDir,"slope.tif"))
+
+            private$brk <- c(private$brk,ratb,rup,rslp)
+        },
+        ## function to do property calculations on a downward pass (high to low DEM values)
+        apply_accumulate_layer = function(lyr, verbose){
+            rq <- c("filled_dem","channel_id","channel_fraction",lyr)
+            stopifnot(
+                "Not all required input layers have been generated \n Try running sink_fill first" =
+                    all( rq %in% names( private$brk) )
+            )
+
+            ## work out some properties of the brick
+            rs <- terra::res( private$brk )[1]
+            nr <- terra::ncol(private$brk)
+            delta <- c(-nr-1,-nr,-nr+1,-1,1,nr-1,nr,nr+1)
+            sc <- c(sqrt(2),1,sqrt(2),1,1,sqrt(2),1,sqrt(2))
+            dxy <- sc*rs
+            dcl <- (0.5/sc)*rs
+            cell_area <- rs*rs
+
+            ## load dem
+            d <- terra::values( private$brk[["filled_dem"]] )
+            chn_id <- terra::values( private$brk[["channel_id"]] )
+            chn_frc <- terra::values( private$brk[["channel_fraction"]] )
+
+            x <- terra::values( private$brk[[lyr]] )
+            if(lyr %in% names(private$chn)){
+                x_chn <- private$chn[[lyr]]
+                x <- x*(1-chn_frc)
+            }else{
+                x_chn <- rep(0,nrow(private$chn))
+            }
+
+
+            if( verbose ){ print("Computing downward pass of hillslope") }
+
+
+            idx <- order(d,na.last=NA,decreasing=TRUE) ## search order
+            ## set up printing variables
+            if(verbose){
+                print_step <- c(1,round(length(idx)/20,2),length(idx)) # current, next print, step, total
+            }
+
+            ## main loop through hillslope cells
+            grd <- gcl <- rep(NA,8)
+            for(ii in idx){
+                jj <- chn_id[ii]
+                if( is.na(jj) ){
+                    ## pure hillslope
+                    jdx <- ii+delta
+                    grd[] <- (d[ii]-d[jdx])/dxy
+                    gcl[] <- grd*dcl
+                    is_lower <- is.finite(gcl) & gcl>0
+                    if( any(is_lower) ){
+                        sum_gcl <- sum( gcl[is_lower] )
+                        sum_dcl <- sum( dcl[is_lower] )
+                        f <- gcl[is_lower]/sum_gcl ## frac in each direction
+                        x[ jdx[is_lower] ] <- x[ jdx[is_lower] ] + f * x[ii]
+                    }else{
+                        stop("Should never get here")
+                    }
+                }else{
+                    ## river cell
+                    x_chn[jj] <- x_chn[jj] + x[ii]
+                }
+            }
+
+            if( verbose ){ print("Computing downward pass of channels") }
+
+            ## This is much quicker using vectors and not constantly accessing via the SpatVect object
+            sN <- private$chn$startNode
+            eN <- private$chn$endNode
+            for(ii in order(private$chn$band,decreasing=TRUE)){
+                jj <- sN == eN[ii]
+                x_chn[ jj ] <- x_chn[ jj ] + x_chn[ii]/sum(jj)
+            }
+
+            ## save
+            lyr_name <- paste0("acc_",lyr)
+            private$chn[[ lyr_name ]] <- x_chn
+
+            rlyr <- private$brk["filled_dem"]
+            names(rlyr) <- lyr_name
+            terra::values(rlyr) <- x
+            terra::writeRaster(rlyr, file.path(private$projectDir,paste0(lyr_name,".tif")))
+
+            private$brk <- c(private$brk,rlyr)
         },
         ## create a model
         apply_create_model = function(model_name,class_lyr,
                                       precip_lyr,precip_lbl,
                                       pet_lyr,pet_lbl,
                                       verbose){
-            browser()
             ## check layers
             rq <- c("hru","band",
                     "filled_dem",

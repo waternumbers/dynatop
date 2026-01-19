@@ -291,8 +291,8 @@ dynatop <- R6Class(
                        band = "integer",
                        precip = "character",
                        pet = "character",
-                       ##z = "numeric",
-                       ##is_channel = "logical",
+                       z = "numeric",
+                       is_channel = "logical",
                        edges = "character",
                        area = "integer",
                        geom = "character",
@@ -490,38 +490,23 @@ dynatop <- R6Class(
             ## check table
             stopifnot(
                 "Output definition should be a data frame" = is.data.frame(defn),
-                "Output definition must have variables name, id, flux" = TRUE
+                "Output definition must have variables name, hru, flux and scale" = all(c("name","hru","flux","scale") %in% names(defn))
             )
-            if( !is.data.frame(defn) ){ stop("Output definition should be a data frame") }
-            if( !all(c("name","id","flux","scale") %in% names(defn) ) ){ stop("Output definition must have variables name, id and flux") }
-            if( !all(defn$id %in% (0:(length(private$model)-1))) ){
-                stop(paste("id should be between 0 and",length(private$model)-1))
-            }
-
-            if( !("scale" %in% names(defn) ) ){
-                warning("Output definition does not have scale - adding a vector of 1's")
-                defn$scale <- 1
-            }
-
             defn$name <- as.character(defn$name)
-            defn$id <- as.integer(defn$id)
+            defn$hru <- as.integer(defn$hru)
             defn$flux <- as.character(defn$flux)
-            if( !all( defn$flux %in% names(private$info$output) ) ){
-                stop("At least one flux type not recognised")
-            }
             defn$scale <- as.numeric(defn$scale)
-            unm <- unique(defn$name)
-            defn$name_idx <- setNames(0:(length(unm)-1),unm)[ defn$name ]
-            defn$flux_int <- private$info$output[ defn$flux ]
+
+            stopifnot(
+                "HRU is not known" = all(defn$hru %in% mdl$hru),
+                "Flux is not known" = all(defn$flux %in% aldskfja;sldfjk),
+                "Scale must be finite" = all(is.finite(defn$scale)),
+                "Name must be finite" = all(is.finite(defn$name))
+            )
+
             private$output_defn <- defn
-            private$time_series$output <- matrix(as.numeric(NA), length(private$time_series$index), length(unm))
+            ##private$time_series$output <- matrix(as.numeric(NA), length(private$time_series$index), length(unm))
             colnames( private$time_series$output ) <- unm
-        },
-        ## reform the output definition if required
-        reform_output_defn = function(){
-            defn <- private$output_defn
-            defn$flux_int <- defn$name_idx <- NULL
-            return( defn )
         },
         ## compute the simulation timestep
         comp_ts = function(sub_step=NULL){
