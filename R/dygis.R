@@ -89,11 +89,12 @@ dynatopGIS <- R6::R6Class(
         #' @details Takes the representation of the channel network as a SpatVect with properties name, length, area, startNode, endNode and overlaying it on the DEM. In doing this a variable called id is created (or overwritten) other variables in the data frame are passed through unaltered.
         #'
         #' @return suitable for chaining
-        add_channel = function(channel,verbose=FALSE,allow_lines=FALSE){
+        add_channel = function(channel,verbose=FALSE,chn_is_lines=FALSE){
             if(!is(channel,"SpatVector")){ channel <- terra::vect( as.character(channel) ) }
             if(!is(channel,"SpatVector")){ stop("channel is not a SpatVector object") }
 
-            private$apply_add_channel(channel,as.logical(verbose),as.logical(allow_lines))
+            private$apply_add_channel(channel,verbose = as.logical(verbose),
+                                      chn_is_lines = as.logical(chn_is_lines))
             invisible(self)
         },
         #' @description Add a layer of geographical information
@@ -163,7 +164,7 @@ dynatopGIS <- R6::R6Class(
         #'
         sink_fill = function(min_grad = 1e-4,max_it=1e6,verbose=FALSE, hot_start=FALSE){
             private$apply_sink_fill(min_grad,max_it,verbose,hot_start)
-            private$apply_downward_pass(verbose)
+            private$apply_upward_pass(verbose)
             invisible(self)
         },
         ## #' @description Computes the computational band of each cell
@@ -279,7 +280,7 @@ dynatopGIS <- R6::R6Class(
         brk = NULL,
         chn = NULL,
         reserved_layers = c("catchment","dem","channel","channel_fraction","filled_dem",
-                            "gradient","upslope_area","atb",
+                            "gradient","upslope_area","atb","slope","hru",
                             "band"),
         ## check and read the project files
         apply_initialize = function(projectDir){
@@ -310,10 +311,10 @@ dynatopGIS <- R6::R6Class(
             stopifnot("Raster data not valid: Processing currently only works with padded grids" = isPadded)
 
             ## work out channel file names
-            if( "channel" %in% names(brk) ){
+            if( "channel_id" %in% names(brk) ){
                 channelFile <- file.path(projectDir,"channel.gpkg")
                 stopifnot( "Data Error: No channel file available but channel_id raster" = file.exists(channelFile) )
-                private$shp <- terra::vect( channelFile )
+                private$chn <- terra::vect( channelFile )
             }
 
             private$projectDir <- projectDir
@@ -363,7 +364,7 @@ dynatopGIS <- R6::R6Class(
             private$brk <- c(ctch,dem)
         },
         ## add the channel
-        apply_add_channel = function(chn,verbose, allow_lines){
+        apply_add_channel = function(chn,verbose, chn_is_lines){
             rq <- c("catchment")
 
             stopifnot(
@@ -374,7 +375,33 @@ dynatopGIS <- R6::R6Class(
             )
 
             if(verbose){ print("Checking channel") }
-            check_channel(chn,allow_lines = allow_lines)
+            check_channel(chn, chn_is_lines=chn_is_lines, check_connectivity=FALSE)
+
+            ## check connectivy while adding order - lowest order is outlet
+            if("band" %in% names(chn)){ warning("Overwriting band variable") }
+            sN <- chn$startNode
+            eN <- chn$endNode
+            bnd <- rep(NA_integer_,length(sN))
+            idx <- !(eN%in%sN) ## outlets are channel lengths whose outlet does not join another channel
+            it <- 0L
+            cnt <- table(sN) ## we should never vist a node more times then it is a starting point
+            while( any(idx) & it <= nrow(chn)){
+                bnd[idx] <- it+1
+                jdx <- sN[idx]
+                tmp <- table(jdx)
+                cnt[ names(tmp) ] <- cnt[ names(tmp) ] - tmp
+                if( any(cnt<0) ){
+                    stop(paste("Failing loop involving nodes:", paste(names(cnt)[cnt<0],collapse=", ")))
+                }
+                jdx <- jdx[cnt[jdx]==0] ## only move up if it is the last visit to the startNode
+                idx <- eN %in% jdx
+                it <- it+1
+            }
+            stopifnot(
+                "Error ingesting channel: problem with visiting all points" = all(cnt==0),
+                "To many iterations" = it <= nrow(chn)
+            )
+            chn$band <- bnd
 
             ## Add the id
             if("id" %in% names(chn)){ warning("Overwriting id variable") }
@@ -421,7 +448,7 @@ dynatopGIS <- R6::R6Class(
             flg <- terra::global( is.na(layer) &
                 !is.na(private$brk[["catchment"]]) &
                 is.na(private$brk[["channel_id"]]) ,max)
-            stopifnot( "Layer has missing values in the catchment - try running fill_na first" = flag==0 )
+            stopifnot( "Layer has missing values in the catchment - try running fill_na first" = flg==0 )
 
             ## save output
             terra::writeRaster(layer,file.path(private$projectDir,paste0(names(layer),".tiff")))
@@ -526,14 +553,13 @@ dynatopGIS <- R6::R6Class(
                 rfd <- terra::rast( private$brk[["dem"]], names="filled_dem", vals=fd )
                 private$brk <- c( private$brk, rfd )
             }
-
-            private$save_project()
+            terra::writeRaster(private$brk[["filled_dem"]],
+                               file.path(private$projectDir,"filled_dem.tiff"),overwrite=TRUE)
 
             if(it>max_it){ stop("Maximum number of iterations reached, sink filling not complete") }
         },
-        ## function to do property calculations on a downward pass (high to low DEM values)
-        apply_downward_pass = function(verbose){
-
+        ## function to do band calculations on the DEM
+        apply_upward_pass = function(verbose){
             rq <- c("filled_dem","channel_id","channel_fraction")
             stopifnot(
                 "Not all required input layers have been generated \n Try running sink_fill first" =
@@ -546,8 +572,98 @@ dynatopGIS <- R6::R6Class(
             chn_frc <- terra::values( private$brk[["channel_fraction"]] )
 
             ## initialise the bands
+            bnd <- is.finite(d)*1L
+            if( verbose ){ print("Computing upward pass of hillslope") }
+
+            idx <- order(d,na.last=NA) ## search order
+
+            nr <- terra::ncol(private$brk); delta <- c(-nr-1,-nr,-nr+1,-1,1,nr-1,nr,nr+1) ## neighbours
+
+            ## set up printing variables
+            if(verbose){
+                print_step <- c(1,round(length(idx)/20,2),length(idx)) # current, next print, step, total
+            }
+
+            ## main loop through hillslope cells
+            chn_bnd <- private$chn$band
+            dz <- rep(NA,8)
+            max_bnd <- max(chn_bnd)
+            for(ii in idx){
+                jj <- chn_id[ii]
+                if( is.na(jj) ){
+                    jdx <- ii+delta
+                    dz[] <- d[ii] - d[jdx]
+                    is_lower <- is.finite(dz) & dz>0
+                    bnd[ii] <- max( bnd[ jdx[is_lower] ] ) + 1
+                }else{
+                    if(chn_frc[ii]==1){
+                        bnd[ii] <- chn_bnd[jj] ## all channel
+                    }else{
+                        bnd[ii] <- chn_bnd[jj] + 1
+                    }
+                }
+                max_bnd <- max( max_bnd, bnd[ii] )
+            }
+
+            ## work out hru id - might not need this - could loop bands in create_model
+            max_hru <- -1
+            hru <- rep(NA,length(bnd))
+            chn_hru <- rep(NA,length(chn_bnd))
+            bnd[chn_frc==1] <- NA ## else get a hru number
+            for(ii in max_bnd:1){
+                ## hillslope
+                idx <- bnd==ii
+                nidx <- sum(idx)
+                hru[idx] <- max_hru + 1:nidx
+                max_hru <- max_hru + nidx
+                ## channel
+                idx <- chn_bnd == ii
+                nidx <- sum(idx)
+                chn_hru[idx] <- max_hru + 1:nidx
+                max_hru <- max_hru + nidx
+            }
+            bnd[bnd==0] <- NA
+            private$chn$hru <- chn_hru
+
+            ## save
+            rbnd <- private$brk["filled_dem"]
+            names(rbnd) <- "band"
+            terra::values(rbnd) <- bnd
+            terra::writeRaster(rbnd, file.path(private$projectDir,"band.tif"))
+            rhru <- private$brk["filled_dem"]
+            names(rhru) <- "hru"
+            terra::values(rhru) <- hru
+            terra::writeRaster(rbnd, file.path(private$projectDir,"hru.tif"))
+            private$brk <- c(private$brk,rbnd,rhru)
+
+        },
+
+        ## function to do property calculations on a downward pass (high to low DEM values)
+        apply_downward_pass = function(verbose){
+            rq <- c("filled_dem","channel_id","channel_fraction")
+            stopifnot(
+                "Not all required input layers have been generated \n Try running sink_fill first" =
+                    all( rq %in% names( private$brk) )
+            )
+
+            ## work out some properties of the brick
+            rs <- terra::res( private$brk )[1]
+            nr <- terra::ncol(private$brk)
+            delta <- c(-nr-1,-nr,-nr+1,-1,1,nr-1,nr,nr+1)
+            sc <- c(sqrt(2),1,sqrt(2),1,1,sqrt(2),1,sqrt(2))
+            dxy <- sc*rs
+            dcl <- (0.5/sc)*rs
+            cell_area <- rs*rs
+
+            ## load dem
+            d <- terra::values( private$brk[["filled_dem"]] )
+            chn_id <- terra::values( private$brk[["channel_id"]] )
+            chn_frc <- terra::values( private$brk[["channel_fraction"]] )
+
+            ## initialise the properties
+            up_area
+            atb
             bnd <- is.finite(d)*1 ## initialise everything
-            chn_bnd <- rep(1,nrow(private$chn)) ## we will populate this by id so will need merging back into private$chn carefully
 
             if( verbose ){ print("Computing downward pass of hillslope") }
 
@@ -589,33 +705,21 @@ dynatopGIS <- R6::R6Class(
 
             if( verbose ){ print("Computing downward pass of channels") }
             ## assume channel id values are ordered 1:nrow(chn)
-            stopifnot("Channel id are not correct" = all( 1:nrow(chn) == private$chn$id ))
+            stopifnot("Channel id are not correct" = all( 1:nrow(private$chn) == private$chn$id ),
+                      "Channel order is not correct" = all( (1:max( private$chn$order)) %in% private$chn$order)
+                      )
             ## This is much quicker using vectors and not constantly accessing via the SpatVect object
             sN <- private$chn$startNode
             eN <- private$chn$endNode
-
-            idx <- !(sN %in%eN) ## initial channel reaches at head of system
-            it <- 1
-            cnt <- table(eN) ## we should never vist a node more times then it is an endpoint
-            while( any(idx) & it <= nrow(chn)){
-                chn_bnd[idx] <- pmax( chn_bnd[idx], it )
-                jdx <- eN[idx]
-                tmp <- table(jdx)
-                cnt[ names(tmp) ] <- cnt[ names(tmp) ] - tmp
-                if( any(cnt<0) ){
-                    stop(paste("Failing loop involving nodes:", paste(names(cnt)[cnt<0],collapse=", ")))
-                }
-                jdx <- jdx[cnt[jdx]==0] ## only move down if it is the last visit to the endNode
-                idx <- sN %in% jdx
-                it <- it+1
+            jdx <- match(eN,sN)
+            for(ii in order(private$chn$order,decreasing=TRUE)){
+                if(is.na(jdx[ii])){ next }
+                chn_bnd[ jdx[ii] ] <- max( chn_bnd[ jdx[ii] ], chn_bnd[ii]+1 )
             }
-            stopifnot(
-                "Error processing channel: problem with visiting all points" = all(cnt==0)
-            )
             private$chn$band <- chn_bnd
 
             if( verbose ){ print("Computing HRU IDs") }
-            ## work out hru id
+            ## work out hru id - might not need this - could loop bands in create_model
             max_hru <- -1
             hru <- rep(NA,length(bnd))
             chn_hru <- rep(NA,length(chn_bnd))
@@ -637,19 +741,19 @@ dynatopGIS <- R6::R6Class(
             rbnd <- private$brk["filled_dem"]
             names(rbnd) <- "band"
             terra::values(rbnd) <- bnd
+            terra::writeRaster(rbnd, file.path(private$projectDir,"band.tif"))
             rhru <- private$brk["filled_dem"]
             names(rhru) <- "hru"
             terra::values(rhru) <- hru
+            terra::writeRaster(rbnd, file.path(private$projectDir,"hru.tif"))
             private$brk <- c(private$brk,rbnd,rhru)
-            private$save_project(chn=TRUE)
-
         },
         ## create a model
         apply_create_model = function(model_name,class_lyr,
                                       precip_lyr,precip_lbl,
                                       pet_lyr,pet_lbl,
                                       verbose){
-
+            browser()
             ## check layers
             rq <- c("hru","band",
                     "filled_dem",
@@ -676,16 +780,16 @@ dynatopGIS <- R6::R6Class(
 
             ## rename and sort out some variables
             if(is.null(precip_lyr)){
-                mdl$precip <- ""
+                mdl$precip <- precip_lbl
             }else{
-                mdl$precip <- mdl[[precip_lyr]]
+                mdl$precip <- paste0(precip_lbl,mdl[[precip_lyr]])
                 mdl[[precip_lyr]] <- NULL
             }
 
             if(is.null(pet_lyr)){
-                mdl$pet <- ""
+                mdl$pet <- pet_lbl
             }else{
-                mdl$pet <- mdl[[pet_lyr]]
+                mdl$pet <- paste0(pet_lbl,mdl[[pet_lyr]])
                 mdl[[pet_lyr]] <- NULL
             }
 
@@ -748,7 +852,7 @@ dynatopGIS <- R6::R6Class(
             ## apply some more channel HRU calculations
             chn$area <- total_chn_frac * cell_area
             fin <- function(x){
-                out <- if(length(x)==0){ NA_integer_ }else{ as.integer(names(x)[which.max(x)]) }
+                out <- if(length(x)==0){ NA_character_ }else{ names(x)[which.max(x)] }
                 return(out)
             }
             chn$precip <- sapply(chn_precip,fin)

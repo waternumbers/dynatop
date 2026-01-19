@@ -65,6 +65,14 @@ terra::plot( ctch$get_layer('filled_dem') - ctch$get_layer('dem'),
 ctch$plot_layer("band")
 ctch$plot_layer("hru")
 
+bnd <- ctch$get_layer("band")
+chn <- ctch$get_layer("channel")
+hru <- ctch$get_layer("hru")
+
+range(bnd)
+range(chn$band)
+chn$band
+
 #devtools::load_all(".")
 #ctch <- dynatopGIS$new(demo_file)
 ctch$create_model("./inst/extdata/mdl/SwindaleModel")

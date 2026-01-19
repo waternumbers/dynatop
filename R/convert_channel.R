@@ -409,11 +409,11 @@ simplify_channel <- function(chn, simplify_length=100, outlets=NULL, strict_rout
 #' property_names <- c(name="identifier",endNode="endNode",startNode="startNode",length="length")
 #' chn <- convert_channel(vect_lines,property_names)
 #' @export
-check_channel <- function(chn,outlets=NULL,allow_lines=FALSE){
+check_channel <- function(chn,outlets=NULL,chn_is_lines=FALSE,check_connectivity=TRUE){
     ## direct checks
-    allowedGeom <- ifelse(allow_lines,c("lines","polygons"),"polygons")
+    allowedGeom <- ifelse(chn_is_lines,"lines","polygons")
     stopifnot(
-        "The channel network does not have a suitable geometry" = terra::geomtype(chn) %in% allowedGeom,
+        "The channel network does not have a suitable geometry" = terra::geomtype(chn) == allowedGeom,
         ## names
         "uid property is missing" = "uid" %in% names(chn),
         "uids should be strings" = is.character(chn$uid),
@@ -455,29 +455,31 @@ check_channel <- function(chn,outlets=NULL,allow_lines=FALSE){
     }
 
     ## check connectivity
-    ## This is much quicker using vectors and not constantly accessing via the SpatVect object
-    sN <- chn$startNode
-    eN <- chn$endNode
+    if(check_connectivity){
+        ## This is much quicker using vectors and not constantly accessing via the SpatVect object
+        sN <- chn$startNode
+        eN <- chn$endNode
 
-    idx <- !(eN %in%sN) ## outlets are channel lengths whose outlet does not join another channel
-    it <- 0
-    cnt <- table(sN) ## we should never vist a node more times then it is a starting point
+        idx <- !(eN %in%sN) ## outlets are channel lengths whose outlet does not join another channel
+        it <- 0
+        cnt <- table(sN) ## we should never vist a node more times then it is a starting point
 
-    while( any(idx) & it <= nrow(chn)){
-        jdx <- sN[idx]
-        tmp <- table(jdx)
-        cnt[ names(tmp) ] <- cnt[ names(tmp) ] - tmp
-        if( any(cnt<0) ){
-            stop(paste("Failing loop involving nodes:", paste(names(cnt)[cnt<0],collapse=", ")))
+        while( any(idx) & it <= nrow(chn)){
+            jdx <- sN[idx]
+            tmp <- table(jdx)
+            cnt[ names(tmp) ] <- cnt[ names(tmp) ] - tmp
+            if( any(cnt<0) ){
+                stop(paste("Failing loop involving nodes:", paste(names(cnt)[cnt<0],collapse=", ")))
+            }
+            jdx <- jdx[cnt[jdx]==0] ## only move up if it is the last visit to the startNode
+            idx <- eN %in% jdx
+            it <- it+1
         }
-        jdx <- jdx[cnt[jdx]==0] ## only move up if it is the last visit to the startNode
-        idx <- eN %in% jdx
-        it <- it+1
+        stopifnot(
+            "Error ingesting channel: problem with visiting all points" = all(cnt==0),
+            "To many iterations" = it <= nrow(chn)
+        )
     }
-    stopifnot(
-        "Error ingesting channel: problem with visiting all points" = all(cnt==0),
-        "To many iterations" = it <= nrow(chn)
-    )
 
     invisible(TRUE)
 }
