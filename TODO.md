@@ -1,5 +1,15 @@
 ## Things to update in v0.5
 
+- memory management in dynaGIS - goes out with UK sized data, could try
+  - move some algorithms to C++ with deque to save sorting
+  - stop holding the brk read in rasters as required (not sure what
+    impact this would make)
+  - make better use of writing rasters on the fly rather then at end
+    of steps
+  - possible gc() calls???
+  
+- dynaGIS initialisation slow with large projects
+
 - To revert in model build
   - sort out hru numbering - error between channel and hillslope 
   - sort out band numbering - error between channel and hillslope

@@ -756,7 +756,8 @@ dynatopGIS <- R6::R6Class(
             rq <- c("filled_dem","channel_id","channel_fraction",lyr)
             stopifnot(
                 "Not all required input layers have been generated \n Try running sink_fill first" =
-                    all( rq %in% names( private$brk) )
+                    all( rq %in% names( private$brk) ),
+                "Accumulate layer already exists" = !(paste0("acc_",lyr,".tif") %in% names(private$brk))
             )
 
             ## work out some properties of the brick
@@ -828,6 +829,7 @@ dynatopGIS <- R6::R6Class(
             ## save
             lyr_name <- paste0("acc_",lyr)
             private$chn[[ lyr_name ]] <- x_chn
+            terra::writeVector(private$chn, file.path(private$projectDir,"channel.gpkg"),overwrite=TRUE)
 
             rlyr <- private$brk["filled_dem"]
             names(rlyr) <- lyr_name
@@ -979,8 +981,6 @@ dynatopGIS <- R6::R6Class(
             mdl$channel_id <- mdl$channel_fraction <- NULL
 
             mdl <- merge(mdl,chn,all=TRUE)
-            mdl$precip <- paste0(precip_lbl,mdl$precip)
-            mdl$pet <- paste0(precip_lbl,mdl$pet)
             mdl$s_sf <- NA_real_
             mdl$s_rz <- NA_real_
             mdl$s_uz <- NA_real_
@@ -994,6 +994,9 @@ dynatopGIS <- R6::R6Class(
 
             ## save the model
             write_model(mdl,paste0(model_name,".csv"))
+            mdl <- terra::vect(mdl,geom="geom")
+            terra::writeVector(mdl,paste0(model_name,".geojson"))
+            return(output)
         }
     )
     )

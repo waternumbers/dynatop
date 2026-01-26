@@ -92,7 +92,7 @@ ctch$add_layer(tmp, "area")
 ctch$accumulate_layer("area")
 ua <- ctch$get_layer("upslope_area")
 aa <- ctch$get_layer("acc_area")
-all( tmp$upslope_area - tmp$acc_area == 0 )
+all( aa - ua == 0 )
 
 
 ## ###############################################################

@@ -152,7 +152,7 @@ trim_channel <- function(chn,outlets,removed=FALSE){
 #'
 #' @details Elements in x are either cropped, or fully removed if they lie under y. Attempts are made to ensure that the start and end Nodes are suitably replaced
 #' @export
-merge_channels <- function(x,y,outlets=NULL,verbose=FALSE){
+merge_channels <- function(x,y,outlets=NULL,verbose=FALSE,check_connectivity=TRUE){
 
     ## check x is a channel
     if(is.character(x)){ x <- terra::vect(x) }
@@ -221,7 +221,9 @@ merge_channels <- function(x,y,outlets=NULL,verbose=FALSE){
 
     x <- rbind(x[keep_x,],y[keep_y,])
 
-    check_channel(x,outlets)
+    terra::writeVector(x,"test_merge.gpkg",overwrite=TRUE)
+
+    check_channel(x,outlets,check_connectivity=check_connectivity)
 
     return(x)
 }
@@ -475,6 +477,8 @@ check_channel <- function(chn,outlets=NULL,chn_is_lines=FALSE,check_connectivity
             idx <- eN %in% jdx
             it <- it+1
         }
+        ##browser()
+        ##pjs <- 999
         stopifnot(
             "Error ingesting channel: problem with visiting all points" = all(cnt==0),
             "To many iterations" = it <= nrow(chn)

@@ -214,10 +214,10 @@ dynatop <- R6Class(
         ## output_defn = list(), ## definition of output
         time_series = list(), ## storage for time series data
         info = list(
-            output = setNames(1:14, c("precip","pet","aet",
-                                      "q_sf","q_sf_in","q_sz","q_sz_in",
-                                      "s_sf","s_rz","s_uz","s_sz",
-                                      "q_sf_rz","q_rz_uz","q_uz_sz"))
+            output = c("precip","pet","aet",
+                       "q_sf","q_sf_in","q_sz","q_sz_in",
+                       "s_sf","s_rz","s_uz","s_sz",
+                       "q_sf_rz","q_rz_uz","q_uz_sz")
         ),
         ## ## function that checks a hru
         ## digest_hru = function(h, use_states){ ## check HRU returns a text string of errors
@@ -499,7 +499,7 @@ dynatop <- R6Class(
 
             stopifnot(
                 "HRU is not known" = all(defn$hru %in% mdl$hru),
-                "Flux is not known" = all(defn$flux %in% aldskfja;sldfjk),
+                "Flux is not known" = all(defn$flux %in% private$info$output),
                 "Scale must be finite" = all(is.finite(defn$scale)),
                 "Name must be finite" = all(is.finite(defn$name))
             )
