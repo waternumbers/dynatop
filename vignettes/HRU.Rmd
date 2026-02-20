@@ -135,16 +135,17 @@ gradient. Letting $\mathcal{N}$ be the neighbouring downslope cells
 the total outflow is given by
 
 \[
-q_{sf}^{+} = \sum\limits_{i \in \mathcal{N}} 
+q_{sf}^{+} = Q_{sf}\left(s_{sf}\right) \\
+= \sum\limits_{i \in \mathcal{N}} 
 \left( 
-a_{1,i}\min\left(s_{sf},s_{1}\right)^{b_{1,i}} 
+a_{1,i}\min\left(s_{sf},s_{1}\right)^{b_{1}} 
 + 
-a_{2,i}\max\left(0,\min\left(s_{sf}-s_{1},s_{2}-s_{1}\right)\right)^{b_{2,i}} + 
-a_{3,i}\max\left(0,s_{sf}-s_{2}\right)^{b_{3,i}} 
+a_{2,i}\max\left(0,\min\left(s_{sf}-s_{1},s_{2}-s_{1}\right)\right)^{b_{2}} + 
+a_{3,i}\max\left(0,s_{sf}-s_{2}\right)^{b_{3}} 
 \right)
 \]
 This three layer structure can be made to match a variety of dynamics
-as outlines in <TODO ref>
+as outlined in **TODO**
 
 ## Root zone
 
@@ -199,7 +200,7 @@ r_{uz \rightarrow uz} - q_{sz}^{-}
 
 The outflow from the saturated zone is given by
 \[
-q_{sz}^{+} = w \tan\left(\beta\right) T\left(s_{sz}\right)
+q_{sz}^{+} =  T\left(s_{sz}\right) \sum\limits_{i \in \mathcal{N}} w_{i} \tan\left(\beta_{i}\right)
 \]
 
 In many TOPMODEL and dynamic TOPMODEL forumations the flux between the
@@ -207,8 +208,10 @@ unsaturated ans saturated zones is given by
 \[
 r_{uz \rightarrow sz} = \frac{A s_{uz}}{T_d s_{sz}}
 \]
-It is acknowledged that this formaulation has no physical
-basis (Beven, The Primer, Box?? 20**)
+While it is acknowledged that this formaulation has no physical
+basis (Beven, The Primer, Box?? 20**) it has generally been
+interpreted as indicating that the unsaturated zone drains as a linear
+tank with time constant $\frac{T_d s_{sz}}{A}.
 
 Here we develop an equally parsimonious alternative informed by the
 previsou analysis of (Beven 1984, Ion, 1989 paper, URBS model paper).
@@ -240,6 +243,9 @@ approximate this the flux is taken to be
 r_{uz \rightarrow sz} = A K_0 \exp\left(-\frac{s_{sz}}{m}\right) \frac{s_{uz}}{s_{sz}}
 \]
 
+The ratio $\frac{s_{uz}}{s_{sz}}$ approximates the gradient of the
+vertical hydraulic head.
+
 The continuity equations can be rewritten as
 \[
 \frac{ds_{uz}}{dt} = \min\left(r_{rz \rightarrow uz},AK_{0}\right)
@@ -260,10 +266,6 @@ w_{i}\tan\left(\beta_{i}\right)$
 \left( W_{\beta} m - A\frac{s_{uz}}{s_{sz}} \right) K_0 \exp\left(-\frac{s_{sz}}{m}\right)
 - q_{sz}^{-}
 \]
-
-
-
-
 
 
 # Numerical Solution
@@ -289,12 +291,11 @@ The implicit solution of mass balance equation gives
 \left. s_{sf} \right\rvert_{t+\Delta t} = \left. s_{sf} \right\rvert_{t} +
 \Delta t 
 \left( \left. q_{sf}^{-} \right\rvert_{t+\Delta t} -
-\left. \mathcal{F}\left(s_{sf},q^{-}_{sf},r_{sf \rightarrow
-rz},\Theta_{sf}\right)\right\rvert_{t+\Delta t} \right) - 
+Q_{sf}\left( \left. s_{sf}\right\rvert_{t+\Delta t} \right) \right) - 
 \left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t}
 \]
 
-Since the outflow is 0 when the $s_sf=0$ the maximum downward flux volume is
+Since downward flux is prioritised the maximum downward flux volume is
 \[
 \left. \hat{v}_{sf \rightarrow rz} \right\rvert_{t+\Delta t} =  \left. s_{sf}
 \right\rvert_{t} + \Delta t \left. q_{sf}^{-} \right\rvert_{t+\Delta t}
@@ -313,102 +314,139 @@ v_{sf \rightarrow rz} - v_{rz \rightarrow uz} \right)
 \end{equation}
 
 Since flow to the unsaturated zone occur only to keep 
-$s_{rz} \leq s_{rzmax}$ then
+$s_{rz} \leq s_{rzmax}$ and at a maximum rate $AK_{0}$ then
 \begin{equation}
-\hat{v}_{rz \rightarrow uz} = \max\left(0,
-\left. s_{rz} \right.\rvert_{0}
+\hat{v}_{rz \rightarrow uz} = \min\left(A K_{0} \Delta t,
+\max\left(0,
+\left. s_{rz} \right.\rvert_{t}
 + \Delta t \left( p -e_{p}\right)
 + \hat{v}_{sf \rightarrow rz}
 - s_{rzmax}
-\right)
+\right)\right)
 \end{equation}
 
-### Unsaturated Zone
+### Unsaturated & Saturated Zones
 
-The implicit expression for the unsaturated zone is given in terms of
-$\left. s_{uz} \right.\rvert_{t+\Delta t}$ and 
-$\left. s_{sz} \right.\rvert_{t+\Delta t}$ as
+The unsaturated ans saturated zones are solved semi-implicitly by
+taking an implicit estimate the transmissivity of the interface
+between the unsaturated and saturated zones:
 
-\begin{equation}
-\left. s_{uz} \right.\rvert_{t+\Delta t} = 
-\frac{T_{d}\left. s_{sz} \right.\rvert_{t+\Delta t}}{
-T_{d}\left. s_{sz} \right.\rvert_{t+\Delta t} + A \Delta t}
-\left( \left. s_{uz} \right.\rvert_{t} + 
-v_{rz \rightarrow uz}\right)
-\end{equation}
-
-Since $\left. s_{uz} \right.\rvert_{t+\Delta t} \leq \left. s_{sz}
-	   \right.\rvert_{t+\Delta t}$ this places an additional condition of
-\begin{equation}
-\left. s_{uz} \right.\rvert_{t} + v_{rz \rightarrow uz} \leq 
-\left. s_{sz} \right.\rvert_{t+\Delta t} + \frac{A \Delta t}{T_d}
-\end{equation}
-
-By mass balance this gives the maximum downward flux volume as
 \[
-\hat{v}_{uz \rightarrow sz} = A\Delta t \min\left(
-\frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
-{T_{d}\left. s_{sz} \right.\rvert_{t+\Delta t} + A \Delta t}, \frac{1}{T_{d}} \right)
+\phi = AK_{0}\exp\left(-\frac{\left. s_{sz} \right.\rvert_{t}}{m}\right)
 \]
 
-This is a function of $\left. s_{sz} \right.\rvert_{t+\Delta t}$.
+Continuity for the unsaturated zone then gives
+\[
+\left. s_{uz} \right.\rvert_{t + \Delta t} = \min\left( 
+\left. s_{sz} \right.\rvert_{t + \Delta t},
+\left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz} -
+\Delta t \phi \frac{ \left. s_{uz} \right.\rvert_{t + \Delta t} } {
+\left. s_{sz} \right.\rvert_{t + \Delta t} }
+\right)
+\]
 
-### Saturated Zone
-
-Building on the generic solution the implicit scheme for the saturated zone gives
+and for the saturated zone
 
 \[
-\left. s_{sz} \right\rvert_{t+\Delta t} = \left. s_{sz} \right\rvert_{t} +
-\Delta t  \left(
-\left. \mathcal{G}\left(s_{sz},q^{-}_{sz},\Theta_{sz}\right)\right\rvert_{t+\Delta t} -
-\left. q_{sz}^{-} \right\rvert_{t+\Delta t} \right) -
-\left. v_{uz \rightarrow sz} \right\rvert_{t+\Delta t}
+\left. s_{sz} \right.\rvert_{t + \Delta t} = \max\left( 
+0,
+\left. s_{sz} \right.\rvert_{t} + 
+\Delta t W_{\beta}mK_{0}\exp\left(-\frac{\left. s_{sz}
+\right.\rvert_{t+\Delta t}}{m}\right) - 
+\Delta t \phi \frac{ \left. s_{uz} \right.\rvert_{t + \Delta t} } {
+\left. s_{sz} \right.\rvert_{t + \Delta t} } -
+\left. q_{sz}^{-} \right\rvert_{t+\Delta t} \Delta t 
+\right)
+\]
+
+In deriving a numeric scheme for thse coupled equations we observed
+that
+\[
+\frac{
+\left. s_{uz} \right.\rvert_{t + \Delta t}
+}{
+\left. s_{sz} \right.\rvert_{t + \Delta t}
+} = \left\{
+\begin{array}{cc}
+\frac{ \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz} }
+{ \left. s_{sz} \right.\rvert_{t + \Delta t} + \phi \Delta t} & 
+\left. s_{sz} \right.\rvert_{t + \Delta t} \geq \left. s_{uz}
+\right.\rvert_{t} + \hat{v}_{rz \rightarrow uz} - \phi \Delta t \\
+1 & \rm{otherwise} \\
+\end{array}
+\right.
 \]
 
 Consider the pseudo-function 
 \[
-\mathcal{H}\left(z\right) = 
-z - 
-\left. s_{sz}\right.\rvert_{t} +
-\Delta t  \left. q_{sz}^{-} \right\rvert_{t+\Delta t} +
-A\Delta t \min\left(
-\frac{\left( \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz}\right)}
-{T_{d}z + A \Delta t}, \frac{1}{T_{d}} \right) - \\
-\Delta t \min\left(q_{sz}^{max},\max\left( 0, 2 \mathcal{G}\left(z,\Theta_{sz}\right) - \left. q_{sz}^{-}
-\right\rvert_{t+\Delta t}
-\right)\right)
+\mathcal{H}\left(z\right) = \left\{
+\begin{array}{cc}
+\left. s_{sz} \right.\rvert_{t} + 
+\Delta t W_{\beta}mK_{0}\exp\left(-\frac{z}{m}\right) - 
+\Delta t \phi \frac{ \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz} }
+{z + \phi \Delta t} -
+\left. q_{sz}^{-} \right\rvert_{t+\Delta t} \Delta t - z & z \geq \left. s_{uz}
+\right.\rvert_{t} + \hat{v}_{rz \rightarrow uz} - \phi \Delta t \\
+\left. s_{sz} \right.\rvert_{t} + 
+\Delta t W_{\beta}mK_{0}\exp\left(-\frac{z}{m}\right) - 
+\Delta t \phi  -
+\left. q_{sz}^{-} \right\rvert_{t+\Delta t} \Delta t - z &
+\rm{otherwise}\\
+\end{array}
+\right.
 \]
 
-adapted from the approximating equation for the saturated zone storage.
-In Appendix A it is
-shown that $\mathcal{H}\left(z\right)$ is a monotonic increasing function of
-$z > 0$ and $\mathcal{H}\left(D\right) \geq 0$. 
-Hence if $\mathcal{H}\left(0\right) \lt 0$ unique solution for
-$\left. s_{sz}\right.\rvert_{\Delta t}$ can be found. 
-If  $\mathcal{H}\left(0\right) \geq 0$ then the incoming fluxes are enough to
+adapted from the approximating equation for continuity in the
+saturated zone storage. Differentiating with respect to $z$ gives
+
+\[
+\frac{\partial}{\partial z}\mathcal{H}\left(z\right) = \left\{
+\begin{array}{cc}
+- \frac{\Delta t W_{\beta}mK_{0}}{m}\exp\left(-\frac{z}{m}\right) + 
+\frac{\Delta t \phi}{z + \phi \Delta t} 
+\frac{ \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz} }
+{z + \phi \Delta t} - 1
+ & z \geq \left. s_{uz}
+\right.\rvert_{t} + \hat{v}_{rz \rightarrow uz} - \phi \Delta t \\
+-\frac{\Delta t W_{\beta}mK_{0}}{m}\exp\left(-\frac{z}{m}\right) - 
+1 &
+\rm{otherwise}\\
+\end{array}
+\right.
+\]
+from which in can be seen that $\mathcal{H}\left(z\right)$ is a monotonic decreasing function of
+$z > 0$ and $\mathcal{H}\left(z\right) \rightarrow -\infty$ as $z
+\rightarrow \infty$.
+
+Hence if $\mathcal{H}\left(0\right) \gt 0$ a unique solution
+$\mathcal{H}\left(z\right) = 0$ can be found to provide a value for
+$\left. s_{sz}\right.\rvert_{\Delta t}$. 
+If  $\mathcal{H}\left(0\right) \leq 0$ then the incoming fluxes are enough to
 produce saturation in the subsurface and
 $\left. s_{sz}\right.\rvert_{\Delta t} = 0$. 
 
 Maintaining a water (mass) balance and
 correct limits on the state values
 depends upon the accuracy of the solution of
-$\mathcal{H}\left(z\right)=0$. Since each evaluation of
-$\mathcal{H}\left(z\right)$ requires an evaluation of $\mathcal{G}$ this
-rapidly become the most expensive part of the code.
-Use of a numerical scheme which allows mass balance to maintained
+$\mathcal{H}\left(z\right)=0$. 
+The use of a
+numerical scheme which allows mass balance to maintained
 regardless of the accuracy of the solution of $\mathcal{H}\left(z\right)=0$
 allows scope for compromises based on computational time.
 
 The upward pass presented below is mass conservative so long as
-$\mathcal{H}\left(\left. s_{sz}\right.\rvert_{\Delta t}\right)\geq0$. 
+$\mathcal{H}\left(\left. s_{sz}\right.\rvert_{\Delta t}\right)\leq 0$. 
 We therefore seek $z$ which satifies for some tolerance $\epsilon>0$
 \[
-\epsilon \geq \mathcal{H}\left(z\right) \geq 0
+-\epsilon \leq \mathcal{H}\left(z\right) \leq 0
 \]
 One approach to finding such a value is use a bracketing algorithm. At each iteration the lower and upper limits  $z^{l} <
-z^{u}$ satisify $\mathcal{H}\left(z^{l}\right)\leq 0 \leq
+z^{u}$ satisify $\mathcal{H}\left(z^{l}\right)\geq 0 \geq
 \mathcal{H}\left(z^{u}\right)$, thus bracket the solution. Iterating (using for example bisection) until
- $\mathcal{H}\left(z^{l}\right) \leq \epsilon$ give the approximation $\left. s_{sz}\right.\rvert_{\Delta t} = z^{u}$.
+ $\mathcal{H}\left(z^{u}\right) \geq -\epsilon$ and give the approximation $\left. s_{sz}\right.\rvert_{\Delta t} = z^{u}$.
+
+
+**GOT HERE**
 
 ## Upward Pass
 
