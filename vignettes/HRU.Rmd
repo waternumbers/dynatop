@@ -451,18 +451,17 @@ z^{u}$ satisify $\mathcal{H}\left(z^{l}\right)\geq 0 \geq
 ## Upward Pass
 
 Given an estimate of $\left. s_{sz}\right.\rvert_{\Delta t}$ such that
-$\mathcal{H}\left(\left. s_{sz}\right.\rvert_{\Delta t}\right)>0$ compute the
+$\mathcal{H}\left(\left. s_{sz}\right.\rvert_{t+\Delta t}\right) \leq 0$ compute the
 vertical flux volumes in the following fashion
 
-1. $\left. q_{sz}^{+}\right.\rvert_{t+\Delta t} =
-   \min\left(q_{sz}^{max},\max\left( 0, 2
-   \mathcal{G}\left(\left. s_{sz}\right.\rvert_{t+\Delta t},\Theta_{sz}\right) -
-   \left. q_{sz}^{-} \right\rvert_{t+\Delta t}\right)\right)$
+1. Compute $v_{uz \rightarrow sz} = \Delta t \phi \min\left(1,\frac{ \left. s_{uz} \right.\rvert_{t} + \hat{v}_{rz \rightarrow uz} }
+{\left. s_{sz}\right.\rvert_{t + \Delta t}z + \phi \Delta t} \right)$
 
-1. $v_{uz \rightarrow sz} = \left. s_{sz}\right.\rvert_{t} +\Delta t
-   \left(\left. q_{sz}^{+}\right.\rvert_{t+\Delta t} - \left. q_{sz}^{-}
-   \right\rvert_{t+\Delta t}\right) - \left. s_{sz}\right.\rvert_{t+\Delta t}$
-   
+1. $\left. q_{sz}^{+}\right.\rvert_{t+\Delta t} = \frac{1}{\Delta t}
+   \left( \left. s_{sz}\right.\rvert_{t+\Delta t} -
+   \left. s_{sz}\right.\rvert_{t} + v_{uz \rightarrow sz} +
+   \left. q_{sz}^{-} \right\rvert_{t+\Delta t} \Delta t \right)$
+
 1. $\left. s_{uz}\right.\rvert_{t+\Delta t} =
    \min\left(\left. s_{sz}\right.\rvert_{t+\Delta
    t},\left. s_{uz}\right.\rvert_{t} + \hat{v}_{rz \rightarrow uz} - v_{uz
@@ -488,28 +487,47 @@ This leaves the solution of the surface zone
 
 ### Surface Zone
 
-Proceeding in a similar fashion to the saturated zone consider the pseudo-function
+Proceeding in a similar fashion to the saturated zone consider the
+pseudo-function 
 \[
 \mathcal{S}\left(w\right) =
 \left. s_{sf} \right\rvert_{t} +
 \Delta t 
 \left( \left. q_{sf}^{-} \right\rvert_{t+\Delta t} -
-\mathcal{F}\left(w,q_{sf}^{-},\frac{\left. v_{sf \rightarrow rz}
-\right\rvert_{t+\Delta t}}{\Delta t},\Theta_{sf}\right) 
+Q_{sf}\left(w\right) 
 \right) - 
 \left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t} - w
 \]
-which is monotonically decreasing for $w \geq 0$ with
-$\mathcal{S}\left(0\right)\geq 0$.
+with gradient with respect to $w$ of
+\[
+\frac{\partial}{\partial w} \mathcal{S}\left(w\right) =
+- \Delta t \frac{\partial}{\partial w} Q_{sf}\left(w\right) - 1
+\]
+Taking 
+\[
+a_{j} = \sum\limits_{i \in \mathcal{N}} a_{j,i}
+\]
+and recognising the three intervals in $Q_{sf}$ gives
+\[
+\frac{\partial}{\partial w} Q_{sf}\left(w\right) =
+\left\{\begin{array}{cc}
+a_{1}b_{1}w^{b_{1}-1} & w \leq s_{1} \\
+a_{2}b_{2}w^{b_{2}-1} & s_{1} < w \leq s_{2} \\
+a_{3}b_{3}w^{b_{3}-1} & s_{2} < w\\
+\end{array}
+\right.
+\]
 
-A bracketing solution algorithm gives at any iteration $w^{l} < \left. s_{sf}
-\right\rvert_{t+\Delta t} < w^{u}$. An initial value of $w^{u}$ can be computed
-as $\left. s_{sf} \right\rvert_{t} + \Delta t\left. q_{sf}^{-}
-\right\rvert_{t+\Delta t} - \left. v_{sf \rightarrow rz} \right\rvert_{t+\Delta t}$. Iterating until; for some
-tolerance $\epsilon>0$; $w^{u} - w^{l}
-< \epsilon$ take $\left. s_{sf}\right.\rvert_{\Delta t} = w^{l}$.
-In this case $\mathcal{S}\left(\left. s_{sf}\right.\rvert_{\Delta t}\right) >
-0$ hence mass conservation can be maintained by taking
+Since $\mathcal{S}\left(w\right)$ is monotonically decreasing for $w \geq 0$ with
+$\mathcal{S}\left(0\right)\geq 0$ the solution for
+$\mathcal{S}\left(w\right)=0$ is bracketed by $w^{l} < \left. s_{sf}
+\right\rvert_{t+\Delta t} < w^{u}$ where initial values can be taken at
+$w_{l} = 0$ and $w^{u} = \left. s_{sf} \right\rvert_{t} + \Delta t\left. q_{sf}^{-}
+\right\rvert_{t+\Delta t} - \left. v_{sf \rightarrow rz}
+\right\rvert_{t+\Delta t}$. 
+Iterating the values of $w_{l}$ and $w_{u}$ until; for some
+tolerance $\epsilon>0$; $S\left(w_{l}\right) < \epsilon$ take
+$\left. s_{sf}\right.\rvert_{t+\Delta t} = w_{l}$ and compute
 \[
 \left. q_{sf}^{+} \right\rvert_{t+\Delta t} = 
 \left. q_{sf}^{-} \right\rvert_{t+\Delta t} +
