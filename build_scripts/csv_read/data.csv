@@ -1,0 +1,4 @@
+id,name,wkt
+1,PointA,"POINT(30 10)"
+2,LineB,"LINESTRING(30 10, 10 30, 40 40)"
+3,PolyC,"POLYGON((30 10, 40 40, 20 40, 10 20, 30 10))"
